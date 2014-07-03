@@ -1,0 +1,13 @@
+TextBoxWWWroot=
+TextBoxFILEroot=
+textHttpPortNumber=40003
+textBoxUdpApp=
+TextBoxBonDriverPath=
+textBoxUdpPort=42424
+textBoxHlsApp=
+ComboBoxNum=1
+ComboBoxBonDriver=
+TextBoxChSpace=0
+ComboBoxServiceID=
+ComboBoxResolution=
+textBoxHlsOpt=

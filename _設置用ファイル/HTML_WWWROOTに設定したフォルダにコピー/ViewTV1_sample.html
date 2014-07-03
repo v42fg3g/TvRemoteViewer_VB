@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="shift_jis" />
+        <meta name="viewport" content="width=device-width">
+        <title>HTTP Live Streaming %NUM%</title>
+    </head>
+    <body style="padding:0px; margin:0; border:0;">
+        <video src="mystream%NUM%.m3u8" controls autobuffer autoplay preload="auto" width="640" height="360"></video>
+        <br>
+        <input type="button" value="ストリーム1" onClick="location.href='ViewTV1.html'">
+        <input type="button" value="ストリーム2" onClick="location.href='ViewTV2.html'">
+        <input type="button" value="ストリーム3" onClick="location.href='ViewTV3.html'">
+        <input type="button" value="ストリーム4" onClick="location.href='ViewTV4.html'">
+        <br>
+		<br>
+        <form action="StartTV.html">
+            <input type="submit" value="日本テレビを視聴" />
+            <input type="hidden" name="num" value="%NUM%">
+            <input type="hidden" name="redirect" value="ViewTV%NUM%.html">
+            <input type="hidden" name="Bon_Sid_Ch" value="BonDriver_Spinel_PT3_t0.dll,1040,0">
+        </form>
+        <br>
+        <input type="button" Value="再読み込み" onClick="location.reload();">
+        <input type="button" value="トップメニューへ" onClick="location.href='index.html'">
+    </body>
+</html>

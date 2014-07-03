@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS" />
+    </head>
+    <body>
+        <form action="StartTv.html">
+            <select name="num">
+               <option>1</option>
+               <option>2</option>
+               <option>3</option>
+               <option>4</option>
+            </select>
+            <br><br>
+            <select name="BonDriver">
+               <option>BonDriver_PT3_t0.dll</option>
+               <option>BonDriver_PT3_t1.dll</option>
+               <option>BonDriver_PT2_t0.dll</option>
+               <option>BonDriver_PT2_t1.dll</option>
+            </select>
+            <br><br>
+            <select name="resolution">
+               <option>フォーム上のオプション</option>
+               <option>320x180</option>
+               <option>480x270</option>
+               <option selected>640x360</option>
+               <option>720x480</option>
+               <option>960x540</option>
+               <option>1280x720</option>
+            </select>
+            <br><br>
+            <select name="ServiceID">
+               <option value="1024">ＮＨＫ総合・東京</option>
+               <option value="1032">ＮＨＫＥテレ東京</option>
+               <option value="1040">日本テレビ</option>
+               <option value="1064">テレビ朝日</option>
+               <option value="1048">ＴＢＳ</option>
+               <option value="1072">テレビ東京</option>
+               <option value="1056">フジテレビジョン</option>
+               <option value="23608">ＴＯＫＹＯ ＭＸ</option>
+            </select>
+            <br><br>
+            <select name="ChSpace">
+               <option value="0">chspace 0</option>
+               <option value="1">chspace 1</option>
+            </select>
+            <br><br>
+            <input type="submit" value="配信開始" />
+        </form>
+        <br>
+        <br>
+        <form action="ShowProc.html">
+            <input type="submit" value="稼働中ストリーム" />
+        </form>
+        %PROCBONLIST%
+        
+        <br />
+        <br />
+        <br />
+
+        <form action="ViewTV1.html">
+            <input type="submit" value="ストリーム1を視聴" />
+        </form>
+        <br />
+
+        <form action="ViewTV2.html">
+            <input type="submit" value="ストリーム2を視聴" />
+        </form>
+        <br />
+
+        <form action="ViewTV3.html">
+            <input type="submit" value="ストリーム3を視聴" />
+        </form>
+        <br />
+
+        <form action="ViewTV4.html">
+            <input type="submit" value="ストリーム4を視聴" />
+        </form>
+        
+        <br />
+        <br />
+        <br />
+        
+        <form action="CloseTv.html">
+            <select name="num">
+               <option>1</option>
+               <option>2</option>
+               <option>3</option>
+               <option>4</option>
+            </select>
+            <input type="submit" value="配信停止" />
+        </form>
+        <br />
+        <form action="StopAll.html">
+            <input type="submit" value="全配信停止" />
+        </form>
+    </body>
+</html>
