@@ -315,9 +315,66 @@ Class WebRemocon
 
                     'ViewTV.html用
                     If chk_viewtv_ok = 1 And num > 0 Then
+                        '配信中ならば
+
+                        '_listから取得resolutionを取得
+                        Dim rez As String = Me._procMan.get_resolution(num)
+                        Dim rezx As Integer = 0
+                        Dim rezy As Integer = 0
+                        If rez.Length = 0 Then
+                            '_listから取得できなければ_hlsOpt2から取得する
+                            Dim ho As String = Me._hlsOpt2
+                            Dim sp1, sp2 As Integer
+                            If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                Try
+                                    sp1 = ho.IndexOf("-s ")
+                                    sp2 = ho.IndexOf(" ", sp1 + 3)
+                                    rez = ho.Substring(sp1 + "-s ".Length, sp2 - sp1 - "-s ".Length)
+                                Catch ex As Exception
+                                    rez = ""
+                                End Try
+                            ElseIf Me._hlsApp.IndexOf("vlc") >= 0 Then
+                                Try
+                                    sp1 = ho.IndexOf("width=")
+                                    sp2 = ho.IndexOf(",", sp1)
+                                    rezx = ho.Substring(sp1 + "width=".Length, sp2 - sp1 - "width=".Length)
+                                    sp1 = ho.IndexOf("height=")
+                                    sp2 = ho.IndexOf(",", sp1)
+                                    rezy = ho.Substring(sp1 + "height=".Length, sp2 - sp1 - "height=".Length)
+                                    If rezx > 0 And rezy > 0 Then
+                                        rez = Trim(rezx) & "x" & Trim(rezy)
+                                    Else
+                                        rez = ""
+                                    End If
+                                Catch ex As Exception
+                                    rez = ""
+                                End Try
+                            End If
+                        End If
+                        Dim d() As String = rez.Split("x")
+                        If d.Length = 2 Then
+                            If Val(d(0)) > 0 And Val(d(1)) > 0 Then
+                                rezx = Val(d(0))
+                                rezy = Val(d(1))
+                            Else
+                                rez = ""
+                            End If
+                        Else
+                            rez = ""
+                        End If
+                        If rezx > 0 And rezy > 0 Then
+                            s = s.Replace("%WIDTH%", rezx.ToString)
+                            s = s.Replace("%HEIGHT%", rezy.ToString)
+                        Else
+                            '値がなければデフォルトをセット
+                            s = s.Replace("%WIDTH%", "640")
+                            s = s.Replace("%HEIGHT%", "360")
+                        End If
+
+                        '配信中ならばnumからBonDriver_pathとBonDriverを取得
                         If s.IndexOf("%SELECTCH") >= 0 Then
-                            '配信中ならばnumからBonDriver_pathとBonDriverを取得
                             Dim bon As String = Me._procMan.get_bondriver_name(num)
+
                             Dim bonp As String = Me._BonDriverPath
                             If bonp.Length = 0 Then
                                 '指定が無い場合はUDPAPPと同じフォルダにあると見なす
@@ -332,6 +389,9 @@ Class WebRemocon
                                 vhtml &= "<input type=""submit"" value=""視聴"" />" & vbCrLf
                                 vhtml &= "<input type=""hidden"" name=""num"" value=""" & num & """>" & vbCrLf
                                 vhtml &= "<input type=""hidden"" name=""redirect"" value=""ViewTV" & num & ".html"">" & vbCrLf
+                                If rez.Length > 0 Then
+                                    vhtml &= "<input type=""hidden"" name=""resolution"" value=""" & rez & """>" & vbCrLf
+                                End If
                                 vhtml &= "</form>" & vbCrLf
                                 s = s.Replace("%SELECTCH%", vhtml)
                             End If
@@ -412,7 +472,7 @@ Class WebRemocon
             For i As Integer = 0 To d.Length - 1
                 If d(i) > 0 Then
                     html &= bst
-                    html &= "<input type=""button"" value=""ストリーム" & d(i).ToString & """ onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
+                    html &= "<input type=""button"" value=""ストリーム" & d(i).ToString & "を視聴"" onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
                     'html &= "<form action=""ViewTV" & d(i).ToString & ".html"">" & vbCrLf
                     'html &= "    <input type=""submit"" value=""ストリーム" & d(i).ToString & "を視聴"" />" & vbCrLf
                     'html &= "</form>" & vbCrLf
@@ -573,7 +633,7 @@ Class WebRemocon
     End Sub
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, Optional ByVal resolution As String = Nothing)
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, Optional ByVal resolution As String = "")
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         If fileroot.Length = 0 Then
@@ -604,7 +664,7 @@ Class WebRemocon
 
         '★HLSオプションの生成
         Dim hlsOpt As String = ""
-        If resolution IsNot Nothing Then
+        If resolution.Length > 0 Then
             '解像度指定があれば
             Dim chk As Integer = 0
             If vlc_option IsNot Nothing Then
@@ -619,6 +679,7 @@ Class WebRemocon
             If chk = 0 Then
                 '該当がなければフォーム上のVLCオプション文字列を使用する
                 hlsOpt = hlsOpt2
+                resolution = ""
             End If
         Else
             '解像度指定がなければフォーム上のVLCオプション文字列を使用する
@@ -644,7 +705,7 @@ Class WebRemocon
 
         Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
         '★プロセスを起動
-        Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole)
+        Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, resolution)
     End Sub
 
     'HLS_option.txtから解像度とHLSオプションを読み込む

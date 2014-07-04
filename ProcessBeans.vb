@@ -17,9 +17,10 @@ Class ProcessBean
     Public _udpPort As Integer = 0
     Public _stopping As Integer = 0 '停止を試みているときは1
     Public _ShowConsole As Boolean = False
+    Public _resolution As String = ""
     'Public _m3u8_update_time As Date 'm3u8の更新日時
 
-    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId As Integer, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean)
+    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId As Integer, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, resolution As String)
         Me._udpProc = udpProc
         Me._hlsProc = hlsProc
         Me._procBrowserIndex = procBrowserIndex
@@ -33,6 +34,7 @@ Class ProcessBean
         Me._udpPort = udpPort
         Me._stopping = 0
         Me._ShowConsole = ShowConsole
+        Me._resolution = resolution
         'Me._m3u8_update_time = Now()
     End Sub
 

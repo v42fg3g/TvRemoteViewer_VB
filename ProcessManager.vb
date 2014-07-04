@@ -49,7 +49,7 @@ Public Class ProcessManager
         Return r
     End Function
 
-    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer)
+    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, resolution As String)
         '★起動している場合は既存のプロセスを止める
         stopProc(num)
 
@@ -157,7 +157,7 @@ Public Class ProcessManager
                 log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
 
                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole)
+                Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, resolution)
                 Me._list.Add(pb)
             Else
                 Try
@@ -233,11 +233,12 @@ Public Class ProcessManager
                     Dim p5 As Integer = Me._list(i)._num
                     Dim p6 As Integer = Me._list(i)._udpPort
                     Dim p7 As Boolean = Me._list(i)._ShowConsole
+                    Dim p8 As String = Me._list(i)._resolution
                     'プロセスを停止
                     stopProc(p5)
                     'System.Threading.Thread.Sleep(500)
                     'プロセスを開始
-                    startProc(p1, p2, p3, p4, p5, p6, p7)
+                    startProc(p1, p2, p3, p4, p5, p6, p7, p8)
                     log1write("No.=" & p5 & "のプロセスを再起動しました")
                 End If
             End If
@@ -705,6 +706,20 @@ Public Class ProcessManager
                     bon = s.Substring(sp, (ep - sp) + ".dll".Length)
                     r = bon
                 End If
+            End If
+        Next
+
+        Return r
+    End Function
+
+    'numからbon_driverのパスと名前を取得
+    Public Function get_resolution(ByVal num As Integer) As String
+        Dim r As String = ""
+        '現在のlist(i)
+        Dim js As String = ""
+        For j As Integer = 0 To Me._list.Count - 1
+            If Me._list(j)._num = num Then
+                r = Me._list(j)._resolution
             End If
         Next
 

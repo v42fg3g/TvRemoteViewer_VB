@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.04
+TvRemoteViewer_VB v0.05
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
 
@@ -27,7 +27,7 @@ FrameWork4.0
 ・RecTaskとBonDriverを適切に配置
 
 
-・ffmpeg又はVLCをインストール（★半角スペースが入らない場所のほうが安心です）
+・ffmpeg又はVLCをインストール
 （★ffmpegを使う場合は同梱のlibx264-ipod640.ffpresetをffmpegをインストールしたとこのpresetsフォルダにコピー）
 
 
@@ -38,13 +38,9 @@ FrameWork4.0
 （★VLC使用の場合は半角スペースが入らない場所のほうが安心です）
 
 
-・index.htmlとViewTV*.htmlを自分の環境用に編集　★重要★　現状は関東に設定
-Bondriver名とチャンネル名とServiceID、CSを指定する場合はチャンネルスペースを編集のうえ保存してください。
-チャンネル名とサービスIDは
-http://soranikakaruhashi.blog.fc2.com/blog-entry-71.html
-を参考にすると良いでしょう
 
-★htmlファイル名の大文字小文字を維持してください。
+■WEBデザインを変更したい場合
+
 
 ・index.html
 index.htmlからStartTv（配信開始）が呼び出される際にWEBから送られるパラメーターとしては今のところ以下を想定しています。
@@ -58,7 +54,8 @@ Web_Start()内を編集すれば違う動作や異なるWEB設計にも対応できるでしょう。
 "Bon_Sid_Ch"	"BonDriver_pt2_t0.dll,54321,0"		上記３つを同時に設定
 "redirect"	"ViewTV2.html"				配信開始後ジャンプするページ
 
-・ViewTV[n].htmlで使用できる変数
+
+・index.html、ViewTV[n].htmlで使用できる変数
 html内に以下の変数を記入しておくと呼び出されたときに適切な値に変換されます
 変換前				変換後
 %NUM%				ストリームナンバー
@@ -68,7 +65,12 @@ html内に以下の変数を記入しておくと呼び出されたときに適切な値に変換されます
 %VIEWBUTTONS%			ストリームを選択する<SELECT>を作成
 %VIEWBUTTONS:[html]%		[html] = <SELECT>と<SELECT>の間にかませるhtml
 %VIEWBUTTONS:[html1]:[html2]%	[html2] = 末尾に付け加えるhtml
+
+
+・ViewTV[n].htmlで使用できる変数
 %SELECTCH%			ViewTV.html内で番組を選択する<SELECT>を作成する
+%WIDTH%				ビデオの幅
+%HEIGHT%			ビデオの高さ
 
 
 
@@ -128,7 +130,7 @@ iPad(第3世代）iOS7 safari
 
 
 ・全般的に
-クラスというものがわかってない・・おまいがっ
+クラスというものがわかってない・・お～まいがっ
 
 
 ・想定外のエラー処理。テスト不足
@@ -139,7 +141,7 @@ iPad(第3世代）iOS7 safari
 
 ・HLSアプリが動いてるふりしながら停止しているときへの対処
 まぁ、配信が止まると見てるほうも止まるから再読込や停止しますよね。
-なので対処しなくてもいいかなと放置してます。
+なのでとりあえずは対処しなくてもいいかなと放置してます。
 
 
 ・Windows上での各種ニコニコ生放送ソフトとの連携（希望）
@@ -160,6 +162,9 @@ iPad(第3世代）iOS7 safari
 0.04	二重起動を試みたときに例外エラーが出るバグを修正
 	どのhtmlページでもパラメーター置換を行うようにした
 	WEBインターフェースの修正（HTMLを書き換える必要が無くなりました）
+0.05	ViewTV.htmlでチャンネル切り替え時に解像度を引き継ぐようにした
+	ViewTV.htmlのビデオの幅と高さを変数化
+	ViewTV.htmlの修正
 
 
 
