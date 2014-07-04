@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.05
+TvRemoteViewer_VB v0.06
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
 
@@ -165,6 +165,8 @@ iPad(第3世代）iOS7 safari
 0.05	ViewTV.htmlでチャンネル切り替え時に解像度を引き継ぐようにした
 	ViewTV.htmlのビデオの幅と高さを変数化
 	ViewTV.htmlの修正
+0.06	UDPアプリ用オプション欄を追加
+	UDPオプション作成時のバグ修正
 
 
 

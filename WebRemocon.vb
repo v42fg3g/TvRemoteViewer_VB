@@ -31,6 +31,7 @@ Class WebRemocon
 
     'form1から変更されるパラメーター
     Public _udpApp As String = Nothing
+    Public _udpOpt3 As String = Nothing
     Public _chSpace As Integer = Nothing
     Public _hlsApp As String = Nothing
     Public _hlsroot As String = Nothing
@@ -56,7 +57,7 @@ Class WebRemocon
         Public opt As String 'VLCオプション文字列
     End Structure
 
-    Public Sub New(udpApp As String, udpPort As Integer, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String())
+    Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String())
         'Public Sub New(udpPort As Integer, wwwroot As String, wwwport As Integer) ', num As Integer)
         '初期化 
 
@@ -69,6 +70,7 @@ Class WebRemocon
 
         '現在ファームにセットされている値をセット
         Me._udpApp = udpApp
+        Me._udpOpt3 = udpOpt3
         Me._hlsApp = hlsApp
         Dim ss As String = "\"
         Dim sp As Integer = hlsApp.LastIndexOf(ss)
@@ -203,7 +205,7 @@ Class WebRemocon
                     'パラメーターが正しいかチェック
                     If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
                         '正しければ配信スタート
-                        Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, resolution)
+                        Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpopt3, resolution)
                     Else
                         StartTv_param = -1
                     End If
@@ -633,7 +635,7 @@ Class WebRemocon
     End Sub
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, Optional ByVal resolution As String = "")
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, Optional ByVal resolution As String = "")
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         If fileroot.Length = 0 Then
@@ -647,7 +649,7 @@ Class WebRemocon
         If Me._BonDriverPath.Length > 0 Then
             opt_bondriver = "/d """ & Me._BonDriverPath & "\" & bondriver & """"
         Else
-            opt_bondriver = "/d " & bondriver & """"
+            opt_bondriver = "/d " & bondriver
         End If
 
         Dim udpPortNumber As Integer = 0
@@ -658,7 +660,10 @@ Class WebRemocon
 
         '★UDPオプションの生成
         Dim udpOpt As String
-        udpOpt = "/udp /sendservice 1 /port " & udpPortNumber & " /chspace " & ChSpace.ToString & " " & opt_serviceID & " " & opt_bondriver
+        udpOpt = "/udp /port " & udpPortNumber & " /chspace " & ChSpace.ToString & " " & opt_serviceID & " " & opt_bondriver
+        If udpOpt3.Length > 0 Then
+            udpOpt &= " " & Trim(udpOpt3)
+        End If
 
         log1write("UDP option=" & udpOpt)
 

@@ -22,6 +22,7 @@ Public Class Form1
             Dim sid As Integer = 0 '下で取得
             Dim chspace As Integer = Val(TextBoxChSpace.Text.ToString)
             Dim udpApp As String = textBoxUdpApp.Text.ToString
+            Dim udpOpt3 As String = TextBoxUdpOpt3.Text.ToString
             Dim hlsApp As String = textBoxHlsApp.Text.ToString
             Dim hlsroot As String = ""
             Dim ss As String = "\"
@@ -38,7 +39,7 @@ Public Class Form1
             If bondriver.IndexOf(".dll") > 0 Then
                 If s.Length = 3 Then
                     sid = Val(s(1))
-                    Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole)
+                    Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3)
                 Else
                     MsgBox("サービスIDを指定してください")
                 End If
@@ -175,6 +176,7 @@ Public Class Form1
         'フォームからパラメーターを取得
         Dim udpApp As String = Me.textBoxUdpApp.Text.ToString
         Dim udpPort As Integer = Val(Me.textBoxUdpPort.Text.ToString)
+        Dim udpOpt3 As String = Me.TextBoxUdpOpt3.Text.ToString
         Dim chSpace As Integer = Val(Me.TextBoxChSpace.Text.ToString)
         Dim hlsApp As String = Me.textBoxHlsApp.Text.ToString
         Dim hlsOpt1 As String = "" 'Me.textBoxHlsOpt1.Text.ToString
@@ -187,7 +189,7 @@ Public Class Form1
         Dim ShowConsole As Boolean = Me.CheckBoxShowConsole.Checked
 
         Me.ButtonWebStart.Enabled = False
-        Me._worker = New WebRemocon(udpApp, udpPort, chSpace, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, wwwport, BonDriverPath, ShowConsole, BonDriver_NGword)
+        Me._worker = New WebRemocon(udpApp, udpPort, udpOpt3, chSpace, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, wwwport, BonDriverPath, ShowConsole, BonDriver_NGword)
         Me._webThread = New Thread(New ThreadStart(AddressOf Me._worker.Web_Start))
         Me._webThread.Start()
         Me.ButtonWebStop.Enabled = True
@@ -304,6 +306,8 @@ Public Class Form1
                             TextBoxBonDriverPath.Text = lr(1)
                         Case "textBoxUdpPort"
                             textBoxUdpPort.Text = lr(1)
+                        Case "textBoxUdpOpt3"
+                            TextBoxUdpOpt3.Text = lr(1)
                         Case "textBoxHlsApp"
                             textBoxHlsApp.Text = lr(1)
                         Case "textBoxHlsOpt1"
@@ -365,6 +369,7 @@ Public Class Form1
         s &= "textBoxUdpApp=" & textBoxUdpApp.Text & vbCrLf
         s &= "TextBoxBonDriverPath=" & TextBoxBonDriverPath.Text & vbCrLf
         s &= "textBoxUdpPort=" & textBoxUdpPort.Text & vbCrLf
+        s &= "textBoxUdpOpt3=" & TextBoxUdpOpt3.Text & vbCrLf
         s &= "textBoxHlsApp=" & textBoxHlsApp.Text & vbCrLf
         's &= "textBoxHlsOpt1=" & textBoxHlsOpt1.Text & vbCrLf
         s &= "ComboBoxNum=" & ComboBoxNum.Text & vbCrLf
@@ -713,6 +718,14 @@ Public Class Form1
         End Try
     End Sub
 
+    '項目が変更されたことをインスタンスに知らせる
+    Private Sub TextBoxUdpOpt3_TextChanged(sender As System.Object, e As System.EventArgs) Handles TextBoxUdpOpt3.TextChanged
+        Try
+            Me._worker._udpOpt3 = TextBoxUdpOpt3.Text.ToString
+        Catch ex As Exception
+        End Try
+    End Sub
+
     '初期値ボタン
     Private Sub Button5_Click(sender As System.Object, e As System.EventArgs) Handles Button5.Click
         textHttpPortNumber.Text = "40003"
@@ -721,6 +734,11 @@ Public Class Form1
     '初期値ボタン
     Private Sub Button6_Click(sender As System.Object, e As System.EventArgs) Handles Button6.Click
         textBoxUdpPort.Text = "42424"
+    End Sub
+
+    '初期値ボタン
+    Private Sub Button3_Click(sender As System.Object, e As System.EventArgs) Handles Button3.Click
+        TextBoxUdpOpt3.Text = "/sendservice 1"
     End Sub
 
     '最小化アイコン右クリック→終了

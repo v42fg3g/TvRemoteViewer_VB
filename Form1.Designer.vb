@@ -74,6 +74,9 @@ Partial Class Form1
         Me.終了ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.CheckBoxShowConsole = New System.Windows.Forms.CheckBox()
         Me.LabelStream = New System.Windows.Forms.Label()
+        Me.TextBoxUdpOpt3 = New System.Windows.Forms.TextBox()
+        Me.Label11 = New System.Windows.Forms.Label()
+        Me.Button3 = New System.Windows.Forms.Button()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -490,11 +493,40 @@ Partial Class Form1
         Me.LabelStream.TabIndex = 88
         Me.LabelStream.Text = "配信中："
         '
+        'TextBoxUdpOpt3
+        '
+        Me.TextBoxUdpOpt3.Location = New System.Drawing.Point(374, 189)
+        Me.TextBoxUdpOpt3.Name = "TextBoxUdpOpt3"
+        Me.TextBoxUdpOpt3.Size = New System.Drawing.Size(91, 19)
+        Me.TextBoxUdpOpt3.TabIndex = 90
+        Me.TextBoxUdpOpt3.Text = "/sendservice 1"
+        '
+        'Label11
+        '
+        Me.Label11.AutoSize = True
+        Me.Label11.Location = New System.Drawing.Point(278, 192)
+        Me.Label11.Name = "Label11"
+        Me.Label11.Size = New System.Drawing.Size(95, 12)
+        Me.Label11.TabIndex = 89
+        Me.Label11.Text = "追加UDPオプション"
+        '
+        'Button3
+        '
+        Me.Button3.Location = New System.Drawing.Point(469, 186)
+        Me.Button3.Name = "Button3"
+        Me.Button3.Size = New System.Drawing.Size(50, 25)
+        Me.Button3.TabIndex = 91
+        Me.Button3.Text = "初期値"
+        Me.Button3.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(529, 665)
+        Me.Controls.Add(Me.Button3)
+        Me.Controls.Add(Me.TextBoxUdpOpt3)
+        Me.Controls.Add(Me.Label11)
         Me.Controls.Add(Me.LabelStream)
         Me.Controls.Add(Me.CheckBoxShowConsole)
         Me.Controls.Add(Me.ButtonFILEROOT)
@@ -600,5 +632,8 @@ Partial Class Form1
     Friend WithEvents 終了ToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents CheckBoxShowConsole As System.Windows.Forms.CheckBox
     Private WithEvents LabelStream As System.Windows.Forms.Label
+    Private WithEvents TextBoxUdpOpt3 As System.Windows.Forms.TextBox
+    Private WithEvents Label11 As System.Windows.Forms.Label
+    Friend WithEvents Button3 As System.Windows.Forms.Button
 
 End Class
