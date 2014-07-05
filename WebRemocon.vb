@@ -39,6 +39,8 @@ Class WebRemocon
     Public _hlsOpt2 As String = Nothing
     Public _BonDriverPath As String = Nothing
     Public _ShowConsole As Boolean = Nothing
+    Public _id As String
+    Public _pass As String
 
     '変更されたら再起動が必要なパラメーター
     Private _udpPort As Integer = Nothing
@@ -47,6 +49,7 @@ Class WebRemocon
     Private _wwwport As Integer = Nothing
     Private _BonDriver_NGword As String() = Nothing
     Public _videopath() As String
+    Public _AddSubFolder As Integer
 
     '空きUDPポートが取得できないので暫定
     Private _updCount As Integer
@@ -58,7 +61,7 @@ Class WebRemocon
         Public opt As String 'VLCオプション文字列
     End Structure
 
-    Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String())
+    Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String(), ByVal id As String, ByVal pass As String)
         'Public Sub New(udpPort As Integer, wwwroot As String, wwwport As Integer) ', num As Integer)
         '初期化 
 
@@ -85,6 +88,9 @@ Class WebRemocon
         Me._chSpace = chSpace
         Me._BonDriverPath = BonDriverPath
         Me._ShowConsole = ShowConsole
+
+        Me._id = id
+        Me._pass = pass
 
         'VLCオプションを読み込む
         Me.read_vlc_option()
@@ -119,334 +125,373 @@ Class WebRemocon
         ' 受け付けるURL
         Me._listener = New HttpListener()
         Me._listener.Prefixes.Add(prefix)
+        'BASIC認証
+        If Me._id.Length > 0 And Me._pass.Length > 0 Then
+            'IDとパスが設定されていれば
+            Me._listener.AuthenticationSchemes = AuthenticationSchemes.Basic
+            Me._listener.Realm = "SECRET AREA"
+        End If
         ' プレフィックスの登録
         Me._listener.Start()
 
         While Me._isWebStart
             Try
+
                 Dim context As HttpListenerContext = Me._listener.GetContext()
                 Dim req As HttpListenerRequest = context.Request
                 Dim res As HttpListenerResponse = context.Response
 
-                ' リクエストされたURLからファイルのパスを求める
-                Dim path As String = root & req.Url.LocalPath.Replace("/", "\")
-
-                'ルートにアクセスされた場合、index.htmlを表示する
-                If path = Me._wwwroot & "\" Then
-                    path = path & "index.html"
-                End If
-
-                log1write(req.Url.LocalPath & "へのリクエストがありました")
-
-                'ToLower小文字で比較
-                Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
-                Dim request_page As Integer = 0 '特別なリクエストかどうか
-
-                '★リクエストパラメーターを取得
-                'スレッドナンバー
-                Dim num As Integer = 0
-                num = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num") & "")
-                'Int32.TryParse(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num"), num)
-                'BonDriver指定
-                Dim bondriver As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("BonDriver") & ""
-                'サービスＩＤ指定
-                Dim sid As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ServiceID") & ""
-                'chspace指定
-                Dim chspace As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ChSpace") & ""
-                'Bon_Sid_Ch一括指定があった場合（JavaScript等でBon_Sid_Ch="BonDriver_t0.dll,12345,0"というように指定された場合）
-                Dim bon_sid_ch_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("Bon_Sid_Ch") & ""
-                Dim bon_sid_ch() As String = bon_sid_ch_str.Split(",")
-                If bon_sid_ch.Length = 3 Then
-                    '個別に値が決まっていなければセット
-                    If bondriver.Length = 0 Then bondriver = Trim(bon_sid_ch(0))
-                    If sid.Length = 0 Then sid = Trim(bon_sid_ch(1))
-                    If chspace.Length = 0 Then chspace = Trim(bon_sid_ch(2))
-                End If
-
-                '解像度指定 "640x360"等
-                Dim resolution As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("resolution") & ""
-                'redirect指定
-                Dim redirect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("redirect") & ""
-
-                'm3u8,tsの準備状況
-                Dim check_m3u8_ts As Integer = 0
-
-                'ストリームモード 0=UDP 1=ファイル再生
-                Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
-
-                'ファイル名
-                Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
-                'URLエンコードしておいたフルパスを文字列に変換
-                videoname = System.Web.HttpUtility.UrlDecode(videoname)
-
-                Dim chk_viewtv_ok As Integer = 0
-
-                'WEBページ表示前処理
-                '特別なページ　配信スタート停止などサーバー動作を実行
-                If req.Url.LocalPath.ToLower.IndexOf("/ViewTV".ToLower) >= 0 Then
-                    '通常視聴
-                    request_page = 2
-                    'numが<form>から渡されていなければURLから取得するViewTV2.htmlなら2
-                    If num = 0 Then
-                        Dim num_url As String = Val(req.Url.LocalPath.ToLower.Substring(req.Url.LocalPath.ToLower.IndexOf("ViewTV".ToLower) + "ViewTV".Length))
-                        If num_url > 0 Then
-                            num = num_url
-                        End If
-                    End If
-
-                    Dim gln As String = Me._procMan.get_live_numbers()
-                    If gln.IndexOf(" " & num.ToString & " ") >= 0 Then
-                        check_m3u8_ts = check_m3u8_ts_status(num)
-                        If check_m3u8_ts <= 2 Then
-                            '準備ができていない
-                            request_page = 1 'waiting表示
-                        Else
-                            'ViewTV.html用
-                            chk_viewtv_ok = 1
-                        End If
+                Dim auth_ok As Integer = 0
+                If Me._id.Length = 0 Or Me._pass.Length = 0 Then
+                    'パスワード未設定は素通り
+                    auth_ok = 1
+                ElseIf req.IsAuthenticated Then
+                    'ヘッダから認証情報を解析し、Base64デコード
+                    Dim auth As String = Encoding.GetEncoding("Shift_JIS").GetString(Convert.FromBase64String(req.Headers("Authorization").Substring(6)))
+                    'IDとパスワードに分離する
+                    Dim p As String() = auth.Split(":")
+                    '判定
+                    If Me._id = p(0) And Me._pass = p(1) Then
+                        '受付
+                        auth_ok = 2
                     Else
-                        '配信されていない
-                        request_page = 11
+                        auth_ok = -1
                     End If
-                ElseIf req.Url.LocalPath.ToLower = ("/StartTv.html").ToLower Then
-                    '配信スタート
-                    request_page = 3
-                    'パラメーターが正しいかチェック
-                    If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
-                        '正しければ配信スタート
-                        Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, resolution)
-                    ElseIf num > 0 And videoname.Length > 0 Then
-                        'ファイル再生
-                        If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
-                            'ffmpegなら
-                            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, resolution)
-                        Else
-                            '今のところVLCには未対応
-                            request_page = 12
-                        End If
-                    Else
-                        StartTv_param = -1
-                    End If
-                ElseIf req.Url.LocalPath.ToLower = "/CloseTv.html".ToLower Then
-                    '配信停止
-                    request_page = 4
-                    Me.stop_movie(num)
-                ElseIf req.Url.LocalPath.ToLower = "/StopAll.html".ToLower Then
-                    'すべてのプロセスと関連アプリを停止する
-                    request_page = 5
-                    stop_movie(-2)
-                ElseIf req.Url.LocalPath.ToLower = "/SelectVideo.html".ToLower Then
-                    'ファイル選択ページ
-                    request_page = 6
+                Else
+                    auth_ok = -2
                 End If
 
-                'WEBページ表示
-                If StartTv_param = -1 Then
-                    '/StartTvにリクエストがあったがパラメーターが不正な場合
-                    Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                    sw.WriteLine(ERROR_PAGE("パラメーターが不正です", "パラメーターが不正です"))
-                    sw.Flush()
-                    log1write("パラメーターが不正です")
-                ElseIf request_page = 1 Then
-                    'waitingページを表示する
-                    Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                    sw.WriteLine("<!doctype html>")
-                    sw.WriteLine("<html>")
-                    sw.WriteLine("<head>")
-                    sw.WriteLine("<title>Waiting " & num.ToString & "</title>")
-                    sw.WriteLine("<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />")
-                    sw.WriteLine("<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">")
-                    sw.WriteLine("</head>")
-                    sw.WriteLine("<body>")
-                    sw.WriteLine("配信準備中です..(" & check_m3u8_ts.ToString & ")")
-                    sw.WriteLine("<br><br>")
-                    'sw.WriteLine("<FORM><INPUT type=""button"" Value=""戻る"" onClick=""history.go(-1);""></CENTER></P></FORM>")
-                    sw.WriteLine("<input type=""button"" value=""トップメニューへ"" onClick=""location.href='index.html'"">")
-                    sw.WriteLine("</body>")
-                    sw.WriteLine("</html>")
-                    sw.Flush()
-                    log1write(num.ToString & ":配信準備できていません")
-                ElseIf request_page = 11 Then
-                    '配信されていない
-                    Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                    sw.WriteLine(ERROR_PAGE("配信されていません：" & num.ToString, "配信されていません"))
-                    sw.Flush()
-                    log1write(num.ToString & ":配信されていません")
-                ElseIf request_page = 12 Then
-                    'VLCはファイル再生未対応
-                    Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                    sw.WriteLine(ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません"))
-                    sw.Flush()
-                    log1write(num.ToString & ":配信されていません")
-                ElseIf path.IndexOf(".htm") > 0 And File.Exists(path) Then
-                    'ElseIf request_page >= 2 Then
-                    'パラメーターを置換する必要があるページ
-                    Dim s As String = ReadAllTexts(path)
+                If auth_ok > 0 Then
+                    ' リクエストされたURLからファイルのパスを求める
+                    Dim path As String = root & req.Url.LocalPath.Replace("/", "\")
 
-                    Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-
-                    'BonDriverと番組名連携選択
-                    If s.IndexOf("%SELECTBONSIDCH") >= 0 Then
-                        Dim sb1 As Integer = s.IndexOf("%SELECTBONSIDCH:")
-                        Dim sb2 As Integer = s.IndexOf("%", sb1 + 1)
-                        Dim sbs As String = ""
-                        If sb1 >= 0 And sb2 > sb1 Then
-                            '間に入れるhtmlを取得
-                            sbs = s.Substring(sb1 + "%SELECTBONSIDCH:".Length, sb2 - sb1 - "%SELECTBONSIDCH:".Length)
-                        End If
-                        Dim selectbon As String = WEB_make_select_Bondriver_html(sbs)
-                        s = s.Replace("%SELECTBONSIDCH%", selectbon)
-                        s = s.Replace("%SELECTBONSIDCH:" & sbs & "%", selectbon)
+                    'ルートにアクセスされた場合、index.htmlを表示する
+                    If path = Me._wwwroot & "\" Then
+                        path = path & "index.html"
                     End If
 
-                    'Viewボタン作成
-                    If s.IndexOf("%VIEWBUTTONS") >= 0 Then
-                        Dim vb1 As Integer = s.IndexOf("%VIEWBUTTONS:")
-                        Dim vb2 As Integer = s.IndexOf("%", vb1 + 1)
-                        Dim vbs As String = ""
-                        If vb1 >= 0 And vb2 > vb1 Then
-                            '間に入れるhtmlを取得
-                            vbs = s.Substring(vb1 + "%VIEWBUTTONS:".Length, vb2 - vb1 - "%VIEWBUTTONS:".Length)
-                        End If
-                        Dim viewbutton_html As String = WEB_make_ViewLink_html(vbs)
-                        s = s.Replace("%VIEWBUTTONS%", viewbutton_html)
-                        s = s.Replace("%VIEWBUTTONS:" & vbs & "%", viewbutton_html)
+                    log1write(req.Url.LocalPath & "へのリクエストがありました")
+
+                    'ToLower小文字で比較
+                    Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
+                    Dim request_page As Integer = 0 '特別なリクエストかどうか
+
+                    '★リクエストパラメーターを取得
+                    'スレッドナンバー
+                    Dim num As Integer = 0
+                    num = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num") & "")
+                    'Int32.TryParse(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num"), num)
+                    'BonDriver指定
+                    Dim bondriver As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("BonDriver") & ""
+                    'サービスＩＤ指定
+                    Dim sid As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ServiceID") & ""
+                    'chspace指定
+                    Dim chspace As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ChSpace") & ""
+                    'Bon_Sid_Ch一括指定があった場合（JavaScript等でBon_Sid_Ch="BonDriver_t0.dll,12345,0"というように指定された場合）
+                    Dim bon_sid_ch_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("Bon_Sid_Ch") & ""
+                    Dim bon_sid_ch() As String = bon_sid_ch_str.Split(",")
+                    If bon_sid_ch.Length = 3 Then
+                        '個別に値が決まっていなければセット
+                        If bondriver.Length = 0 Then bondriver = Trim(bon_sid_ch(0))
+                        If sid.Length = 0 Then sid = Trim(bon_sid_ch(1))
+                        If chspace.Length = 0 Then chspace = Trim(bon_sid_ch(2))
                     End If
 
-                    'ストリーム番号
-                    If s.IndexOf("%NUM%") >= 0 Then
-                        s = s.Replace("%NUM%", num.ToString)
-                    End If
+                    '解像度指定 "640x360"等
+                    Dim resolution As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("resolution") & ""
+                    'redirect指定
+                    Dim redirect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("redirect") & ""
 
-                    'ViewTV.html用
-                    If chk_viewtv_ok = 1 And num > 0 Then
-                        '配信中ならば
+                    'm3u8,tsの準備状況
+                    Dim check_m3u8_ts As Integer = 0
 
-                        '_listから取得resolutionを取得
-                        Dim rez As String = Me._procMan.get_resolution(num)
-                        Dim rezx As Integer = 0
-                        Dim rezy As Integer = 0
-                        If rez.Length = 0 Then
-                            '_listから取得できなければ_hlsOpt2から取得する
-                            Dim ho As String = Me._hlsOpt2
-                            Dim sp1, sp2 As Integer
-                            If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                                Try
-                                    sp1 = ho.IndexOf("-s ")
-                                    sp2 = ho.IndexOf(" ", sp1 + 3)
-                                    rez = ho.Substring(sp1 + "-s ".Length, sp2 - sp1 - "-s ".Length)
-                                Catch ex As Exception
-                                    rez = ""
-                                End Try
-                            ElseIf Me._hlsApp.IndexOf("vlc") >= 0 Then
-                                Try
-                                    sp1 = ho.IndexOf("width=")
-                                    sp2 = ho.IndexOf(",", sp1)
-                                    rezx = ho.Substring(sp1 + "width=".Length, sp2 - sp1 - "width=".Length)
-                                    sp1 = ho.IndexOf("height=")
-                                    sp2 = ho.IndexOf(",", sp1)
-                                    rezy = ho.Substring(sp1 + "height=".Length, sp2 - sp1 - "height=".Length)
-                                    If rezx > 0 And rezy > 0 Then
-                                        rez = Trim(rezx) & "x" & Trim(rezy)
-                                    Else
-                                        rez = ""
-                                    End If
-                                Catch ex As Exception
-                                    rez = ""
-                                End Try
+                    'ストリームモード 0=UDP 1=ファイル再生
+                    Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
+
+                    'ファイル名
+                    Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
+                    'URLエンコードしておいたフルパスを文字列に変換
+                    videoname = System.Web.HttpUtility.UrlDecode(videoname)
+
+                    Dim chk_viewtv_ok As Integer = 0
+
+                    'WEBページ表示前処理
+                    '特別なページ　配信スタート停止などサーバー動作を実行
+                    If req.Url.LocalPath.ToLower.IndexOf("/ViewTV".ToLower) >= 0 Then
+                        '通常視聴
+                        request_page = 2
+                        'numが<form>から渡されていなければURLから取得するViewTV2.htmlなら2
+                        If num = 0 Then
+                            Dim num_url As String = Val(req.Url.LocalPath.ToLower.Substring(req.Url.LocalPath.ToLower.IndexOf("ViewTV".ToLower) + "ViewTV".Length))
+                            If num_url > 0 Then
+                                num = num_url
                             End If
                         End If
-                        Dim d() As String = rez.Split("x")
-                        If d.Length = 2 Then
-                            If Val(d(0)) > 0 And Val(d(1)) > 0 Then
-                                rezx = Val(d(0))
-                                rezy = Val(d(1))
+
+                        Dim gln As String = Me._procMan.get_live_numbers()
+                        If gln.IndexOf(" " & num.ToString & " ") >= 0 Then
+                            check_m3u8_ts = check_m3u8_ts_status(num)
+                            If check_m3u8_ts <= 2 Then
+                                '準備ができていない
+                                request_page = 1 'waiting表示
+                            Else
+                                'ViewTV.html用
+                                chk_viewtv_ok = 1
+                            End If
+                        Else
+                            '配信されていない
+                            request_page = 11
+                        End If
+                    ElseIf req.Url.LocalPath.ToLower = ("/StartTv.html").ToLower Then
+                        '配信スタート
+                        request_page = 3
+                        'パラメーターが正しいかチェック
+                        If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
+                            '正しければ配信スタート
+                            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, resolution)
+                        ElseIf num > 0 And videoname.Length > 0 Then
+                            'ファイル再生
+                            If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
+                                'ffmpegなら
+                                Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, resolution)
+                            Else
+                                '今のところVLCには未対応
+                                request_page = 12
+                            End If
+                        Else
+                            StartTv_param = -1
+                        End If
+                    ElseIf req.Url.LocalPath.ToLower = "/CloseTv.html".ToLower Then
+                        '配信停止
+                        request_page = 4
+                        Me.stop_movie(num)
+                    ElseIf req.Url.LocalPath.ToLower = "/StopAll.html".ToLower Then
+                        'すべてのプロセスと関連アプリを停止する
+                        request_page = 5
+                        stop_movie(-2)
+                    ElseIf req.Url.LocalPath.ToLower = "/SelectVideo.html".ToLower Then
+                        'ファイル選択ページ
+                        request_page = 6
+                    End If
+
+                    'WEBページ表示
+                    If StartTv_param = -1 Then
+                        '/StartTvにリクエストがあったがパラメーターが不正な場合
+                        Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                        sw.WriteLine(ERROR_PAGE("パラメーターが不正です", "パラメーターが不正です"))
+                        sw.Flush()
+                        log1write("パラメーターが不正です")
+                    ElseIf request_page = 1 Then
+                        'waitingページを表示する
+                        Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                        sw.WriteLine("<!doctype html>")
+                        sw.WriteLine("<html>")
+                        sw.WriteLine("<head>")
+                        sw.WriteLine("<title>Waiting " & num.ToString & "</title>")
+                        sw.WriteLine("<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />")
+                        sw.WriteLine("<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">")
+                        sw.WriteLine("</head>")
+                        sw.WriteLine("<body>")
+                        sw.WriteLine("配信準備中です..(" & check_m3u8_ts.ToString & ")")
+                        sw.WriteLine("<br><br>")
+                        'sw.WriteLine("<FORM><INPUT type=""button"" Value=""戻る"" onClick=""history.go(-1);""></CENTER></P></FORM>")
+                        sw.WriteLine("<input type=""button"" value=""トップメニューへ"" onClick=""location.href='index.html'"">")
+                        sw.WriteLine("</body>")
+                        sw.WriteLine("</html>")
+                        sw.Flush()
+                        log1write(num.ToString & ":配信準備できていません")
+                    ElseIf request_page = 11 Then
+                        '配信されていない
+                        Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                        sw.WriteLine(ERROR_PAGE("配信されていません：" & num.ToString, "配信されていません"))
+                        sw.Flush()
+                        log1write(num.ToString & ":配信されていません")
+                    ElseIf request_page = 12 Then
+                        'VLCはファイル再生未対応
+                        Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                        sw.WriteLine(ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません"))
+                        sw.Flush()
+                        log1write(num.ToString & ":配信されていません")
+                    ElseIf path.IndexOf(".htm") > 0 And File.Exists(path) Then
+                        'ElseIf request_page >= 2 Then
+                        'パラメーターを置換する必要があるページ
+                        Dim s As String = ReadAllTexts(path)
+
+                        Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+
+                        'BonDriverと番組名連携選択
+                        If s.IndexOf("%SELECTBONSIDCH") >= 0 Then
+                            Dim sb1 As Integer = s.IndexOf("%SELECTBONSIDCH:")
+                            Dim sb2 As Integer = s.IndexOf("%", sb1 + 1)
+                            Dim sbs As String = ""
+                            If sb1 >= 0 And sb2 > sb1 Then
+                                '間に入れるhtmlを取得
+                                sbs = s.Substring(sb1 + "%SELECTBONSIDCH:".Length, sb2 - sb1 - "%SELECTBONSIDCH:".Length)
+                            End If
+                            Dim selectbon As String = WEB_make_select_Bondriver_html(sbs)
+                            s = s.Replace("%SELECTBONSIDCH%", selectbon)
+                            s = s.Replace("%SELECTBONSIDCH:" & sbs & "%", selectbon)
+                        End If
+
+                        'Viewボタン作成
+                        If s.IndexOf("%VIEWBUTTONS") >= 0 Then
+                            Dim vb1 As Integer = s.IndexOf("%VIEWBUTTONS:")
+                            Dim vb2 As Integer = s.IndexOf("%", vb1 + 1)
+                            Dim vbs As String = ""
+                            If vb1 >= 0 And vb2 > vb1 Then
+                                '間に入れるhtmlを取得
+                                vbs = s.Substring(vb1 + "%VIEWBUTTONS:".Length, vb2 - vb1 - "%VIEWBUTTONS:".Length)
+                            End If
+                            Dim viewbutton_html As String = WEB_make_ViewLink_html(vbs)
+                            s = s.Replace("%VIEWBUTTONS%", viewbutton_html)
+                            s = s.Replace("%VIEWBUTTONS:" & vbs & "%", viewbutton_html)
+                        End If
+
+                        'ストリーム番号
+                        If s.IndexOf("%NUM%") >= 0 Then
+                            s = s.Replace("%NUM%", num.ToString)
+                        End If
+
+                        'ViewTV.html用
+                        If chk_viewtv_ok = 1 And num > 0 Then
+                            '配信中ならば
+
+                            '_listから取得resolutionを取得
+                            Dim rez As String = Me._procMan.get_resolution(num)
+                            Dim rezx As Integer = 0
+                            Dim rezy As Integer = 0
+                            If rez.Length = 0 Then
+                                '_listから取得できなければ_hlsOpt2から取得する
+                                Dim ho As String = Me._hlsOpt2
+                                Dim sp1, sp2 As Integer
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    Try
+                                        sp1 = ho.IndexOf("-s ")
+                                        sp2 = ho.IndexOf(" ", sp1 + 3)
+                                        rez = ho.Substring(sp1 + "-s ".Length, sp2 - sp1 - "-s ".Length)
+                                    Catch ex As Exception
+                                        rez = ""
+                                    End Try
+                                ElseIf Me._hlsApp.IndexOf("vlc") >= 0 Then
+                                    Try
+                                        sp1 = ho.IndexOf("width=")
+                                        sp2 = ho.IndexOf(",", sp1)
+                                        rezx = ho.Substring(sp1 + "width=".Length, sp2 - sp1 - "width=".Length)
+                                        sp1 = ho.IndexOf("height=")
+                                        sp2 = ho.IndexOf(",", sp1)
+                                        rezy = ho.Substring(sp1 + "height=".Length, sp2 - sp1 - "height=".Length)
+                                        If rezx > 0 And rezy > 0 Then
+                                            rez = Trim(rezx) & "x" & Trim(rezy)
+                                        Else
+                                            rez = ""
+                                        End If
+                                    Catch ex As Exception
+                                        rez = ""
+                                    End Try
+                                End If
+                            End If
+                            Dim d() As String = rez.Split("x")
+                            If d.Length = 2 Then
+                                If Val(d(0)) > 0 And Val(d(1)) > 0 Then
+                                    rezx = Val(d(0))
+                                    rezy = Val(d(1))
+                                Else
+                                    rez = ""
+                                End If
                             Else
                                 rez = ""
                             End If
-                        Else
-                            rez = ""
-                        End If
-                        If rezx > 0 And rezy > 0 Then
-                            s = s.Replace("%WIDTH%", rezx.ToString)
-                            s = s.Replace("%HEIGHT%", rezy.ToString)
-                        Else
-                            '値がなければデフォルトをセット
-                            s = s.Replace("%WIDTH%", "640")
-                            s = s.Replace("%HEIGHT%", "360")
-                        End If
-
-                        '配信中ならばnumからBonDriver_pathとBonDriverを取得
-                        If s.IndexOf("%SELECTCH") >= 0 Then
-                            Dim bon As String = Me._procMan.get_bondriver_name(num)
-
-                            Dim bonp As String = Me._BonDriverPath
-                            If bonp.Length = 0 Then
-                                '指定が無い場合はUDPAPPと同じフォルダにあると見なす
-                                bonp = filepath2path(Me._udpApp.ToString)
-                            End If
-                            Dim vhtml As String = WEB_search_ServiceID(bonp, bon, 1)
-                            If vhtml.Length > 0 Then
-                                vhtml = "<option value="""">---</option>" & vbCrLf & vhtml
-                                vhtml = "<select name=""Bon_Sid_Ch"">" & vbCrLf & vhtml
-                                vhtml = "<form action=""StartTV.html"">" & vbCrLf & vhtml
-                                vhtml &= "</select>" & vbCrLf
-                                vhtml &= "<input type=""submit"" value=""視聴"" />" & vbCrLf
-                                vhtml &= "<input type=""hidden"" name=""num"" value=""" & num & """>" & vbCrLf
-                                vhtml &= "<input type=""hidden"" name=""redirect"" value=""ViewTV" & num & ".html"">" & vbCrLf
-                                If rez.Length > 0 Then
-                                    vhtml &= "<input type=""hidden"" name=""resolution"" value=""" & rez & """>" & vbCrLf
-                                End If
-                                vhtml &= "</form>" & vbCrLf
-                                s = s.Replace("%SELECTCH%", vhtml)
+                            If rezx > 0 And rezy > 0 Then
+                                s = s.Replace("%WIDTH%", rezx.ToString)
+                                s = s.Replace("%HEIGHT%", rezy.ToString)
                             Else
-                                s = s.Replace("%SELECTCH%", "")
+                                '値がなければデフォルトをセット
+                                s = s.Replace("%WIDTH%", "640")
+                                s = s.Replace("%HEIGHT%", "360")
+                            End If
+
+                            '配信中ならばnumからBonDriver_pathとBonDriverを取得
+                            If s.IndexOf("%SELECTCH") >= 0 Then
+                                Dim bon As String = Me._procMan.get_bondriver_name(num)
+
+                                Dim bonp As String = Me._BonDriverPath
+                                If bonp.Length = 0 Then
+                                    '指定が無い場合はUDPAPPと同じフォルダにあると見なす
+                                    bonp = filepath2path(Me._udpApp.ToString)
+                                End If
+                                Dim vhtml As String = WEB_search_ServiceID(bonp, bon, 1)
+                                If vhtml.Length > 0 Then
+                                    vhtml = "<option value="""">---</option>" & vbCrLf & vhtml
+                                    vhtml = "<select name=""Bon_Sid_Ch"">" & vbCrLf & vhtml
+                                    vhtml = "<form action=""StartTV.html"">" & vbCrLf & vhtml
+                                    vhtml &= "</select>" & vbCrLf
+                                    vhtml &= "<input type=""submit"" value=""視聴"" />" & vbCrLf
+                                    vhtml &= "<input type=""hidden"" name=""num"" value=""" & num & """>" & vbCrLf
+                                    vhtml &= "<input type=""hidden"" name=""redirect"" value=""ViewTV" & num & ".html"">" & vbCrLf
+                                    If rez.Length > 0 Then
+                                        vhtml &= "<input type=""hidden"" name=""resolution"" value=""" & rez & """>" & vbCrLf
+                                    End If
+                                    vhtml &= "</form>" & vbCrLf
+                                    s = s.Replace("%SELECTCH%", vhtml)
+                                Else
+                                    s = s.Replace("%SELECTCH%", "")
+                                End If
                             End If
                         End If
-                    End If
 
-                    'ファイル選択ページ用
-                    If request_page = 6 Then
-                        Dim shtml As String = make_file_select_html()
-                        s = s.Replace("%SELECTVIDEO%", shtml)
-                    End If
-
-                    '配信中簡易リスト
-                    If s.IndexOf("%PROCBONLIST%") >= 0 Then
-                        Dim js As String = Me._procMan.get_live_numbers_bon().Replace(vbCrLf, "<br>")
-                        s = s.Replace("%PROCBONLIST%", js)
-                    End If
-
-                    'リダイレクト
-                    If s.IndexOf("%REDIRECT%") >= 0 Then
-                        If redirect.Length > 3 Then
-                            'リダイレクト指定があれば
-                            s = s.Replace("%REDIRECT%", "<meta http-equiv=""refresh"" content=""0 ; URL=" & redirect & """>")
-                        Else
-                            '無ければリダイレクト変数を消す
-                            s = s.Replace("%REDIRECT%", "")
+                        'ファイル選択ページ用
+                        If request_page = 6 Then
+                            Dim shtml As String = make_file_select_html()
+                            s = s.Replace("%SELECTVIDEO%", shtml)
                         End If
+
+                        '配信中簡易リスト
+                        If s.IndexOf("%PROCBONLIST%") >= 0 Then
+                            Dim js As String = Me._procMan.get_live_numbers_bon().Replace(vbCrLf, "<br>")
+                            s = s.Replace("%PROCBONLIST%", js)
+                        End If
+
+                        'リダイレクト
+                        If s.IndexOf("%REDIRECT%") >= 0 Then
+                            If redirect.Length > 3 Then
+                                'リダイレクト指定があれば
+                                s = s.Replace("%REDIRECT%", "<meta http-equiv=""refresh"" content=""0 ; URL=" & redirect & """>")
+                            Else
+                                '無ければリダイレクト変数を消す
+                                s = s.Replace("%REDIRECT%", "")
+                            End If
+                        End If
+
+                        sw.WriteLine(s)
+                        sw.Flush()
+
+                        log1write(path & "へのアクセスを受け付けました")
+
+                    ElseIf File.Exists(path) Then
+                        ' ローカルファイルが存在すればレスポンス・ストリームに書き出す
+                        'm3u8、tsへの要求はこちらへ来る
+                        Dim content As Byte() = ReadAllBytes(path)
+                        res.OutputStream.Write(content, 0, content.Length)
+                        log1write(path & "へのアクセスを受け付けました")
+                    Else
+                        'ローカルファイルが存在していない
+                        Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                        sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
+                        sw.Flush()
+                        log1write(path & "が見つかりませんでした")
                     End If
-
-                    sw.WriteLine(s)
-                    sw.Flush()
-
-                    log1write(path & "へのアクセスを受け付けました")
-
-                ElseIf File.Exists(path) Then
-                    ' ローカルファイルが存在すればレスポンス・ストリームに書き出す
-                    'm3u8、tsへの要求はこちらへ来る
-                    Dim content As Byte() = ReadAllBytes(path)
-                    res.OutputStream.Write(content, 0, content.Length)
-                    log1write(path & "へのアクセスを受け付けました")
+                    res.Close()
                 Else
-                    'ローカルファイルが存在していない
-                    Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                    sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
-                    sw.Flush()
-                    log1write(path & "が見つかりませんでした")
+                    '認証エラー
+                    context.Response.StatusCode = 401
                 End If
-                res.Close()
+
+                Try
+                    context.Response.Close()
+                Catch ex As Exception
+                    ' client closed connection before the content was sent
+                End Try
+
             Catch httpEx As HttpListenerException
                 log1write(httpEx.Message)
                 log1write(httpEx.StackTrace)
@@ -917,6 +962,8 @@ Class WebRemocon
                                         Me._videopath(j) = trim8(clset(j))
                                     Next
                                 End If
+                            Case "AddSubFolder"
+                                Me._addsubfolder = Val(youso(1).ToString)
                         End Select
                     End If
                 Next

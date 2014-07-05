@@ -3,3 +3,8 @@
 ;　　VideoPath = "D:\My Videos", "\\COM1\My Videos"
 
 VideoPath = 
+
+
+;サブフォルダーを（0=含めない 1=含める）
+
+AddSubFolder = 1

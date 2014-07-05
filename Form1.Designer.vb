@@ -77,12 +77,17 @@ Partial Class Form1
         Me.TextBoxUdpOpt3 = New System.Windows.Forms.TextBox()
         Me.Label11 = New System.Windows.Forms.Label()
         Me.Button3 = New System.Windows.Forms.Button()
+        Me.TextBoxID = New System.Windows.Forms.TextBox()
+        Me.TextBoxPASS = New System.Windows.Forms.TextBox()
+        Me.Label12 = New System.Windows.Forms.Label()
+        Me.Label13 = New System.Windows.Forms.Label()
+        Me.Label14 = New System.Windows.Forms.Label()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
         'buttonHlsAppPath
         '
-        Me.buttonHlsAppPath.Location = New System.Drawing.Point(491, 233)
+        Me.buttonHlsAppPath.Location = New System.Drawing.Point(491, 254)
         Me.buttonHlsAppPath.Name = "buttonHlsAppPath"
         Me.buttonHlsAppPath.Size = New System.Drawing.Size(25, 19)
         Me.buttonHlsAppPath.TabIndex = 38
@@ -91,7 +96,7 @@ Partial Class Form1
         '
         'buttonUdpAppPath
         '
-        Me.buttonUdpAppPath.Location = New System.Drawing.Point(492, 139)
+        Me.buttonUdpAppPath.Location = New System.Drawing.Point(492, 160)
         Me.buttonUdpAppPath.Name = "buttonUdpAppPath"
         Me.buttonUdpAppPath.Size = New System.Drawing.Size(25, 19)
         Me.buttonUdpAppPath.TabIndex = 23
@@ -100,7 +105,7 @@ Partial Class Form1
         '
         'textBoxHlsOpt2
         '
-        Me.textBoxHlsOpt2.Location = New System.Drawing.Point(102, 258)
+        Me.textBoxHlsOpt2.Location = New System.Drawing.Point(102, 279)
         Me.textBoxHlsOpt2.Multiline = True
         Me.textBoxHlsOpt2.Name = "textBoxHlsOpt2"
         Me.textBoxHlsOpt2.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
@@ -110,7 +115,7 @@ Partial Class Form1
         'labelHlsOpt2
         '
         Me.labelHlsOpt2.AutoSize = True
-        Me.labelHlsOpt2.Location = New System.Drawing.Point(8, 261)
+        Me.labelHlsOpt2.Location = New System.Drawing.Point(8, 282)
         Me.labelHlsOpt2.Name = "labelHlsOpt2"
         Me.labelHlsOpt2.Size = New System.Drawing.Size(73, 12)
         Me.labelHlsOpt2.TabIndex = 26
@@ -118,7 +123,7 @@ Partial Class Form1
         '
         'textBoxHlsApp
         '
-        Me.textBoxHlsApp.Location = New System.Drawing.Point(102, 233)
+        Me.textBoxHlsApp.Location = New System.Drawing.Point(102, 254)
         Me.textBoxHlsApp.Name = "textBoxHlsApp"
         Me.textBoxHlsApp.Size = New System.Drawing.Size(384, 19)
         Me.textBoxHlsApp.TabIndex = 37
@@ -126,7 +131,7 @@ Partial Class Form1
         'labelHlsApp
         '
         Me.labelHlsApp.AutoSize = True
-        Me.labelHlsApp.Location = New System.Drawing.Point(8, 236)
+        Me.labelHlsApp.Location = New System.Drawing.Point(8, 257)
         Me.labelHlsApp.Name = "labelHlsApp"
         Me.labelHlsApp.Size = New System.Drawing.Size(51, 12)
         Me.labelHlsApp.TabIndex = 29
@@ -134,7 +139,7 @@ Partial Class Form1
         '
         'textBoxUdpApp
         '
-        Me.textBoxUdpApp.Location = New System.Drawing.Point(102, 139)
+        Me.textBoxUdpApp.Location = New System.Drawing.Point(102, 160)
         Me.textBoxUdpApp.Name = "textBoxUdpApp"
         Me.textBoxUdpApp.Size = New System.Drawing.Size(384, 19)
         Me.textBoxUdpApp.TabIndex = 22
@@ -142,7 +147,7 @@ Partial Class Form1
         'labelUdpApp
         '
         Me.labelUdpApp.AutoSize = True
-        Me.labelUdpApp.Location = New System.Drawing.Point(7, 142)
+        Me.labelUdpApp.Location = New System.Drawing.Point(7, 163)
         Me.labelUdpApp.Name = "labelUdpApp"
         Me.labelUdpApp.Size = New System.Drawing.Size(53, 12)
         Me.labelUdpApp.TabIndex = 27
@@ -150,7 +155,7 @@ Partial Class Form1
         '
         'textHttpPortNumber
         '
-        Me.textHttpPortNumber.Location = New System.Drawing.Point(102, 80)
+        Me.textHttpPortNumber.Location = New System.Drawing.Point(101, 106)
         Me.textHttpPortNumber.Name = "textHttpPortNumber"
         Me.textHttpPortNumber.Size = New System.Drawing.Size(43, 19)
         Me.textHttpPortNumber.TabIndex = 42
@@ -159,7 +164,7 @@ Partial Class Form1
         'labelPortNuber
         '
         Me.labelPortNuber.AutoSize = True
-        Me.labelPortNuber.Location = New System.Drawing.Point(6, 83)
+        Me.labelPortNuber.Location = New System.Drawing.Point(5, 109)
         Me.labelPortNuber.Name = "labelPortNuber"
         Me.labelPortNuber.Size = New System.Drawing.Size(80, 12)
         Me.labelPortNuber.TabIndex = 21
@@ -167,7 +172,7 @@ Partial Class Form1
         '
         'ButtonMovieStart
         '
-        Me.ButtonMovieStart.Location = New System.Drawing.Point(374, 489)
+        Me.ButtonMovieStart.Location = New System.Drawing.Point(374, 510)
         Me.ButtonMovieStart.Name = "ButtonMovieStart"
         Me.ButtonMovieStart.Size = New System.Drawing.Size(68, 28)
         Me.ButtonMovieStart.TabIndex = 49
@@ -176,7 +181,7 @@ Partial Class Form1
         '
         'ButtonMovieStop
         '
-        Me.ButtonMovieStop.Location = New System.Drawing.Point(448, 489)
+        Me.ButtonMovieStop.Location = New System.Drawing.Point(448, 510)
         Me.ButtonMovieStop.Name = "ButtonMovieStop"
         Me.ButtonMovieStop.Size = New System.Drawing.Size(68, 28)
         Me.ButtonMovieStop.TabIndex = 50
@@ -190,7 +195,7 @@ Partial Class Form1
         'ButtonWebStop
         '
         Me.ButtonWebStop.Enabled = False
-        Me.ButtonWebStop.Location = New System.Drawing.Point(233, 102)
+        Me.ButtonWebStop.Location = New System.Drawing.Point(224, 103)
         Me.ButtonWebStop.Name = "ButtonWebStop"
         Me.ButtonWebStop.Size = New System.Drawing.Size(68, 28)
         Me.ButtonWebStop.TabIndex = 52
@@ -200,7 +205,7 @@ Partial Class Form1
         '
         'ButtonWebStart
         '
-        Me.ButtonWebStart.Location = New System.Drawing.Point(233, 77)
+        Me.ButtonWebStart.Location = New System.Drawing.Point(205, 103)
         Me.ButtonWebStart.Name = "ButtonWebStart"
         Me.ButtonWebStart.Size = New System.Drawing.Size(68, 28)
         Me.ButtonWebStart.TabIndex = 51
@@ -212,7 +217,7 @@ Partial Class Form1
         '
         Me.ComboBoxNum.FormattingEnabled = True
         Me.ComboBoxNum.Items.AddRange(New Object() {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"})
-        Me.ComboBoxNum.Location = New System.Drawing.Point(102, 418)
+        Me.ComboBoxNum.Location = New System.Drawing.Point(102, 439)
         Me.ComboBoxNum.Name = "ComboBoxNum"
         Me.ComboBoxNum.Size = New System.Drawing.Size(51, 20)
         Me.ComboBoxNum.TabIndex = 53
@@ -220,7 +225,7 @@ Partial Class Form1
         '
         'textBoxUdpPort
         '
-        Me.textBoxUdpPort.Location = New System.Drawing.Point(102, 189)
+        Me.textBoxUdpPort.Location = New System.Drawing.Point(102, 210)
         Me.textBoxUdpPort.Name = "textBoxUdpPort"
         Me.textBoxUdpPort.Size = New System.Drawing.Size(43, 19)
         Me.textBoxUdpPort.TabIndex = 55
@@ -229,7 +234,7 @@ Partial Class Form1
         'Label2
         '
         Me.Label2.AutoSize = True
-        Me.Label2.Location = New System.Drawing.Point(6, 192)
+        Me.Label2.Location = New System.Drawing.Point(6, 213)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(74, 12)
         Me.Label2.TabIndex = 54
@@ -237,7 +242,7 @@ Partial Class Form1
         '
         'TextBoxChSpace
         '
-        Me.TextBoxChSpace.Location = New System.Drawing.Point(102, 469)
+        Me.TextBoxChSpace.Location = New System.Drawing.Point(102, 490)
         Me.TextBoxChSpace.Name = "TextBoxChSpace"
         Me.TextBoxChSpace.Size = New System.Drawing.Size(28, 19)
         Me.TextBoxChSpace.TabIndex = 57
@@ -246,7 +251,7 @@ Partial Class Form1
         'Label3
         '
         Me.Label3.AutoSize = True
-        Me.Label3.Location = New System.Drawing.Point(8, 472)
+        Me.Label3.Location = New System.Drawing.Point(8, 493)
         Me.Label3.Name = "Label3"
         Me.Label3.Size = New System.Drawing.Size(47, 12)
         Me.Label3.TabIndex = 56
@@ -279,7 +284,7 @@ Partial Class Form1
         '
         'TextBoxLog
         '
-        Me.TextBoxLog.Location = New System.Drawing.Point(0, 523)
+        Me.TextBoxLog.Location = New System.Drawing.Point(0, 544)
         Me.TextBoxLog.Multiline = True
         Me.TextBoxLog.Name = "TextBoxLog"
         Me.TextBoxLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
@@ -289,7 +294,7 @@ Partial Class Form1
         'Label5
         '
         Me.Label5.AutoSize = True
-        Me.Label5.Location = New System.Drawing.Point(8, 447)
+        Me.Label5.Location = New System.Drawing.Point(8, 468)
         Me.Label5.Name = "Label5"
         Me.Label5.Size = New System.Drawing.Size(56, 12)
         Me.Label5.TabIndex = 65
@@ -298,7 +303,7 @@ Partial Class Form1
         'Label6
         '
         Me.Label6.AutoSize = True
-        Me.Label6.Location = New System.Drawing.Point(8, 497)
+        Me.Label6.Location = New System.Drawing.Point(8, 518)
         Me.Label6.Name = "Label6"
         Me.Label6.Size = New System.Drawing.Size(54, 12)
         Me.Label6.TabIndex = 66
@@ -307,7 +312,7 @@ Partial Class Form1
         'Label7
         '
         Me.Label7.AutoSize = True
-        Me.Label7.Location = New System.Drawing.Point(8, 421)
+        Me.Label7.Location = New System.Drawing.Point(8, 442)
         Me.Label7.Name = "Label7"
         Me.Label7.Size = New System.Drawing.Size(92, 12)
         Me.Label7.TabIndex = 67
@@ -315,7 +320,7 @@ Partial Class Form1
         '
         'ButtonBonDriverPath
         '
-        Me.ButtonBonDriverPath.Location = New System.Drawing.Point(492, 164)
+        Me.ButtonBonDriverPath.Location = New System.Drawing.Point(492, 185)
         Me.ButtonBonDriverPath.Name = "ButtonBonDriverPath"
         Me.ButtonBonDriverPath.Size = New System.Drawing.Size(25, 19)
         Me.ButtonBonDriverPath.TabIndex = 69
@@ -324,7 +329,7 @@ Partial Class Form1
         '
         'TextBoxBonDriverPath
         '
-        Me.TextBoxBonDriverPath.Location = New System.Drawing.Point(102, 164)
+        Me.TextBoxBonDriverPath.Location = New System.Drawing.Point(102, 185)
         Me.TextBoxBonDriverPath.Name = "TextBoxBonDriverPath"
         Me.TextBoxBonDriverPath.Size = New System.Drawing.Size(384, 19)
         Me.TextBoxBonDriverPath.TabIndex = 68
@@ -332,7 +337,7 @@ Partial Class Form1
         'Label8
         '
         Me.Label8.AutoSize = True
-        Me.Label8.Location = New System.Drawing.Point(7, 167)
+        Me.Label8.Location = New System.Drawing.Point(7, 188)
         Me.Label8.Name = "Label8"
         Me.Label8.Size = New System.Drawing.Size(83, 12)
         Me.Label8.TabIndex = 70
@@ -341,7 +346,7 @@ Partial Class Form1
         'ComboBoxBonDriver
         '
         Me.ComboBoxBonDriver.FormattingEnabled = True
-        Me.ComboBoxBonDriver.Location = New System.Drawing.Point(102, 443)
+        Me.ComboBoxBonDriver.Location = New System.Drawing.Point(102, 464)
         Me.ComboBoxBonDriver.Name = "ComboBoxBonDriver"
         Me.ComboBoxBonDriver.Size = New System.Drawing.Size(210, 20)
         Me.ComboBoxBonDriver.TabIndex = 71
@@ -349,14 +354,14 @@ Partial Class Form1
         'ComboBoxServiceID
         '
         Me.ComboBoxServiceID.FormattingEnabled = True
-        Me.ComboBoxServiceID.Location = New System.Drawing.Point(102, 494)
+        Me.ComboBoxServiceID.Location = New System.Drawing.Point(102, 515)
         Me.ComboBoxServiceID.Name = "ComboBoxServiceID"
         Me.ComboBoxServiceID.Size = New System.Drawing.Size(249, 20)
         Me.ComboBoxServiceID.TabIndex = 72
         '
         'Button2
         '
-        Me.Button2.Location = New System.Drawing.Point(415, 77)
+        Me.Button2.Location = New System.Drawing.Point(414, 103)
         Me.Button2.Name = "Button2"
         Me.Button2.Size = New System.Drawing.Size(102, 28)
         Me.Button2.TabIndex = 73
@@ -370,7 +375,7 @@ Partial Class Form1
         'Label9
         '
         Me.Label9.AutoSize = True
-        Me.Label9.Location = New System.Drawing.Point(200, 192)
+        Me.Label9.Location = New System.Drawing.Point(200, 213)
         Me.Label9.Name = "Label9"
         Me.Label9.Size = New System.Drawing.Size(56, 12)
         Me.Label9.TabIndex = 74
@@ -379,14 +384,14 @@ Partial Class Form1
         'ComboBoxResolution
         '
         Me.ComboBoxResolution.FormattingEnabled = True
-        Me.ComboBoxResolution.Location = New System.Drawing.Point(322, 382)
+        Me.ComboBoxResolution.Location = New System.Drawing.Point(322, 403)
         Me.ComboBoxResolution.Name = "ComboBoxResolution"
         Me.ComboBoxResolution.Size = New System.Drawing.Size(87, 20)
         Me.ComboBoxResolution.TabIndex = 75
         '
         'Button1
         '
-        Me.Button1.Location = New System.Drawing.Point(280, 77)
+        Me.Button1.Location = New System.Drawing.Point(279, 103)
         Me.Button1.Name = "Button1"
         Me.Button1.Size = New System.Drawing.Size(129, 28)
         Me.Button1.TabIndex = 76
@@ -395,7 +400,7 @@ Partial Class Form1
         '
         'ButtonHLSoption
         '
-        Me.ButtonHLSoption.Location = New System.Drawing.Point(415, 377)
+        Me.ButtonHLSoption.Location = New System.Drawing.Point(415, 398)
         Me.ButtonHLSoption.Name = "ButtonHLSoption"
         Me.ButtonHLSoption.Size = New System.Drawing.Size(102, 28)
         Me.ButtonHLSoption.TabIndex = 77
@@ -404,7 +409,7 @@ Partial Class Form1
         '
         'Button5
         '
-        Me.Button5.Location = New System.Drawing.Point(148, 77)
+        Me.Button5.Location = New System.Drawing.Point(147, 103)
         Me.Button5.Name = "Button5"
         Me.Button5.Size = New System.Drawing.Size(52, 25)
         Me.Button5.TabIndex = 79
@@ -413,7 +418,7 @@ Partial Class Form1
         '
         'Button6
         '
-        Me.Button6.Location = New System.Drawing.Point(148, 186)
+        Me.Button6.Location = New System.Drawing.Point(148, 207)
         Me.Button6.Name = "Button6"
         Me.Button6.Size = New System.Drawing.Size(52, 25)
         Me.Button6.TabIndex = 80
@@ -477,7 +482,7 @@ Partial Class Form1
         'CheckBoxShowConsole
         '
         Me.CheckBoxShowConsole.AutoSize = True
-        Me.CheckBoxShowConsole.Location = New System.Drawing.Point(395, 458)
+        Me.CheckBoxShowConsole.Location = New System.Drawing.Point(395, 479)
         Me.CheckBoxShowConsole.Name = "CheckBoxShowConsole"
         Me.CheckBoxShowConsole.Size = New System.Drawing.Size(122, 16)
         Me.CheckBoxShowConsole.TabIndex = 86
@@ -487,7 +492,7 @@ Partial Class Form1
         'LabelStream
         '
         Me.LabelStream.AutoSize = True
-        Me.LabelStream.Location = New System.Drawing.Point(165, 422)
+        Me.LabelStream.Location = New System.Drawing.Point(165, 443)
         Me.LabelStream.Name = "LabelStream"
         Me.LabelStream.Size = New System.Drawing.Size(47, 12)
         Me.LabelStream.TabIndex = 88
@@ -495,7 +500,7 @@ Partial Class Form1
         '
         'TextBoxUdpOpt3
         '
-        Me.TextBoxUdpOpt3.Location = New System.Drawing.Point(374, 189)
+        Me.TextBoxUdpOpt3.Location = New System.Drawing.Point(374, 210)
         Me.TextBoxUdpOpt3.Name = "TextBoxUdpOpt3"
         Me.TextBoxUdpOpt3.Size = New System.Drawing.Size(91, 19)
         Me.TextBoxUdpOpt3.TabIndex = 90
@@ -504,7 +509,7 @@ Partial Class Form1
         'Label11
         '
         Me.Label11.AutoSize = True
-        Me.Label11.Location = New System.Drawing.Point(278, 192)
+        Me.Label11.Location = New System.Drawing.Point(278, 213)
         Me.Label11.Name = "Label11"
         Me.Label11.Size = New System.Drawing.Size(95, 12)
         Me.Label11.TabIndex = 89
@@ -512,18 +517,65 @@ Partial Class Form1
         '
         'Button3
         '
-        Me.Button3.Location = New System.Drawing.Point(469, 186)
+        Me.Button3.Location = New System.Drawing.Point(469, 207)
         Me.Button3.Name = "Button3"
         Me.Button3.Size = New System.Drawing.Size(50, 25)
         Me.Button3.TabIndex = 91
         Me.Button3.Text = "初期値"
         Me.Button3.UseVisualStyleBackColor = True
         '
+        'TextBoxID
+        '
+        Me.TextBoxID.Location = New System.Drawing.Point(121, 80)
+        Me.TextBoxID.Name = "TextBoxID"
+        Me.TextBoxID.Size = New System.Drawing.Size(91, 19)
+        Me.TextBoxID.TabIndex = 92
+        '
+        'TextBoxPASS
+        '
+        Me.TextBoxPASS.Location = New System.Drawing.Point(258, 80)
+        Me.TextBoxPASS.Name = "TextBoxPASS"
+        Me.TextBoxPASS.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
+        Me.TextBoxPASS.Size = New System.Drawing.Size(91, 19)
+        Me.TextBoxPASS.TabIndex = 93
+        '
+        'Label12
+        '
+        Me.Label12.AutoSize = True
+        Me.Label12.Location = New System.Drawing.Point(6, 83)
+        Me.Label12.Name = "Label12"
+        Me.Label12.Size = New System.Drawing.Size(81, 12)
+        Me.Label12.TabIndex = 94
+        Me.Label12.Text = "BASIC認証 (*)"
+        '
+        'Label13
+        '
+        Me.Label13.AutoSize = True
+        Me.Label13.Location = New System.Drawing.Point(102, 83)
+        Me.Label13.Name = "Label13"
+        Me.Label13.Size = New System.Drawing.Size(16, 12)
+        Me.Label13.TabIndex = 95
+        Me.Label13.Text = "ID"
+        '
+        'Label14
+        '
+        Me.Label14.AutoSize = True
+        Me.Label14.Location = New System.Drawing.Point(221, 83)
+        Me.Label14.Name = "Label14"
+        Me.Label14.Size = New System.Drawing.Size(34, 12)
+        Me.Label14.TabIndex = 96
+        Me.Label14.Text = "PASS"
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(530, 665)
+        Me.ClientSize = New System.Drawing.Size(530, 685)
+        Me.Controls.Add(Me.Label14)
+        Me.Controls.Add(Me.Label13)
+        Me.Controls.Add(Me.Label12)
+        Me.Controls.Add(Me.TextBoxPASS)
+        Me.Controls.Add(Me.TextBoxID)
         Me.Controls.Add(Me.Button3)
         Me.Controls.Add(Me.TextBoxUdpOpt3)
         Me.Controls.Add(Me.Label11)
@@ -572,7 +624,7 @@ Partial Class Form1
         Me.Controls.Add(Me.textHttpPortNumber)
         Me.Controls.Add(Me.labelPortNuber)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximumSize = New System.Drawing.Size(546, 702)
+        Me.MaximumSize = New System.Drawing.Size(546, 722)
         Me.Name = "Form1"
         Me.ShowInTaskbar = False
         Me.Text = "TvRemoteViewer_VB"
@@ -635,5 +687,10 @@ Partial Class Form1
     Private WithEvents TextBoxUdpOpt3 As System.Windows.Forms.TextBox
     Private WithEvents Label11 As System.Windows.Forms.Label
     Friend WithEvents Button3 As System.Windows.Forms.Button
+    Private WithEvents TextBoxID As System.Windows.Forms.TextBox
+    Private WithEvents TextBoxPASS As System.Windows.Forms.TextBox
+    Private WithEvents Label12 As System.Windows.Forms.Label
+    Private WithEvents Label13 As System.Windows.Forms.Label
+    Private WithEvents Label14 As System.Windows.Forms.Label
 
 End Class

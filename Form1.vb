@@ -1,10 +1,10 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.08"
+    Private version As String = "TvRemoteViewer_VB version 0.09"
 
     '指定語句が含まれるBonDriverは無視する
-    Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
+    Private BonDriver_NGword As String() = {"_file", "_pipe"} '{"_file", "_udp", "_pipe"}
 
     Private chk_timer1 As Integer = 0 'timer1重複回避用temp
     Private chk_timer1_deleteTS As Integer = 0 '古いtsファイルを削除する間隔調整用
@@ -146,9 +146,11 @@ Public Class Form1
         Dim num As Integer = Val(Me.ComboBoxNum.Text.ToString)
         Dim BonDriverPath As String = Me.TextBoxBonDriverPath.Text.ToString
         Dim ShowConsole As Boolean = Me.CheckBoxShowConsole.Checked
+        Dim id As String = Me.TextBoxID.Text.ToString
+        Dim pass As String = Me.TextBoxPASS.Text.ToString
 
         Me.ButtonWebStart.Enabled = False
-        Me._worker = New WebRemocon(udpApp, udpPort, udpOpt3, chSpace, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, wwwport, BonDriverPath, ShowConsole, BonDriver_NGword)
+        Me._worker = New WebRemocon(udpApp, udpPort, udpOpt3, chSpace, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, wwwport, BonDriverPath, ShowConsole, BonDriver_NGword, id, pass)
         Me._webThread = New Thread(New ThreadStart(AddressOf Me._worker.Web_Start))
         Me._webThread.Start()
         Me.ButtonWebStop.Enabled = True
@@ -242,11 +244,59 @@ Public Class Form1
         'ファイル再生用パス読み込み
         Me._worker.read_videopath()
 
+        If Me._worker._AddSubFolder = 1 Then
+            'サブフォルダを含める
+            Dim sf As New ArrayList
+            Dim errf As New ArrayList
+            For j = 0 To Me._worker._videopath.Length - 1
+                GetSubfolders(Me._worker._videopath(j), sf, errf)
+                errf.Add("RECYCLER") '"RECYCLER"を除外する
+                errf.Add("chapters") 'chaptersを除外する
+            Next
+            'ここまでで、sf.arrayにフォルダ、errf.arrayにエラーフォルダ
+            Dim folder As String
+            For Each folder In sf
+                Dim chk As Integer = 0
+                Dim errfolder As String
+                For Each errfolder In errf
+                    If folder.IndexOf(errfolder) >= 0 Then
+                        chk = 1
+                        Exit For
+                    End If
+                Next
+                If chk = 0 Then
+                    'video_path()に追加
+                    Dim b As Integer = Me._worker._videopath.Length
+                    ReDim Preserve Me._worker._videopath(b)
+                    Me._worker._videopath(b) = folder
+                End If
+            Next folder
+        End If
+        For j = 0 To Me._worker._videopath.Length - 1
+            log1write("ファイルフォルダ " & Me._worker._videopath(j))
+        Next
+
         '解像度コンボボックスをセット httpサーバースタート後にvlc_option()がセットされている
         search_ComboBoxResolution()
 
         'プロセスクラッシュ監視等開始
         Timer1.Enabled = True
+    End Sub
+
+    'サブフォルダを取得
+    Public Sub GetSubfolders(ByVal folderName As String, ByRef subFolders As ArrayList, ByRef errFolders As ArrayList)
+        Dim folder As String
+        Try
+            For Each folder In System.IO.Directory.GetDirectories(folderName)
+                'リストに追加
+                subFolders.Add(folder)
+                '再帰的にサブフォルダを取得する
+                GetSubfolders(folder, subFolders, errFolders)
+            Next folder
+        Catch ex As Exception
+            errFolders.Add(folderName)
+            Exit Sub
+        End Try
     End Sub
 
     'ウィンドウの位置を復元
@@ -289,6 +339,10 @@ Public Class Form1
                             ComboBoxResolution.Text = lr(1)
                         Case "CheckBoxShowConsole"
                             CheckBoxShowConsole.Checked = lr(1)
+                        Case "ID"
+                            TextBoxID.Text = lr(1)
+                        Case "PASS"
+                            TextBoxPASS.Text = lr(1)
                     End Select
                 ElseIf lr.Length > 2 And trim8(lr(0)) = "textBoxHlsOpt" Then
                     'VLC OPTION
@@ -341,8 +395,10 @@ Public Class Form1
         s &= "TextBoxChSpace=" & TextBoxChSpace.Text & vbCrLf
         s &= "ComboBoxServiceID=" & ComboBoxServiceID.Text & vbCrLf
         s &= "ComboBoxResolution=" & ComboBoxResolution.Text & vbCrLf
-        s &= "textBoxHlsOpt=" & textBoxHlsOpt2.Text & vbCrLf
         s &= "CheckBoxShowConsole=" & CheckBoxShowConsole.Checked & vbCrLf
+        s &= "ID=" & TextBoxID.Text & vbCrLf
+        s &= "PASS=" & TextBoxPASS.Text & vbCrLf
+        s &= "textBoxHlsOpt=" & textBoxHlsOpt2.Text & vbCrLf
 
         'カレントディレクトリ変更
         F_set_ppath4program()
@@ -686,6 +742,22 @@ Public Class Form1
     Private Sub TextBoxUdpOpt3_TextChanged(sender As System.Object, e As System.EventArgs) Handles TextBoxUdpOpt3.TextChanged
         Try
             Me._worker._udpOpt3 = TextBoxUdpOpt3.Text.ToString
+        Catch ex As Exception
+        End Try
+    End Sub
+
+    '項目が変更されたことをインスタンスに知らせる
+    Private Sub TextBoxID_TextChanged(sender As System.Object, e As System.EventArgs) Handles TextBoxID.TextChanged
+        Try
+            Me._worker._id = TextBoxID.Text.ToString
+        Catch ex As Exception
+        End Try
+    End Sub
+
+    '項目が変更されたことをインスタンスに知らせる
+    Private Sub TextBoxPASS_TextChanged(sender As System.Object, e As System.EventArgs) Handles TextBoxPASS.TextChanged
+        Try
+            Me._worker._pass = TextBoxPASS.Text.ToString
         Catch ex As Exception
         End Try
     End Sub
