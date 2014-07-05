@@ -46,6 +46,7 @@ Class WebRemocon
     Private _fileroot As String = Nothing
     Private _wwwport As Integer = Nothing
     Private _BonDriver_NGword As String() = Nothing
+    Public _videopath() As String
 
     '空きUDPポートが取得できないので暫定
     Private _updCount As Integer
@@ -170,6 +171,14 @@ Class WebRemocon
                 'm3u8,tsの準備状況
                 Dim check_m3u8_ts As Integer = 0
 
+                'ストリームモード 0=UDP 1=ファイル再生
+                Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
+
+                'ファイル名
+                Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
+                'URLエンコードしておいたフルパスを文字列に変換
+                videoname = System.Web.HttpUtility.UrlDecode(videoname)
+
                 Dim chk_viewtv_ok As Integer = 0
 
                 'WEBページ表示前処理
@@ -205,7 +214,16 @@ Class WebRemocon
                     'パラメーターが正しいかチェック
                     If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
                         '正しければ配信スタート
-                        Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpopt3, resolution)
+                        Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, resolution)
+                    ElseIf num > 0 And videoname.Length > 0 Then
+                        'ファイル再生
+                        If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
+                            'ffmpegなら
+                            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, resolution)
+                        Else
+                            '今のところVLCには未対応
+                            request_page = 12
+                        End If
                     Else
                         StartTv_param = -1
                     End If
@@ -217,27 +235,18 @@ Class WebRemocon
                     'すべてのプロセスと関連アプリを停止する
                     request_page = 5
                     stop_movie(-2)
+                ElseIf req.Url.LocalPath.ToLower = "/SelectVideo.html".ToLower Then
+                    'ファイル選択ページ
+                    request_page = 6
                 End If
 
                 'WEBページ表示
                 If StartTv_param = -1 Then
                     '/StartTvにリクエストがあったがパラメーターが不正な場合
                     Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                    sw.WriteLine("<!doctype html>")
-                    sw.WriteLine("<html>")
-                    sw.WriteLine("<head>")
-                    sw.WriteLine("<title>WEBパラメーターが不正です</title>")
-                    sw.WriteLine("<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />")
-                    sw.WriteLine("</head>")
-                    sw.WriteLine("<body>")
-                    sw.WriteLine("WEBパラメーターが不正です")
-                    sw.WriteLine("<br><br>")
-                    'sw.WriteLine("<FORM><INPUT type=""button"" Value=""戻る"" onClick=""history.go(-1);""></CENTER></P></FORM>")
-                    sw.WriteLine("<input type=""button"" value=""トップメニューへ"" onClick=""location.href='index.html'"">")
-                    sw.WriteLine("</body>")
-                    sw.WriteLine("</html>")
+                    sw.WriteLine(ERROR_PAGE("パラメーターが不正です", "パラメーターが不正です"))
                     sw.Flush()
-                    log1write("WEBパラメーターが不正です")
+                    log1write("パラメーターが不正です")
                 ElseIf request_page = 1 Then
                     'waitingページを表示する
                     Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
@@ -260,19 +269,13 @@ Class WebRemocon
                 ElseIf request_page = 11 Then
                     '配信されていない
                     Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                    sw.WriteLine("<!doctype html>")
-                    sw.WriteLine("<html>")
-                    sw.WriteLine("<head>")
-                    sw.WriteLine("<title>配信されていません：" & num.ToString & "</title>")
-                    sw.WriteLine("<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />")
-                    sw.WriteLine("</head>")
-                    sw.WriteLine("<body>")
-                    sw.WriteLine("配信されていません")
-                    sw.WriteLine("<br><br>")
-                    'sw.WriteLine("<FORM><INPUT type=""button"" Value=""戻る"" onClick=""history.go(-1);""></CENTER></P></FORM>")
-                    sw.WriteLine("<input type=""button"" value=""トップメニューへ"" onClick=""location.href='index.html'"">")
-                    sw.WriteLine("</body>")
-                    sw.WriteLine("</html>")
+                    sw.WriteLine(ERROR_PAGE("配信されていません：" & num.ToString, "配信されていません"))
+                    sw.Flush()
+                    log1write(num.ToString & ":配信されていません")
+                ElseIf request_page = 12 Then
+                    'VLCはファイル再生未対応
+                    Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                    sw.WriteLine(ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません"))
                     sw.Flush()
                     log1write(num.ToString & ":配信されていません")
                 ElseIf path.IndexOf(".htm") > 0 And File.Exists(path) Then
@@ -396,8 +399,16 @@ Class WebRemocon
                                 End If
                                 vhtml &= "</form>" & vbCrLf
                                 s = s.Replace("%SELECTCH%", vhtml)
+                            Else
+                                s = s.Replace("%SELECTCH%", "")
                             End If
                         End If
+                    End If
+
+                    'ファイル選択ページ用
+                    If request_page = 6 Then
+                        Dim shtml As String = make_file_select_html()
+                        s = s.Replace("%SELECTVIDEO%", shtml)
                     End If
 
                     '配信中簡易リスト
@@ -431,19 +442,7 @@ Class WebRemocon
                 Else
                     'ローカルファイルが存在していない
                     Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                    sw.WriteLine("<!doctype html>")
-                    sw.WriteLine("<html>")
-                    sw.WriteLine("<head>")
-                    sw.WriteLine("<title>bad request</title>")
-                    sw.WriteLine("<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />")
-                    sw.WriteLine("</head>")
-                    sw.WriteLine("<body>")
-                    sw.WriteLine("ページが見つかりません")
-                    sw.WriteLine("<br><br>")
-                    'sw.WriteLine("<FORM><INPUT type=""button"" Value=""戻る"" onClick=""history.go(-1);""></CENTER></P></FORM>")
-                    sw.WriteLine("<input type=""button"" value=""トップメニューへ"" onClick=""location.href='index.html'"">")
-                    sw.WriteLine("</body>")
-                    sw.WriteLine("</html>")
+                    sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
                     sw.Flush()
                     log1write(path & "が見つかりませんでした")
                 End If
@@ -455,6 +454,69 @@ Class WebRemocon
         End While
 
     End Sub
+
+    'ファイル再生ページ用　ビデオ選択htmlを作成する
+    Private Function make_file_select_html() As String
+        Dim shtml As String = ""
+
+        Dim i, k As Integer
+        If Me._videopath IsNot Nothing Then
+            If Me._videopath.Length > 0 Then
+                For i = 0 To Me._videopath.Length - 1
+                    If Me._videopath(i).Length > 0 Then
+                        Try
+                            For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
+                                Dim s As String = stFilePath & System.Environment.NewLine
+                                s = trim8(s)
+                                'フルパスファイル名がsに入る
+                                Dim fullpath As String = s
+                                Dim filename As String = ""
+                                If fullpath.IndexOf("\") >= 0 Then
+                                    'ファイル名だけを取り出す
+                                    k = fullpath.LastIndexOf("\")
+                                    filename = fullpath.Substring(k + 1)
+                                End If
+                                filename = trim8(filename)
+                                If filename.IndexOf(".ts") > 0 Or filename.IndexOf(".mp4") Then
+                                    'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
+                                    fullpath = System.Web.HttpUtility.UrlEncode(fullpath)
+                                    shtml &= "<option value=""" & fullpath & """>" & filename & "</option>" & vbCrLf
+                                End If
+                            Next stFilePath
+                        Catch ex As Exception
+                        End Try
+                    End If
+                Next
+            End If
+        End If
+
+        'If shtml.Length > 0 Then
+        shtml = "<option value="""">---</option>" & vbCrLf & shtml
+        shtml = "<select name=""VideoName"">" & vbCrLf & shtml
+
+        shtml &= "</select>" & vbCrLf
+        'End If
+
+        Return shtml
+    End Function
+
+    'エラーページ用ひな形
+    Public Function ERROR_PAGE(ByVal title As String, ByVal body As String) As String
+        Dim r As String = ""
+        r &= "<!doctype html>" & vbCrLf
+        r &= "<html>" & vbCrLf
+        r &= "<head>" & vbCrLf
+        r &= "<title>" & title & "</title>" & vbCrLf
+        r &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />" & vbCrLf
+        r &= "</head>" & vbCrLf
+        r &= "<body>" & vbCrLf
+        r &= body & vbCrLf
+        r &= "<br><br>" & vbCrLf
+        r &= "<input type=""button"" value=""トップメニューへ"" onClick=""location.href='index.html'"">" & vbCrLf
+        r &= "</body>" & vbCrLf
+        r &= "</html>" & vbCrLf
+        Return r
+    End Function
 
     'HTML内置換用　配信しているストリームのボタンを作成
     Public Function WEB_make_ViewLink_html(Optional ByVal bs As String = "") As String
@@ -635,7 +697,7 @@ Class WebRemocon
     End Sub
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, Optional ByVal resolution As String = "")
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, Optional ByVal resolution As String = "")
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         If fileroot.Length = 0 Then
@@ -691,6 +753,21 @@ Class WebRemocon
             hlsOpt = hlsOpt2
         End If
 
+        'ファイル再生か？
+        Dim stream_mode As Integer = 0
+        If filename.Length > 0 Then
+            stream_mode = 1
+            'hlsオプションを書き換える
+            If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                'ffmpegのとき
+                hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename)
+            Else
+                'その他vlc
+                '今のところ未対応
+                Exit Sub
+            End If
+        End If
+
         '"%HLSROOT/../%"用
         Dim hlsroot2 As String = hlsroot
         Dim sp As Integer = hlsroot2.LastIndexOf("\")
@@ -710,8 +787,23 @@ Class WebRemocon
 
         Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
         '★プロセスを起動
-        Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, resolution)
+        Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, stream_mode, resolution)
     End Sub
+
+    '現在のhlsOptをファイル再生用に書き換える
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String) As String
+        Dim sp As Integer = hlsOpt.IndexOf("-i ")
+        Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
+        If sp >= 0 And se > sp Then
+            hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & hlsOpt.Substring(se)
+            sp = hlsOpt.IndexOf("-segment_list_size ")
+            se = hlsOpt.IndexOf(" ", sp + "-segment_list_size ".Length)
+            If sp >= 0 And se > sp Then
+                hlsOpt = hlsOpt.Substring(0, sp) & hlsOpt.Substring(se)
+            End If
+        End If
+        Return hlsOpt
+    End Function
 
     'HLS_option.txtから解像度とHLSオプションを読み込む
     Public Sub read_vlc_option()
@@ -776,6 +868,64 @@ Class WebRemocon
         r = Me._procMan.get_live_numbers()
         Return r
     End Function
+
+    '古いTSファイルを削除する　ffmpeg用
+    Public Sub delete_old_TS()
+        Dim fileroot As String = Me._fileroot.ToString
+        If fileroot.Length = 0 Then
+            'm3u8やtsの格納場所が指定されていなければwwwrootと同じ場所とする
+            fileroot = Me._wwwroot.ToString
+        End If
+
+        Me._procMan.delete_old_TS(fileroot)
+    End Sub
+
+    'ファイル再生用パスを読み込む
+    Public Sub read_videopath()
+        Dim errstr As String = ""
+        Dim line() As String = file2line("VideoPath.txt")
+
+        Dim i, j As Integer
+
+        Try
+            If line Is Nothing Then
+            ElseIf line.Length > 0 Then
+                '読み込み完了
+                For i = 0 To line.Length - 1
+                    line(i) = trim8(line(i))
+                    'コメント削除
+                    If line(i).IndexOf(";") >= 0 Then
+                        line(i) = line(i).Substring(0, line(i).IndexOf(";"))
+                    End If
+                    If line(i).IndexOf("#") >= 0 Then
+                        line(i) = line(i).Substring(0, line(i).IndexOf("#"))
+                    End If
+                    Dim youso() As String = line(i).Split("=")
+                    If youso Is Nothing Then
+                    ElseIf youso.Length > 1 Then
+                        For j = 0 To youso.Length - 1
+                            youso(j) = trim8(youso(j))
+                        Next
+                        Select Case youso(0)
+                            Case "VideoPath"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve Me._videopath(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        Me._videopath(j) = trim8(clset(j))
+                                    Next
+                                End If
+                        End Select
+                    End If
+                Next
+            End If
+        Catch ex As Exception
+        End Try
+
+    End Sub
+
 End Class
 
 

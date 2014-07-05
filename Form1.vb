@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.07"
+    Private version As String = "TvRemoteViewer_VB version 0.08"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -39,7 +39,8 @@ Public Class Form1
             If bondriver.IndexOf(".dll") > 0 Then
                 If s.Length = 3 Then
                     sid = Val(s(1))
-                    Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3)
+                    Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
+                    Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename)
                 Else
                     MsgBox("サービスIDを指定してください")
                 End If
@@ -100,9 +101,9 @@ Public Class Form1
         End If
 
         'ログ処理
-        If log1.Length > 10000 Then
+        If log1.Length > 20000 Then
             '10000文字以上になったらカット
-            log1 = log1.Substring(0, 10000)
+            log1 = log1.Substring(0, 20000)
         End If
         If log1 <> TextBoxLog.Text Then
             TextBoxLog.Text = log1
@@ -114,60 +115,7 @@ Public Class Form1
 
     '古いTSファイルを削除する　ffmpeg用
     Private Sub delete_old_TS()
-        Dim fileroot As String = TextBoxFILEROOT.Text.ToString
-        If fileroot.Length = 0 Then
-            'm3u8やtsの格納場所が指定されていなければwwwrootと同じ場所とする
-            fileroot = TextBoxWWWroot.Text.ToString
-        End If
-        'Dim files As String() = System.IO.Directory.GetFiles(tsroot, "*.ts", System.IO.SearchOption.AllDirectories)
-        Dim files As String() = System.IO.Directory.GetFiles(fileroot, "*.m3u8")
-        For Each tempFile As String In files
-            Dim n As Integer = 0
-            If tempFile.IndexOf("mystream") >= 0 Then
-                Try
-                    n = Val(tempFile.Substring(tempFile.IndexOf("mystream") + "mystream".Length)) 'スレッドナンバー
-                Catch ex As Exception
-                    n = 0
-                End Try
-                If n > 0 Then
-                    Dim s As String = ReadAllTexts(tempFile)
-                    'm3u8に書かれている最初のファイル
-                    Dim m As Integer = -1
-                    Dim sp As Integer = s.IndexOf("mystream" & n.ToString & "-")
-                    Try
-                        m = Val(s.Substring(sp + ("mystream" & n.ToString & "-").Length))
-                    Catch ex As Exception
-                        m = -1
-                    End Try
-                    m -= 1 '再生中の可能性もあるのでm3u8に書かれている最初のtsの一つ前まで残す
-                    'm3u8に書かれている最後のファイル
-                    Dim mend As Integer = 999999999
-                    sp = s.LastIndexOf("mystream" & n.ToString & "-")
-                    Try
-                        mend = Val(s.Substring(sp + ("mystream" & n.ToString & "-").Length))
-                    Catch ex As Exception
-                        mend = -1
-                    End Try
-                    mend += 1 '処理中に新たなファイルが作成される可能性があるのでm3u8に書かれている最終tsの一つ後まで残す
-                    If m > 0 Then
-                        Dim files2 As String() = System.IO.Directory.GetFiles(fileroot, "mystream" & n.ToString & "-*.ts")
-                        For Each tsFile As String In files2
-                            Dim sp2 As Integer = tsFile.IndexOf("mystream" & n.ToString & "-")
-                            Dim m2 As Integer = -1
-                            Try
-                                m2 = Val(tsFile.Substring(sp2 + ("mystream" & n.ToString & "-").Length))
-                            Catch ex As Exception
-                                m2 = -1
-                            End Try
-                            If (m2 >= 0 And m2 < m) Or (m2 > mend) Then
-                                '古いものと、なぜか残っている未来のものを消す
-                                deletefile(tsFile)
-                            End If
-                        Next
-                    End If
-                End If
-            End If
-        Next
+        Me._worker.delete_old_TS()
     End Sub
 
     '================================================================
@@ -237,9 +185,11 @@ Public Class Form1
     Private Sub Button1_Click(sender As System.Object, e As System.EventArgs) Handles Button1.Click
         Try
             'カレントディレクトリ変更
-            System.IO.Directory.SetCurrentDirectory(TextBoxWWWroot.Text)
+            'System.IO.Directory.SetCurrentDirectory(TextBoxWWWroot.Text)
+            F_set_ppath4program()
             Try
-                System.Diagnostics.Process.Start("notepad.exe", """index.html""")
+                'System.Diagnostics.Process.Start("notepad.exe", """index.html""")
+                System.Diagnostics.Process.Start("VideoPath.txt")
             Catch ex As Exception
                 '開けないファイルだった場合
             End Try
@@ -288,6 +238,9 @@ Public Class Form1
         Me._worker.stopProcName("RecTask")
         Me._worker.stopProcName("ffmpeg")
         log1write("関連アプリのプロセスを停止しました")
+
+        'ファイル再生用パス読み込み
+        Me._worker.read_videopath()
 
         '解像度コンボボックスをセット httpサーバースタート後にvlc_option()がセットされている
         search_ComboBoxResolution()

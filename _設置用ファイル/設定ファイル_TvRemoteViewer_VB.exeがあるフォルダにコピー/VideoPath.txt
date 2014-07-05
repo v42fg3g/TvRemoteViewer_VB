@@ -1,0 +1,5 @@
+;ビデオファイルがあるパスを記述してください。
+;例　VideoPath = "D:\My Videos"
+;　　VideoPath = "D:\My Videos", "\\COM1\My Videos"
+
+VideoPath = 

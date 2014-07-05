@@ -386,11 +386,11 @@ Partial Class Form1
         '
         'Button1
         '
-        Me.Button1.Location = New System.Drawing.Point(307, 77)
+        Me.Button1.Location = New System.Drawing.Point(280, 77)
         Me.Button1.Name = "Button1"
-        Me.Button1.Size = New System.Drawing.Size(102, 28)
+        Me.Button1.Size = New System.Drawing.Size(129, 28)
         Me.Button1.TabIndex = 76
-        Me.Button1.Text = "index.htmlを編集"
+        Me.Button1.Text = "VideoPath.txtを編集(*)"
         Me.Button1.UseVisualStyleBackColor = True
         '
         'ButtonHLSoption
@@ -523,7 +523,7 @@ Partial Class Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(529, 665)
+        Me.ClientSize = New System.Drawing.Size(530, 665)
         Me.Controls.Add(Me.Button3)
         Me.Controls.Add(Me.TextBoxUdpOpt3)
         Me.Controls.Add(Me.Label11)
@@ -572,7 +572,7 @@ Partial Class Form1
         Me.Controls.Add(Me.textHttpPortNumber)
         Me.Controls.Add(Me.labelPortNuber)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximumSize = New System.Drawing.Size(545, 702)
+        Me.MaximumSize = New System.Drawing.Size(546, 702)
         Me.Name = "Form1"
         Me.ShowInTaskbar = False
         Me.Text = "TvRemoteViewer_VB"

@@ -49,7 +49,7 @@ Public Class ProcessManager
         Return r
     End Function
 
-    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, resolution As String)
+    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, resolution As String)
         '★起動している場合は既存のプロセスを止める
         stopProc(num)
 
@@ -62,82 +62,118 @@ Public Class ProcessManager
 
             'If Me._list.Count < Me._maxSize Then
 
-            Dim pipeListBefore As New List(Of Integer)()
-            If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
-                '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
-                Dim listOfPipes As String() = System.IO.Directory.GetFiles("\\.\pipe\")
-                For Each pipeName As String In listOfPipes
-                    If pipeName.Contains("RecTask_Server_Pipe_") Then
-                        Dim pindex1 As Integer = 0
-                        Try
-                            pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20))
-                        Catch ex As Exception
-                        End Try
-                        If pindex1 > 0 Then
-                            pipeListBefore.Add(pindex1)
-                            'log1write("Before PipeName=" & pipeName & " PipeIndex=" & pindex1)
-                        End If
-                    End If
-                Next
-            End If
-
-            '★UDPソフトを実行
-            'ProcessStartInfoオブジェクトを作成する
-            Dim udpPsi As New System.Diagnostics.ProcessStartInfo()
-            '起動するファイルのパスを指定する
-            udpPsi.FileName = udpApp
-            'コマンドライン引数を指定する
-            udpPsi.Arguments = udpOpt
-            'アプリケーションを起動する
-            Dim udpProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(udpPsi)
-            udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-            log1write("No.=" & num & "のUDPアプリを起動しました。handle=" & udpProc.Handle.ToString)
-
-            'pipeindexを取得
-            Dim pipeIndex As Integer = 0
-            Dim chk As Integer = 0
-            While chk < 200
-                'RecTaskのパイプが増加するまで繰り返す
+            If stream_mode = 0 Then
+                'UDPストリーム再生
+                Dim pipeListBefore As New List(Of Integer)()
                 If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
-                    '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
+                    '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
                     Dim listOfPipes As String() = System.IO.Directory.GetFiles("\\.\pipe\")
                     For Each pipeName As String In listOfPipes
                         If pipeName.Contains("RecTask_Server_Pipe_") Then
-                            Dim pindex2 As Integer = 0
+                            Dim pindex1 As Integer = 0
                             Try
-                                pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
+                                pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20))
                             Catch ex As Exception
                             End Try
-                            If pindex2 > 0 Then
-                                'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
-                                Dim c2 As Integer = 0
-                                '起動前のパイプindexに存在しなければOK
-                                For Each pt As Integer In pipeListBefore
-                                    If pindex2 = pt Then
-                                        c2 += 100
-                                    End If
-                                Next
-                                '該当するpipeindexが見つからなければ新規
-                                If c2 = 0 Then
-                                    pipeIndex = pindex2
-                                    Exit While
-                                End If
-                            Else
-                                pipeIndex = pindex2
-                                Exit While
+                            If pindex1 > 0 Then
+                                pipeListBefore.Add(pindex1)
+                                'log1write("Before PipeName=" & pipeName & " PipeIndex=" & pindex1)
                             End If
                         End If
                     Next
                 End If
-                System.Threading.Thread.Sleep(50)
-                chk += 1
-            End While
 
-            If pipeIndex > 0 Then
-                log1write("No.=" & num & "のパイプインデックスを取得しました。pipeindex=" & pipeIndex.ToString)
+                '★UDPソフトを実行
+                'ProcessStartInfoオブジェクトを作成する
+                Dim udpPsi As New System.Diagnostics.ProcessStartInfo()
+                '起動するファイルのパスを指定する
+                udpPsi.FileName = udpApp
+                'コマンドライン引数を指定する
+                udpPsi.Arguments = udpOpt
+                'アプリケーションを起動する
+                Dim udpProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(udpPsi)
+                udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                log1write("No.=" & num & "のUDPアプリを起動しました。handle=" & udpProc.Handle.ToString)
 
-                System.Threading.Thread.Sleep(1000)
+                'pipeindexを取得
+                Dim pipeIndex As Integer = 0
+                Dim chk As Integer = 0
+                While chk < 200
+                    'RecTaskのパイプが増加するまで繰り返す
+                    If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                        '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
+                        Dim listOfPipes As String() = System.IO.Directory.GetFiles("\\.\pipe\")
+                        For Each pipeName As String In listOfPipes
+                            If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                Dim pindex2 As Integer = 0
+                                Try
+                                    pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
+                                Catch ex As Exception
+                                End Try
+                                If pindex2 > 0 Then
+                                    'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
+                                    Dim c2 As Integer = 0
+                                    '起動前のパイプindexに存在しなければOK
+                                    For Each pt As Integer In pipeListBefore
+                                        If pindex2 = pt Then
+                                            c2 += 100
+                                        End If
+                                    Next
+                                    '該当するpipeindexが見つからなければ新規
+                                    If c2 = 0 Then
+                                        pipeIndex = pindex2
+                                        Exit While
+                                    End If
+                                Else
+                                    pipeIndex = pindex2
+                                    Exit While
+                                End If
+                            End If
+                        Next
+                    End If
+                    System.Threading.Thread.Sleep(50)
+                    chk += 1
+                End While
 
+                If pipeIndex > 0 Then
+                    log1write("No.=" & num & "のパイプインデックスを取得しました。pipeindex=" & pipeIndex.ToString)
+
+                    System.Threading.Thread.Sleep(1000)
+
+                    '★HLSソフトを実行
+                    'ProcessStartInfoオブジェクトを作成する
+                    Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
+                    '起動するファイルのパスを指定する
+                    hlsPsi.FileName = hlsApp
+                    'コマンドライン引数を指定する
+                    hlsPsi.Arguments = hlsOpt
+                    If ShowConsole = False Then
+                        ' コンソール・ウィンドウを開かない
+                        hlsPsi.CreateNoWindow = True
+                        ' シェル機能を使用しない
+                        hlsPsi.UseShellExecute = False
+                    End If
+                    'アプリケーションを起動する
+                    Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
+
+                    log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
+
+                    'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
+                    Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, resolution)
+                    Me._list.Add(pb)
+                Else
+                    Try
+                        'UDPアプリ終了　pipeindexがわからないので強制終了
+                        udpProc.Kill()
+                        udpProc.Dispose()
+                        udpProc.Close()
+                    Catch ex As Exception
+                    End Try
+                    log1write("No.=" & num & "のpipeindexの取得に失敗しました")
+                End If
+
+            ElseIf stream_mode = 1 Then
+                'ファイル再生
                 '★HLSソフトを実行
                 'ProcessStartInfoオブジェクトを作成する
                 Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
@@ -157,17 +193,8 @@ Public Class ProcessManager
                 log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
 
                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, resolution)
+                Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, resolution)
                 Me._list.Add(pb)
-            Else
-                Try
-                    'UDPアプリ終了　pipeindexがわからないので強制終了
-                    udpProc.Kill()
-                    udpProc.Dispose()
-                    udpProc.Close()
-                Catch ex As Exception
-                End Try
-                log1write("No.=" & num & "のpipeindexの取得に失敗しました")
             End If
             'End If
         End If
@@ -181,7 +208,7 @@ Public Class ProcessManager
     'プロセスが順調に動いているかチェック
     Public Sub checkAllProc()
         For i As Integer = Me._list.Count - 1 To 0 Step -1
-            If Me._list(i)._num > 0 And Me._list(i)._stopping = 0 Then
+            If Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And Me._list(i)._stream_mode = 0 Then
                 Dim chk As Integer = 0
                 Dim procudp As System.Diagnostics.Process = Nothing
                 Dim prochls As System.Diagnostics.Process = Nothing
@@ -233,12 +260,13 @@ Public Class ProcessManager
                     Dim p5 As Integer = Me._list(i)._num
                     Dim p6 As Integer = Me._list(i)._udpPort
                     Dim p7 As Boolean = Me._list(i)._ShowConsole
-                    Dim p8 As String = Me._list(i)._resolution
+                    Dim p8 As Integer = Me._list(i)._stream_mode
+                    Dim p9 As String = Me._list(i)._resolution
                     'プロセスを停止
                     stopProc(p5)
                     'System.Threading.Thread.Sleep(500)
                     'プロセスを開始
-                    startProc(p1, p2, p3, p4, p5, p6, p7, p8)
+                    startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9)
                     log1write("No.=" & p5 & "のプロセスを再起動しました")
                 End If
             End If
@@ -456,6 +484,9 @@ Public Class ProcessManager
             Dim bon As String = ""
             If sp >= 0 And ep > sp Then
                 bon = s.Substring(sp, (ep - sp) + ".dll".Length)
+            End If
+            If Me._list(j)._stream_mode = 1 Then
+                bon = "ファイル再生"
             End If
             js &= Me._list(j)._num.ToString & ": " & bon & vbCrLf
         Next
@@ -725,6 +756,74 @@ Public Class ProcessManager
 
         Return r
     End Function
+
+    Public Sub delete_old_TS(ByVal fileroot As String)
+        'Dim files As String() = System.IO.Directory.GetFiles(tsroot, "*.ts", System.IO.SearchOption.AllDirectories)
+        Dim files As String() = System.IO.Directory.GetFiles(fileroot, "*.m3u8")
+        For Each tempFile As String In files
+            Dim n As Integer = 0
+            If tempFile.IndexOf("mystream") >= 0 Then
+                Try
+                    n = Val(tempFile.Substring(tempFile.IndexOf("mystream") + "mystream".Length)) 'スレッドナンバー
+                Catch ex As Exception
+                    n = 0
+                End Try
+
+                'nからlist(i)を求める
+                Dim stream_mode As Integer = 0
+                If Me._list.Count > 0 Then
+                    Dim j As Integer = -1
+                    For i As Integer = 0 To Me._list.Count - 1
+                        If Me._list(i)._num = n Then
+                            j = i
+                        End If
+                    Next
+                    If j >= 0 Then
+                        'ファイル再生なら1が入る
+                        stream_mode = Me._list(j)._stream_mode
+                    End If
+                End If
+
+                If n > 0 And stream_mode = 0 Then
+                    Dim s As String = ReadAllTexts(tempFile)
+                    'm3u8に書かれている最初のファイル
+                    Dim m As Integer = -1
+                    Dim sp As Integer = s.IndexOf("mystream" & n.ToString & "-")
+                    Try
+                        m = Val(s.Substring(sp + ("mystream" & n.ToString & "-").Length))
+                    Catch ex As Exception
+                        m = -1
+                    End Try
+                    m -= 5 '再生中の可能性もあるのでm3u8に書かれている最初のtsの5つ前まで残す
+                    'm3u8に書かれている最後のファイル
+                    Dim mend As Integer = 999999999
+                    sp = s.LastIndexOf("mystream" & n.ToString & "-")
+                    Try
+                        mend = Val(s.Substring(sp + ("mystream" & n.ToString & "-").Length))
+                    Catch ex As Exception
+                        mend = -1
+                    End Try
+                    mend += 5 '処理中に新たなファイルが作成される可能性があるのでm3u8に書かれている最終tsの5つ後まで残す
+                    If m > 0 Then
+                        Dim files2 As String() = System.IO.Directory.GetFiles(fileroot, "mystream" & n.ToString & "-*.ts")
+                        For Each tsFile As String In files2
+                            Dim sp2 As Integer = tsFile.IndexOf("mystream" & n.ToString & "-")
+                            Dim m2 As Integer = -1
+                            Try
+                                m2 = Val(tsFile.Substring(sp2 + ("mystream" & n.ToString & "-").Length))
+                            Catch ex As Exception
+                                m2 = -1
+                            End Try
+                            If (m2 >= 0 And m2 < m) Or (m2 > mend) Then
+                                '古いものと、なぜか残っている未来のものを消す
+                                deletefile(tsFile)
+                            End If
+                        Next
+                    End If
+                End If
+            End If
+        Next
+    End Sub
 End Class
 
 
