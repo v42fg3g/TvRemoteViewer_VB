@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.05"
+    Private version As String = "TvRemoteViewer_VB version 0.07"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -131,13 +131,24 @@ Public Class Form1
                 End Try
                 If n > 0 Then
                     Dim s As String = ReadAllTexts(tempFile)
-                    Dim sp As Integer = s.IndexOf("mystream" & n.ToString & "-")
+                    'm3u8に書かれている最初のファイル
                     Dim m As Integer = -1
+                    Dim sp As Integer = s.IndexOf("mystream" & n.ToString & "-")
                     Try
                         m = Val(s.Substring(sp + ("mystream" & n.ToString & "-").Length))
                     Catch ex As Exception
                         m = -1
                     End Try
+                    m -= 1 '再生中の可能性もあるのでm3u8に書かれている最初のtsの一つ前まで残す
+                    'm3u8に書かれている最後のファイル
+                    Dim mend As Integer = 999999999
+                    sp = s.LastIndexOf("mystream" & n.ToString & "-")
+                    Try
+                        mend = Val(s.Substring(sp + ("mystream" & n.ToString & "-").Length))
+                    Catch ex As Exception
+                        mend = -1
+                    End Try
+                    mend += 1 '処理中に新たなファイルが作成される可能性があるのでm3u8に書かれている最終tsの一つ後まで残す
                     If m > 0 Then
                         Dim files2 As String() = System.IO.Directory.GetFiles(fileroot, "mystream" & n.ToString & "-*.ts")
                         For Each tsFile As String In files2
@@ -148,7 +159,7 @@ Public Class Form1
                             Catch ex As Exception
                                 m2 = -1
                             End Try
-                            If (m2 >= 0 And m2 < m) Or (m2 > (m + 30)) Then
+                            If (m2 >= 0 And m2 < m) Or (m2 > mend) Then
                                 '古いものと、なぜか残っている未来のものを消す
                                 deletefile(tsFile)
                             End If

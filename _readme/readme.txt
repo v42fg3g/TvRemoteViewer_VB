@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.06
+TvRemoteViewer_VB v0.07
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
 
@@ -167,6 +167,7 @@ iPad(第3世代）iOS7 safari
 	ViewTV.htmlの修正
 0.06	UDPアプリ用オプション欄を追加
 	UDPオプション作成時のバグ修正
+0.07	ffmpeg使用時の自動ts削除を修正
 
 
 
