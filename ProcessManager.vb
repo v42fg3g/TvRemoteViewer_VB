@@ -456,40 +456,80 @@ Public Class ProcessManager
         log1write("現在稼働中のNumber：" & js)
     End Sub
 
+    '現在稼働中のlistナンバーをnumでソートして返す
+    Public Function get_live_index_sort() As Object
+        Dim r() As Integer = Nothing
+        Dim s() As Integer = Nothing
+        Dim i As Integer = 0
+        Dim j As Integer = 0
+        If Me._list.Count > 0 Then
+            For j = 0 To Me._list.Count - 1
+                ReDim Preserve r(j)
+                r(j) = Me._list(j)._num
+                ReDim Preserve s(j)
+                s(j) = j
+            Next
+
+            '並び替え
+            If r.Length > 1 Then
+                Dim temp As Integer = -1
+                For j = 0 To Me._list.Count - 2
+                    For i = 0 To Me._list.Count - 2
+                        If r(i + 1) < r(i) Then
+                            temp = r(i)
+                            r(i) = r(i + 1)
+                            r(i + 1) = temp
+                            temp = s(i)
+                            s(i) = s(i + 1)
+                            s(i + 1) = temp
+                        End If
+                    Next
+                Next
+            End If
+        End If
+
+        Return s
+    End Function
+
     '現在稼働中のlist(i)._numを取得
     Public Function get_live_numbers() As String
-        '現在のlist(i)
         Dim js As String = " "
-        For j As Integer = 0 To Me._list.Count - 1
-            If Me._list(j)._stopping = 1 Then
-                js &= "x" & Me._list(j)._num.ToString & " "
-            Else
-                js &= Me._list(j)._num.ToString & " "
-            End If
-        Next
+        Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
+        If d IsNot Nothing Then
+            For j As Integer = 0 To d.Length - 1
+                If Me._list(d(j))._stopping = 1 Then
+                    js &= "x" & Me._list(d(j))._num.ToString & " "
+                Else
+                    js &= Me._list(d(j))._num.ToString & " "
+                End If
+            Next
+        End If
         Return js
     End Function
 
     '現在稼働中のlist(i)に関するBonDriver情報を併せて取得
     Public Function get_live_numbers_bon() As String
-        '現在のlist(i)
         Dim js As String = ""
-        For j As Integer = 0 To Me._list.Count - 1
-            If Me._list(j)._stopping = 1 Then
-                js &= "x"
-            End If
-            Dim s As String = Me._list(j)._udpOpt
-            Dim sp As Integer = s.ToLower.IndexOf("bondriver")
-            Dim ep As Integer = s.IndexOf(".dll")
-            Dim bon As String = ""
-            If sp >= 0 And ep > sp Then
-                bon = s.Substring(sp, (ep - sp) + ".dll".Length)
-            End If
-            If Me._list(j)._stream_mode = 1 Then
-                bon = "ファイル再生"
-            End If
-            js &= Me._list(j)._num.ToString & ": " & bon & vbCrLf
-        Next
+        Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
+        If d IsNot Nothing Then
+            For j As Integer = 0 To d.Length - 1
+                If Me._list(d(j))._stopping = 1 Then
+                    js &= "x"
+                End If
+                Dim s As String = Me._list(d(j))._udpOpt
+                Dim sp As Integer = s.ToLower.IndexOf("bondriver")
+                Dim ep As Integer = s.IndexOf(".dll")
+                Dim bon As String = ""
+                If sp >= 0 And ep > sp Then
+                    bon = s.Substring(sp, (ep - sp) + ".dll".Length)
+                End If
+                If Me._list(d(j))._stream_mode = 1 Then
+                    bon = "ファイル再生"
+                End If
+                js &= Me._list(d(j))._num.ToString & ": " & bon & vbCrLf
+            Next
+        End If
+
         Return js
     End Function
 
