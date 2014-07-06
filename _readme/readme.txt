@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.09
+TvRemoteViewer_VB v0.10
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
 
@@ -171,6 +171,8 @@ iPad(第3世代）iOS7 safari
 0.08	ファイル再生に対応（ffmpegのみ）
 0.09	BASIC認証対応
 	VideoPath.txtにサブフォルダを含めるかどうかのオプションを追加
+0.10	ストリーム視聴ボタンを番号順に並び替えるようにした
+	VideoPath.txtが存在しないときに例外エラーが出ていたバグを修正
 
 
 

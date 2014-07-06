@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.09a"
+    Private version As String = "TvRemoteViewer_VB version 0.10"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_pipe"} '{"_file", "_udp", "_pipe"}
@@ -272,9 +272,11 @@ Public Class Form1
                 End If
             Next folder
         End If
-        For j = 0 To Me._worker._videopath.Length - 1
-            log1write("ファイルフォルダ " & Me._worker._videopath(j))
-        Next
+        If Me._worker._videopath IsNot Nothing Then
+            For j = 0 To Me._worker._videopath.Length - 1
+                log1write("ファイルフォルダ " & Me._worker._videopath(j))
+            Next
+        End If
 
         '解像度コンボボックスをセット httpサーバースタート後にvlc_option()がセットされている
         search_ComboBoxResolution()
