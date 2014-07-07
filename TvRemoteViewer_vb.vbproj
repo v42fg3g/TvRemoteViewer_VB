@@ -70,7 +70,7 @@
     <ApplicationManifest>My Project\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>TvRemoteViewer_VB2.ico</ApplicationIcon>
+    <ApplicationIcon>TvRemoteViewer_VB3.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -175,7 +175,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="TvRemoteViewer_VB.ico" />
     <Content Include="TvRemoteViewer_VB2.ico" />
+    <Content Include="TvRemoteViewer_VB3.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

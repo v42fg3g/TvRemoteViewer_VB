@@ -350,8 +350,10 @@ Class WebRemocon
                             Dim rez As String = Me._procMan.get_resolution(num)
                             Dim rezx As Integer = 0
                             Dim rezy As Integer = 0
+                            Dim rez_hlsopt As Integer = 0
                             If rez.Length = 0 Then
                                 '_listから取得できなければ_hlsOpt2から取得する
+                                rez_hlsopt = 1
                                 Dim ho As String = Me._hlsOpt2
                                 Dim sp1, sp2 As Integer
                                 If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
@@ -404,7 +406,13 @@ Class WebRemocon
                             If s.IndexOf("%SELECTCH") >= 0 Then
                                 '%SELECTCHをhtmlに置換
                                 Dim gt() As String = get_atags("%SELECTCH:", s)
-                                Dim vhtml As String = replace_html_selectch(num, rez, gt)
+                                Dim vhtml As String
+                                If rez_hlsopt = 0 Then
+                                    vhtml = replace_html_selectch(num, rez, gt)
+                                Else
+                                    'hlsOptから解像度を取得した場合は値を渡さない（HLS_option.txtのオプションが使われてしまうため）
+                                    vhtml = replace_html_selectch(num, "", gt)
+                                End If
                                 s = s.Replace("%SELECTCH%", vhtml)
                                 s = s.Replace("%SELECTCH:" & gt(0) & "%", vhtml)
                             End If
@@ -805,7 +813,7 @@ Class WebRemocon
             udpOpt &= " " & Trim(udpOpt3)
         End If
 
-        log1write("UDP option=" & udpOpt)
+        'log1write("UDP option=" & udpOpt)
 
         '★HLSオプションの生成
         Dim hlsOpt As String = ""
@@ -861,7 +869,7 @@ Class WebRemocon
         hlsOpt = hlsOpt.Replace("%HLSROOT/../%", hlsroot2)
         hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPortNumber.ToString)
 
-        log1write("HLS option=" & hlsOpt)
+        'log1write("HLS option=" & hlsOpt)
 
         Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
         '★プロセスを起動

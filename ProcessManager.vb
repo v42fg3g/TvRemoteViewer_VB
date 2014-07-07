@@ -90,6 +90,8 @@ Public Class ProcessManager
                 udpPsi.FileName = udpApp
                 'コマンドライン引数を指定する
                 udpPsi.Arguments = udpOpt
+                'ログ表示
+                log1write("UDP option=" & udpOpt)
                 'アプリケーションを起動する
                 Dim udpProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(udpPsi)
                 udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
@@ -153,6 +155,17 @@ Public Class ProcessManager
                         ' シェル機能を使用しない
                         hlsPsi.UseShellExecute = False
                     End If
+                    'VLCは上の非表示コマンドが効かないのでオプションを書き換える
+                    If ShowConsole = False And hlsApp.IndexOf("vlc") >= 0 Then
+                        If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
+                            hlsOpt = hlsOpt.Replace("-I dummy", "-I dummy --dummy-quiet")
+                        End If
+                        If hlsOpt.IndexOf("--rc-quiet") < 0 And hlsOpt.IndexOf("--rc-host=") >= 0 Then
+                            hlsOpt = hlsOpt.Replace("--rc-host=", "--rc-quiet --rc-host=")
+                        End If
+                    End If
+                    'ログ表示
+                    log1write("HLS option=" & hlsOpt)
                     'アプリケーションを起動する
                     Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
 
@@ -187,6 +200,8 @@ Public Class ProcessManager
                     ' シェル機能を使用しない
                     hlsPsi.UseShellExecute = False
                 End If
+                'ログ表示
+                log1write("HLS option=" & hlsOpt)
                 'アプリケーションを起動する
                 Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
 
@@ -195,8 +210,8 @@ Public Class ProcessManager
                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
                 Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, resolution)
                 Me._list.Add(pb)
-            End If
-            'End If
+        End If
+        'End If
         End If
 
         '現在稼働中のlist(i)._numをログに表示
@@ -297,10 +312,10 @@ Public Class ProcessManager
                         If quit_VLC(i) = 1 Then
                             'プロセスが無くなるまで待機
                             If wait_stop_proc(proc) = 1 Then
-                                log1write("No.=" & num & "のVLCアプリを終了しました")
+                                log1write("No.=" & num & "のVLCを終了しました")
                                 hls_stop = 1
                             Else
-                                log1write("No.=" & num & "のVLCアプリ終了に失敗しました")
+                                log1write("No.=" & num & "のVLC終了に失敗しました")
                             End If
                             proc.Close()
                             proc.Dispose()
@@ -309,10 +324,10 @@ Public Class ProcessManager
                             'proc.CloseMainWindow()
                             proc.Kill()
                             If wait_stop_proc(proc) = 1 Then
-                                log1write("No.=" & num & "のVLCアプリを強制終了しました")
+                                log1write("No.=" & num & "のVLCを強制終了しました")
                                 hls_stop = 1
                             Else
-                                log1write("No.=" & num & "のVLCアプリ強制終了に失敗しました")
+                                log1write("No.=" & num & "のVLC強制終了に失敗しました")
                             End If
                             'proc.WaitForExit()
                             proc.Close()
