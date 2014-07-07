@@ -249,6 +249,8 @@ Class WebRemocon
                         If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
                             '正しければ配信スタート
                             Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, resolution)
+                            'すぐさま視聴ページへリダイレクトする
+                            redirect = "ViewTV" & num & ".html"
                         ElseIf num > 0 And videoname.Length > 0 Then
                             'ファイル再生
                             If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
@@ -321,30 +323,18 @@ Class WebRemocon
 
                         'BonDriverと番組名連携選択
                         If s.IndexOf("%SELECTBONSIDCH") >= 0 Then
-                            Dim sb1 As Integer = s.IndexOf("%SELECTBONSIDCH:")
-                            Dim sb2 As Integer = s.IndexOf("%", sb1 + 1)
-                            Dim sbs As String = ""
-                            If sb1 >= 0 And sb2 > sb1 Then
-                                '間に入れるhtmlを取得
-                                sbs = s.Substring(sb1 + "%SELECTBONSIDCH:".Length, sb2 - sb1 - "%SELECTBONSIDCH:".Length)
-                            End If
-                            Dim selectbon As String = WEB_make_select_Bondriver_html(sbs)
+                            Dim gt() As String = get_atags("%SELECTBONSIDCH:", s)
+                            Dim selectbon As String = WEB_make_select_Bondriver_html(gt)
                             s = s.Replace("%SELECTBONSIDCH%", selectbon)
-                            s = s.Replace("%SELECTBONSIDCH:" & sbs & "%", selectbon)
+                            s = s.Replace("%SELECTBONSIDCH:" & gt(0) & "%", selectbon)
                         End If
 
                         'Viewボタン作成
                         If s.IndexOf("%VIEWBUTTONS") >= 0 Then
-                            Dim vb1 As Integer = s.IndexOf("%VIEWBUTTONS:")
-                            Dim vb2 As Integer = s.IndexOf("%", vb1 + 1)
-                            Dim vbs As String = ""
-                            If vb1 >= 0 And vb2 > vb1 Then
-                                '間に入れるhtmlを取得
-                                vbs = s.Substring(vb1 + "%VIEWBUTTONS:".Length, vb2 - vb1 - "%VIEWBUTTONS:".Length)
-                            End If
-                            Dim viewbutton_html As String = WEB_make_ViewLink_html(vbs)
+                            Dim gt() As String = get_atags("%VIEWBUTTONS:", s)
+                            Dim viewbutton_html As String = WEB_make_ViewLink_html(gt)
                             s = s.Replace("%VIEWBUTTONS%", viewbutton_html)
-                            s = s.Replace("%VIEWBUTTONS:" & vbs & "%", viewbutton_html)
+                            s = s.Replace("%VIEWBUTTONS:" & gt(0) & "%", viewbutton_html)
                         End If
 
                         'ストリーム番号
@@ -412,30 +402,11 @@ Class WebRemocon
 
                             '配信中ならばnumからBonDriver_pathとBonDriverを取得
                             If s.IndexOf("%SELECTCH") >= 0 Then
-                                Dim bon As String = Me._procMan.get_bondriver_name(num)
-
-                                Dim bonp As String = Me._BonDriverPath
-                                If bonp.Length = 0 Then
-                                    '指定が無い場合はUDPAPPと同じフォルダにあると見なす
-                                    bonp = filepath2path(Me._udpApp.ToString)
-                                End If
-                                Dim vhtml As String = WEB_search_ServiceID(bonp, bon, 1)
-                                If vhtml.Length > 0 Then
-                                    vhtml = "<option value="""">---</option>" & vbCrLf & vhtml
-                                    vhtml = "<select name=""Bon_Sid_Ch"">" & vbCrLf & vhtml
-                                    vhtml = "<form action=""StartTV.html"">" & vbCrLf & vhtml
-                                    vhtml &= "</select>" & vbCrLf
-                                    vhtml &= "<input type=""submit"" value=""視聴"" />" & vbCrLf
-                                    vhtml &= "<input type=""hidden"" name=""num"" value=""" & num & """>" & vbCrLf
-                                    vhtml &= "<input type=""hidden"" name=""redirect"" value=""ViewTV" & num & ".html"">" & vbCrLf
-                                    If rez.Length > 0 Then
-                                        vhtml &= "<input type=""hidden"" name=""resolution"" value=""" & rez & """>" & vbCrLf
-                                    End If
-                                    vhtml &= "</form>" & vbCrLf
-                                    s = s.Replace("%SELECTCH%", vhtml)
-                                Else
-                                    s = s.Replace("%SELECTCH%", "")
-                                End If
+                                '%SELECTCHをhtmlに置換
+                                Dim gt() As String = get_atags("%SELECTCH:", s)
+                                Dim vhtml As String = replace_html_selectch(num, rez, gt)
+                                s = s.Replace("%SELECTCH%", vhtml)
+                                s = s.Replace("%SELECTCH:" & gt(0) & "%", vhtml)
                             End If
                         End If
 
@@ -446,8 +417,13 @@ Class WebRemocon
                         End If
 
                         '配信中簡易リスト
-                        If s.IndexOf("%PROCBONLIST%") >= 0 Then
+                        If s.IndexOf("%PROCBONLIST") >= 0 Then
+                            Dim gt() As String = get_atags("%PROCBONLIST:", s)
                             Dim js As String = Me._procMan.get_live_numbers_bon().Replace(vbCrLf, "<br>")
+                            If js.Length > 0 Then
+                                js = gt(1) & js & gt(3)
+                            End If
+                            s = s.Replace("%PROCBONLIST:" & gt(0) & "%", js)
                             s = s.Replace("%PROCBONLIST%", js)
                         End If
 
@@ -499,6 +475,68 @@ Class WebRemocon
         End While
 
     End Sub
+
+    '%変数に埋め込まれた前中後に挿入すべきhtmlタグを抽出
+    Private Function get_atags(ByVal tag As String, ByVal s As String) As Object
+        'tag="%～:" s=html
+        '返値　d(0)=抽出タグ文字列 d(1)=前 d(2)=中 d(3)=後
+        Dim d() As String
+        ReDim Preserve d(3)
+        Dim vb1 As Integer = s.IndexOf(tag)
+        Dim vb2 As Integer = s.IndexOf("%", vb1 + 1)
+        Dim vbs As String = ""
+        If vb1 >= 0 And vb2 > vb1 Then
+            vbs = s.Substring(vb1 + tag.Length, vb2 - vb1 - tag.Length)
+        End If
+        Dim vbt() As String = vbs.Split(":")
+
+        d(0) = vbs
+        d(1) = ""
+        d(2) = ""
+        d(3) = ""
+        If vbt.Length = 1 Then
+            d(2) = vbt(0)
+        ElseIf vbt.Length = 2 Then
+            d(2) = vbt(0)
+            d(3) = vbt(1)
+        ElseIf vbt.Length = 3 Then
+            d(1) = vbt(0)
+            d(2) = vbt(1)
+            d(3) = vbt(2)
+        End If
+
+        Return d
+    End Function
+
+    '%SELECTCHをhtmlに置換して返す
+    Private Function replace_html_selectch(ByVal num As Integer, ByVal rez As String, ByVal atag() As String) As String
+        Dim bon As String = Me._procMan.get_bondriver_name(num)
+
+        Dim bonp As String = Me._BonDriverPath
+        If bonp.Length = 0 Then
+            '指定が無い場合はUDPAPPと同じフォルダにあると見なす
+            bonp = filepath2path(Me._udpApp.ToString)
+        End If
+        Dim vhtml As String = WEB_search_ServiceID(bonp, bon, 1)
+        If vhtml.Length > 0 Then
+            vhtml = "<option value="""">---</option>" & vbCrLf & vhtml
+            vhtml = "<select name=""Bon_Sid_Ch"">" & vbCrLf & vhtml
+            vhtml = "<form action=""StartTV.html"">" & vbCrLf & vhtml
+            vhtml = atag(1) & vhtml
+            vhtml &= "</select>" & vbCrLf
+            vhtml &= atag(2)
+            vhtml &= "<input type=""submit"" value=""視聴"" />" & vbCrLf
+            vhtml &= "<input type=""hidden"" name=""num"" value=""" & num & """>" & vbCrLf
+            vhtml &= "<input type=""hidden"" name=""redirect"" value=""ViewTV" & num & ".html"">" & vbCrLf
+            If rez.Length > 0 Then
+                vhtml &= "<input type=""hidden"" name=""resolution"" value=""" & rez & """>" & vbCrLf
+            End If
+            vhtml &= "</form>" & vbCrLf
+            vhtml &= atag(3)
+        End If
+
+        Return vhtml
+    End Function
 
     'ファイル再生ページ用　ビデオ選択htmlを作成する
     Private Function make_file_select_html() As String
@@ -564,16 +602,9 @@ Class WebRemocon
     End Function
 
     'HTML内置換用　配信しているストリームのボタンを作成
-    Public Function WEB_make_ViewLink_html(Optional ByVal bs As String = "") As String
+    Public Function WEB_make_ViewLink_html(ByVal atag() As String) As String
         Dim html As String = ""
         Dim bst As String = ""
-        Dim bst2 As String = ""
-
-        Dim bs2() As String = bs.Split(":")
-        If bs2.Length >= 2 Then
-            bs = bs2(0)
-            bst2 = bs2(1) '2番目のhtmlを最後に表示
-        End If
 
         Dim gln As String = Trim(Me._procMan.get_live_numbers())
         If gln.Length > 0 Then
@@ -585,20 +616,20 @@ Class WebRemocon
                     'html &= "<form action=""ViewTV" & d(i).ToString & ".html"">" & vbCrLf
                     'html &= "    <input type=""submit"" value=""ストリーム" & d(i).ToString & "を視聴"" />" & vbCrLf
                     'html &= "</form>" & vbCrLf
-                    bst = bs
+                    bst = atag(2)
                 End If
             Next
         End If
 
         If html.Length > 0 Then
-            html &= bst2 & vbCrLf
+            html = atag(1) & html & atag(3) & vbCrLf
         End If
 
         Return html
     End Function
 
     'HTML内置換用　BonDriverセレクトボックスを作成
-    Public Function WEB_make_select_Bondriver_html(Optional ByVal bs As String = "") As String
+    Public Function WEB_make_select_Bondriver_html(ByVal atag() As String) As String
         's=BonDriverセレクトと番組セレクトの間に入れるhtmlタグ <br>とか
         Dim html As String = ""
         Dim bons() As String = Nothing
@@ -642,6 +673,7 @@ Class WebRemocon
         If bons IsNot Nothing Then
             If bons.Length > 0 Then
                 'BonDriver一覧
+                html &= atag(1)
                 html &= "<script type=""text/javascript"" src=""ConnectedSelect.js""></script>" & vbCrLf
                 html &= "<select id=""SEL1"" name=""BonDriver"">" & vbCrLf
                 html &= "<option value="""">---</option>" & vbCrLf
@@ -649,7 +681,7 @@ Class WebRemocon
                     html &= "<option value=""" & bons(i) & """>" & bons(i) & "</option>" & vbCrLf
                 Next
                 html &= "</select>" & vbCrLf
-                html &= bs & vbCrLf
+                html &= atag(2)
                 '各BonDriverに対応したチャンネルを書き込む
                 html &= "<select id=""SEL2"" name=""Bon_Sid_Ch"">" & vbCrLf
                 html &= "<option value="""">---</option>" & vbCrLf
@@ -663,6 +695,7 @@ Class WebRemocon
                 html &= "<script type=""text/javascript"">" & vbCrLf
                 html &= "ConnectedSelect(['SEL1','SEL2']);" & vbCrLf
                 html &= "</script>" & vbCrLf
+                html &= atag(3)
             End If
         End If
 

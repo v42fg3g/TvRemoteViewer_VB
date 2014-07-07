@@ -1,10 +1,10 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.10"
+    Private version As String = "TvRemoteViewer_VB version 0.11"
 
     '指定語句が含まれるBonDriverは無視する
-    Private BonDriver_NGword As String() = {"_file", "_pipe"} '{"_file", "_udp", "_pipe"}
+    Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
 
     Private chk_timer1 As Integer = 0 'timer1重複回避用temp
     Private chk_timer1_deleteTS As Integer = 0 '古いtsファイルを削除する間隔調整用
