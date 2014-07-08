@@ -643,7 +643,16 @@ Class WebRemocon
             For i As Integer = 0 To d.Length - 1
                 If d(i) > 0 Then
                     html &= bst
-                    html &= "<input type=""button"" value=""ストリーム" & d(i).ToString & "を視聴"" onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
+                    Dim ChannelName As String = Me._procMan.get_channelname(d(i))
+                    If ChannelName.Length > 20 Then
+                        '長すぎるときはカット
+                        ChannelName = ChannelName.Substring(0, 18) & ".."
+                    End If
+                    If ChannelName.Length > 0 Then
+                        html &= "<input type=""button"" value=""" & d(i).ToString & "　" & ChannelName & """ onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
+                    Else
+                        html &= "<input type=""button"" value=""ストリーム" & d(i).ToString & "を視聴"" onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
+                    End If
                     'html &= "<form action=""ViewTV" & d(i).ToString & ".html"">" & vbCrLf
                     'html &= "    <input type=""submit"" value=""ストリーム" & d(i).ToString & "を視聴"" />" & vbCrLf
                     'html &= "</form>" & vbCrLf
@@ -772,8 +781,6 @@ Class WebRemocon
             fileroot = Me._wwwroot
         End If
         fileroot &= "\"
-
-        Debug.Print(fileroot & "]")
 
         ' 必要な変数を宣言する
         Dim stPrompt As String = String.Empty

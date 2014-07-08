@@ -298,7 +298,7 @@ Public Class ProcessManager
 
     End Sub
 
-    'numから_list(i)のiを取得する ■未使用
+    'numから_list(i)のiを取得する
     Public Function num2i(ByVal num As Integer) As Integer
         Dim r As Integer = -1
 
@@ -564,6 +564,33 @@ Public Class ProcessManager
         Dim js As String = get_live_numbers()
         log1write("現在稼働中のNumber：" & js)
     End Sub
+
+    'ストリームnumの放送局名を取得する
+    Public Function get_channelname(ByVal num As Integer) As String
+        Dim r As String = ""
+        Dim i As Integer = num2i(num) 'numから_list(i)のiに変換
+        If i >= 0 Then
+            If Me._list(i)._stream_mode = 1 Then
+                r = "ファイル再生"
+            Else
+                Dim udpOpt As String = Me._list(i)._udpOpt
+                'udpOptからsidを抜き出す
+                Dim sp As Integer = udpOpt.IndexOf("/sid ")
+                Dim ep As Integer = udpOpt.IndexOf(" ", sp + "/sid ".Length)
+                Dim sid As Integer = 0
+                If sp >= 0 And ep > sp Then
+                    sid = Val(udpOpt.Substring(sp + "/sid ".Length, ep - sp - "/sid ".Length))
+                End If
+                If sid > 0 Then
+                    Dim j As Integer = Array.IndexOf(ch_list, sid)
+                    If j >= 0 Then
+                        r = ch_list(j).jigyousha
+                    End If
+                End If
+            End If
+        End If
+        Return r
+    End Function
 
     '現在稼働中のlistナンバーをnumでソートして返す
     Public Function get_live_index_sort() As Object

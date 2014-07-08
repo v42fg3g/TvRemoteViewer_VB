@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.14"
+    Private version As String = "TvRemoteViewer_VB version 0.15"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -235,6 +235,9 @@ Public Class Form1
         search_BonDriver()
         search_ServiceID()
         ComboBoxServiceID.Text = ServiceID_temp '前回終了時に選択していたものをセット
+
+        'チャンネル名一覧を読み込む
+        ch_sid_load()
 
         'httpサーバースタート
         log1write("httpサーバーを起動しています")
@@ -547,7 +550,6 @@ Public Class Form1
         If FolderBrowserDialog1.ShowDialog(Me) = DialogResult.OK Then
             '選択されたフォルダを表示する
             r = FolderBrowserDialog1.SelectedPath
-            'Debug.Print(FolderBrowserDialog1.SelectedPath)
         End If
 
         Return r
