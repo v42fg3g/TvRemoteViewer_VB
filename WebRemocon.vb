@@ -61,6 +61,32 @@ Class WebRemocon
         Public opt As String 'VLCオプション文字列
     End Structure
 
+    'htmlキャッシュ用
+    'index.html内 %SELECTBONSIDCH%用 WEB_make_select_Bondriver_html()で作成されたhtml
+    Private html_selectbonsidch_a As String = ""
+    Private html_selectbonsidch_b As String = ""
+
+    'htmlキャッシュ用
+    'bondriver毎の<select><option>
+    Public BonDriver_select_html() As bh_structure
+    Public Structure bh_structure
+        Public BonDriver As String
+        Public html As String
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            'indexof用
+            Dim pF As String = CType(obj, String) '検索内容を取得
+            If pF = "" Then '空白である場合
+                Return False '対象外
+            Else
+                If Me.BonDriver = pF Then
+                    Return True '一致した
+                Else
+                    Return False '一致しない
+                End If
+            End If
+        End Function
+    End Structure
+
     Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String(), ByVal id As String, ByVal pass As String)
         'Public Sub New(udpPort As Integer, wwwroot As String, wwwport As Integer) ', num As Integer)
         '初期化 
@@ -675,69 +701,77 @@ Class WebRemocon
         Dim bons() As String = Nothing
         Dim bons_n As Integer = 0
 
-        Dim bondriver_path As String = Me._BonDriverPath.ToString
-        If bondriver_path.Length = 0 Then
-            '指定が無い場合はUDPAPPと同じフォルダにあると見なす
-            bondriver_path = filepath2path(Me._udpApp.ToString)
-        End If
-        Try
-            For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
-                Dim s As String = stFilePath & System.Environment.NewLine
-                'フルパスファイル名がsに入る
-                Dim fpf As String = trim8(s)
-                If s.IndexOf("\") >= 0 Then
-                    'ファイル名だけを取り出す
-                    Dim k As Integer = s.LastIndexOf("\")
-                    s = trim8(s.Substring(k + 1))
-                End If
-                Dim sl As String = s.ToLower() '小文字に変換
-                '表示しないBonDriverかをチェック
-                If Me._BonDriver_NGword IsNot Nothing Then
-                    For j As Integer = 0 To Me._BonDriver_NGword.Length - 1
-                        If sl.IndexOf(Me._BonDriver_NGword(j)) >= 0 Then
-                            sl = ""
-                        End If
-                    Next
-                End If
-                If sl.IndexOf("bondriver") = 0 Then
-                    'セレクトボックス用にBonDriverを記録しておく
-                    ReDim Preserve bons(bons_n)
-                    bons(bons_n) = sl
-                    bons_n += 1
-                End If
-            Next
-        Catch ex As Exception
-        End Try
+        If Me.html_selectbonsidch_a.Length = 0 And Me.html_selectbonsidch_b.Length = 0 Then
+            '初めの1回　まだhtmlができていない
+            Dim bondriver_path As String = Me._BonDriverPath.ToString
+            If bondriver_path.Length = 0 Then
+                '指定が無い場合はUDPAPPと同じフォルダにあると見なす
+                bondriver_path = filepath2path(Me._udpApp.ToString)
+            End If
+            Try
+                For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
+                    Dim s As String = stFilePath & System.Environment.NewLine
+                    'フルパスファイル名がsに入る
+                    Dim fpf As String = trim8(s)
+                    If s.IndexOf("\") >= 0 Then
+                        'ファイル名だけを取り出す
+                        Dim k As Integer = s.LastIndexOf("\")
+                        s = trim8(s.Substring(k + 1))
+                    End If
+                    Dim sl As String = s.ToLower() '小文字に変換
+                    '表示しないBonDriverかをチェック
+                    If Me._BonDriver_NGword IsNot Nothing Then
+                        For j As Integer = 0 To Me._BonDriver_NGword.Length - 1
+                            If sl.IndexOf(Me._BonDriver_NGword(j)) >= 0 Then
+                                sl = ""
+                            End If
+                        Next
+                    End If
+                    If sl.IndexOf("bondriver") = 0 Then
+                        'セレクトボックス用にBonDriverを記録しておく
+                        ReDim Preserve bons(bons_n)
+                        bons(bons_n) = sl
+                        bons_n += 1
+                    End If
+                Next
+            Catch ex As Exception
+            End Try
 
-        Dim i As Integer = 0
-        If bons IsNot Nothing Then
-            If bons.Length > 0 Then
-                'BonDriver一覧
-                html &= atag(1)
-                html &= "<script type=""text/javascript"" src=""ConnectedSelect.js""></script>" & vbCrLf
-                html &= "<select id=""SEL1"" name=""BonDriver"">" & vbCrLf
-                html &= "<option value="""">---</option>" & vbCrLf
-                For i = 0 To bons.Length - 1
-                    html &= "<option value=""" & bons(i) & """>" & bons(i) & "</option>" & vbCrLf
-                Next
-                html &= "</select>" & vbCrLf
-                html &= atag(2)
-                '各BonDriverに対応したチャンネルを書き込む
-                html &= "<select id=""SEL2"" name=""Bon_Sid_Ch"">" & vbCrLf
-                html &= "<option value="""">---</option>" & vbCrLf
-                For i = 0 To bons.Length - 1
-                    html &= "<optgroup label=""" & bons(i) & """>" & vbCrLf
-                    '局名を書き込む
-                    html &= WEB_search_ServiceID(bondriver_path, bons(i), 0)
-                    html &= "</optgroup>" & vbCrLf
-                Next
-                html &= "</select>" & vbCrLf
-                html &= "<script type=""text/javascript"">" & vbCrLf
-                html &= "ConnectedSelect(['SEL1','SEL2']);" & vbCrLf
-                html &= "</script>" & vbCrLf
-                html &= atag(3)
+            Dim i As Integer = 0
+            If bons IsNot Nothing Then
+                If bons.Length > 0 Then
+                    'BonDriver一覧
+
+                    Me.html_selectbonsidch_a &= "<script type=""text/javascript"" src=""ConnectedSelect.js""></script>" & vbCrLf
+                    Me.html_selectbonsidch_a &= "<select id=""SEL1"" name=""BonDriver"">" & vbCrLf
+                    Me.html_selectbonsidch_a &= "<option value="""">---</option>" & vbCrLf
+                    For i = 0 To bons.Length - 1
+                        Me.html_selectbonsidch_a &= "<option value=""" & bons(i) & """>" & bons(i) & "</option>" & vbCrLf
+                    Next
+                    Me.html_selectbonsidch_a &= "</select>" & vbCrLf
+
+                    '各BonDriverに対応したチャンネルを書き込む
+                    Me.html_selectbonsidch_b &= "<select id=""SEL2"" name=""Bon_Sid_Ch"">" & vbCrLf
+                    Me.html_selectbonsidch_b &= "<option value="""">---</option>" & vbCrLf
+                    For i = 0 To bons.Length - 1
+                        Me.html_selectbonsidch_b &= "<optgroup label=""" & bons(i) & """>" & vbCrLf
+                        '局名を書き込む
+                        Me.html_selectbonsidch_b &= WEB_search_ServiceID(bondriver_path, bons(i), 0)
+                        Me.html_selectbonsidch_b &= "</optgroup>" & vbCrLf
+                    Next
+                    Me.html_selectbonsidch_b &= "</select>" & vbCrLf
+                    Me.html_selectbonsidch_b &= "<script type=""text/javascript"">" & vbCrLf
+                    Me.html_selectbonsidch_b &= "ConnectedSelect(['SEL1','SEL2']);" & vbCrLf
+                    Me.html_selectbonsidch_b &= "</script>" & vbCrLf
+                End If
             End If
         End If
+
+        html &= atag(1)
+        html &= Me.html_selectbonsidch_a
+        html &= atag(2)
+        html &= Me.html_selectbonsidch_b
+        html &= atag(3)
 
         Return html
     End Function
@@ -746,33 +780,75 @@ Class WebRemocon
     Private Function WEB_search_ServiceID(ByVal bondriver_path As String, ByVal bondriver As String, ByVal BonDriverWrite As Integer) As String
         Dim html As String = ""
         If bondriver.Length > 0 Then
-
-            Dim filename As String
-            If bondriver_path.Length > 0 Then
-                filename = bondriver_path & "\" & bondriver.Replace(".dll", ".ch2")
-            Else
-                filename = bondriver.Replace(".dll", ".ch2")
+            Dim k As Integer = -1
+            If Me.BonDriver_select_html IsNot Nothing Then
+                If Me.BonDriver_select_html.Length > 0 Then
+                    k = Array.IndexOf(Me.BonDriver_select_html, bondriver)
+                End If
             End If
-            Dim line() As String = file2line(filename)
-            If line IsNot Nothing Then
-                For i As Integer = 0 To line.Length - 1
-                    If line(i).IndexOf(";") < 0 Then
-                        Dim s() As String = line(i).Split(",")
-                        If s.Length = 9 Then
-                            If BonDriverWrite = 1 Then
+            If k >= 0 Then
+                html = Me.BonDriver_select_html(k).html
+            Else
+                '追加
+                Dim j As Integer = 0
+                If Me.BonDriver_select_html IsNot Nothing Then
+                    j = Me.BonDriver_select_html.Length
+                End If
+                ReDim Preserve Me.BonDriver_select_html(j)
+
+                'サービスIDと放送局名用
+                Dim si As Integer = 0
+                If ch_list IsNot Nothing Then
+                    si = ch_list.Length
+                End If
+
+                Dim filename As String
+                If bondriver_path.Length > 0 Then
+                    filename = bondriver_path & "\" & bondriver.Replace(".dll", ".ch2")
+                Else
+                    filename = bondriver.Replace(".dll", ".ch2")
+                End If
+                Dim line() As String = file2line(filename)
+                If line IsNot Nothing Then
+                    For i As Integer = 0 To line.Length - 1
+                        If line(i).IndexOf(";") < 0 Then
+                            Dim s() As String = line(i).Split(",")
+                            If s.Length = 9 Then
+                                'If BonDriverWrite = 1 Then
                                 html &= "<option value=""" & bondriver & " ," & s(5) & "," & s(1) & """>" & s(0) & "</option>" & vbCrLf
-                            Else
-                                'Bondriverはすでに設定済みなので字数節約のため空白
-                                html &= "<option value="" ," & s(5) & "," & s(1) & """>" & s(0) & "</option>" & vbCrLf
+                                'Else
+                                ''Bondriverはすでに設定済みなので字数節約のため空白
+                                'html &= "<option value="" ," & s(5) & "," & s(1) & """>" & s(0) & "</option>" & vbCrLf
+                                'End If
+
+                                'serviceIDと放送局名を記録しておく
+                                If ch_list IsNot Nothing Then
+                                    If Array.IndexOf(ch_list, s(5)) < 0 Then
+                                        ReDim Preserve ch_list(si)
+                                        ch_list(si).sid = s(5)
+                                        ch_list(si).jigyousha = s(0)
+                                        si += 1
+                                    End If
+                                Else
+                                    ReDim Preserve ch_list(0)
+                                    ch_list(0).sid = s(5)
+                                    ch_list(0).jigyousha = s(0)
+                                    si += 1
+                                End If
                             End If
                         End If
-                    End If
-                Next
+                    Next
+                End If
+
+                'キャッシュに記録
+                Me.BonDriver_select_html(j).BonDriver = bondriver
+                Me.BonDriver_select_html(j).html = html
             End If
         End If
         Return html
     End Function
 
+    '配信準備中の進歩度を返す
     Private Function check_m3u8_ts_status(ByVal num As Integer) As Integer
         Dim r As Integer = 0 '1=m3u8無,ts無、2=m3u8有、123ts無、3=m3u8有、～ts有
         'm3u8が存在していればViewTV1_waiting.htmlのrefresh先を書き換える

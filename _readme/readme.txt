@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.15
+TvRemoteViewer_VB v0.16
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
 
@@ -208,9 +208,8 @@ TvRemoteViewer_VB v0.15
 	0.13	ffmpeg使用時、BS1＆BSプレミアム視聴時のみvlcに切り替えるオプションをVideoPath.txtに追加
 	0.14	%FILEROOT%指定が全く機能していなかったバグを修正し併せてViewTV.htmlを修正した
 	0.15	ストリーム視聴ボタンに放送局名を表示するようにした
+	0.16	BonDriverと放送局を取得するファイルアクセスを極力減らすようにした。html表示高速化
 
 
 
 ※ConnectedSelect.jsはhttp://d.hatena.ne.jp/Mars/20071109のスクリプトを使用させていただきました。
-※ch_sid.txtはNicoJKPlayModのjkch.sh.txtを参照し難視聴部分と放送局名に修正を加えたものです。
-各ソフトの作者様ありがとうございます。
