@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.13
+TvRemoteViewer_VB v0.14
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
 
@@ -86,6 +86,7 @@ TvRemoteViewer_VB v0.13
 	%SELECTCH%			ViewTV.html内で番組を選択する<SELECT>を作成する
 	%WIDTH%				ビデオの幅
 	%HEIGHT%			ビデオの高さ
+	%FILEROOT%			.m3u8が存在する相対フォルダ
 
 
 	・なお、%PROCBONLIST%、%SELECTCH%、%VIEWBUTTONS%、%SELECTBONSIDCH%　に対しては、要素の前中後に表示するhtmlタグを指定できます。要素自体が存在しない場合は表示されません。
@@ -205,6 +206,7 @@ TvRemoteViewer_VB v0.13
 		コンソール非表示に指定してもVLCのコンソールが表示されてしまうバグを修正
 		UDP&HLSオプションをログに表示するタイミングを修正
 	0.13	ffmpeg使用時、BS1＆BSプレミアム視聴時のみvlcに切り替えるオプションをVideoPath.txtに追加
+	0.14	%FILEROOT%指定が全く機能していなかったバグを修正し併せてViewTV.htmlを修正した
 
 
 

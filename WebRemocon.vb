@@ -416,6 +416,29 @@ Class WebRemocon
                                 s = s.Replace("%SELECTCH%", vhtml)
                                 s = s.Replace("%SELECTCH:" & gt(0) & "%", vhtml)
                             End If
+
+                        End If
+
+                        '%FILEROOT%変換
+                        If s.IndexOf("%FILEROOT%") >= 0 Then
+                            Dim fileroot As String = Me._fileroot
+                            If Me._fileroot.Length = 0 Then
+                                fileroot = Me._wwwroot
+                            End If
+                            '相対アドレスに変換
+                            fileroot = fileroot.Replace(Me._wwwroot, "")
+                            If fileroot.Length > 0 Then
+                                '先頭が\なら削除
+                                If fileroot.Substring(0, 1) = "\" Then
+                                    Try
+                                        fileroot = fileroot.Substring(1)
+                                    Catch ex As Exception
+                                    End Try
+                                End If
+                                fileroot = fileroot.Replace("\", "/")
+                                fileroot &= "/"
+                            End If
+                            s = s.Replace("%FILEROOT%", fileroot)
                         End If
 
                         'ファイル選択ページ用
@@ -744,20 +767,26 @@ Class WebRemocon
     Private Function check_m3u8_ts_status(ByVal num As Integer) As Integer
         Dim r As Integer = 0 '1=m3u8無,ts無、2=m3u8有、123ts無、3=m3u8有、～ts有
         'm3u8が存在していればViewTV1_waiting.htmlのrefresh先を書き換える
-        Dim wwwroot As String = Me._wwwroot & "\"
+        Dim fileroot As String = Me._fileroot
+        If fileroot.Length = 0 Then
+            fileroot = Me._wwwroot
+        End If
+        fileroot &= "\"
+
+        Debug.Print(fileroot & "]")
 
         ' 必要な変数を宣言する
         Dim stPrompt As String = String.Empty
         Dim s As String
 
-        If file_exist(wwwroot & "mystream" & num.ToString & ".m3u8") <= 0 Then
+        If file_exist(fileroot & "mystream" & num.ToString & ".m3u8") <= 0 Then
             'm3u8無し
             r = 0
         Else
             'm3u8有り
             'tsチェック
             Dim ts_count As Integer = 0
-            For Each stFilePath As String In System.IO.Directory.GetFiles(wwwroot, "mystream" & num.ToString & "-*.ts")
+            For Each stFilePath As String In System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "-*.ts")
                 s = stFilePath & System.Environment.NewLine
                 ts_count += 1
             Next
