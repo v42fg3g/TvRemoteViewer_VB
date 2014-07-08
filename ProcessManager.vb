@@ -582,7 +582,10 @@ Public Class ProcessManager
                     sid = Val(udpOpt.Substring(sp + "/sid ".Length, ep - sp - "/sid ".Length))
                 End If
                 If sid > 0 Then
-                    Dim j As Integer = Array.IndexOf(ch_list, sid)
+                    Dim j As Integer = -1
+                    If ch_list IsNot Nothing Then
+                        j = Array.IndexOf(ch_list, sid)
+                    End If
                     If j >= 0 Then
                         r = ch_list(j).jigyousha
                     End If

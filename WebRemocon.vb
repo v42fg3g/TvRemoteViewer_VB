@@ -983,7 +983,12 @@ Class WebRemocon
 
         'log1write("HLS option=" & hlsOpt)
 
-        Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
+        Try
+            Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
+        Catch ex As Exception
+            '設定しないうちにスタートしようとすると例外が起こる
+            Exit Sub
+        End Try
         '★プロセスを起動
         Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, stream_mode, resolution)
     End Sub

@@ -236,9 +236,6 @@ Public Class Form1
         search_ServiceID()
         ComboBoxServiceID.Text = ServiceID_temp '前回終了時に選択していたものをセット
 
-        'チャンネル名一覧を読み込む
-        'ch_sid_load()
-
         'httpサーバースタート
         log1write("httpサーバーを起動しています")
         StartHttpServer()
