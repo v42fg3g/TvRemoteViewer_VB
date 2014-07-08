@@ -204,4 +204,20 @@ Module モジュール_ファイル
         End If
         Return r
     End Function
+
+    'プログラムが存在するディレクトリにカレントディレクトリ変更
+    Public Sub F_set_ppath4program()
+        Dim ppath As String = System.Reflection.Assembly.GetExecutingAssembly().Location
+        Dim psp As Integer
+        If ppath.Length > 0 Then
+            psp = ppath.LastIndexOf("\")
+            If psp >= 0 Then
+                ppath = ppath.Substring(0, psp + 1)
+            Else
+                ppath = ""
+            End If
+        End If
+        System.IO.Directory.SetCurrentDirectory(ppath)
+    End Sub
+
 End Module

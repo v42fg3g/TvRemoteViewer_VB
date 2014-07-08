@@ -1004,7 +1004,9 @@ Class WebRemocon
                                     Next
                                 End If
                             Case "AddSubFolder"
-                                Me._addsubfolder = Val(youso(1).ToString)
+                                Me._AddSubFolder = Val(youso(1).ToString)
+                            Case "BS1_hlsApp"
+                                BS1_hlsApp = trim8(youso(1).ToString)
                         End Select
                     End If
                 Next

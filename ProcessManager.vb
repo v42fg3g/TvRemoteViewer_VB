@@ -49,6 +49,66 @@ Public Class ProcessManager
         Return r
     End Function
 
+    'BS1用にffmpeg用オプションからvlcオプションに書き換え
+    Public Function translate_ffmpeg2vlc(hlsOpt As String) As String
+        Dim r As String = ""
+
+        'カレントディレクトリに変更
+        F_set_ppath4program()
+        'HLS_option_VLC.txtを読み込む
+        Dim ho_vlc() As String = file2line("HLS_option_VLC.txt")
+
+        If ho_vlc IsNot Nothing Then
+            If ho_vlc.Length > 0 Then
+                '解像度を抜き出す
+                '_listから取得resolutionを取得
+                Dim rez As String = ""
+                Dim sp1, sp2 As Integer
+                Try
+                    sp1 = hlsOpt.IndexOf("-s ")
+                    sp2 = hlsOpt.IndexOf(" ", sp1 + 3)
+                    rez = hlsOpt.Substring(sp1 + "-s ".Length, sp2 - sp1 - "-s ".Length)
+                Catch ex As Exception
+                    rez = ""
+                End Try
+                'チェック
+                Dim d() As String = rez.Split("x")
+                If d.Length = 2 Then
+                    If Val(d(0)) > 0 And Val(d(1)) > 0 Then
+                        'ok
+                    Else
+                        'エラーの場合はデフォルト
+                        rez = "640x360"
+                    End If
+                Else
+                    'エラーの場合はデフォルト
+                    rez = "640x360"
+                End If
+                rez = "[" & rez & "]"
+
+                '解像度に合ったオプションを取り出す
+                For i As Integer = 0 To ho_vlc.Length - 1
+                    If ho_vlc(i).IndexOf(rez) = 0 Then
+                        Try
+                            r = ho_vlc(i).Substring(rez.Length)
+                            Exit For
+                        Catch ex As Exception
+                            'エラーが起こったときは
+                            r = ""
+                        End Try
+                    End If
+                Next
+            End If
+        End If
+
+        If r.Length = 0 Then
+            'どうしてもエラーの場合は
+            r = "-I dummy udp://@:%UDPPORT% --sout ""#transcode{width=640,height=360,vcodec=h264,vb=1000,fps=29.97,venc=x264{aud,profile=baseline,level=30,keyint=30,bframes=0,ref=1,nocabac},acodec=aac,ab=128,channels=2,aenc=avcodec{strict=-2},samplerate=48000,audio-sync,hurry-up}:std{access=livehttp{seglen=5,delsegs=true,numsegs=5,index=%WWWROOT%\mystream.m3u8,index-url=mystream-########.ts},mux=ts{use-key-frames},dst=%WWWROOT%\mystream-########.ts}"" --no-ts-es-id-pid --sout-ts-pid-audio=68 --intf=""rc"" --rc-host=%rc-host% vlc://quit"""
+        End If
+
+        Return r
+    End Function
+
     Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, resolution As String)
         '★起動している場合は既存のプロセスを止める
         stopProc(num)
@@ -91,6 +151,7 @@ Public Class ProcessManager
                 'コマンドライン引数を指定する
                 udpPsi.Arguments = udpOpt
                 'ログ表示
+                log1write("UDP アプリ=" & udpApp)
                 log1write("UDP option=" & udpOpt)
                 'アプリケーションを起動する
                 Dim udpProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(udpPsi)
@@ -142,6 +203,21 @@ Public Class ProcessManager
 
                     System.Threading.Thread.Sleep(1000)
 
+                    'NHK BS1、BSプレミアム対策 ■暫定
+                    If hlsApp.IndexOf("ffmpeg") >= 0 And (udpOpt.IndexOf("/sid 101 ") > 0 Or udpOpt.IndexOf("/sid 103 ") > 0) And BS1_hlsApp.IndexOf("vlc.exe") >= 0 Then
+                        'hlsAppとhlsOptをVLCに置き換える
+                        Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt)
+                        If hlsOpt_temp.Length > 0 Then
+                            hlsOpt = hlsOpt_temp
+                            hlsApp = BS1_hlsApp
+                            hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPort)
+                            hlsOpt = hlsOpt.Replace("%WWWROOT%", Me._wwwroot)
+                            hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
+                            hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".")
+                            hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-")
+                        End If
+                    End If
+
                     '★HLSソフトを実行
                     'ProcessStartInfoオブジェクトを作成する
                     Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
@@ -165,6 +241,7 @@ Public Class ProcessManager
                         End If
                     End If
                     'ログ表示
+                    log1write("HLS アプリ=" & hlsApp)
                     log1write("HLS option=" & hlsOpt)
                     'アプリケーションを起動する
                     Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
@@ -201,6 +278,7 @@ Public Class ProcessManager
                     hlsPsi.UseShellExecute = False
                 End If
                 'ログ表示
+                log1write("HLS アプリ=" & hlsApp)
                 log1write("HLS option=" & hlsOpt)
                 'アプリケーションを起動する
                 Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
@@ -219,6 +297,22 @@ Public Class ProcessManager
         log1write("現在稼働中のNumber：" & js)
 
     End Sub
+
+    'numから_list(i)のiを取得する ■未使用
+    Public Function num2i(ByVal num As Integer) As Integer
+        Dim r As Integer = -1
+
+        If Me._list.Count > 0 Then
+            For i As Integer = 0 To Me._list.Count - 1
+                If Me._list(i)._num = num Then
+                    r = i
+                    Exit For
+                End If
+            Next
+        End If
+
+        Return r
+    End Function
 
     'プロセスが順調に動いているかチェック
     Public Sub checkAllProc()

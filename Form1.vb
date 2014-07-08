@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.12"
+    Private version As String = "TvRemoteViewer_VB version 0.13"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -183,7 +183,7 @@ Public Class Form1
         End If
     End Sub
 
-    'index.html編集
+    'VideoPath.txt編集
     Private Sub Button1_Click(sender As System.Object, e As System.EventArgs) Handles Button1.Click
         Try
             'カレントディレクトリ変更
@@ -810,20 +810,5 @@ Public Class Form1
         s = Trim(s)
         Return s
     End Function
-
-    'プログラムが存在するディレクトリにカレントディレクトリ変更
-    Public Sub F_set_ppath4program()
-        Dim ppath As String = System.Reflection.Assembly.GetExecutingAssembly().Location
-        Dim psp As Integer
-        If ppath.Length > 0 Then
-            psp = ppath.LastIndexOf("\")
-            If psp >= 0 Then
-                ppath = ppath.Substring(0, psp + 1)
-            Else
-                ppath = ""
-            End If
-        End If
-        System.IO.Directory.SetCurrentDirectory(ppath)
-    End Sub
 
 End Class

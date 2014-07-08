@@ -8,3 +8,11 @@ VideoPath =
 ;サブフォルダーを（0=含めない 1=含める）
 
 AddSubFolder = 1
+
+
+;ffmpeg使用時にNHK BS1とBSプレミアムの音声が聞こえないことへの暫定的処置
+;BS1とBSプレミアムの再生時のみvlcに切り替えます
+;必要ない場合は空白にしておいてください。
+;例　BS1_hlsApp = "D:\TvRemoteViewer\vlc\vlc.exe"
+
+BS1_hlsApp = 
