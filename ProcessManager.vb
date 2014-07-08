@@ -211,7 +211,12 @@ Public Class ProcessManager
                             hlsOpt = hlsOpt_temp
                             hlsApp = BS1_hlsApp
                             hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPort)
-                            hlsOpt = hlsOpt.Replace("%WWWROOT%", Me._wwwroot)
+                            Dim fr As String = Me._fileroot
+                            If fr.Length = 0 Then
+                                fr = Me._wwwroot
+                            End If
+                            hlsOpt = hlsOpt.Replace("%WWWROOT%", fr) '必要ないが過去のHLS_option_VLC.txtとの互換性のため
+                            hlsOpt = hlsOpt.Replace("%FILEROOT%", fr)
                             hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
                             hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".")
                             hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-")
