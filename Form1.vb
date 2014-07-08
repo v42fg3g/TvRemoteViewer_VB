@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.13"
+    Private version As String = "TvRemoteViewer_VB version 0.13a"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -64,7 +64,7 @@ Public Class Form1
             chk_timer1 = 1
 
             'VLCのcrashダイアログが出ていたら消す
-            If textBoxHlsApp.Text.IndexOf("vlc.exe") >= 0 Then
+            If textBoxHlsApp.Text.IndexOf("vlc.exe") >= 0 Or BS1_hlsApp.IndexOf("vlc.exe") >= 0 Then
                 Me._worker.check_crash_dialog()
             End If
 
