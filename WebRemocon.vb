@@ -574,7 +574,7 @@ Class WebRemocon
             '指定が無い場合はUDPAPPと同じフォルダにあると見なす
             bonp = filepath2path(Me._udpApp.ToString)
         End If
-        Dim vhtml As String = WEB_search_ServiceID(bonp, bon, 1)
+        Dim vhtml As String = WEB_search_ServiceID(bonp, bon, 1, num)
         If vhtml.Length > 0 Then
             vhtml = "<option value="""">---</option>" & vbCrLf & vhtml
             vhtml = "<select name=""Bon_Sid_Ch"">" & vbCrLf & vhtml
@@ -617,7 +617,7 @@ Class WebRemocon
                                     filename = fullpath.Substring(k + 1)
                                 End If
                                 filename = trim8(filename)
-                                If filename.IndexOf(".ts") > 0 Or filename.IndexOf(".mp4") Then
+                                If filename.IndexOf(".db") < 0 Then
                                     'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
                                     fullpath = System.Web.HttpUtility.UrlEncode(fullpath)
                                     shtml &= "<option value=""" & fullpath & """>" & filename & "</option>" & vbCrLf
@@ -777,7 +777,7 @@ Class WebRemocon
     End Function
 
     'HTML内置換用　番組選局セレクトボックスを作成（WEB_make_select_Bondriver_html補助）
-    Private Function WEB_search_ServiceID(ByVal bondriver_path As String, ByVal bondriver As String, ByVal BonDriverWrite As Integer) As String
+    Private Function WEB_search_ServiceID(ByVal bondriver_path As String, ByVal bondriver As String, ByVal BonDriverWrite As Integer, Optional ByVal num As Integer = 0) As String
         Dim html As String = ""
         If bondriver.Length > 0 Then
             Dim k As Integer = -1
@@ -815,7 +815,7 @@ Class WebRemocon
                             Dim s() As String = line(i).Split(",")
                             If s.Length = 9 Then
                                 'If BonDriverWrite = 1 Then
-                                html &= "<option value=""" & bondriver & " ," & s(5) & "," & s(1) & """>" & s(0) & "</option>" & vbCrLf
+                                html &= "<option value=""" & bondriver & "," & s(5) & "," & s(1) & """>" & s(0) & "</option>" & vbCrLf
                                 'Else
                                 ''Bondriverはすでに設定済みなので字数節約のため空白
                                 'html &= "<option value="" ," & s(5) & "," & s(1) & """>" & s(0) & "</option>" & vbCrLf
@@ -845,6 +845,17 @@ Class WebRemocon
                 Me.BonDriver_select_html(j).html = html
             End If
         End If
+
+        If num > 0 Then
+            '配信ストリームの指定があった場合は放送局のsidを取得してselectedする
+            Dim sid As Integer = Me._procMan.get_sid(num)
+            Dim sp As Integer = html.IndexOf("," & sid.ToString & ",")
+            Dim ep As Integer = html.IndexOf(">", sp + 1)
+            If sp > 0 And ep > sp Then
+                html = html.Substring(0, ep) & " selected" & html.Substring(ep)
+            End If
+        End If
+
         Return html
     End Function
 

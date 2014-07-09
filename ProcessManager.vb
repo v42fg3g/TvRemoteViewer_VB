@@ -1008,6 +1008,23 @@ Public Class ProcessManager
             End If
         Next
     End Sub
+
+    'numから放送中のサービスIDを取得する
+    Public Function get_sid(ByVal num As Integer) As Integer
+        Dim sid As Integer = 0
+        Dim i As Integer = num2i(num)
+        If i >= 0 Then
+            Dim udpOpt As String = Me._list(i)._udpOpt
+            'udpOptから/sidを抜き出す
+            Dim sp As Integer = udpOpt.IndexOf("/sid ")
+            Dim ep As Integer = udpOpt.IndexOf(" ", sp + "/sid ".Length)
+            If sp >= 0 And ep > sp Then
+                sid = Val(udpOpt.Substring(sp + "/sid ".Length, ep - sp - "/sid ".Length))
+            End If
+        End If
+        Return sid
+        Debug.Print("sid=" & sid)
+    End Function
 End Class
 
 
