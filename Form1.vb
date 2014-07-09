@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.17"
+    Private version As String = "TvRemoteViewer_VB version 0.18"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -385,10 +385,15 @@ Public Class Form1
             Me._webThread.Abort()
         Catch ex As Exception
         End Try
+
+        'ウィンドウの位置を保存
+        save_form_status()
     End Sub
 
-    'ウィンドウの位置を保存
     Private Sub Form1_FormClosed(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
+    End Sub
+
+    Private Sub save_form_status()
         Dim s As String = ""
 
         s &= "TextBoxWWWroot=" & TextBoxWWWroot.Text & vbCrLf

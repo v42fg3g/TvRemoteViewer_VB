@@ -228,14 +228,6 @@ Public Class ProcessManager
                     Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
                     '起動するファイルのパスを指定する
                     hlsPsi.FileName = hlsApp
-                    'コマンドライン引数を指定する
-                    hlsPsi.Arguments = hlsOpt
-                    If ShowConsole = False Then
-                        ' コンソール・ウィンドウを開かない
-                        hlsPsi.CreateNoWindow = True
-                        ' シェル機能を使用しない
-                        hlsPsi.UseShellExecute = False
-                    End If
                     'VLCは上の非表示コマンドが効かないのでオプションを書き換える
                     If ShowConsole = False And hlsApp.IndexOf("vlc") >= 0 Then
                         If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
@@ -244,6 +236,14 @@ Public Class ProcessManager
                         If hlsOpt.IndexOf("--rc-quiet") < 0 And hlsOpt.IndexOf("--rc-host=") >= 0 Then
                             hlsOpt = hlsOpt.Replace("--rc-host=", "--rc-quiet --rc-host=")
                         End If
+                    End If
+                    'コマンドライン引数を指定する
+                    hlsPsi.Arguments = hlsOpt
+                    If ShowConsole = False Then
+                        ' コンソール・ウィンドウを開かない
+                        hlsPsi.CreateNoWindow = True
+                        ' シェル機能を使用しない
+                        hlsPsi.UseShellExecute = False
                     End If
                     'ログ表示
                     log1write("HLS アプリ=" & hlsApp)
@@ -293,8 +293,8 @@ Public Class ProcessManager
                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
                 Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, resolution)
                 Me._list.Add(pb)
-        End If
-        'End If
+            End If
+            'End If
         End If
 
         '現在稼働中のlist(i)._numをログに表示

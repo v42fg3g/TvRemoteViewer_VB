@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.17
+TvRemoteViewer_VB v0.18
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
 
@@ -211,6 +211,7 @@ TvRemoteViewer_VB v0.17
 	0.16	BonDriverと放送局を取得するファイルアクセスを極力減らすようにした。html表示高速化
 	0.17	%FILEROOT%が指定されているときにVLCが正しい場所にファイルを作らないバグを修正
 		HLS_option_VLC.txtの修正
+	0.18	コンソールを表示しない設定にしていてもVLCの窓が表示されてしまっていたバグを修正
 
 
 
