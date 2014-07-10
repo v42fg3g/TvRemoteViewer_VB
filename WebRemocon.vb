@@ -495,6 +495,11 @@ Class WebRemocon
                             End If
                         End If
 
+                        '番組表
+                        If s.IndexOf("%TVPROGRAM-D%") >= 0 Then
+                            s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now())
+                        End If
+
                         sw.WriteLine(s)
                         sw.Flush()
 
@@ -1135,6 +1140,26 @@ Class WebRemocon
                                 Me._AddSubFolder = Val(youso(1).ToString)
                             Case "BS1_hlsApp"
                                 BS1_hlsApp = trim8(youso(1).ToString)
+                            Case "TvProgramD"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgram_ch(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        TvProgram_ch(j) = Val(trim8(clset(j)))
+                                    Next
+                                End If
+                            Case "TvProgramD_NGword"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgram_NGword(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        TvProgram_NGword(j) = trim8(clset(j))
+                                    Next
+                                End If
                         End Select
                     End If
                 Next

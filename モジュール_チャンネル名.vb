@@ -1,7 +1,7 @@
 ﻿Module モジュール_チャンネル名
     '放送局
-    Public ch_list() As sidstructure
-    Public Structure sidstructure
+    Public ch_list() As ch_liststructure
+    Public Structure ch_liststructure
         Public sid As Integer
         Public jigyousha As String
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
