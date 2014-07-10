@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="shift_jis" />
+        <meta name="viewport" content="width=device-width">
+        <title>放映中の番組　地デジ</title>
+		
+		
+        <style type="text/css">
+	        p{
+			}
+
+			p.p_name{
+				background-color:#999999;
+				border:2px solid #999999;
+				color:#ffffff;
+				font-weight: bold;
+			}
+
+			p.p_time{
+				font-size: 9pt;
+				line-height: 1pt;
+			}
+
+			div.p_title{
+				font-size: 11pt;
+				line-height: 1pt;
+			}
+
+			p.p_content{
+				font-size: 9pt;
+			}
+			</style>
+		
+    </head>
+    <body>
+        %TVPROGRAM-D%
+        <br>
+        <input type="button" Value="再読み込み" onClick="location.reload();">
+		<br><br>
+        <input type="button" value="戻る" onClick="history.back(); return false;">
+    </body>
+</html>
