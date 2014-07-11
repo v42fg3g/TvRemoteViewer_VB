@@ -124,6 +124,7 @@
     <Compile Include="ProcessBeans.vb" />
     <Compile Include="ProcessManager.vb" />
     <Compile Include="WebRemocon.vb" />
+    <Compile Include="モジュール_HTMLキャッシュ.vb" />
     <Compile Include="モジュール_NHKBS対策_暫定.vb" />
     <Compile Include="モジュール_ウィンドウ関連.vb" />
     <Compile Include="モジュール_キーボード操作.vb" />

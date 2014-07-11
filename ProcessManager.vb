@@ -1023,7 +1023,6 @@ Public Class ProcessManager
             End If
         End If
         Return sid
-        Debug.Print("sid=" & sid)
     End Function
 End Class
 

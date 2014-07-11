@@ -61,32 +61,6 @@ Class WebRemocon
         Public opt As String 'VLCオプション文字列
     End Structure
 
-    'htmlキャッシュ用
-    'index.html内 %SELECTBONSIDCH%用 WEB_make_select_Bondriver_html()で作成されたhtml
-    Private html_selectbonsidch_a As String = ""
-    Private html_selectbonsidch_b As String = ""
-
-    'htmlキャッシュ用
-    'bondriver毎の<select><option>
-    Public BonDriver_select_html() As bh_structure
-    Public Structure bh_structure
-        Public BonDriver As String
-        Public html As String
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            'indexof用
-            Dim pF As String = CType(obj, String) '検索内容を取得
-            If pF = "" Then '空白である場合
-                Return False '対象外
-            Else
-                If Me.BonDriver = pF Then
-                    Return True '一致した
-                Else
-                    Return False '一致しない
-                End If
-            End If
-        End Function
-    End Structure
-
     Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String(), ByVal id As String, ByVal pass As String)
         'Public Sub New(udpPort As Integer, wwwroot As String, wwwport As Integer) ', num As Integer)
         '初期化 
@@ -322,8 +296,10 @@ Class WebRemocon
                         sw.WriteLine("<body>")
                         sw.WriteLine("配信準備中です..(" & check_m3u8_ts.ToString & ")")
                         sw.WriteLine("<br><br>")
-                        'sw.WriteLine("<FORM><INPUT type=""button"" Value=""戻る"" onClick=""history.go(-1);""></CENTER></P></FORM>")
                         sw.WriteLine("<input type=""button"" value=""トップメニューへ"" onClick=""location.href='index.html'"">")
+                        sw.WriteLine("<br><br>")
+                        sw.WriteLine("<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">")
+                        'sw.WriteLine("<input type=""button"" value=""地デジ番組表へ"" onClick=""location.href='TvProgram.html'"">")
                         sw.WriteLine("</body>")
                         sw.WriteLine("</html>")
                         sw.Flush()
@@ -658,6 +634,8 @@ Class WebRemocon
         r &= body & vbCrLf
         r &= "<br><br>" & vbCrLf
         r &= "<input type=""button"" value=""トップメニューへ"" onClick=""location.href='index.html'"">" & vbCrLf
+        r &= "<br><br>" & vbCrLf
+        r &= "<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">"
         r &= "</body>" & vbCrLf
         r &= "</html>" & vbCrLf
         Return r
@@ -706,7 +684,7 @@ Class WebRemocon
         Dim bons() As String = Nothing
         Dim bons_n As Integer = 0
 
-        If Me.html_selectbonsidch_a.Length = 0 And Me.html_selectbonsidch_b.Length = 0 Then
+        If html_selectbonsidch_a.Length = 0 And html_selectbonsidch_b.Length = 0 Then
             '初めの1回　まだhtmlができていない
             Dim bondriver_path As String = Me._BonDriverPath.ToString
             If bondriver_path.Length = 0 Then
@@ -747,35 +725,35 @@ Class WebRemocon
                 If bons.Length > 0 Then
                     'BonDriver一覧
 
-                    Me.html_selectbonsidch_a &= "<script type=""text/javascript"" src=""ConnectedSelect.js""></script>" & vbCrLf
-                    Me.html_selectbonsidch_a &= "<select id=""SEL1"" name=""BonDriver"">" & vbCrLf
-                    Me.html_selectbonsidch_a &= "<option value="""">---</option>" & vbCrLf
+                    html_selectbonsidch_a &= "<script type=""text/javascript"" src=""ConnectedSelect.js""></script>" & vbCrLf
+                    html_selectbonsidch_a &= "<select id=""SEL1"" name=""BonDriver"">" & vbCrLf
+                    html_selectbonsidch_a &= "<option value="""">---</option>" & vbCrLf
                     For i = 0 To bons.Length - 1
-                        Me.html_selectbonsidch_a &= "<option value=""" & bons(i) & """>" & bons(i) & "</option>" & vbCrLf
+                        html_selectbonsidch_a &= "<option value=""" & bons(i) & """>" & bons(i) & "</option>" & vbCrLf
                     Next
-                    Me.html_selectbonsidch_a &= "</select>" & vbCrLf
+                    html_selectbonsidch_a &= "</select>" & vbCrLf
 
                     '各BonDriverに対応したチャンネルを書き込む
-                    Me.html_selectbonsidch_b &= "<select id=""SEL2"" name=""Bon_Sid_Ch"">" & vbCrLf
-                    Me.html_selectbonsidch_b &= "<option value="""">---</option>" & vbCrLf
+                    html_selectbonsidch_b &= "<select id=""SEL2"" name=""Bon_Sid_Ch"">" & vbCrLf
+                    html_selectbonsidch_b &= "<option value="""">---</option>" & vbCrLf
                     For i = 0 To bons.Length - 1
-                        Me.html_selectbonsidch_b &= "<optgroup label=""" & bons(i) & """>" & vbCrLf
+                        html_selectbonsidch_b &= "<optgroup label=""" & bons(i) & """>" & vbCrLf
                         '局名を書き込む
-                        Me.html_selectbonsidch_b &= WEB_search_ServiceID(bondriver_path, bons(i), 0)
-                        Me.html_selectbonsidch_b &= "</optgroup>" & vbCrLf
+                        html_selectbonsidch_b &= WEB_search_ServiceID(bondriver_path, bons(i), 0)
+                        html_selectbonsidch_b &= "</optgroup>" & vbCrLf
                     Next
-                    Me.html_selectbonsidch_b &= "</select>" & vbCrLf
-                    Me.html_selectbonsidch_b &= "<script type=""text/javascript"">" & vbCrLf
-                    Me.html_selectbonsidch_b &= "ConnectedSelect(['SEL1','SEL2']);" & vbCrLf
-                    Me.html_selectbonsidch_b &= "</script>" & vbCrLf
+                    html_selectbonsidch_b &= "</select>" & vbCrLf
+                    html_selectbonsidch_b &= "<script type=""text/javascript"">" & vbCrLf
+                    html_selectbonsidch_b &= "ConnectedSelect(['SEL1','SEL2']);" & vbCrLf
+                    html_selectbonsidch_b &= "</script>" & vbCrLf
                 End If
             End If
         End If
 
         html &= atag(1)
-        html &= Me.html_selectbonsidch_a
+        html &= html_selectbonsidch_a
         html &= atag(2)
-        html &= Me.html_selectbonsidch_b
+        html &= html_selectbonsidch_b
         html &= atag(3)
 
         Return html
@@ -786,20 +764,20 @@ Class WebRemocon
         Dim html As String = ""
         If bondriver.Length > 0 Then
             Dim k As Integer = -1
-            If Me.BonDriver_select_html IsNot Nothing Then
-                If Me.BonDriver_select_html.Length > 0 Then
-                    k = Array.IndexOf(Me.BonDriver_select_html, bondriver)
+            If BonDriver_select_html IsNot Nothing Then
+                If BonDriver_select_html.Length > 0 Then
+                    k = Array.IndexOf(BonDriver_select_html, bondriver)
                 End If
             End If
             If k >= 0 Then
-                html = Me.BonDriver_select_html(k).html
+                html = BonDriver_select_html(k).html
             Else
                 '追加
                 Dim j As Integer = 0
-                If Me.BonDriver_select_html IsNot Nothing Then
-                    j = Me.BonDriver_select_html.Length
+                If BonDriver_select_html IsNot Nothing Then
+                    j = BonDriver_select_html.Length
                 End If
-                ReDim Preserve Me.BonDriver_select_html(j)
+                ReDim Preserve BonDriver_select_html(j)
 
                 'サービスIDと放送局名用
                 Dim si As Integer = 0
@@ -830,14 +808,18 @@ Class WebRemocon
                                 If ch_list IsNot Nothing Then
                                     If Array.IndexOf(ch_list, s(5)) < 0 Then
                                         ReDim Preserve ch_list(si)
-                                        ch_list(si).sid = s(5)
+                                        ch_list(si).sid = Val(s(5))
                                         ch_list(si).jigyousha = s(0)
+                                        ch_list(si).bondriver = bondriver
+                                        ch_list(si).chspace = Val(s(1))
                                         si += 1
                                     End If
                                 Else
                                     ReDim Preserve ch_list(0)
-                                    ch_list(0).sid = s(5)
+                                    ch_list(0).sid = Val(s(5))
                                     ch_list(0).jigyousha = s(0)
+                                    ch_list(0).bondriver = bondriver
+                                    ch_list(0).chspace = Val(s(1))
                                     si += 1
                                 End If
                             End If
@@ -846,8 +828,8 @@ Class WebRemocon
                 End If
 
                 'キャッシュに記録
-                Me.BonDriver_select_html(j).BonDriver = bondriver
-                Me.BonDriver_select_html(j).html = html
+                BonDriver_select_html(j).BonDriver = bondriver
+                BonDriver_select_html(j).html = html
             End If
         End If
 
@@ -1158,6 +1140,30 @@ Class WebRemocon
                                     ReDim Preserve TvProgram_NGword(clset.Length - 1)
                                     For j = 0 To clset.Length - 1
                                         TvProgram_NGword(j) = trim8(clset(j))
+                                    Next
+                                End If
+                            Case "TvProgramD_BonDriver1st"
+                                TvProgramD_BonDriver1st = trim8(youso(1).ToString)
+                            Case "TvProgramD_channels"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgramD_channels(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        '全角に変換
+                                        TvProgramD_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
+                                    Next
+                                End If
+                            Case "TvProgramD_sort"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgramD_sort(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        '全角に変換
+                                        TvProgramD_sort(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
                                     Next
                                 End If
                         End Select

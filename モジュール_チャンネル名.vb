@@ -4,6 +4,8 @@
     Public Structure ch_liststructure
         Public sid As Integer
         Public jigyousha As String
+        Public bondriver As String
+        Public chspace As Integer
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
             Dim pF As String = CType(obj, String) '検索内容を取得
