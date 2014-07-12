@@ -18,7 +18,7 @@ AddSubFolder = 1
 BS1_hlsApp = 
 
 
-;放映中の番組
+;地デジ番組表
 ;表示したい都道府県コードを記述してください。
 ;例　東京の場合　	TvProgramD = 13
 ;　　福岡＆佐賀の場合	TvProgramD = 40,41
@@ -36,7 +36,7 @@ TvProgramD =
 TvProgramD_NGword = 
 
 
-;地デジ番組表の放送局名からBonDriver.ch2で記述されている放送局名への変換
+;番組表の放送局名からBonDriver.ch2で記述されている放送局名への変換
 ;（地デジ番組表を表示した際に自動判別できていないものを記入してください）
 ;左側が地デジ番組表の放送局名、右側がBonDriver.ch2で記述されている放送局名
 ;例　TvProgramD_channels = "NHK総合:ＮＨＫ総合・東京","フジテレビ:フジテレビジョン"
@@ -44,15 +44,30 @@ TvProgramD_NGword =
 TvProgramD_channels = 
 
 
-;地デジ番組表の並び順
+;番組表の並び順
 ;指定の無い放送局は指定された放送局の後に表示されます
 ;例　TvProgramD_sort = "NHK総合","NHK Eテレ","日本テレビ","TBSテレビ","フジテレビ","テレビ朝日","テレビ東京","TOKYO MX"
 
 TvProgramD_sort = 
 
 
-;地デジ番組表で優先的に割り当てるBonDriver
-;空白にすると自動的に地デジ用BonDriverが割り当てられます
+;番組表で優先的に割り当てるBonDriver（地デジ）
+;特別に指定が無い場合は空白
 ;例　TvProgramD_BonDriver1st = "BonDriver_PT2_t0.dll"
 
 TvProgramD_BonDriver1st = 
+
+
+;番組表で優先的に割り当てるBonDriver（BS/CS)
+;特別に指定が無い場合は空白
+;例　TvProgramS_BonDriver1st = "BonDriver_PT2_s0.dll"
+
+TvProgramS_BonDriver1st =
+
+
+;TvRockのiPhone用番組表URL
+;例　TvProgram_tvrock_url = "http://127.0.0.1:8969/ユーザー名/iphone"
+;一度このiPhone用番組表をブラウザで開いて表示チューナーを選択し予約表示を無しにする必要があります
+;TvRockを使用していない場合は空白
+
+TvProgram_tvrock_url = 

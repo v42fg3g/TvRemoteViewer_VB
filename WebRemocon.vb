@@ -471,9 +471,25 @@ Class WebRemocon
                             End If
                         End If
 
-                        '番組表
+                        '地デジ番組表（通常のネットから取得）
                         If s.IndexOf("%TVPROGRAM-D%") >= 0 Then
-                            s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now())
+                            s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0))
+                        End If
+
+                        'TvRock番組表
+                        If s.IndexOf("%TVPROGRAM-TVROCK%") >= 0 Then
+                            s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999))
+                        End If
+                        'TvRock番組表ボタン
+                        If s.IndexOf("%TVPROGRAM-TVROCK-BUTTON") >= 0 Then
+                            Dim gt() As String = get_atags("%TVPROGRAM-TVROCK-BUTTON:", s)
+                            If TvProgram_tvrock_url.Length > 0 Then
+                                s = s.Replace("%TVPROGRAM-TVROCK-BUTTON:" & gt(0) & "%", gt(1) & "<input type=""button"" value=""TvRock番組表へ"" onClick=""location.href='TvProgram_TvRock.html'"">") & gt(3)
+                                s = s.Replace("%TVPROGRAM-TVROCK-BUTTON%", "<input type=""button"" value=""TvRock番組表へ"" onClick=""location.href='TvProgram_TvRock.html'"">")
+                            Else
+                                s = s.Replace("%TVPROGRAM-TVROCK-BUTTON:" & gt(0) & "%", "")
+                                s = s.Replace("%TVPROGRAM-TVROCK-BUTTON%", "")
+                            End If
                         End If
 
                         sw.WriteLine(s)
@@ -1144,6 +1160,10 @@ Class WebRemocon
                                 End If
                             Case "TvProgramD_BonDriver1st"
                                 TvProgramD_BonDriver1st = trim8(youso(1).ToString)
+                            Case "TvProgramS_BonDriver1st"
+                                TvProgramS_BonDriver1st = trim8(youso(1).ToString)
+                            Case "TvProgram_tvrock_url"
+                                TvProgram_tvrock_url = trim8(youso(1).ToString)
                             Case "TvProgramD_channels"
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                 Dim clset() As String = youso(1).Split(",")
