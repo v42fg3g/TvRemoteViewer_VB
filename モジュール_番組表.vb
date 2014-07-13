@@ -207,13 +207,6 @@ Module モジュール_番組表
                             Dim sr As StreamReader = New StreamReader(st, enc)
                             Dim html As String = sr.ReadToEnd()
 
-                            Debug.Print("===================")
-                            Debug.Print("===================")
-                            Debug.Print("===================")
-                            Debug.Print("===================")
-                            Debug.Print("===================")
-                            Debug.Print(html)
-
                             Dim sp As Integer = html.IndexOf("<eventinfo>")
                             Dim ep As Integer = html.IndexOf("</eventinfo>", sp + 1)
                             While sp >= 0 And ep > sp
@@ -242,11 +235,8 @@ Module モジュール_番組表
                                         r(j).endDateTime = t2s
                                         r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
                                         r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
-
-                                    ElseIf t1 > DateAdd(DateInterval.Day, 1, t) Then
-                                        '過ぎ去ったら途中で中止 時間の無駄
-                                        'と思ったらそうでもなかった
-                                        'Exit While
+                                        '1個みつかればおｋ
+                                        Exit While
                                     End If
                                 Catch ex As Exception
                                 End Try
