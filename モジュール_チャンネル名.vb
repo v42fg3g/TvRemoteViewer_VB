@@ -6,6 +6,7 @@
         Public jigyousha As String
         Public bondriver As String
         Public chspace As Integer
+        Public tsid As Integer
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
             Dim pF As String = CType(obj, String) '検索内容を取得

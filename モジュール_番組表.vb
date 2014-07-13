@@ -11,7 +11,6 @@ Module モジュール_番組表
     Public TvProgramD_sort() As String
     Public TvProgramD_BonDriver1st As String = ""
     Public TvProgramS_BonDriver1st As String = ""
-
     Public TvProgram_tvrock_url As String = ""
     Public TvProgram_EDCB_url As String = ""
 
@@ -92,9 +91,16 @@ Module モジュール_番組表
                                         'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
 
                                         html &= "<span class=""p_name"">" & d(0) & "　<span class=""p_name2"">(" & p.stationDispName & ")</span></span><br>" & vbCrLf 'p.stationDispName
-                                        html &= "<span class=""p_time"">" & startt & " ～" & endt & "</span><br>"
-                                        html &= "<span class=""p_title"">" & p.programTitle & "</span><br>" & vbCrLf
-                                        html &= "<span class=""p_content"">" & p.programContent & "</span><br>" & vbCrLf
+                                        If startt.Length > 0 And endt.Length > 0 Then
+                                            html &= "<span class=""p_time"">" & startt & " ～" & endt & "</span><br>"
+                                        End If
+                                        If p.programTitle.Length > 0 Or p.programContent.Length > 0 Then
+                                            html &= "<span class=""p_title"">" & p.programTitle & "</span><br>" & vbCrLf
+                                            html &= "<span class=""p_content"">" & p.programContent & "</span><br>" & vbCrLf
+                                        Else
+                                            '放送されていない
+                                            html &= "<span class=""p_title"">" & "　" & "</span><br>" & vbCrLf
+                                        End If
                                         'html &= "<br>" & vbCrLf
                                         chkstr &= s4 & ":"
 
@@ -142,15 +148,15 @@ Module モジュール_番組表
                                         End If
                                         html &= "<br><br>" & vbCrLf
                                     End If
+                                    End If
                                 End If
-                            End If
 
-                            ReDim Preserve TvProgram_html(cnt)
-                            TvProgram_html(cnt).stationDispName = StrConv(p.stationDispName, VbStrConv.Wide)
-                            TvProgram_html(cnt).hosokyoku = hosokyoku
-                            TvProgram_html(cnt).html = html
-                            TvProgram_html(cnt).done = 0
-                            cnt += 1
+                                ReDim Preserve TvProgram_html(cnt)
+                                TvProgram_html(cnt).stationDispName = StrConv(p.stationDispName, VbStrConv.Wide)
+                                TvProgram_html(cnt).hosokyoku = hosokyoku
+                                TvProgram_html(cnt).html = html
+                                TvProgram_html(cnt).done = 0
+                                cnt += 1
                         Next
                     End If
                 End If
@@ -202,13 +208,19 @@ Module モジュール_番組表
                             Else
                                 st_add = "&"
                             End If
-                            Dim st As Stream = wc.OpenRead(TvProgram_EDCB_url & st_add & "SID=" & ch_list(i).sid.ToString)
+                            Dim st_str As String = TvProgram_EDCB_url & st_add & "SID=" & ch_list(i).sid.ToString
+                            If ch_list(i).sid >= 291 And ch_list(i).sid <= 298 Then
+                                '難視聴かどうかわからない場合はtsidを付加
+                                st_str = st_str & "&TSID=" & ch_list(i).tsid.ToString
+                            End If
+                            Dim st As Stream = wc.OpenRead(st_str)
                             Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
                             Dim sr As StreamReader = New StreamReader(st, enc)
                             Dim html As String = sr.ReadToEnd()
 
                             Dim sp As Integer = html.IndexOf("<eventinfo>")
                             Dim ep As Integer = html.IndexOf("</eventinfo>", sp + 1)
+                            Dim chk As Integer = 0
                             While sp >= 0 And ep > sp
                                 Try
                                     'まず現在時刻にあてはまるかチェック
@@ -230,12 +242,14 @@ Module モジュール_番組表
                                         End If
                                         ReDim Preserve r(j)
                                         Dim sid As Integer = Val(Instr_pickup(html, "<SID>", "</SID>", sp, ep))
-                                        r(j).stationDispName = sid2jigyousha(sid)
+                                        Dim tsid As Integer = Val(Instr_pickup(html, "<TSID>", "</TSID>", sp, ep))
+                                        r(j).stationDispName = sid2jigyousha(sid, tsid)
                                         r(j).startDateTime = t1s
                                         r(j).endDateTime = t2s
                                         r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
                                         r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
                                         '1個みつかればおｋ
+                                        chk = 1
                                         Exit While
                                     End If
                                 Catch ex As Exception
@@ -248,6 +262,21 @@ Module モジュール_番組表
                             sr.Close()
                             st.Close()
 
+                            If chk = 0 Then
+                                '該当時間帯の番組が無かった場合
+                                Dim j As Integer = 0
+                                If r Is Nothing Then
+                                    j = 0
+                                Else
+                                    j = r.Length
+                                End If
+                                ReDim Preserve r(j)
+                                r(j).stationDispName = ch_list(i).jigyousha
+                                r(j).startDateTime = ""
+                                r(j).endDateTime = ""
+                                r(j).programTitle = ""
+                                r(j).programContent = ""
+                            End If
                         Next
                     End If
                 End If
@@ -361,8 +390,10 @@ Module モジュール_番組表
         Dim r(3) As String
         hosokyoku = StrConv(hosokyoku, VbStrConv.Wide) '全角に変換
         Dim h2 As String = rename_hosokyoku2jigyousha(hosokyoku)
+        Dim chk As Integer = 0
         If h2.Length > 0 Then
             hosokyoku = h2
+            chk = 1
         Else
             Dim sp1 As Integer
             sp1 = hosokyoku.IndexOf("テレビ")
@@ -397,13 +428,25 @@ Module モジュール_番組表
             For i = 0 To ch_list.Length - 1
                 Dim h As String
                 h = StrConv(ch_list(i).jigyousha, VbStrConv.Wide) '全角に変換
-                If h.IndexOf(hosokyoku) >= 0 Then
-                    '一致した
-                    r(0) = ch_list(i).jigyousha
-                    r(1) = ch_list(i).bondriver
-                    r(2) = ch_list(i).sid.ToString
-                    r(3) = ch_list(i).chspace.ToString
-                    Exit For
+                If chk = 1 Then
+                    '変換した場合は完全一致でないとＮＧ
+                    If h = hosokyoku Then
+                        '一致した
+                        r(0) = ch_list(i).jigyousha
+                        r(1) = ch_list(i).bondriver
+                        r(2) = ch_list(i).sid.ToString
+                        r(3) = ch_list(i).chspace.ToString
+                        Exit For
+                    End If
+                Else
+                    '推測の場合は部分一致おｋ
+                    If h.IndexOf(hosokyoku) >= 0 Then
+                        r(0) = ch_list(i).jigyousha
+                        r(1) = ch_list(i).bondriver
+                        r(2) = ch_list(i).sid.ToString
+                        r(3) = ch_list(i).chspace.ToString
+                        Exit For
+                    End If
                 End If
             Next
         End If
@@ -448,17 +491,25 @@ Module モジュール_番組表
     End Function
 
     'sidから放送局名を取得する
-    Public Function sid2jigyousha(ByVal sid As Integer) As String
-        Dim r As String
+    Public Function sid2jigyousha(ByVal sid As Integer, Optional tsid As Integer = 0) As String
+        Dim r As String = ""
 
         If sid > 0 Then
             Dim i As Integer = 0
             If ch_list IsNot Nothing Then
                 For i = 0 To ch_list.Length - 1
-                    If sid = ch_list(i).sid Then
-                        '一致した
-                        r = ch_list(i).jigyousha
-                        Exit For
+                    If tsid = 0 Then
+                        If sid = ch_list(i).sid Then
+                            '一致した
+                            r = ch_list(i).jigyousha
+                            Exit For
+                        End If
+                    Else
+                        If sid = ch_list(i).sid And tsid = ch_list(i).tsid Then
+                            '一致した
+                            r = ch_list(i).jigyousha
+                            Exit For
+                        End If
                     End If
                 Next
             End If
