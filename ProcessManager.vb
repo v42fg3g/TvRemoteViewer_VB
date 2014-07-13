@@ -560,8 +560,10 @@ Public Class ProcessManager
         If num = -2 Then
             log1write("関連アプリのプロセスを停止しています")
             stopProcName("vlc")
-            stopProcName("RecTask")
             stopProcName("ffmpeg")
+            If Stop_RecTask_at_StartEnd = 1 Then
+                stopProcName("RecTask")
+            End If
             log1write("関連アプリのプロセスを停止しました")
         End If
 

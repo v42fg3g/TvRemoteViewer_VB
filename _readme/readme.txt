@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.23
+TvRemoteViewer_VB v0.24
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -240,6 +240,10 @@ TvRemoteViewer_VB v0.23
 		地デジ番組表の設定項目をVideoPath.txtに追加
 	0.22	TvRockから番組表を取得できるようにした（ブラウザでiPhone用番組表を一度だけ表示する必要有り）
 	0.23	EDCBから番組表を取得できるようにした（EpgTimerSrv.iniを編集する必要有り）
+	0.24	わかりずらいので設定ファイルをTvRemoteViewer_VB.iniにした。
+		（VideoPath.txtが存在する場合はVideoPath.txtを優先します）
+		RecTaskを名前指定で終了させるかどうかのオプションをTvRemoteViewer_VB.iniに追加
+		（録画でRecTaskを使用している環境を考慮）
 
 
 

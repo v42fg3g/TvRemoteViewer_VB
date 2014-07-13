@@ -395,7 +395,7 @@ Partial Class Form1
         Me.Button1.Name = "Button1"
         Me.Button1.Size = New System.Drawing.Size(129, 28)
         Me.Button1.TabIndex = 76
-        Me.Button1.Text = "VideoPath.txtを編集(*)"
+        Me.Button1.Text = "設定ファイルを編集(*)"
         Me.Button1.UseVisualStyleBackColor = True
         '
         'ButtonHLSoption

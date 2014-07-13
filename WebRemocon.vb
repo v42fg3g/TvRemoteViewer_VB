@@ -1082,7 +1082,7 @@ Class WebRemocon
 
     Public Sub stopProc(ByVal num As Integer)
         'プロセスを停止する
-        Me._procMan.stopProc(-1)
+        Me._procMan.stopProc(num)
     End Sub
 
     Public Sub convert_m3u8_xspf()
@@ -1116,7 +1116,14 @@ Class WebRemocon
     'ファイル再生用パスを読み込む
     Public Sub read_videopath()
         Dim errstr As String = ""
-        Dim line() As String = file2line("VideoPath.txt")
+        Dim line() As String = Nothing
+        If file_exist("VideoPath.txt") Then
+            line = file2line("VideoPath.txt")
+            log1write("設定ファイルとして VideoPath.txt を読み込みました")
+        Else
+            line = file2line("TvRemoteViewer_VB.ini")
+            log1write("設定ファイルとして TvRemoteViewer_VB.ini を読み込みました")
+        End If
 
         Dim i, j As Integer
 
@@ -1204,6 +1211,8 @@ Class WebRemocon
                                         TvProgramD_sort(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
                                     Next
                                 End If
+                            Case "Stop_RecTask_at_StartQuit"
+                                Stop_RecTask_at_StartEnd = Val(youso(1).ToString)
                         End Select
                     End If
                 Next

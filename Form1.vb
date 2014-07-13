@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.23"
+    Private version As String = "TvRemoteViewer_VB version 0.24"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -9,6 +9,9 @@ Public Class Form1
     Private chk_timer1 As Integer = 0 'timer1重複回避用temp
     Private chk_timer1_deleteTS As Integer = 0 '古いtsファイルを削除する間隔調整用
     Private ServiceID_temp As String '起動時、前回終了時のサービスIDを復活するための一時待避用temp
+
+    'TvRemoteViewer_VBが無事スタートしたら1
+    Public TvRemoteViewer_VB_Start As Integer = 0
 
     '================================================================
     'メイン
@@ -39,12 +42,16 @@ Public Class Form1
             If num > 0 Then
                 If fileroot.IndexOf(wwwroot) = 0 Or fileroot.Length = 0 Then
                     If bondriver.IndexOf(".dll") > 0 Then
-                        If s.Length = 3 Then
-                            sid = Val(s(1))
-                            Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
-                            Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename)
+                        If hlsOpt2.Length > 0 Then
+                            If s.Length = 3 Then
+                                sid = Val(s(1))
+                                Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
+                                Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename)
+                            Else
+                                MsgBox("サービスIDを指定してください")
+                            End If
                         Else
-                            MsgBox("サービスIDを指定してください")
+                            MsgBox("HLSオプションを記入してください")
                         End If
                     Else
                         MsgBox("BonDriverを指定してください")
@@ -199,7 +206,11 @@ Public Class Form1
             F_set_ppath4program()
             Try
                 'System.Diagnostics.Process.Start("notepad.exe", """index.html""")
-                System.Diagnostics.Process.Start("VideoPath.txt")
+                If file_exist("VideoPath.txt") Then
+                    System.Diagnostics.Process.Start("VideoPath.txt")
+                Else
+                    System.Diagnostics.Process.Start("TvRemoteViewer_VB.ini")
+                End If
             Catch ex As Exception
                 '開けないファイルだった場合
             End Try
@@ -243,14 +254,12 @@ Public Class Form1
 
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止
-        log1write("関連アプリのプロセスを停止しています")
-        Me._worker.stopProcName("vlc")
-        Me._worker.stopProcName("RecTask")
-        Me._worker.stopProcName("ffmpeg")
-        log1write("関連アプリのプロセスを停止しました")
+        Me._worker.stopProc(-2)
 
         'ファイル再生用パス読み込み
         Me._worker.read_videopath()
+        '無事起動
+        TvRemoteViewer_VB_Start = 1
 
         If Me._worker._AddSubFolder = 1 Then
             'サブフォルダを含める
@@ -372,12 +381,14 @@ Public Class Form1
 
         '全プロセスを停止
         Try
-            Me._worker.stopProc(-1)
-            '全プロセスを名前指定で停止
-            'stopProcName("vlc")
-            'stopProcName("RecTask")
+            Me._worker.stopProc(-2)
         Catch ex As Exception
         End Try
+
+        'ウィンドウの位置を保存
+        If TvRemoteViewer_VB_Start = 1 Then
+            save_form_status()
+        End If
 
         'Webスレッド停止
         Try
@@ -386,8 +397,6 @@ Public Class Form1
         Catch ex As Exception
         End Try
 
-        'ウィンドウの位置を保存
-        save_form_status()
     End Sub
 
     Private Sub Form1_FormClosed(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
@@ -707,6 +716,7 @@ Public Class Form1
 
     '項目が変更されたことをインスタンスに知らせる
     Private Sub textBoxUdpApp_TextChanged(sender As System.Object, e As System.EventArgs) Handles textBoxUdpApp.TextChanged
+        search_BonDriver()
         Try
             Me._worker._udpApp = textBoxUdpApp.Text.ToString
         Catch ex As Exception
