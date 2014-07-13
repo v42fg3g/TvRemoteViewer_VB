@@ -492,6 +492,22 @@ Class WebRemocon
                             End If
                         End If
 
+                        'EDCB番組表
+                        If s.IndexOf("%TVPROGRAM-EDCB%") >= 0 Then
+                            s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998))
+                        End If
+                        'EDCB番組表ボタン
+                        If s.IndexOf("%TVPROGRAM-EDCB-BUTTON") >= 0 Then
+                            Dim gt() As String = get_atags("%TVPROGRAM-EDCB-BUTTON:", s)
+                            If TvProgram_EDCB_url.Length > 0 Then
+                                s = s.Replace("%TVPROGRAM-EDCB-BUTTON:" & gt(0) & "%", gt(1) & "<input type=""button"" value=""EDCB番組表へ"" onClick=""location.href='TvProgram_EDCB.html'"">") & gt(3)
+                                s = s.Replace("%TVPROGRAM-EDCB-BUTTON%", "<input type=""button"" value=""EDCB番組表へ"" onClick=""location.href='TvProgram_EDCB.html'"">")
+                            Else
+                                s = s.Replace("%TVPROGRAM-EDCB-BUTTON:" & gt(0) & "%", "")
+                                s = s.Replace("%TVPROGRAM-EDCB-BUTTON%", "")
+                            End If
+                        End If
+
                         sw.WriteLine(s)
                         sw.Flush()
 
@@ -1164,6 +1180,8 @@ Class WebRemocon
                                 TvProgramS_BonDriver1st = trim8(youso(1).ToString)
                             Case "TvProgram_tvrock_url"
                                 TvProgram_tvrock_url = trim8(youso(1).ToString)
+                            Case "TvProgram_EDCB_url"
+                                TvProgram_EDCB_url = trim8(youso(1).ToString)
                             Case "TvProgramD_channels"
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                 Dim clset() As String = youso(1).Split(",")

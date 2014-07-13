@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.22
+TvRemoteViewer_VB v0.23
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -70,6 +70,13 @@ TvRemoteViewer_VB v0.22
 		2. 「予約表示」数を「無し」にする。まぁ無し以外でもいいですけど
 		　ここで表示された番組表がデータとして使用されます。
 		3. ブラウザを閉じる
+
+	・EDCB番組表につきまして
+		EpgTimer.exeが存在するフォルダにあるEpgTimerSrv.iniを開いて[SET]直後に
+			EnableHttpSrv=1
+			HttpPort=5510
+		を書き加えてEpgTimerを再起動してください
+		参考　http://blog.livedoor.jp/kotositu/archives/1923002.html
 
 
 
@@ -232,6 +239,7 @@ TvRemoteViewer_VB v0.22
 	0.21	地デジ番組表に視聴ボタンを付けた
 		地デジ番組表の設定項目をVideoPath.txtに追加
 	0.22	TvRockから番組表を取得できるようにした（ブラウザでiPhone用番組表を一度だけ表示する必要有り）
+	0.23	EDCBから番組表を取得できるようにした（EpgTimerSrv.iniを編集する必要有り）
 
 
 

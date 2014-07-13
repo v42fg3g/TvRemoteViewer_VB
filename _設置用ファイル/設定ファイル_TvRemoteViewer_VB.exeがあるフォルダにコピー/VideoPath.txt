@@ -71,3 +71,16 @@ TvProgramS_BonDriver1st =
 ;TvRockを使用していない場合は空白
 
 TvProgram_tvrock_url = 
+
+
+;EDCBの番組表WEBインターフェースURL
+;準備
+;EpgTimer.exeが存在するフォルダにあるEpgTimerSrv.iniを開いて[SET]直後に
+;  EnableHttpSrv=1
+;  HttpPort=5510
+;を書き加えてEpgTimerを再起動してください
+;参考　http://blog.livedoor.jp/kotositu/archives/1923002.html
+;例　TvProgram_EDCB_url = "http://127.0.0.1:5510/api/EnumEventInfo"
+;EDCBを使用していない場合は空白
+
+TvProgram_EDCB_url = 

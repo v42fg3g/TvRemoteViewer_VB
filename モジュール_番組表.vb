@@ -13,6 +13,7 @@ Module モジュール_番組表
     Public TvProgramS_BonDriver1st As String = ""
 
     Public TvProgram_tvrock_url As String = ""
+    Public TvProgram_EDCB_url As String = ""
 
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
@@ -43,6 +44,10 @@ Module モジュール_番組表
         If a = 0 Then
             '通常のインターネットから取得
             TvProgram_ch2 = TvProgram_ch
+        ElseIf a = 998 Then
+            'EDCBから取得
+            ReDim Preserve TvProgram_ch2(0)
+            TvProgram_ch2(0) = 998
         ElseIf a = 999 Then
             'tvrockから取得
             ReDim Preserve TvProgram_ch2(0)
@@ -184,7 +189,83 @@ Module モジュール_番組表
     '地域番号から番組表を取得
     Public Function get_TVprogram_now(ByVal regionID As Integer) As Object
         Dim r() As TVprogramstructure = Nothing
-        If regionID = 999 Then
+        If regionID = 998 Then
+            'EDCB
+            Try
+                If TvProgram_EDCB_url.Length > 0 Then
+                    If ch_list IsNot Nothing Then
+                        For i As Integer = 0 To ch_list.Length - 1
+                            Dim wc As WebClient = New WebClient()
+                            Dim st_add As String = ""
+                            If TvProgram_EDCB_url.IndexOf("?") < 0 Then
+                                st_add = "?"
+                            Else
+                                st_add = "&"
+                            End If
+                            Dim st As Stream = wc.OpenRead(TvProgram_EDCB_url & st_add & "SID=" & ch_list(i).sid.ToString)
+                            Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
+                            Dim sr As StreamReader = New StreamReader(st, enc)
+                            Dim html As String = sr.ReadToEnd()
+
+                            Debug.Print("===================")
+                            Debug.Print("===================")
+                            Debug.Print("===================")
+                            Debug.Print("===================")
+                            Debug.Print("===================")
+                            Debug.Print(html)
+
+                            Dim sp As Integer = html.IndexOf("<eventinfo>")
+                            Dim ep As Integer = html.IndexOf("</eventinfo>", sp + 1)
+                            While sp >= 0 And ep > sp
+                                Try
+                                    'まず現在時刻にあてはまるかチェック
+                                    Dim t As DateTime = Now()
+                                    Dim t1date As String = Instr_pickup(html, "<startDate>", "</startDate>", sp, ep)
+                                    Dim t1time As String = Instr_pickup(html, "<startTime>", "</startTime>", sp, ep)
+                                    Dim t1long As Integer = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
+                                    Dim t1 As DateTime = CDate(t1date & " " & t1time)
+                                    Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
+                                    Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
+                                    Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
+
+                                    If t >= t1 And t < t2 Then
+                                        Dim j As Integer = 0
+                                        If r Is Nothing Then
+                                            j = 0
+                                        Else
+                                            j = r.Length
+                                        End If
+                                        ReDim Preserve r(j)
+                                        Dim sid As Integer = Val(Instr_pickup(html, "<SID>", "</SID>", sp, ep))
+                                        r(j).stationDispName = sid2jigyousha(sid)
+                                        r(j).startDateTime = t1s
+                                        r(j).endDateTime = t2s
+                                        r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
+                                        r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
+
+                                    ElseIf t1 > DateAdd(DateInterval.Day, 1, t) Then
+                                        '過ぎ去ったら途中で中止 時間の無駄
+                                        'と思ったらそうでもなかった
+                                        'Exit While
+                                    End If
+                                Catch ex As Exception
+                                End Try
+
+                                sp = html.IndexOf("<eventinfo>", sp + 1)
+                                ep = html.IndexOf("</eventinfo>", sp + 1)
+                            End While
+
+                            sr.Close()
+                            st.Close()
+
+                        Next
+                    End If
+                End If
+            Catch ex As Exception
+                log1write("EDCBからの番組表取得に失敗しました。" & ex.Message)
+            End Try
+
+        ElseIf regionID = 999 Then
             'TvRock
             Try
                 If TvProgram_tvrock_url.Length > 0 Then
@@ -293,8 +374,21 @@ Module モジュール_番組表
         If h2.Length > 0 Then
             hosokyoku = h2
         Else
-            hosokyoku = hosokyoku.Replace("テレビ", "")
-            hosokyoku = hosokyoku.Replace("放送", "")
+            Dim sp1 As Integer
+            sp1 = hosokyoku.IndexOf("テレビ")
+            If sp1 > 0 Then
+                If hosokyoku.Substring(sp1) = "テレビ" Then
+                    '末尾が"テレビ"なら
+                    hosokyoku = hosokyoku.Replace("テレビ", "")
+                End If
+            End If
+            sp1 = hosokyoku.IndexOf("放送")
+            If sp1 > 0 Then
+                If hosokyoku.Substring(sp1) = "放送" Then
+                    '末尾が"放送"なら
+                    hosokyoku = hosokyoku.Replace("放送", "")
+                End If
+            End If
             Dim sp As Integer = hosokyoku.IndexOf("　")
             If sp > 0 Then
                 Try
@@ -347,7 +441,7 @@ Module モジュール_番組表
     End Function
 
     '文字列から、文字列と文字列に挟まれた文字列を抽出する。
-    Public Function Instr_pickup(ByVal strdat As String, ByVal findstr As String, ByVal endstr As String, ByVal startpos As Integer) As Object
+    Public Function Instr_pickup(ByVal strdat As String, ByVal findstr As String, ByVal endstr As String, ByVal startpos As Integer, Optional ByVal endpos As Integer = 2147483647) As Object
         Dim r As String = ""
 
         If findstr.Length > 0 Then
@@ -355,8 +449,28 @@ Module モジュール_番組表
             Dim ep As Integer
             sp = strdat.IndexOf(findstr, startpos)
             ep = strdat.IndexOf(endstr, sp + findstr.Length)
-            If sp >= 0 And ep > sp Then
+            If sp >= 0 And ep > sp And ep <= endpos Then
                 r = strdat.Substring(sp + findstr.Length, ep - sp - findstr.Length)
+            End If
+        End If
+
+        Return r
+    End Function
+
+    'sidから放送局名を取得する
+    Public Function sid2jigyousha(ByVal sid As Integer) As String
+        Dim r As String
+
+        If sid > 0 Then
+            Dim i As Integer = 0
+            If ch_list IsNot Nothing Then
+                For i = 0 To ch_list.Length - 1
+                    If sid = ch_list(i).sid Then
+                        '一致した
+                        r = ch_list(i).jigyousha
+                        Exit For
+                    End If
+                Next
             End If
         End If
 
