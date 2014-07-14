@@ -8,6 +8,8 @@ Module モジュール_番組表
     Public TvProgram_ch() As Integer '東京13等が複数配列で入る
     Public TvProgram_NGword() As String
     Public TvProgramD_channels() As String
+    Public TvProgramEDCB_channels() As String
+    Public TvProgramTvRock_channels() As String
     Public TvProgramD_sort() As String
     Public TvProgramD_BonDriver1st As String = ""
     Public TvProgramS_BonDriver1st As String = ""
@@ -33,7 +35,7 @@ Module モジュール_番組表
 
     '地デジ番組表作成
     Public Function make_TVprogram_html_now(ByVal a As Integer) As String
-        'a=0 通常のインターネットから取得　 a=1 tvrockから取得
+        'a=0 通常のインターネットから取得　 a=998 EDCBから取得　 a=999 tvrockから取得
         Dim chkstr As String = ":" '重複防止用
         Dim html_all As String = ""
         Dim cnt As Integer = 0
@@ -67,7 +69,7 @@ Module モジュール_番組表
                             's4 = s4.Substring(0, 4)
                             'End If
                             If s4.Length > 0 Then
-                                If chkstr.IndexOf(":" & s4 & ":") < 0 Then
+                                If chkstr.IndexOf(":" & s4 & ":") < 0 Then '重複していないかチェック
                                     Dim chk As Integer = 0
                                     If TvProgram_NGword IsNot Nothing Then
                                         For j As Integer = 0 To TvProgram_NGword.Length - 1
@@ -81,13 +83,14 @@ Module モジュール_番組表
                                         Dim startt As String = ""
                                         Dim endt As String = ""
                                         Try
+                                            '時：分だけ取り出す
                                             startt = p.startDateTime.Substring(p.startDateTime.IndexOf(" "))
                                             endt = p.endDateTime.Substring(p.endDateTime.IndexOf(" "))
                                         Catch ex As Exception
                                         End Try
 
                                         'BonDriver, sid, 事業者を取得
-                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName)
+                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a)
                                         'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
 
                                         html &= "<span class=""p_name"">" & d(0) & "　<span class=""p_name2"">(" & p.stationDispName & ")</span></span><br>" & vbCrLf 'p.stationDispName
@@ -148,7 +151,7 @@ Module モジュール_番組表
                                         End If
                                         html &= "<br><br>" & vbCrLf
                                     End If
-                                    End If
+                                End If
                                 End If
 
                                 ReDim Preserve TvProgram_html(cnt)
@@ -209,10 +212,7 @@ Module モジュール_番組表
                                 st_add = "&"
                             End If
                             Dim st_str As String = TvProgram_EDCB_url & st_add & "SID=" & ch_list(i).sid.ToString
-                            If ch_list(i).sid >= 291 And ch_list(i).sid <= 298 Then
-                                '難視聴かどうかわからない場合はtsidを付加
-                                st_str = st_str & "&TSID=" & ch_list(i).tsid.ToString
-                            End If
+                            st_str = st_str & "&TSID=" & ch_list(i).tsid.ToString
                             Dim st As Stream = wc.OpenRead(st_str)
                             Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
                             Dim sr As StreamReader = New StreamReader(st, enc)
@@ -386,10 +386,10 @@ Module モジュール_番組表
     End Function
 
     '番組表の放送局名からbondriver,sid等の取得を試みる
-    Public Function bangumihyou2bondriver(ByVal hosokyoku As String) As Object
+    Public Function bangumihyou2bondriver(ByVal hosokyoku As String, ByVal a As Integer) As Object
         Dim r(3) As String
         hosokyoku = StrConv(hosokyoku, VbStrConv.Wide) '全角に変換
-        Dim h2 As String = rename_hosokyoku2jigyousha(hosokyoku)
+        Dim h2 As String = rename_hosokyoku2jigyousha(hosokyoku, a)
         Dim chk As Integer = 0
         If h2.Length > 0 Then
             hosokyoku = h2
@@ -455,14 +455,22 @@ Module モジュール_番組表
     End Function
 
     '番組表の放送局からBonDriver.ch2に登録の放送局名へ変換
-    Public Function rename_hosokyoku2jigyousha(ByVal hosokyoku As String) As String
+    Public Function rename_hosokyoku2jigyousha(ByVal hosokyoku As String, ByVal a As Integer) As String
         Dim r As String = ""
-        If TvProgramD_channels IsNot Nothing Then
-            For i As Integer = 0 To TvProgramD_channels.Length - 1
-                Dim sp As Integer = TvProgramD_channels(i).IndexOf("：")
-                If TvProgramD_channels(i).IndexOf(hosokyoku & "：") = 0 Then
+        Dim chs() As String = Nothing
+        If a = 0 Then
+            chs = TvProgramD_channels
+        ElseIf a = 998 Then
+            chs = TvProgramEDCB_channels
+        ElseIf a = 999 Then
+            chs = TvProgramTvRock_channels
+        End If
+        If chs IsNot Nothing Then
+            For i As Integer = 0 To chs.Length - 1
+                Dim sp As Integer = chs(i).IndexOf("：")
+                If chs(i).IndexOf(hosokyoku & "：") = 0 Then
                     Try
-                        r = TvProgramD_channels(i).Substring(sp + 1)
+                        r = chs(i).Substring(sp + 1)
                     Catch ex As Exception
                     End Try
                     Exit For

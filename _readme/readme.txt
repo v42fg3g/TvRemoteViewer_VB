@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.25
+TvRemoteViewer_VB v0.26
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -245,6 +245,8 @@ TvRemoteViewer_VB v0.25
 		RecTaskを名前指定で終了させるかどうかのオプションをTvRemoteViewer_VB.iniに追加
 		（録画でRecTaskを使用している環境を考慮）
 	0.25	EDCB番組表の不具合を修正
+	0.26	放送局名変換をネット・EDCB・TvRockで分離しiniに項目を追加
+		わかりづらかったのでTvRemoteViewer_VB.iniの内容を整理
 
 
 

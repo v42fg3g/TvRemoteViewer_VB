@@ -1213,6 +1213,28 @@ Class WebRemocon
                                         TvProgramD_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
                                     Next
                                 End If
+                            Case "TvProgramEDCB_channels"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgramEDCB_channels(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        '全角に変換
+                                        TvProgramEDCB_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
+                                    Next
+                                End If
+                            Case "TvProgramTvRock_channels"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgramTvRock_channels(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        '全角に変換
+                                        TvProgramTvRock_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
+                                    Next
+                                End If
                             Case "TvProgramD_sort"
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                 Dim clset() As String = youso(1).Split(",")
