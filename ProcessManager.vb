@@ -415,8 +415,8 @@ Public Class ProcessManager
                     Dim p6 As Integer = Me._list(i)._udpPort
                     Dim p7 As Boolean = Me._list(i)._ShowConsole
                     Dim p8 As Integer = Me._list(i)._stream_mode
-                    Dim p9 As String = Me._list(i)._resolution
-                    Dim p10 As Integer = Me._list(i)._NHK_dual_mono_mode_select
+                    Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
+                    Dim p10 As String = Me._list(i)._resolution
                     'プロセスを停止
                     stopProc(p5)
                     'System.Threading.Thread.Sleep(500)
