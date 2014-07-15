@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.26"
+    Private version As String = "TvRemoteViewer_VB version 0.27"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -39,6 +39,7 @@ Public Class Form1
             Dim fileroot As String = TextBoxFILEROOT.Text.ToString
             Dim s() As String = ComboBoxServiceID.Text.Split(",")
             Dim ShowConsole As Boolean = CheckBoxShowConsole.Checked
+            Dim NHK_dual_mono_mode_select As Integer = 0 'フォームからは指定しない常に０
             If num > 0 Then
                 If fileroot.IndexOf(wwwroot) = 0 Or fileroot.Length = 0 Then
                     If bondriver.IndexOf(".dll") > 0 Then
@@ -46,7 +47,7 @@ Public Class Form1
                             If s.Length = 3 Then
                                 sid = Val(s(1))
                                 Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
-                                Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename)
+                                Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select)
                             Else
                                 MsgBox("サービスIDを指定してください")
                             End If

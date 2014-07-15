@@ -109,7 +109,7 @@ Public Class ProcessManager
         Return r
     End Function
 
-    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, resolution As String)
+    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String)
         '★起動している場合は既存のプロセスを止める
         stopProc(num)
 
@@ -203,23 +203,35 @@ Public Class ProcessManager
 
                     System.Threading.Thread.Sleep(1000)
 
-                    'NHK BS1、BSプレミアム対策 ■暫定
-                    If hlsApp.IndexOf("ffmpeg") >= 0 And (udpOpt.IndexOf("/sid 101 ") > 0 Or udpOpt.IndexOf("/sid 103 ") > 0) And BS1_hlsApp.IndexOf("vlc.exe") >= 0 Then
-                        'hlsAppとhlsOptをVLCに置き換える
-                        Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt)
-                        If hlsOpt_temp.Length > 0 Then
-                            hlsOpt = hlsOpt_temp
-                            hlsApp = BS1_hlsApp
-                            hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPort)
-                            Dim fr As String = Me._fileroot
-                            If fr.Length = 0 Then
-                                fr = Me._wwwroot
+                    'NHK BS1、BSプレミアム対策
+                    If hlsApp.IndexOf("ffmpeg") >= 0 Then
+                        'まずこの放送がＮＨＫかどうか
+                        Dim isNHK As Integer = check_isNHK(0, udpOpt)
+                        If isNHK = 1 Then
+                            If NHK_dual_mono_mode_select = 1 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                                '主モノラル固定
+                                hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
+                            ElseIf NHK_dual_mono_mode_select = 2 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                                '副モノラル固定
+                                hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
+                            ElseIf NHK_dual_mono_mode_select = 9 Then
+                                'hlsAppとhlsOptをVLCに置き換える
+                                Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt)
+                                If hlsOpt_temp.Length > 0 Then
+                                    hlsOpt = hlsOpt_temp
+                                    hlsApp = BS1_hlsApp
+                                    hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPort)
+                                    Dim fr As String = Me._fileroot
+                                    If fr.Length = 0 Then
+                                        fr = Me._wwwroot
+                                    End If
+                                    hlsOpt = hlsOpt.Replace("%WWWROOT%", fr) '必要ないが過去のHLS_option_VLC.txtとの互換性のため
+                                    hlsOpt = hlsOpt.Replace("%FILEROOT%", fr)
+                                    hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
+                                    hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".")
+                                    hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-")
+                                End If
                             End If
-                            hlsOpt = hlsOpt.Replace("%WWWROOT%", fr) '必要ないが過去のHLS_option_VLC.txtとの互換性のため
-                            hlsOpt = hlsOpt.Replace("%FILEROOT%", fr)
-                            hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
-                            hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".")
-                            hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-")
                         End If
                     End If
 
@@ -254,7 +266,7 @@ Public Class ProcessManager
                     log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
 
                     'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                    Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, resolution)
+                    Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)
                     Me._list.Add(pb)
                 Else
                     Try
@@ -291,7 +303,7 @@ Public Class ProcessManager
                 log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
 
                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, resolution)
+                Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
                 Me._list.Add(pb)
             End If
             'End If
@@ -302,6 +314,34 @@ Public Class ProcessManager
         log1write("現在稼働中のNumber：" & js)
 
     End Sub
+
+    'このプロセスがＮＨＫ関連かどうか調べる
+    Public Function check_isNHK(ByVal num As Integer, Optional ByVal udpOpt As String = "") As Integer
+        Dim r As Integer = 0
+        Dim i As Integer = -1
+        If num > 0 Then
+            '_list()からudpOptを取得
+            i = num2i(num)
+            If i >= 0 Then
+                udpOpt = Me._list(i)._udpOpt
+            End If
+        End If
+
+        Dim sp As Integer = udpOpt.IndexOf("/sid ")
+        Dim ep As Integer = udpOpt.IndexOf(" ", sp + "/sid ".Length)
+        Dim sid As Integer = 0
+        If sp > 0 And ep > sp Then
+            sid = Val(udpOpt.Substring(sp + "/sid ".Length, ep - sp - "/sid ".Length))
+        End If
+        Dim hosokyoku_name As String = ""
+        If sid > 0 Then
+            hosokyoku_name = StrConv(Trim(F_sid2channelname(sid)), VbStrConv.Wide)
+        End If
+        If hosokyoku_name.IndexOf("ＮＨＫ") >= 0 Then
+            r = 1
+        End If
+        Return r
+    End Function
 
     'numから_list(i)のiを取得する
     Public Function num2i(ByVal num As Integer) As Integer
@@ -376,11 +416,12 @@ Public Class ProcessManager
                     Dim p7 As Boolean = Me._list(i)._ShowConsole
                     Dim p8 As Integer = Me._list(i)._stream_mode
                     Dim p9 As String = Me._list(i)._resolution
+                    Dim p10 As Integer = Me._list(i)._NHK_dual_mono_mode_select
                     'プロセスを停止
                     stopProc(p5)
                     'System.Threading.Thread.Sleep(500)
                     'プロセスを開始
-                    startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9)
+                    startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)
                     log1write("No.=" & p5 & "のプロセスを再起動しました")
                 End If
             End If
@@ -1025,6 +1066,17 @@ Public Class ProcessManager
             End If
         End If
         Return sid
+    End Function
+
+    'numから放送中のNHK音声モードを取得する
+    Public Function get_NHKmode(ByVal num As Integer) As Integer
+        Dim NHKmode As Integer = -1
+        Dim i As Integer = num2i(num)
+        If i >= 0 Then
+            Dim hlsOpt As String = Me._list(i)._hlsOpt
+            NHKmode = Me._list(i)._NHK_dual_mono_mode_select
+        End If
+        Return NHKmode
     End Function
 End Class
 

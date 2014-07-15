@@ -34,7 +34,7 @@ Module モジュール_番組表
     End Structure
 
     '地デジ番組表作成
-    Public Function make_TVprogram_html_now(ByVal a As Integer) As String
+    Public Function make_TVprogram_html_now(ByVal a As Integer, ByVal NHKMODE As Integer) As String
         'a=0 通常のインターネットから取得　 a=998 EDCBから取得　 a=999 tvrockから取得
         Dim chkstr As String = ":" '重複防止用
         Dim html_all As String = ""
@@ -146,20 +146,28 @@ Module モジュール_番組表
                                             html &= "<input type=""hidden"" name=""ServiceID"" value=""" & d(2) & """>" & vbCrLf
                                             html &= "<input type=""hidden"" name=""ChSpace"" value=""" & d(3) & """>" & vbCrLf
                                             html &= "<span class=""p_hosokyoku""> " & d(0) & " </span>" & vbCrLf
+                                            'NHK音声選択
+                                            If hosokyoku.IndexOf("ＮＨＫ") >= 0 Then
+                                                If NHKMODE = 3 Then
+                                                    html &= WEB_make_NHKMODE_html_B()
+                                                Else
+                                                    html &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
+                                                End If
+                                            End If
                                             html &= "<input type=""submit"" value=""視聴"">" & vbCrLf
                                             html &= "</form>" & vbCrLf
                                         End If
                                         html &= "<br><br>" & vbCrLf
                                     End If
                                 End If
-                                End If
+                            End If
 
-                                ReDim Preserve TvProgram_html(cnt)
-                                TvProgram_html(cnt).stationDispName = StrConv(p.stationDispName, VbStrConv.Wide)
-                                TvProgram_html(cnt).hosokyoku = hosokyoku
-                                TvProgram_html(cnt).html = html
-                                TvProgram_html(cnt).done = 0
-                                cnt += 1
+                            ReDim Preserve TvProgram_html(cnt)
+                            TvProgram_html(cnt).stationDispName = StrConv(p.stationDispName, VbStrConv.Wide)
+                            TvProgram_html(cnt).hosokyoku = hosokyoku
+                            TvProgram_html(cnt).html = html
+                            TvProgram_html(cnt).done = 0
+                            cnt += 1
                         Next
                     End If
                 End If
@@ -193,6 +201,19 @@ Module モジュール_番組表
         End If
 
         Return html_all
+    End Function
+
+    'ＮＨＫ音声選択用セレクト作成
+    Public Function WEB_make_NHKMODE_html_B() As String
+        Dim html As String = ""
+        html &= "<select name=""NHKMODE"">"
+        html &= vbCrLf & "<option value=""0"">主・副</option>" & vbCrLf
+        html &= "<option value=""1"">主</option>" & vbCrLf
+        html &= "<option value=""2"">副</option>" & vbCrLf
+        html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
+        html &= "</select>" & vbCrLf
+
+        Return html
     End Function
 
     '地域番号から番組表を取得

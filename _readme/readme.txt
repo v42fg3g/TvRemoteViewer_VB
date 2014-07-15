@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.26
+TvRemoteViewer_VB v0.27
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -247,6 +247,10 @@ TvRemoteViewer_VB v0.26
 	0.25	EDCB番組表の不具合を修正
 	0.26	放送局名変換をネット・EDCB・TvRockで分離しiniに項目を追加
 		わかりづらかったのでTvRemoteViewer_VB.iniの内容を整理
+	0.27	BASIC認証を修正
+		NHK関連で音声がおかしくなることへの対処方法を選択できるようにした
+		（TvRemoteViewer_VB.iniにオプション NHK_dual_mono_mode を追加）
+		HTMLを少々修正
 
 
 

@@ -18,6 +18,7 @@
             <br><br>
             %SELECTBONSIDCH:<br><br>%
             <br><br>
+            %SELECTNHKMODE:::<br><br>%
             <select name="resolution">
                <option>フォーム上のオプション</option>
                <option>320x180</option>
@@ -58,27 +59,22 @@
         <br />
         <br />
         <br />
-        <form action="SelectVideo.html">
-            <select name="num">
-               <option>1</option>
-               <option>2</option>
-               <option>3</option>
-               <option>4</option>
-               <option>5</option>
-               <option>6</option>
-               <option>7</option>
-               <option>8</option>
-            </select>
-            <input type="submit" value="ファイル再生" />
-        </form>
-        <br />
-        <br />
-        <br />
         <form action="TvProgram.html">
             <input type="submit" value="地デジ番組表" />
         </form>
 		%TVPROGRAM-TVROCK-BUTTON:<br>::%
 		%TVPROGRAM-EDCB-BUTTON:<br>::%
+        <br />
+        <br />
+        <br />
+        <br />
+        <form action="SelectVideo.html">
+            <input type="submit" value="ファイル再生" />
+        </form>
+        <br />
+        <br />
+        <br />
+		    <input type="button" Value="再読み込み" onClick="location.reload();">
 		<br><br>
     </body>
 </html>
