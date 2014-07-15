@@ -27,9 +27,11 @@
     Public Function F_sid2channelname(ByVal sid As Integer) As String
         Dim r As String = ""
 
-        Dim i As Integer = Array.IndexOf(ch_list, sid)
-        If i >= 0 Then
-            r = ch_list(i).jigyousha
+        If ch_list IsNot Nothing Then
+            Dim i As Integer = Array.IndexOf(ch_list, sid)
+            If i >= 0 Then
+                r = ch_list(i).jigyousha
+            End If
         End If
 
         Return r
