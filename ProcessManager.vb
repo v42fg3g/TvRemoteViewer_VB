@@ -986,7 +986,13 @@ Public Class ProcessManager
 
     Public Sub delete_old_TS(ByVal fileroot As String)
         'Dim files As String() = System.IO.Directory.GetFiles(tsroot, "*.ts", System.IO.SearchOption.AllDirectories)
-        Dim files As String() = System.IO.Directory.GetFiles(fileroot, "*.m3u8")
+        Dim files As String() = Nothing
+        Try
+            files = System.IO.Directory.GetFiles(fileroot, "*.m3u8")
+        Catch ex As Exception
+            log1write("m3u8一覧の取得に失敗しました。" & fileroot & " " & ex.Message)
+            Exit Sub
+        End Try
         For Each tempFile As String In files
             Dim n As Integer = 0
             If tempFile.IndexOf("mystream") >= 0 Then

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.28
+TvRemoteViewer_VB v0.29
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -22,6 +22,15 @@ TvRemoteViewer_VB v0.28
 
 
 ■起動
+
+	★注意★
+	Windows8以降では以下のどちらかの操作が必要です。
+	・TvRemoteViewer_vb.exeを右クリック、
+	　「プロパティ」→「互換性」→「管理者としてこのプログラムを実行する」にチェック
+	・コマンドプロンプトから
+	　netsh http add urlacl url=http://+:40003/ user=XXXXX
+	　(XXXXXは実行するユーザー、もしくは Everyone と入力する)
+
 
 	設置後、起動するとタスクトレイからスタートします。
 	ダブルクリックで通常の大きさになります。
@@ -252,6 +261,7 @@ TvRemoteViewer_VB v0.28
 		（TvRemoteViewer_VB.iniにオプション NHK_dual_mono_mode を追加）
 		HTMLを少々修正
 	0.28	index.htmlにおいてNHK関連以外は音声選択を表示しないようにした
+	0.29	初起動時に設定途中で例外エラーが起こるバグを修正
 
 
 
