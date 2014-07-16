@@ -268,6 +268,8 @@ Class WebRemocon
                                     '今のところVLCには未対応
                                     request_page = 12
                                 End If
+                                'すぐさま視聴ページへリダイレクトする
+                                redirect = "ViewTV" & num & ".html"
                             Else
                                 StartTv_param = -1
                             End If
