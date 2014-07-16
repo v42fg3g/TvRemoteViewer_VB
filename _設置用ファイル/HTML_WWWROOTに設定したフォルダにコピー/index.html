@@ -76,5 +76,24 @@
         <br />
 		    <input type="button" Value="再読み込み" onClick="location.reload();">
 		<br><br>
+		
+		<script type="text/javascript">
+			function changeSelect(){
+				try {
+    				var select = document.getElementById('SEL2');
+	    			var options = document.getElementById('SEL2').options;
+    				var value = options.item(select.selectedIndex).text;
+					if (value.indexOf('ＮＨＫ') < 0) {
+						document.getElementById('NHKVIEW').style.display = "none";
+					} else {
+						document.getElementById('NHKVIEW').style.display = "";
+					}
+				} catch (e) {
+				}
+			}
+			//オンロードさせ、リロード時に選択を保持
+			window.onload = changeSelect;
+		</script>
+
     </body>
 </html>

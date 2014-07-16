@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.27
+TvRemoteViewer_VB v0.28
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -251,6 +251,7 @@ TvRemoteViewer_VB v0.27
 		NHK関連で音声がおかしくなることへの対処方法を選択できるようにした
 		（TvRemoteViewer_VB.iniにオプション NHK_dual_mono_mode を追加）
 		HTMLを少々修正
+	0.28	index.htmlにおいてNHK関連以外は音声選択を表示しないようにした
 
 
 

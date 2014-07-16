@@ -356,7 +356,7 @@ Class WebRemocon
                             If s.IndexOf("%SELECTNHKMODE") >= 0 Then
                                 Dim gt() As String = get_atags("%SELECTNHKMODE:", s)
                                 If Me._NHK_dual_mono_mode = 3 Then
-                                    Dim viewbutton_html As String = WEB_make_NHKMODE_html(gt, num)
+                                    Dim viewbutton_html As String = "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(gt, num) & "</span>"
                                     s = s.Replace("%SELECTNHKMODE%", viewbutton_html)
                                     s = s.Replace("%SELECTNHKMODE:" & gt(0) & "%", viewbutton_html)
                                 Else
@@ -828,7 +828,7 @@ Class WebRemocon
                     'BonDriver一覧
 
                     html_selectbonsidch_a &= "<script type=""text/javascript"" src=""ConnectedSelect.js""></script>" & vbCrLf
-                    html_selectbonsidch_a &= "<select id=""SEL1"" name=""BonDriver"" onChange=""entryChange1;"">" & vbCrLf
+                    html_selectbonsidch_a &= "<select id=""SEL1"" name=""BonDriver"">" & vbCrLf
                     html_selectbonsidch_a &= "<option value="""">---</option>" & vbCrLf
                     For i = 0 To bons.Length - 1
                         html_selectbonsidch_a &= "<option value=""" & bons(i) & """>" & bons(i) & "</option>" & vbCrLf
@@ -836,7 +836,7 @@ Class WebRemocon
                     html_selectbonsidch_a &= "</select>" & vbCrLf
 
                     '各BonDriverに対応したチャンネルを書き込む
-                    html_selectbonsidch_b &= "<select id=""SEL2"" name=""Bon_Sid_Ch"">" & vbCrLf
+                    html_selectbonsidch_b &= "<select id=""SEL2"" name=""Bon_Sid_Ch"" onChange=""changeSelect()"">" & vbCrLf
                     html_selectbonsidch_b &= "<option value="""">---</option>" & vbCrLf
                     For i = 0 To bons.Length - 1
                         html_selectbonsidch_b &= "<optgroup label=""" & bons(i) & """>" & vbCrLf
