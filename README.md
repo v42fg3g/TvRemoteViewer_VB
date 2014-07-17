@@ -15,6 +15,8 @@ TvRemoteViewer_VB
 TvRemoteViewer無しにスムーズな開発は出来なかったでしょう。  
 作者様ありがとうございます。感謝感謝です。  
 
+バイナリは<http://vb45wb5b.seesaa.net/>からどうぞ
+
 #動かないぞゴルァ！ の前に  
 
 ####・Windows8以降のOSでは以下のどちらかの操作が必要です。  
