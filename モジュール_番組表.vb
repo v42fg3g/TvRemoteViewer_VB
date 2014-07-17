@@ -210,7 +210,9 @@ Module モジュール_番組表
         html &= vbCrLf & "<option value=""0"">主・副</option>" & vbCrLf
         html &= "<option value=""1"">主</option>" & vbCrLf
         html &= "<option value=""2"">副</option>" & vbCrLf
-        html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
+        If BS1_hlsApp.Length > 0 Then
+            html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
+        End If
         html &= "</select>" & vbCrLf
 
         Return html
