@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.30
+TvRemoteViewer_VB v0.32
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -120,8 +120,8 @@ TvRemoteViewer_VB v0.30
 	%FILEROOT%			.m3u8が存在する相対フォルダ
 
 
-	・なお、%PROCBONLIST%、%SELECTCH%、%VIEWBUTTONS%、%SELECTBONSIDCH%　に対しては、要素の前中後に表示するhtmlタグを指定できます。要素自体が存在しない場合は表示されません。
-	書式	%VIEWBUTTONS:[前方に表示するhtmlタグ]:[ボタンとボタンの間に表示するhtmlタグ]:[後方に表示するhtmlタグ]%
+	・なお、%PROCBONLIST%、%SELECTCH%、%VIEWBUTTONS%、%SELECTBONSIDCH%、%SELECTNHKMODE%　に対しては、要素の前中後に表示するhtmlタグを指定できます。要素自体が存在しない場合は表示されません。
+	書式	%VIEWBUTTONS:[前方に表示するhtmlタグ]:[ボタンとボタンの間に表示するhtmlタグ]:[後方に表示するhtmlタグ]:[要素が表示されない場合に替わりに表示されるhtmlタグ]%
 	例	%VIEWBUTTONS:視聴可能ストリーム<br>:<br>===================<br>:ボタンを押してください<br>%
 	結果	視聴可能ストリーム
 		[ストリーム1を視聴]
@@ -263,6 +263,9 @@ TvRemoteViewer_VB v0.30
 	0.28	index.htmlにおいてNHK関連以外は音声選択を表示しないようにした
 	0.29	初起動時に設定途中で例外エラーが起こるバグを修正
 	0.30	ファイル再生でリダイレクトに失敗していたバグを修正
+	0.31	VLCが指定されていなくてもNHK音声選択に「VLCで再生」と表示されていたバグを修正
+	0.32	アイコンの追加
+		コードの最適化
 
 
 

@@ -335,18 +335,24 @@ Class WebRemocon
 
                             'BonDriverと番組名連携選択
                             If s.IndexOf("%SELECTBONSIDCH") >= 0 Then
-                                Dim gt() As String = get_atags("%SELECTBONSIDCH:", s)
+                                Dim gt() As String = get_atags("%SELECTBONSIDCH", s)
                                 Dim selectbon As String = WEB_make_select_Bondriver_html(gt)
-                                s = s.Replace("%SELECTBONSIDCH%", selectbon)
-                                s = s.Replace("%SELECTBONSIDCH:" & gt(0) & "%", selectbon)
+                                If selectbon.Length > 0 Then
+                                    s = s.Replace("%SELECTBONSIDCH" & gt(0) & "%", selectbon)
+                                Else
+                                    s = s.Replace("%SELECTBONSIDCH" & gt(0) & "%", gt(4))
+                                End If
                             End If
 
                             'Viewボタン作成
                             If s.IndexOf("%VIEWBUTTONS") >= 0 Then
-                                Dim gt() As String = get_atags("%VIEWBUTTONS:", s)
+                                Dim gt() As String = get_atags("%VIEWBUTTONS", s)
                                 Dim viewbutton_html As String = WEB_make_ViewLink_html(gt)
-                                s = s.Replace("%VIEWBUTTONS%", viewbutton_html)
-                                s = s.Replace("%VIEWBUTTONS:" & gt(0) & "%", viewbutton_html)
+                                If viewbutton_html.Length > 0 Then
+                                    s = s.Replace("%VIEWBUTTONS" & gt(0) & "%", viewbutton_html)
+                                Else
+                                    s = s.Replace("%VIEWBUTTONS" & gt(0) & "%", gt(4))
+                                End If
                             End If
 
                             'ストリーム番号
@@ -356,14 +362,12 @@ Class WebRemocon
 
                             'NHK音声モード
                             If s.IndexOf("%SELECTNHKMODE") >= 0 Then
-                                Dim gt() As String = get_atags("%SELECTNHKMODE:", s)
+                                Dim gt() As String = get_atags("%SELECTNHKMODE", s)
                                 If Me._NHK_dual_mono_mode = 3 Then
                                     Dim viewbutton_html As String = "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(gt, num) & "</span>"
-                                    s = s.Replace("%SELECTNHKMODE%", viewbutton_html)
-                                    s = s.Replace("%SELECTNHKMODE:" & gt(0) & "%", viewbutton_html)
+                                    s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", viewbutton_html)
                                 Else
-                                    s = s.Replace("%SELECTNHKMODE%", "<input type=""hidden"" name=""NHKMODE"" value=""" & Me._NHK_dual_mono_mode & """>")
-                                    s = s.Replace("%SELECTNHKMODE:" & gt(0) & "%", "<input type=""hidden"" name=""NHKMODE"" value=""" & Me._NHK_dual_mono_mode & """>")
+                                    s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", "<input type=""hidden"" name=""NHKMODE"" value=""" & Me._NHK_dual_mono_mode & """>")
                                 End If
                             End If
 
@@ -430,7 +434,7 @@ Class WebRemocon
                                 '配信中ならばnumからBonDriver_pathとBonDriverを取得
                                 If s.IndexOf("%SELECTCH") >= 0 Then
                                     '%SELECTCHをhtmlに置換
-                                    Dim gt() As String = get_atags("%SELECTCH:", s)
+                                    Dim gt() As String = get_atags("%SELECTCH", s)
                                     Dim vhtml As String
                                     If rez_hlsopt = 0 Then
                                         vhtml = replace_html_selectch(num, rez, gt, Me._NHK_dual_mono_mode)
@@ -438,8 +442,11 @@ Class WebRemocon
                                         'hlsOptから解像度を取得した場合は値を渡さない（HLS_option.txtのオプションが使われてしまうため）
                                         vhtml = replace_html_selectch(num, "", gt, Me._NHK_dual_mono_mode)
                                     End If
-                                    s = s.Replace("%SELECTCH%", vhtml)
-                                    s = s.Replace("%SELECTCH:" & gt(0) & "%", vhtml)
+                                    If vhtml.Length > 0 Then
+                                        s = s.Replace("%SELECTCH" & gt(0) & "%", vhtml)
+                                    Else
+                                        s = s.Replace("%SELECTCH" & gt(0) & "%", gt(4))
+                                    End If
                                 End If
 
                             End If
@@ -474,13 +481,16 @@ Class WebRemocon
 
                             '配信中簡易リスト
                             If s.IndexOf("%PROCBONLIST") >= 0 Then
-                                Dim gt() As String = get_atags("%PROCBONLIST:", s)
+                                Dim gt() As String = get_atags("%PROCBONLIST", s)
                                 Dim js As String = Me._procMan.get_live_numbers_bon().Replace(vbCrLf, "<br>")
                                 If js.Length > 0 Then
                                     js = gt(1) & js & gt(3)
                                 End If
-                                s = s.Replace("%PROCBONLIST:" & gt(0) & "%", js)
-                                s = s.Replace("%PROCBONLIST%", js)
+                                If js.Length > 0 Then
+                                    s = s.Replace("%PROCBONLIST" & gt(0) & "%", js)
+                                Else
+                                    s = s.Replace("%PROCBONLIST" & gt(0) & "%", gt(4))
+                                End If
                             End If
 
                             'リダイレクト
@@ -505,13 +515,11 @@ Class WebRemocon
                             End If
                             'TvRock番組表ボタン
                             If s.IndexOf("%TVPROGRAM-TVROCK-BUTTON") >= 0 Then
-                                Dim gt() As String = get_atags("%TVPROGRAM-TVROCK-BUTTON:", s)
+                                Dim gt() As String = get_atags("%TVPROGRAM-TVROCK-BUTTON", s)
                                 If TvProgram_tvrock_url.Length > 0 Then
-                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON:" & gt(0) & "%", gt(1) & "<input type=""button"" value=""TvRock番組表"" onClick=""location.href='TvProgram_TvRock.html'"">") & gt(3)
-                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON%", "<input type=""button"" value=""TvRock番組表"" onClick=""location.href='TvProgram_TvRock.html'"">")
+                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" value=""TvRock番組表"" onClick=""location.href='TvProgram_TvRock.html'"">") & gt(3)
                                 Else
-                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON:" & gt(0) & "%", "")
-                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON%", "")
+                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON" & gt(0) & "%", gt(4))
                                 End If
                             End If
 
@@ -521,13 +529,11 @@ Class WebRemocon
                             End If
                             'EDCB番組表ボタン
                             If s.IndexOf("%TVPROGRAM-EDCB-BUTTON") >= 0 Then
-                                Dim gt() As String = get_atags("%TVPROGRAM-EDCB-BUTTON:", s)
+                                Dim gt() As String = get_atags("%TVPROGRAM-EDCB-BUTTON", s)
                                 If TvProgram_EDCB_url.Length > 0 Then
-                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON:" & gt(0) & "%", gt(1) & "<input type=""button"" value=""EDCB番組表"" onClick=""location.href='TvProgram_EDCB.html'"">") & gt(3)
-                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON%", "<input type=""button"" value=""EDCB番組表"" onClick=""location.href='TvProgram_EDCB.html'"">")
+                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" value=""EDCB番組表"" onClick=""location.href='TvProgram_EDCB.html'"">") & gt(3)
                                 Else
-                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON:" & gt(0) & "%", "")
-                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON%", "")
+                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(4))
                                 End If
                             End If
 
@@ -585,9 +591,9 @@ Class WebRemocon
     '%変数に埋め込まれた前中後に挿入すべきhtmlタグを抽出
     Private Function get_atags(ByVal tag As String, ByVal s As String) As Object
         'tag="%～:" s=html
-        '返値　d(0)=抽出タグ文字列 d(1)=前 d(2)=中 d(3)=後
+        '返値　d(0)=抽出タグ文字列 d(1)=前 d(2)=中 d(3)=後 d(4)=要素がnothingだった場合に替わりに表示するタグ
         Dim d() As String
-        ReDim Preserve d(3)
+        ReDim Preserve d(4)
         Dim vb1 As Integer = s.IndexOf(tag)
         Dim vb2 As Integer = s.IndexOf("%", vb1 + 1)
         Dim vbs As String = ""
@@ -600,15 +606,21 @@ Class WebRemocon
         d(1) = ""
         d(2) = ""
         d(3) = ""
-        If vbt.Length = 1 Then
-            d(2) = vbt(0)
-        ElseIf vbt.Length = 2 Then
-            d(2) = vbt(0)
-            d(3) = vbt(1)
+        d(4) = ""
+        If vbt.Length = 2 Then
+            d(2) = vbt(1)
         ElseIf vbt.Length = 3 Then
-            d(1) = vbt(0)
             d(2) = vbt(1)
             d(3) = vbt(2)
+        ElseIf vbt.Length = 4 Then
+            d(1) = vbt(1)
+            d(2) = vbt(2)
+            d(3) = vbt(3)
+        ElseIf vbt.Length = 5 Then
+            d(1) = vbt(1)
+            d(2) = vbt(2)
+            d(3) = vbt(3)
+            d(4) = vbt(4)
         End If
 
         Return d
