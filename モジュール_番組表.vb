@@ -150,7 +150,7 @@ Module モジュール_番組表
                                             If hosokyoku.IndexOf("ＮＨＫ") >= 0 Then
                                                 If NHKMODE = 3 Then
                                                     html &= WEB_make_NHKMODE_html_B()
-                                                Else
+                                                ElseIf NHKMODE >= 0 Then
                                                     html &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
                                                 End If
                                             End If

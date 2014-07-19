@@ -364,11 +364,15 @@ Class WebRemocon
                             'NHK音声モード
                             If s.IndexOf("%SELECTNHKMODE") >= 0 Then
                                 Dim gt() As String = get_atags("%SELECTNHKMODE", s)
-                                If Me._NHK_dual_mono_mode = 3 Then
-                                    Dim viewbutton_html As String = "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(gt, num) & "</span>"
-                                    s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", viewbutton_html)
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    If Me._NHK_dual_mono_mode = 3 Then
+                                        Dim viewbutton_html As String = "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(gt, num) & "</span>"
+                                        s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", viewbutton_html)
+                                    Else
+                                        s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", "<input type=""hidden"" name=""NHKMODE"" value=""" & Me._NHK_dual_mono_mode & """>")
+                                    End If
                                 Else
-                                    s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", "<input type=""hidden"" name=""NHKMODE"" value=""" & Me._NHK_dual_mono_mode & """>")
+                                    s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", gt(4))
                                 End If
                             End If
 
@@ -507,12 +511,20 @@ Class WebRemocon
 
                             '地デジ番組表（通常のネットから取得）
                             If s.IndexOf("%TVPROGRAM-D%") >= 0 Then
-                                s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
+                                Else
+                                    s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
+                                End If
                             End If
 
                             'TvRock番組表
                             If s.IndexOf("%TVPROGRAM-TVROCK%") >= 0 Then
-                                s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
+                                Else
+                                    s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
+                                End If
                             End If
                             'TvRock番組表ボタン
                             If s.IndexOf("%TVPROGRAM-TVROCK-BUTTON") >= 0 Then
@@ -526,7 +538,11 @@ Class WebRemocon
 
                             'EDCB番組表
                             If s.IndexOf("%TVPROGRAM-EDCB%") >= 0 Then
-                                s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
+                                Else
+                                    s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
+                                End If
                             End If
                             'EDCB番組表ボタン
                             If s.IndexOf("%TVPROGRAM-EDCB-BUTTON") >= 0 Then
@@ -648,11 +664,13 @@ Class WebRemocon
             'NHKかどうか調べる
             If Me._procMan.check_isNHK(num) = 1 Then
                 'NHKなら
-                If NHKMODE = 3 Then
-                    Dim atag2(3) As String
-                    vhtml &= WEB_make_NHKMODE_html(atag2, num)
-                Else
-                    vhtml &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
+                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                    If NHKMODE = 3 Then
+                        Dim atag2(3) As String
+                        vhtml &= WEB_make_NHKMODE_html(atag2, num)
+                    Else
+                        vhtml &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
+                    End If
                 End If
             End If
 
