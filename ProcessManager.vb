@@ -629,10 +629,22 @@ Public Class ProcessManager
                 If sp >= 0 And ep > sp Then
                     sid = Val(udpOpt.Substring(sp + "/sid ".Length, ep - sp - "/sid ".Length))
                 End If
-                If sid > 0 Then
+                'udpOptからchspaceを抜き出す
+                sp = udpOpt.IndexOf("/chspace ")
+                ep = udpOpt.IndexOf(" ", sp + "/chspace ".Length)
+                Dim chspace As Integer = -1
+                If sp >= 0 And ep > sp Then
+                    chspace = Val(udpOpt.Substring(sp + "/chspace ".Length, ep - sp - "/chspace ".Length))
+                End If
+                If sid > 0 And chspace >= 0 Then
                     Dim j As Integer = -1
                     If ch_list IsNot Nothing Then
-                        j = Array.IndexOf(ch_list, sid)
+                        For k As Integer = 0 To ch_list.Length - 1
+                            If ch_list(k).sid = sid And ch_list(k).chspace = chspace Then
+                                j = k
+                                Exit For
+                            End If
+                        Next
                     End If
                     If j >= 0 Then
                         r = ch_list(j).jigyousha
@@ -1057,22 +1069,6 @@ Public Class ProcessManager
             End If
         Next
     End Sub
-
-    'numから放送中のサービスIDを取得する
-    Public Function get_sid(ByVal num As Integer) As Integer
-        Dim sid As Integer = 0
-        Dim i As Integer = num2i(num)
-        If i >= 0 Then
-            Dim udpOpt As String = Me._list(i)._udpOpt
-            'udpOptから/sidを抜き出す
-            Dim sp As Integer = udpOpt.IndexOf("/sid ")
-            Dim ep As Integer = udpOpt.IndexOf(" ", sp + "/sid ".Length)
-            If sp >= 0 And ep > sp Then
-                sid = Val(udpOpt.Substring(sp + "/sid ".Length, ep - sp - "/sid ".Length))
-            End If
-        End If
-        Return sid
-    End Function
 
     'numから放送中のNHK音声モードを取得する
     Public Function get_NHKmode(ByVal num As Integer) As Integer

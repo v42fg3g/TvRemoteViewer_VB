@@ -965,12 +965,11 @@ Class WebRemocon
         End If
 
         If num > 0 Then
-            '配信ストリームの指定があった場合は放送局のsidを取得してselectedする
-            Dim sid As Integer = Me._procMan.get_sid(num)
-            Dim sp As Integer = html.IndexOf("," & sid.ToString & ",")
-            Dim ep As Integer = html.IndexOf(">", sp + 1)
-            If sp > 0 And ep > sp Then
-                html = html.Substring(0, ep) & " selected" & html.Substring(ep)
+            '配信ストリームの指定があった場合は放送局名を取得してselectedする
+            Dim chname As String = Me._procMan.get_channelname(num)
+            Dim sp As Integer = html.IndexOf(">" & chname.ToString & "<")
+            If sp > 0 Then
+                html = html.Substring(0, sp) & " selected" & html.Substring(sp)
             End If
         End If
 
