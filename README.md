@@ -95,8 +95,9 @@ BonDriver PathにはRecTask.iniに記述されているフォルダを指定し�
 ####・特定の放送局でRecTaskが不安性でHLS再起動が繰り返されてしまう  
 RecTask.ini　  
 Logging.OutputToFile=true　  
-としてみてください
-謎ですがうちでは正常動作となりました。
+としてみてください　  
+謎ですがうちでは正常動作となりました。　  
+また、UDP追加オプションに「/log /loglevel 5」を加えると正常動作したとのコメントがありました。　  
 　  
 　  
 ####・vlcを使用する場合は%WWWROOT%は半角スペースの入らないところに設置しましょう  
