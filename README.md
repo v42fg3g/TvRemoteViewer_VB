@@ -92,6 +92,11 @@ BonDriver PathにはRecTask.iniに記述されているフォルダを指定し�
 あるはずのBonDriverが無いということも起こりえます。  
 　  
 　  
+####・RecTask.exeの位置（不確定）  
+RecTask.exeとBonDriverがProgram Filesの中にありますと一部の放送局で配信がうまくいかない場合があるようです  
+何度もHLSアプリが応答しませんと出る方はRecTask.exeとBonDriverの位置を変更してみてください。  
+　  
+　  
 ####・vlcを使用する場合は%WWWROOT%は半角スペースの入らないところに設置しましょう  
 vlcのオプション記述の関係からhtmlを配置するフォルダのパスには半角スペースが入らないほうが無難です。  
 BS1＆BSプレミアム視聴時にvlcへ切り替える設定をしている場合もご注意ください  

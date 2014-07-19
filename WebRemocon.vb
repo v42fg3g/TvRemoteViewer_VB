@@ -237,6 +237,7 @@ Class WebRemocon
                             End If
 
                             Dim gln As String = Me._procMan.get_live_numbers()
+                            gln = gln.Replace("x", "")
                             If gln.IndexOf(" " & num.ToString & " ") >= 0 Then
                                 check_m3u8_ts = check_m3u8_ts_status(num)
                                 If check_m3u8_ts <= 2 Then
@@ -768,17 +769,22 @@ Class WebRemocon
         If gln.Length > 0 Then
             Dim d() As String = gln.Split(" ")
             For i As Integer = 0 To d.Length - 1
-                If d(i) > 0 Then
+                Dim chkstr As String = ""
+                If d(i).IndexOf("x") >= 0 Then
+                    chkstr = "[X]" '配信停止中
+                End If
+                d(i) = d(i).Replace("x", "")
+                If Val(d(i)) > 0 Then
                     html &= bst
-                    Dim ChannelName As String = Me._procMan.get_channelname(d(i))
+                    Dim ChannelName As String = Me._procMan.get_channelname(Val(d(i)))
                     If ChannelName.Length > 20 Then
                         '長すぎるときはカット
                         ChannelName = ChannelName.Substring(0, 18) & ".."
                     End If
                     If ChannelName.Length > 0 Then
-                        html &= "<input type=""button"" value=""" & d(i).ToString & "　" & ChannelName & """ onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
+                        html &= "<input type=""button"" value=""" & chkstr & d(i) & "　" & ChannelName & """ onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
                     Else
-                        html &= "<input type=""button"" value=""ストリーム" & d(i).ToString & "を視聴"" onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
+                        html &= "<input type=""button"" value=""ストリーム" & chkstr & d(i) & "を視聴"" onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
                     End If
                     'html &= "<form action=""ViewTV" & d(i).ToString & ".html"">" & vbCrLf
                     'html &= "    <input type=""submit"" value=""ストリーム" & d(i).ToString & "を視聴"" />" & vbCrLf
