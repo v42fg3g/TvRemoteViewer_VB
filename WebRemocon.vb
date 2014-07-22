@@ -294,7 +294,7 @@ Class WebRemocon
                             sw.WriteLine(ERROR_PAGE("パラメーターが不正です", "パラメーターが不正です"))
                             'sw.Flush()
                             log1write("パラメーターが不正です")
-                        ElseIf request_page = 1 Then
+                        ElseIf request_page = 1 Or request_page = 11 Then
                             'waitingページを表示する
                             'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
                             sw.WriteLine("<!doctype html>")
@@ -305,7 +305,13 @@ Class WebRemocon
                             sw.WriteLine("<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">")
                             sw.WriteLine("</head>")
                             sw.WriteLine("<body>")
-                            sw.WriteLine("配信準備中です..(" & check_m3u8_ts.ToString & ")")
+                            If request_page = 1 Then
+                                sw.WriteLine("配信準備中です..(" & check_m3u8_ts.ToString & ")")
+                                log1write(num.ToString & ":配信準備中です")
+                            ElseIf request_page = 11 Then
+                                sw.WriteLine("配信されていません")
+                                log1write(num.ToString & ":配信されていません")
+                            End If
                             sw.WriteLine("<br><br>")
                             sw.WriteLine("<input type=""button"" value=""トップメニュー"" onClick=""location.href='index.html'"">")
                             sw.WriteLine("<br><br>")
@@ -314,13 +320,6 @@ Class WebRemocon
                             sw.WriteLine("</body>")
                             sw.WriteLine("</html>")
                             'sw.Flush()
-                            log1write(num.ToString & ":配信準備できていません")
-                        ElseIf request_page = 11 Then
-                            '配信されていない
-                            'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                            sw.WriteLine(ERROR_PAGE("配信されていません：" & num.ToString, "配信されていません", 1))
-                            'sw.Flush()
-                            log1write(num.ToString & ":配信されていません")
                         ElseIf request_page = 12 Then
                             'VLCはファイル再生未対応
                             'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
