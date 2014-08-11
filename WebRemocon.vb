@@ -1399,7 +1399,7 @@ Class WebRemocon
                                         TvProgramD_sort(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
                                     Next
                                 End If
-                            Case "Stop_RecTask_at_StartQuit"
+                            Case "Stop_RecTask_at_StartQuit", "Stop_RecTask_at_StartEnd"
                                 Stop_RecTask_at_StartEnd = Val(youso(1).ToString)
                             Case "NHK_dual_mono_mode"
                                 Me._NHK_dual_mono_mode = Val(youso(1).ToString)
