@@ -64,6 +64,13 @@ Class WebRemocon
         Public opt As String 'VLCオプション文字列
     End Structure
 
+    '配信準備中 指定tsファイル数まで配信準備中にする
+    Public _tsfile_wait As Integer = 3
+
+    'MIME TYPE
+    Public _MIME_TYPE_DEFAULT As String = ""
+    Public _MIME_TYPE() As String
+
     Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String(), ByVal id As String, ByVal pass As String)
         'Public Sub New(udpPort As Integer, wwwroot As String, wwwport As Integer) ', num As Integer)
         '初期化 
@@ -101,6 +108,33 @@ Class WebRemocon
         'ストリーム用インスタンス作成
         Me._procMan = New ProcessManager(udpPort, wwwroot, fileroot)
     End Sub
+
+    'urlからMIMETYPEを取得
+    Private Function get_mimetype(ByVal url As String) As String
+        Dim r As String = ""
+
+        Dim sp As Integer = url.LastIndexOf(".")
+        If sp >= 0 Then
+            Dim k As String = url.Substring(sp)
+            If (url.Length - sp) = k.Length And k.Length > 1 Then
+                k = k.Substring(1)
+                'kに拡張子が入っている
+                If Me._MIME_TYPE IsNot Nothing Then
+                    For i As Integer = 0 To Me._MIME_TYPE.Length - 1
+                        Dim d() As String = Me._MIME_TYPE(i).Split(":")
+                        If d.Length = 2 Then
+                            If k = d(0) Then
+                                r = d(1)
+                                Exit For
+                            End If
+                        End If
+                    Next
+                End If
+            End If
+        End If
+
+        Return r
+    End Function
 
     'HTTPサーバー開始
     Public Sub Web_Start()
@@ -144,6 +178,14 @@ Class WebRemocon
                 Dim req As HttpListenerRequest = context.Request
                 Dim res As HttpListenerResponse = context.Response
 
+                'MIME TYPE
+                Dim mimetype As String = get_mimetype(req.Url.LocalPath)
+                If mimetype.Length > 0 Then
+                    res.ContentType = mimetype
+                Else
+                    res.ContentType = Me._MIME_TYPE_DEFAULT
+                End If
+
                 Dim auth_ok As Integer = 0
                 If Me._id.Length = 0 Or Me._pass.Length = 0 Then
                     'パスワード未設定は素通り
@@ -170,7 +212,10 @@ Class WebRemocon
                         path = path & "index.html"
                     End If
 
-                    log1write(req.Url.LocalPath & "へのリクエストがありました")
+                    log1write(req.Url.LocalPath & "へのリクエストがありました。")
+                    If res.ContentType.Length > 0 Then
+                        log1write("MIME TYPE : " & res.ContentType)
+                    End If
 
                     If path.IndexOf(".htm") > 0 Then
                         'HTMLなら
@@ -240,7 +285,7 @@ Class WebRemocon
                             gln = gln.Replace("x", "")
                             If gln.IndexOf(" " & num.ToString & " ") >= 0 Then
                                 check_m3u8_ts = check_m3u8_ts_status(num)
-                                If check_m3u8_ts <= 2 Then
+                                If check_m3u8_ts < Me._tsfile_wait Then
                                     '準備ができていない
                                     request_page = 1 'waiting表示
                                 Else
@@ -1358,6 +1403,23 @@ Class WebRemocon
                                 Stop_RecTask_at_StartEnd = Val(youso(1).ToString)
                             Case "NHK_dual_mono_mode"
                                 Me._NHK_dual_mono_mode = Val(youso(1).ToString)
+                            Case "tsfile_wait"
+                                Me._tsfile_wait = Val(youso(1).ToString)
+                                If Me._tsfile_wait <= 0 Then
+                                    Me._tsfile_wait = 3
+                                End If
+                            Case "MIME_TYPE_DEFAULT"
+                                Me._MIME_TYPE_DEFAULT = trim8(youso(1))
+                            Case "MIME_TYPE"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve Me._MIME_TYPE(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        Me._MIME_TYPE(j) = trim8(clset(j))
+                                    Next
+                                End If
                         End Select
                     End If
                 Next
