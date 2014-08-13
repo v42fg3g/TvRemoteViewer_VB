@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.37"
+    Private version As String = "TvRemoteViewer_VB version 0.38"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -203,7 +203,6 @@ Public Class Form1
     Private Sub Button1_Click(sender As System.Object, e As System.EventArgs) Handles Button1.Click
         Try
             'カレントディレクトリ変更
-            'System.IO.Directory.SetCurrentDirectory(TextBoxWWWroot.Text)
             F_set_ppath4program()
             Try
                 'System.Diagnostics.Process.Start("notepad.exe", """index.html""")
@@ -230,6 +229,9 @@ Public Class Form1
             'すでに起動していると判断する
             Close()
         End If
+
+        'カレントディレクトリ変更
+        F_set_ppath4program()
 
         If file_exist("HLS_option.txt") = 0 Then
             MsgBox("HLS_option.txtが見つかりません。")
@@ -321,6 +323,9 @@ Public Class Form1
 
     'ウィンドウの位置を復元
     Public Sub F_window_set()
+        'カレントディレクトリ変更
+        F_set_ppath4program()
+
         Dim line() As String = file2line("form_status.txt")
         If line IsNot Nothing Then
             Dim i As Integer
@@ -677,19 +682,8 @@ Public Class Form1
     'HLS_option.txt表示
     Private Sub ButtonHLSoption_Click(sender As System.Object, e As System.EventArgs) Handles ButtonHLSoption.Click
         Try
-            Dim ppath As String = System.Reflection.Assembly.GetExecutingAssembly().Location
-            'パスだけを取り出す
-            If ppath.Length > 0 Then
-                Dim psp As Integer = ppath.LastIndexOf("\")
-                If psp >= 0 Then
-                    ppath = ppath.Substring(0, psp)
-                Else
-                    ppath = ""
-                End If
-            End If
-
             'カレントディレクトリ変更
-            System.IO.Directory.SetCurrentDirectory(ppath)
+            F_set_ppath4program()
             Try
                 'System.Diagnostics.Process.Start("notepad.exe", """HLS_option.txt""")
                 System.Diagnostics.Process.Start("HLS_option.txt")

@@ -1208,6 +1208,9 @@ Class WebRemocon
     Public Sub read_vlc_option()
         Dim i As Integer = 0
 
+        'カレントディレクトリ変更
+        F_set_ppath4program()
+
         Try
             Dim line() As String = file2line("HLS_option.txt")
             If line Is Nothing Then
@@ -1283,6 +1286,10 @@ Class WebRemocon
     Public Sub read_videopath()
         Dim errstr As String = ""
         Dim line() As String = Nothing
+
+        'カレントディレクトリ変更
+        F_set_ppath4program()
+
         If file_exist("VideoPath.txt") Then
             line = file2line("VideoPath.txt")
             log1write("設定ファイルとして VideoPath.txt を読み込みました")
