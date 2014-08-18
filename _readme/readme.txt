@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.38
+TvRemoteViewer_VB v0.39
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -275,6 +275,7 @@ TvRemoteViewer_VB v0.38
 		RecTaskが終了しないオプション(Stop_RecTask_at_StartEnd)が作用していなかったバグを修正
 		HLSオプションを修正（再生待機時間の縮小）
 	0.38	設定ファイルを読み込む際のカレントフォルダをきっちり指定するようにした
+	0.39	MIME TYPEの設定をコメントアウトしたときに例外が起こっていたバグを修正
 
 
 

@@ -106,6 +106,13 @@ Public Class ProcessManager
             r = "-I dummy udp://@:%UDPPORT% --sout ""#transcode{width=640,height=360,vcodec=h264,vb=1000,fps=29.97,venc=x264{aud,profile=baseline,level=30,keyint=30,bframes=0,ref=1,nocabac},acodec=aac,ab=128,channels=2,aenc=avcodec{strict=-2},samplerate=48000,audio-sync,hurry-up}:std{access=livehttp{seglen=5,delsegs=true,numsegs=5,index=%WWWROOT%\mystream.m3u8,index-url=mystream-########.ts},mux=ts{use-key-frames},dst=%WWWROOT%\mystream-########.ts}"" --no-ts-es-id-pid --sout-ts-pid-audio=68 --intf=""rc"" --rc-host=%rc-host% vlc://quit"""
         End If
 
+        'VLCの場合はオプションんでフォルダ指定がされているので必要無し
+        ''カレントディレクトリを戻す
+        'Try
+        'Directory.SetCurrentDirectory(Me._fileroot) 'カレントディレクトリ変更
+        'Catch ex As Exception
+        'End Try
+
         Return r
     End Function
 

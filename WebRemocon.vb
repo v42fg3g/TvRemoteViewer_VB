@@ -122,10 +122,12 @@ Class WebRemocon
                 If Me._MIME_TYPE IsNot Nothing Then
                     For i As Integer = 0 To Me._MIME_TYPE.Length - 1
                         Dim d() As String = Me._MIME_TYPE(i).Split(":")
-                        If d.Length = 2 Then
-                            If k = d(0) Then
-                                r = d(1)
-                                Exit For
+                        If d IsNot Nothing Then
+                            If d.Length = 2 Then
+                                If k = d(0) Then
+                                    r = d(1)
+                                    Exit For
+                                End If
                             End If
                         End If
                     Next
@@ -182,7 +184,7 @@ Class WebRemocon
                 Dim mimetype As String = get_mimetype(req.Url.LocalPath)
                 If mimetype.Length > 0 Then
                     res.ContentType = mimetype
-                Else
+                ElseIf Me._MIME_TYPE_DEFAULT.Length > 0 Then
                     res.ContentType = Me._MIME_TYPE_DEFAULT
                 End If
 
@@ -213,8 +215,10 @@ Class WebRemocon
                     End If
 
                     log1write(req.Url.LocalPath & "へのリクエストがありました。")
-                    If res.ContentType.Length > 0 Then
-                        log1write("MIME TYPE : " & res.ContentType)
+                    If res.ContentType IsNot Nothing Then
+                        If res.ContentType.Length > 0 Then
+                            log1write("MIME TYPE : " & res.ContentType)
+                        End If
                     End If
 
                     If path.IndexOf(".htm") > 0 Then
