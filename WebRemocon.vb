@@ -210,7 +210,8 @@ Class WebRemocon
                     Dim path As String = root & req.Url.LocalPath.Replace("/", "\")
 
                     'ルートにアクセスされた場合、index.htmlを表示する
-                    If path = Me._wwwroot & "\" Then
+                    Dim se1 As Integer = path.LastIndexOf("\")
+                    If se1 >= 0 And (se1 + 1) = path.Length Then
                         path = path & "index.html"
                     End If
 

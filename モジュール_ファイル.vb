@@ -70,6 +70,7 @@ Module モジュール_ファイル
                 cDisposable.Dispose()
             End If
             'エラーが起こったら終了
+            log1write(filename & " " & ex.Message)
             Exit Function
         End Try
 
@@ -83,6 +84,7 @@ Module モジュール_ファイル
             'cDisposable.Dispose()
             'End If
             'エラーが起こったら終了
+            log1write(filename & " " & ex.Message)
             Exit Function
         End Try
 
@@ -94,13 +96,17 @@ Module モジュール_ファイル
         Dim r As Integer = -1
         'File.Exists メソッド
         '指定したファイルが存在するかどうかを確認します
-        If System.IO.File.Exists(fn) Then
-            'MessageBox.Show("ファイル[" & fn & "]は存在します。")
-            r = 1
-        Else
-            'MessageBox.Show("ファイル[" & fn & "]は存在しません。")
-            r = 0
-        End If
+        Try
+            If System.IO.File.Exists(fn) Then
+                'MessageBox.Show("ファイル[" & fn & "]は存在します。")
+                r = 1
+            Else
+                'MessageBox.Show("ファイル[" & fn & "]は存在しません。")
+                r = 0
+            End If
+        Catch ex As Exception
+            log1write(fn & " " & ex.Message)
+        End Try
 
         Return r
     End Function
@@ -217,7 +223,11 @@ Module モジュール_ファイル
                 ppath = ""
             End If
         End If
-        System.IO.Directory.SetCurrentDirectory(ppath)
+        Try
+            System.IO.Directory.SetCurrentDirectory(ppath)
+        Catch ex As Exception
+            log1write("カレントフォルダの変更に失敗しました。" & ex.Message)
+        End Try
     End Sub
 
 End Module
