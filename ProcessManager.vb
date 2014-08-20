@@ -129,25 +129,34 @@ Public Class ProcessManager
 
             'If Me._list.Count < Me._maxSize Then
 
+            '名前付きパイプ一覧取得でエラーが起これば1が入る
+            Dim pipe_error As Integer = 0
+
             If stream_mode = 0 Then
                 'UDPストリーム再生
                 Dim pipeListBefore As New List(Of Integer)()
                 If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
                     '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
-                    Dim listOfPipes As String() = System.IO.Directory.GetFiles("\\.\pipe\")
-                    For Each pipeName As String In listOfPipes
-                        If pipeName.Contains("RecTask_Server_Pipe_") Then
-                            Dim pindex1 As Integer = 0
-                            Try
-                                pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20))
-                            Catch ex As Exception
-                            End Try
-                            If pindex1 > 0 Then
-                                pipeListBefore.Add(pindex1)
-                                'log1write("Before PipeName=" & pipeName & " PipeIndex=" & pindex1)
+                    Dim listOfPipes As String() = Nothing
+                    Try
+                        listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                        For Each pipeName As String In listOfPipes
+                            If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                Dim pindex1 As Integer = 0
+                                Try
+                                    pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + "RecTask_Server_Pipe_".Length))
+                                Catch ex As Exception
+                                End Try
+                                If pindex1 > 0 Then
+                                    pipeListBefore.Add(pindex1)
+                                    'log1write("Before PipeName=" & pipeName & " PipeIndex=" & pindex1)
+                                End If
                             End If
-                        End If
-                    Next
+                        Next
+                    Catch ex As Exception
+                        '名前付きパイプ一覧取得でエラーが起こった
+                        pipe_error = 1
+                    End Try
                 End If
 
                 '★UDPソフトを実行
@@ -168,45 +177,59 @@ Public Class ProcessManager
                 'pipeindexを取得
                 Dim pipeIndex As Integer = 0
                 Dim chk As Integer = 0
-                While chk < 200
-                    'RecTaskのパイプが増加するまで繰り返す
-                    If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
-                        '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
-                        Dim listOfPipes As String() = System.IO.Directory.GetFiles("\\.\pipe\")
-                        For Each pipeName As String In listOfPipes
-                            If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                Dim pindex2 As Integer = 0
-                                Try
-                                    pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
-                                Catch ex As Exception
-                                End Try
-                                If pindex2 > 0 Then
-                                    'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
-                                    Dim c2 As Integer = 0
-                                    '起動前のパイプindexに存在しなければOK
-                                    For Each pt As Integer In pipeListBefore
-                                        If pindex2 = pt Then
-                                            c2 += 100
+                If pipe_error = 0 Then
+                    While chk < 200
+                        'RecTaskのパイプが増加するまで繰り返す
+                        If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                            '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
+                            Dim listOfPipes As String() = Nothing
+                            Try
+                                listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                            Catch ex As Exception
+                                '名前付きパイプ一覧取得でエラーが起こった
+                                pipe_error = 2
+                                Exit While
+                            End Try
+
+                            For Each pipeName As String In listOfPipes
+                                If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                    Dim pindex2 As Integer = 0
+                                    Try
+                                        pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
+                                    Catch ex As Exception
+                                    End Try
+                                    If pindex2 > 0 Then
+                                        'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
+                                        Dim c2 As Integer = 0
+                                        '起動前のパイプindexに存在しなければOK
+                                        For Each pt As Integer In pipeListBefore
+                                            If pindex2 = pt Then
+                                                c2 += 100
+                                            End If
+                                        Next
+                                        '該当するpipeindexが見つからなければ新規
+                                        If c2 = 0 Then
+                                            pipeIndex = pindex2
+                                            Exit While
                                         End If
-                                    Next
-                                    '該当するpipeindexが見つからなければ新規
-                                    If c2 = 0 Then
+                                    Else
                                         pipeIndex = pindex2
                                         Exit While
                                     End If
-                                Else
-                                    pipeIndex = pindex2
-                                    Exit While
                                 End If
-                            End If
-                        Next
-                    End If
-                    System.Threading.Thread.Sleep(50)
-                    chk += 1
-                End While
+                            Next
+                        End If
+                        System.Threading.Thread.Sleep(50)
+                        chk += 1
+                    End While
+                End If
 
-                If pipeIndex > 0 Then
-                    log1write("No.=" & num & "のパイプインデックスを取得しました。pipeindex=" & pipeIndex.ToString)
+                If pipeIndex > 0 Or pipe_error > 0 Then
+                    If pipe_error = 0 Then
+                        log1write("No.=" & num & "のパイプインデックスを取得しました。pipeindex=" & pipeIndex.ToString)
+                    Else
+                        log1write("No.=" & num & "のパイプインデックスは取得できませんでした。パイプを使用せずに続行します。")
+                    End If
 
                     System.Threading.Thread.Sleep(1000)
 
@@ -312,8 +335,8 @@ Public Class ProcessManager
                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
                 Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
                 Me._list.Add(pb)
-            End If
-            'End If
+        End If
+        'End If
         End If
 
         '現在稼働中のlist(i)._numをログに表示
