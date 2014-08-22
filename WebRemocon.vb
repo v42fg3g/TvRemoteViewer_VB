@@ -704,24 +704,24 @@ Class WebRemocon
         Dim vhtml As String = WEB_search_ServiceID(bonp, bon, 1, num)
         If vhtml.Length > 0 Then
             vhtml = "<option value="""">---</option>" & vbCrLf & vhtml
-            vhtml = "<select name=""Bon_Sid_Ch"">" & vbCrLf & vhtml
+            vhtml = "<select name=""Bon_Sid_Ch"" id=""SEL2"" onChange=""changeSelect()"">" & vbCrLf & vhtml
             vhtml = "<form action=""StartTV.html"">" & vbCrLf & vhtml
             vhtml = atag(1) & vhtml
             vhtml &= "</select>" & vbCrLf
             vhtml &= atag(2)
 
             'NHKかどうか調べる
-            If Me._procMan.check_isNHK(num) = 1 Then
-                'NHKなら
-                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                    If NHKMODE = 3 Then
-                        Dim atag2(3) As String
-                        vhtml &= WEB_make_NHKMODE_html(atag2, num)
-                    Else
-                        vhtml &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
-                    End If
+            'If Me._procMan.check_isNHK(num) = 1 Then
+            'NHKなら
+            If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                If NHKMODE = 3 Then
+                    Dim atag2(3) As String
+                    vhtml &= "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(atag2, num) & "</span>"
+                Else
+                    vhtml &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
                 End If
             End If
+            'End If
 
             vhtml &= "<input type=""submit"" value=""視聴"" />" & vbCrLf
             vhtml &= "<input type=""hidden"" name=""num"" value=""" & num & """>" & vbCrLf

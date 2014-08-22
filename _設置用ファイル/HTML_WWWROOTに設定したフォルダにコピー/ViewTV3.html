@@ -18,5 +18,23 @@
 		%TVPROGRAM-TVROCK-BUTTON%
 		%TVPROGRAM-EDCB-BUTTON%
 		<input type="button" value="戻る" onClick="history.go(-1);">
+
+		<script type="text/javascript">
+			function changeSelect(){
+				try {
+    				var select = document.getElementById('SEL2');
+	    			var options = document.getElementById('SEL2').options;
+    				var value = options.item(select.selectedIndex).text;
+					if (value.indexOf('ＮＨＫ') < 0) {
+						document.getElementById('NHKVIEW').style.display = "none";
+					} else {
+						document.getElementById('NHKVIEW').style.display = "";
+					}
+				} catch (e) {
+				}
+			}
+			//オンロードさせ、リロード時に選択を保持
+			window.onload = changeSelect;
+		</script>
     </body>
 </html>
