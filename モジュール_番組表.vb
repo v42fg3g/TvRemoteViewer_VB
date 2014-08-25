@@ -505,10 +505,10 @@ Module モジュール_番組表
     End Function
 
     '文字列から、文字列と文字列に挟まれた文字列を抽出する。
-    Public Function Instr_pickup(ByVal strdat As String, ByVal findstr As String, ByVal endstr As String, ByVal startpos As Integer, Optional ByVal endpos As Integer = 2147483647) As Object
+    Public Function Instr_pickup(ByRef strdat As String, ByVal findstr As String, ByVal endstr As String, ByVal startpos As Integer, Optional ByVal endpos As Integer = 2147483647) As Object
         Dim r As String = ""
 
-        If findstr.Length > 0 Then
+        If findstr.Length > 0 And startpos >= 0 Then
             Dim sp As Integer
             Dim ep As Integer
             sp = strdat.IndexOf(findstr, startpos)
