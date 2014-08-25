@@ -639,6 +639,7 @@ Public Class ProcessManager
             If Stop_RecTask_at_StartEnd = 1 Then
                 stopProcName("RecTask")
             End If
+            Me._list.Clear() 'リストクリア
             log1write("関連アプリのプロセスを停止しました")
         End If
 
