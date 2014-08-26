@@ -258,21 +258,26 @@ Public Class ProcessManager
                                 '副モノラル固定
                                 hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
                             ElseIf NHK_dual_mono_mode_select = 9 Then
-                                'hlsAppとhlsOptをVLCに置き換える
-                                Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt)
-                                If hlsOpt_temp.Length > 0 Then
-                                    hlsOpt = hlsOpt_temp
-                                    hlsApp = BS1_hlsApp
-                                    hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPort)
-                                    Dim fr As String = Me._fileroot
-                                    If fr.Length = 0 Then
-                                        fr = Me._wwwroot
+                                If BS1_hlsApp.Length > 0 Then
+                                    'hlsAppとhlsOptをVLCに置き換える
+                                    Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt)
+                                    If hlsOpt_temp.Length > 0 Then
+                                        hlsOpt = hlsOpt_temp
+                                        hlsApp = BS1_hlsApp
+                                        hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPort)
+                                        Dim fr As String = Me._fileroot
+                                        If fr.Length = 0 Then
+                                            fr = Me._wwwroot
+                                        End If
+                                        hlsOpt = hlsOpt.Replace("%WWWROOT%", fr) '必要ないが過去のHLS_option_VLC.txtとの互換性のため
+                                        hlsOpt = hlsOpt.Replace("%FILEROOT%", fr)
+                                        hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
+                                        hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".")
+                                        hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-")
                                     End If
-                                    hlsOpt = hlsOpt.Replace("%WWWROOT%", fr) '必要ないが過去のHLS_option_VLC.txtとの互換性のため
-                                    hlsOpt = hlsOpt.Replace("%FILEROOT%", fr)
-                                    hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
-                                    hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".")
-                                    hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-")
+                                Else
+                                    NHK_dual_mono_mode_select = 0
+                                    log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
                                 End If
                             End If
                         End If
@@ -349,8 +354,8 @@ Public Class ProcessManager
                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
                 Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
                 Me._list.Add(pb)
-            End If
-                'End If
+        End If
+        'End If
             End If
 
         '現在稼働中のlist(i)._numをログに表示
