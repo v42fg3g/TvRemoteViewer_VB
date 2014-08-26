@@ -1432,6 +1432,8 @@ Class WebRemocon
                                         Me._MIME_TYPE(j) = trim8(clset(j))
                                     Next
                                 End If
+                            Case "PipeListGetter"
+                                PipeListGetter = trim8(youso(1).ToString)
                         End Select
                     End If
                 Next

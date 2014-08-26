@@ -133,6 +133,7 @@
     <Compile Include="モジュール_ファイル.vb" />
     <Compile Include="モジュール_ログ.vb" />
     <Compile Include="モジュール_番組表.vb" />
+    <Compile Include="モジュール_名前付きパイプ取得.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx">

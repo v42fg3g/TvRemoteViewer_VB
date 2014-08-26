@@ -139,7 +139,14 @@ Public Class ProcessManager
                     '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
                     Dim listOfPipes As String() = Nothing
                     Try
+                        'Throw New Exception("TEST_ERROR1") '人為的エラーテスト
                         listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                    Catch ex As Exception
+                        '名前付きパイプ一覧取得でエラーが起こった
+                        '外部プログラムによりパイプ一覧取得を試みる
+                        listOfPipes = F_get_NamedPipeList_from_program()
+                    End Try
+                    If listOfPipes IsNot Nothing Then
                         For Each pipeName As String In listOfPipes
                             If pipeName.Contains("RecTask_Server_Pipe_") Then
                                 Dim pindex1 As Integer = 0
@@ -153,10 +160,10 @@ Public Class ProcessManager
                                 End If
                             End If
                         Next
-                    Catch ex As Exception
-                        '名前付きパイプ一覧取得でエラーが起こった
+                    Else
+                        '何をやってもエラー
                         pipe_error = 1
-                    End Try
+                    End If
                 End If
 
                 '★UDPソフトを実行
@@ -184,11 +191,17 @@ Public Class ProcessManager
                             '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
                             Dim listOfPipes As String() = Nothing
                             Try
+                                'Throw New Exception("TEST_ERROR2") '人為的エラーテスト
                                 listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
                             Catch ex As Exception
                                 '名前付きパイプ一覧取得でエラーが起こった
-                                pipe_error = 2
-                                Exit While
+                                '外部プログラムによりパイプ一覧取得を試みる
+                                listOfPipes = F_get_NamedPipeList_from_program()
+                                If listOfPipes Is Nothing Then
+                                    '何をやってもエラー
+                                    pipe_error = 2
+                                    Exit While
+                                End If
                             End Try
 
                             For Each pipeName As String In listOfPipes
@@ -298,6 +311,7 @@ Public Class ProcessManager
                     'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
                     Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)
                     Me._list.Add(pb)
+
                 Else
                     Try
                         'UDPアプリ終了　pipeindexがわからないので強制終了
@@ -306,7 +320,7 @@ Public Class ProcessManager
                         udpProc.Close()
                     Catch ex As Exception
                     End Try
-                    log1write("No.=" & num & "のpipeindexの取得に失敗しました")
+                    log1write("No.=" & num & "　名前付きパイプ一覧取得に成功したにもかかわらずUDPアプリのパイプ名が見当たらないため、UDPアプリ起動に失敗したとみなして配信を停止します")
                 End If
 
             ElseIf stream_mode = 1 Then
@@ -335,9 +349,9 @@ Public Class ProcessManager
                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
                 Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
                 Me._list.Add(pb)
-        End If
-        'End If
-        End If
+            End If
+                'End If
+            End If
 
         '現在稼働中のlist(i)._numをログに表示
         Dim js As String = get_live_numbers()
