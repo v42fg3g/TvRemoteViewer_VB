@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.43"
+    Private version As String = "TvRemoteViewer_VB version 0.44"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -18,7 +18,7 @@ Public Class Form1
     '================================================================
 
     '視聴スタートボタン
-    Private Sub ButtonMovieStart_Click(sender As System.Object, e As System.EventArgs) Handles ButtonMovieStart.Click
+    Private Sub ButtonMovieStart_MouseClick(sender As System.Object, e As System.Windows.Forms.MouseEventArgs) Handles ButtonMovieStart.MouseClick
         If Me._worker._isWebStart = True Then
             Dim num As Integer = Val(ComboBoxNum.Text.ToString)
             Dim bondriver As String = ComboBoxBonDriver.Text.ToString
@@ -69,7 +69,7 @@ Public Class Form1
     End Sub
 
     '視聴ストップボタン
-    Private Sub ButtonMovieStop_Click(sender As System.Object, e As System.EventArgs) Handles ButtonMovieStop.Click
+    Private Sub ButtonMovieStop_MouseClick(sender As System.Object, e As System.Windows.Forms.MouseEventArgs) Handles ButtonMovieStop.MouseClick
         Dim num As Integer = Val(ComboBoxNum.Text.ToString)
         Me._worker.stop_movie(num)
     End Sub

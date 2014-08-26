@@ -926,6 +926,7 @@ Public Class ProcessManager
             F_sendkeycode(&H9) 'VK_TAB = &H9 'TAB key
             System.Threading.Thread.Sleep(30)
             F_sendkeycode(&HD) 'VK_RETURN = &HD 'ENTER key
+            log1write("VLC crash reportingウィンドウを消しました。")
         End If
     End Sub
 

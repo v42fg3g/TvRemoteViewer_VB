@@ -91,6 +91,7 @@ Partial Class Form1
         Me.buttonHlsAppPath.Name = "buttonHlsAppPath"
         Me.buttonHlsAppPath.Size = New System.Drawing.Size(25, 19)
         Me.buttonHlsAppPath.TabIndex = 38
+        Me.buttonHlsAppPath.TabStop = False
         Me.buttonHlsAppPath.Text = "..."
         Me.buttonHlsAppPath.UseVisualStyleBackColor = True
         '
@@ -100,6 +101,7 @@ Partial Class Form1
         Me.buttonUdpAppPath.Name = "buttonUdpAppPath"
         Me.buttonUdpAppPath.Size = New System.Drawing.Size(25, 19)
         Me.buttonUdpAppPath.TabIndex = 23
+        Me.buttonUdpAppPath.TabStop = False
         Me.buttonUdpAppPath.Text = "..."
         Me.buttonUdpAppPath.UseVisualStyleBackColor = True
         '
@@ -111,6 +113,7 @@ Partial Class Form1
         Me.textBoxHlsOpt2.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
         Me.textBoxHlsOpt2.Size = New System.Drawing.Size(415, 118)
         Me.textBoxHlsOpt2.TabIndex = 40
+        Me.textBoxHlsOpt2.TabStop = False
         '
         'labelHlsOpt2
         '
@@ -127,6 +130,7 @@ Partial Class Form1
         Me.textBoxHlsApp.Name = "textBoxHlsApp"
         Me.textBoxHlsApp.Size = New System.Drawing.Size(384, 19)
         Me.textBoxHlsApp.TabIndex = 37
+        Me.textBoxHlsApp.TabStop = False
         '
         'labelHlsApp
         '
@@ -143,6 +147,7 @@ Partial Class Form1
         Me.textBoxUdpApp.Name = "textBoxUdpApp"
         Me.textBoxUdpApp.Size = New System.Drawing.Size(384, 19)
         Me.textBoxUdpApp.TabIndex = 22
+        Me.textBoxUdpApp.TabStop = False
         '
         'labelUdpApp
         '
@@ -159,6 +164,7 @@ Partial Class Form1
         Me.textHttpPortNumber.Name = "textHttpPortNumber"
         Me.textHttpPortNumber.Size = New System.Drawing.Size(43, 19)
         Me.textHttpPortNumber.TabIndex = 42
+        Me.textHttpPortNumber.TabStop = False
         Me.textHttpPortNumber.Text = "40003"
         '
         'labelPortNuber
@@ -176,6 +182,7 @@ Partial Class Form1
         Me.ButtonMovieStart.Name = "ButtonMovieStart"
         Me.ButtonMovieStart.Size = New System.Drawing.Size(68, 28)
         Me.ButtonMovieStart.TabIndex = 49
+        Me.ButtonMovieStart.TabStop = False
         Me.ButtonMovieStart.Text = "Start"
         Me.ButtonMovieStart.UseVisualStyleBackColor = True
         '
@@ -185,6 +192,7 @@ Partial Class Form1
         Me.ButtonMovieStop.Name = "ButtonMovieStop"
         Me.ButtonMovieStop.Size = New System.Drawing.Size(68, 28)
         Me.ButtonMovieStop.TabIndex = 50
+        Me.ButtonMovieStop.TabStop = False
         Me.ButtonMovieStop.Text = "Stop"
         Me.ButtonMovieStop.UseVisualStyleBackColor = True
         '
@@ -199,6 +207,7 @@ Partial Class Form1
         Me.ButtonWebStop.Name = "ButtonWebStop"
         Me.ButtonWebStop.Size = New System.Drawing.Size(68, 28)
         Me.ButtonWebStop.TabIndex = 52
+        Me.ButtonWebStop.TabStop = False
         Me.ButtonWebStop.Text = "WebStop"
         Me.ButtonWebStop.UseVisualStyleBackColor = True
         Me.ButtonWebStop.Visible = False
@@ -209,6 +218,7 @@ Partial Class Form1
         Me.ButtonWebStart.Name = "ButtonWebStart"
         Me.ButtonWebStart.Size = New System.Drawing.Size(68, 28)
         Me.ButtonWebStart.TabIndex = 51
+        Me.ButtonWebStart.TabStop = False
         Me.ButtonWebStart.Text = "WebStart"
         Me.ButtonWebStart.UseVisualStyleBackColor = True
         Me.ButtonWebStart.Visible = False
@@ -221,6 +231,7 @@ Partial Class Form1
         Me.ComboBoxNum.Name = "ComboBoxNum"
         Me.ComboBoxNum.Size = New System.Drawing.Size(51, 20)
         Me.ComboBoxNum.TabIndex = 53
+        Me.ComboBoxNum.TabStop = False
         Me.ComboBoxNum.Text = "1"
         '
         'textBoxUdpPort
@@ -229,6 +240,7 @@ Partial Class Form1
         Me.textBoxUdpPort.Name = "textBoxUdpPort"
         Me.textBoxUdpPort.Size = New System.Drawing.Size(43, 19)
         Me.textBoxUdpPort.TabIndex = 55
+        Me.textBoxUdpPort.TabStop = False
         Me.textBoxUdpPort.Text = "42424"
         '
         'Label2
@@ -246,6 +258,7 @@ Partial Class Form1
         Me.TextBoxChSpace.Name = "TextBoxChSpace"
         Me.TextBoxChSpace.Size = New System.Drawing.Size(28, 19)
         Me.TextBoxChSpace.TabIndex = 57
+        Me.TextBoxChSpace.TabStop = False
         Me.TextBoxChSpace.Text = "0"
         '
         'Label3
@@ -263,6 +276,7 @@ Partial Class Form1
         Me.ButtonWWWROOT.Name = "ButtonWWWROOT"
         Me.ButtonWWWROOT.Size = New System.Drawing.Size(25, 19)
         Me.ButtonWWWROOT.TabIndex = 60
+        Me.ButtonWWWROOT.TabStop = False
         Me.ButtonWWWROOT.Text = "..."
         Me.ButtonWWWROOT.UseVisualStyleBackColor = True
         '
@@ -272,6 +286,7 @@ Partial Class Form1
         Me.TextBoxWWWroot.Name = "TextBoxWWWroot"
         Me.TextBoxWWWroot.Size = New System.Drawing.Size(384, 19)
         Me.TextBoxWWWroot.TabIndex = 59
+        Me.TextBoxWWWroot.TabStop = False
         '
         'Label4
         '
@@ -324,6 +339,7 @@ Partial Class Form1
         Me.ButtonBonDriverPath.Name = "ButtonBonDriverPath"
         Me.ButtonBonDriverPath.Size = New System.Drawing.Size(25, 19)
         Me.ButtonBonDriverPath.TabIndex = 69
+        Me.ButtonBonDriverPath.TabStop = False
         Me.ButtonBonDriverPath.Text = "..."
         Me.ButtonBonDriverPath.UseVisualStyleBackColor = True
         '
@@ -333,6 +349,7 @@ Partial Class Form1
         Me.TextBoxBonDriverPath.Name = "TextBoxBonDriverPath"
         Me.TextBoxBonDriverPath.Size = New System.Drawing.Size(384, 19)
         Me.TextBoxBonDriverPath.TabIndex = 68
+        Me.TextBoxBonDriverPath.TabStop = False
         '
         'Label8
         '
@@ -350,6 +367,7 @@ Partial Class Form1
         Me.ComboBoxBonDriver.Name = "ComboBoxBonDriver"
         Me.ComboBoxBonDriver.Size = New System.Drawing.Size(210, 20)
         Me.ComboBoxBonDriver.TabIndex = 71
+        Me.ComboBoxBonDriver.TabStop = False
         '
         'ComboBoxServiceID
         '
@@ -358,6 +376,7 @@ Partial Class Form1
         Me.ComboBoxServiceID.Name = "ComboBoxServiceID"
         Me.ComboBoxServiceID.Size = New System.Drawing.Size(249, 20)
         Me.ComboBoxServiceID.TabIndex = 72
+        Me.ComboBoxServiceID.TabStop = False
         '
         'Button2
         '
@@ -365,6 +384,7 @@ Partial Class Form1
         Me.Button2.Name = "Button2"
         Me.Button2.Size = New System.Drawing.Size(102, 28)
         Me.Button2.TabIndex = 73
+        Me.Button2.TabStop = False
         Me.Button2.Text = "index.htmlを開く"
         Me.Button2.UseVisualStyleBackColor = True
         '
@@ -388,6 +408,7 @@ Partial Class Form1
         Me.ComboBoxResolution.Name = "ComboBoxResolution"
         Me.ComboBoxResolution.Size = New System.Drawing.Size(87, 20)
         Me.ComboBoxResolution.TabIndex = 75
+        Me.ComboBoxResolution.TabStop = False
         '
         'Button1
         '
@@ -395,6 +416,7 @@ Partial Class Form1
         Me.Button1.Name = "Button1"
         Me.Button1.Size = New System.Drawing.Size(129, 28)
         Me.Button1.TabIndex = 76
+        Me.Button1.TabStop = False
         Me.Button1.Text = "設定ファイルを編集(*)"
         Me.Button1.UseVisualStyleBackColor = True
         '
@@ -404,6 +426,7 @@ Partial Class Form1
         Me.ButtonHLSoption.Name = "ButtonHLSoption"
         Me.ButtonHLSoption.Size = New System.Drawing.Size(102, 28)
         Me.ButtonHLSoption.TabIndex = 77
+        Me.ButtonHLSoption.TabStop = False
         Me.ButtonHLSoption.Text = "HLS_option.txt(*)"
         Me.ButtonHLSoption.UseVisualStyleBackColor = True
         '
@@ -413,6 +436,7 @@ Partial Class Form1
         Me.Button5.Name = "Button5"
         Me.Button5.Size = New System.Drawing.Size(52, 25)
         Me.Button5.TabIndex = 79
+        Me.Button5.TabStop = False
         Me.Button5.Text = "初期値"
         Me.Button5.UseVisualStyleBackColor = True
         '
@@ -422,6 +446,7 @@ Partial Class Form1
         Me.Button6.Name = "Button6"
         Me.Button6.Size = New System.Drawing.Size(52, 25)
         Me.Button6.TabIndex = 80
+        Me.Button6.TabStop = False
         Me.Button6.Text = "初期値"
         Me.Button6.UseVisualStyleBackColor = True
         '
@@ -440,6 +465,7 @@ Partial Class Form1
         Me.ButtonFILEROOT.Name = "ButtonFILEROOT"
         Me.ButtonFILEROOT.Size = New System.Drawing.Size(25, 19)
         Me.ButtonFILEROOT.TabIndex = 83
+        Me.ButtonFILEROOT.TabStop = False
         Me.ButtonFILEROOT.Text = "..."
         Me.ButtonFILEROOT.UseVisualStyleBackColor = True
         '
@@ -449,6 +475,7 @@ Partial Class Form1
         Me.TextBoxFILEROOT.Name = "TextBoxFILEROOT"
         Me.TextBoxFILEROOT.Size = New System.Drawing.Size(384, 19)
         Me.TextBoxFILEROOT.TabIndex = 82
+        Me.TextBoxFILEROOT.TabStop = False
         '
         'Label1
         '
@@ -486,6 +513,7 @@ Partial Class Form1
         Me.CheckBoxShowConsole.Name = "CheckBoxShowConsole"
         Me.CheckBoxShowConsole.Size = New System.Drawing.Size(122, 16)
         Me.CheckBoxShowConsole.TabIndex = 86
+        Me.CheckBoxShowConsole.TabStop = False
         Me.CheckBoxShowConsole.Text = "コンソールを表示する"
         Me.CheckBoxShowConsole.UseVisualStyleBackColor = True
         '
@@ -504,6 +532,7 @@ Partial Class Form1
         Me.TextBoxUdpOpt3.Name = "TextBoxUdpOpt3"
         Me.TextBoxUdpOpt3.Size = New System.Drawing.Size(91, 19)
         Me.TextBoxUdpOpt3.TabIndex = 90
+        Me.TextBoxUdpOpt3.TabStop = False
         Me.TextBoxUdpOpt3.Text = "/sendservice 1"
         '
         'Label11
@@ -521,6 +550,7 @@ Partial Class Form1
         Me.Button3.Name = "Button3"
         Me.Button3.Size = New System.Drawing.Size(50, 25)
         Me.Button3.TabIndex = 91
+        Me.Button3.TabStop = False
         Me.Button3.Text = "初期値"
         Me.Button3.UseVisualStyleBackColor = True
         '
@@ -530,6 +560,7 @@ Partial Class Form1
         Me.TextBoxID.Name = "TextBoxID"
         Me.TextBoxID.Size = New System.Drawing.Size(91, 19)
         Me.TextBoxID.TabIndex = 92
+        Me.TextBoxID.TabStop = False
         '
         'TextBoxPASS
         '
@@ -538,6 +569,7 @@ Partial Class Form1
         Me.TextBoxPASS.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
         Me.TextBoxPASS.Size = New System.Drawing.Size(91, 19)
         Me.TextBoxPASS.TabIndex = 93
+        Me.TextBoxPASS.TabStop = False
         '
         'Label12
         '
