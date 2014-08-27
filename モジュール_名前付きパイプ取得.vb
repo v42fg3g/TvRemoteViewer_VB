@@ -1,6 +1,64 @@
 ﻿Imports System.Text
+Imports System.Runtime.InteropServices
 
 Module モジュール_名前付きパイプ取得
+    '====================================================
+    '地デジのロケフリシステムを作るスレ part3
+    'http://peace.2ch.net/test/read.cgi/avi/1399389478/516
+    '>>516さんからご提供いただきました
+    '====================================================
+
+    <StructLayout(LayoutKind.Sequential)> _
+    Private Structure FILETIME
+        Public dwLowDateTime As UInteger
+        Public dwHighDateTime As UInteger
+    End Structure
+
+    <StructLayout(LayoutKind.Sequential, CharSet:=CharSet.Unicode)> _
+    Private Structure WIN32_FIND_DATA
+        Public dwFileAttributes As UInteger
+        Public ftCreationTime As FILETIME
+        Public ftLastAccessTime As FILETIME
+        Public ftLastWriteTime As FILETIME
+        Public nFileSizeHigh As UInteger
+        Public nFileSizeLow As UInteger
+        Public dwReserved0 As UInteger
+        Public dwReserved1 As UInteger
+        <MarshalAs(UnmanagedType.ByValTStr, SizeConst:=260)> _
+        Public cFileName As String
+        <MarshalAs(UnmanagedType.ByValTStr, SizeConst:=14)> _
+        Public cAlternateFileName As String
+    End Structure
+
+    <DllImport("kernel32.dll", CharSet:=CharSet.Unicode)> _
+    Private Function FindFirstFile(ByVal lpFileName As String, ByRef lpFindFileData As WIN32_FIND_DATA) As IntPtr
+    End Function
+    <DllImport("kernel32.dll", CharSet:=CharSet.Unicode)> _
+    Private Function FindNextFile(ByVal hFindFile As IntPtr, ByRef lpFindFileData As WIN32_FIND_DATA) As Integer
+    End Function
+    <DllImport("kernel32.dll")> _
+    Private Function FindClose(ByVal hFindFile As IntPtr) As Boolean
+    End Function
+
+    Public Function GetPipes() As String()
+        Dim pipes As New List(Of String)
+        Dim data As New WIN32_FIND_DATA
+        Dim handle As IntPtr = FindFirstFile("\\.\pipe\*", data)
+        If handle <> New IntPtr(-1) Then
+            Do
+                pipes.Add(data.cFileName)
+                'Console.WriteLine(data.cFileName)
+            Loop While FindNextFile(handle, data) <> 0
+            FindClose(handle)
+        End If
+        Return pipes.ToArray
+    End Function
+
+
+    '====================================================
+    '外部プログラム使用
+    '====================================================
+
     Public PipeListGetter As String = ""
 
     'iniで指定されたプログラムを使ってパイプ一覧を取得

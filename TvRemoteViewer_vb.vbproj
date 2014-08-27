@@ -183,8 +183,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="TvRemoteViewer_VB.ico" />
-    <Content Include="TvRemoteViewer_VB2.ico" />
     <Content Include="TvRemoteViewer_VB3.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />

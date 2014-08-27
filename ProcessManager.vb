@@ -140,7 +140,8 @@ Public Class ProcessManager
                     Dim listOfPipes As String() = Nothing
                     Try
                         'Throw New Exception("TEST_ERROR1") '人為的エラーテスト
-                        listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                        'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                        listOfPipes = GetPipes()
                     Catch ex As Exception
                         '名前付きパイプ一覧取得でエラーが起こった
                         '外部プログラムによりパイプ一覧取得を試みる
@@ -192,7 +193,8 @@ Public Class ProcessManager
                             Dim listOfPipes As String() = Nothing
                             Try
                                 'Throw New Exception("TEST_ERROR2") '人為的エラーテスト
-                                listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                                'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                                listOfPipes = GetPipes()
                             Catch ex As Exception
                                 '名前付きパイプ一覧取得でエラーが起こった
                                 '外部プログラムによりパイプ一覧取得を試みる
@@ -570,7 +572,20 @@ Public Class ProcessManager
                             '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
                             Dim chk As Integer = 1000
                             While chk > 0
-                                Dim listOfPipes As String() = System.IO.Directory.GetFiles("\\.\pipe\")
+                                Dim listOfPipes As String() = Nothing
+                                Try
+                                    'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                                    listOfPipes = GetPipes()
+                                Catch ex As Exception
+                                    '名前付きパイプ一覧取得でエラーが起こった
+                                    '外部プログラムによりパイプ一覧取得を試みる
+                                    listOfPipes = F_get_NamedPipeList_from_program()
+                                    If listOfPipes Is Nothing Then
+                                        '何をやってもエラー
+                                        chk = -1
+                                        Exit While
+                                    End If
+                                End Try
                                 Dim chk2 As Integer = 0
                                 For Each pipeName As String In listOfPipes
                                     If pipeName.Contains("RecTask_Server_Pipe_") Then
