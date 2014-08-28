@@ -138,15 +138,13 @@ Public Class ProcessManager
                 If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
                     '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
                     Dim listOfPipes As String() = Nothing
-                    Try
-                        'Throw New Exception("TEST_ERROR1") '人為的エラーテスト
-                        'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                        listOfPipes = GetPipes()
-                    Catch ex As Exception
+                    'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                    listOfPipes = GetPipes()
+                    If listOfPipes Is Nothing Then
                         '名前付きパイプ一覧取得でエラーが起こった
                         '外部プログラムによりパイプ一覧取得を試みる
                         listOfPipes = F_get_NamedPipeList_from_program()
-                    End Try
+                    End If
                     If listOfPipes IsNot Nothing Then
                         For Each pipeName As String In listOfPipes
                             If pipeName.Contains("RecTask_Server_Pipe_") Then
@@ -191,11 +189,9 @@ Public Class ProcessManager
                         If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
                             '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
                             Dim listOfPipes As String() = Nothing
-                            Try
-                                'Throw New Exception("TEST_ERROR2") '人為的エラーテスト
-                                'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                                listOfPipes = GetPipes()
-                            Catch ex As Exception
+                            'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                            listOfPipes = GetPipes()
+                            If listOfPipes Is Nothing Then
                                 '名前付きパイプ一覧取得でエラーが起こった
                                 '外部プログラムによりパイプ一覧取得を試みる
                                 listOfPipes = F_get_NamedPipeList_from_program()
@@ -204,7 +200,7 @@ Public Class ProcessManager
                                     pipe_error = 2
                                     Exit While
                                 End If
-                            End Try
+                            End If
 
                             For Each pipeName As String In listOfPipes
                                 If pipeName.Contains("RecTask_Server_Pipe_") Then
@@ -573,10 +569,9 @@ Public Class ProcessManager
                             Dim chk As Integer = 1000
                             While chk > 0
                                 Dim listOfPipes As String() = Nothing
-                                Try
-                                    'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                                    listOfPipes = GetPipes()
-                                Catch ex As Exception
+                                'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                                listOfPipes = GetPipes()
+                                If listOfPipes Is Nothing Then
                                     '名前付きパイプ一覧取得でエラーが起こった
                                     '外部プログラムによりパイプ一覧取得を試みる
                                     listOfPipes = F_get_NamedPipeList_from_program()
@@ -585,7 +580,8 @@ Public Class ProcessManager
                                         chk = -1
                                         Exit While
                                     End If
-                                End Try
+                                End If
+                                
                                 Dim chk2 As Integer = 0
                                 For Each pipeName As String In listOfPipes
                                     If pipeName.Contains("RecTask_Server_Pipe_") Then
@@ -618,7 +614,7 @@ Public Class ProcessManager
                                 'log1write("No.=" & num & "のudpアプリを強制終了しました")
                                 udp_stop = 1
                             Else
-                                log1write("No.=" & num & "のudpアプリの終了に失敗したようです。")
+                                log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
                             End If
                             proc.Close()
                             proc.Dispose()
