@@ -508,7 +508,7 @@ Module モジュール_番組表
     Public Function Instr_pickup(ByRef strdat As String, ByVal findstr As String, ByVal endstr As String, ByVal startpos As Integer, Optional ByVal endpos As Integer = 2147483647) As Object
         Dim r As String = ""
 
-        If findstr.Length > 0 And startpos >= 0 Then
+        Try
             Dim sp As Integer
             Dim ep As Integer
             sp = strdat.IndexOf(findstr, startpos)
@@ -516,7 +516,8 @@ Module モジュール_番組表
             If sp >= 0 And ep > sp And ep <= endpos Then
                 r = strdat.Substring(sp + findstr.Length, ep - sp - findstr.Length)
             End If
-        End If
+        Catch ex As Exception
+        End Try
 
         Return r
     End Function
