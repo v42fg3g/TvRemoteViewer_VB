@@ -270,8 +270,9 @@ Public Class ProcessManager
                                         hlsOpt = hlsOpt.Replace("%WWWROOT%", fr) '必要ないが過去のHLS_option_VLC.txtとの互換性のため
                                         hlsOpt = hlsOpt.Replace("%FILEROOT%", fr)
                                         hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
-                                        hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".")
-                                        hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-")
+                                        hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".") 'ffmpeg,m3u8 無くしたいが互換性のため
+                                        hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-") 'vlc 無くしたいが互換性のため
+                                        hlsOpt = hlsOpt.Replace("%NUM%", num.ToString)
                                     End If
                                 Else
                                     NHK_dual_mono_mode_select = 0

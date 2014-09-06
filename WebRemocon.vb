@@ -1175,7 +1175,9 @@ Class WebRemocon
         End If
         '文字列内変数を実際の値に変換
         hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPortNumber.ToString)
-        hlsOpt = hlsOpt.Replace("mystream", "mystream" & num)
+        hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".") 'ffmpeg,m3u8 無くしたいが互換性のため
+        hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-") 'vlc 無くしたいが互換性のため
+        hlsOpt = hlsOpt.Replace("%NUM%", num.ToString)
         hlsOpt = hlsOpt.Replace("%WWWROOT%", wwwroot)
         hlsOpt = hlsOpt.Replace("%FILEROOT%", fileroot)
         hlsOpt = hlsOpt.Replace("%HLSROOT%", hlsroot)
