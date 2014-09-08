@@ -1,11 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-<<<<<<< HEAD
     Private version As String = "TvRemoteViewer_VB version 0.48"
-=======
-    Private version As String = "TvRemoteViewer_VB version 0.47"
->>>>>>> parent of 03299ab... TvRemoteViewer_VB version 0.48 HttpStream 0.01
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}

@@ -270,14 +270,9 @@ Public Class ProcessManager
                                         hlsOpt = hlsOpt.Replace("%WWWROOT%", fr) '必要ないが過去のHLS_option_VLC.txtとの互換性のため
                                         hlsOpt = hlsOpt.Replace("%FILEROOT%", fr)
                                         hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
-<<<<<<< HEAD
                                         hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".") 'ffmpeg,m3u8 無くしたいが互換性のため
                                         hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-") 'vlc 無くしたいが互換性のため
                                         hlsOpt = hlsOpt.Replace("%NUM%", num.ToString)
-=======
-                                        hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".")
-                                        hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-")
->>>>>>> parent of 03299ab... TvRemoteViewer_VB version 0.48 HttpStream 0.01
                                     End If
                                 Else
                                     NHK_dual_mono_mode_select = 0
@@ -358,9 +353,9 @@ Public Class ProcessManager
                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
                 Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
                 Me._list.Add(pb)
-        End If
-        'End If
             End If
+            'End If
+        End If
 
         '現在稼働中のlist(i)._numをログに表示
         Dim js As String = get_live_numbers()
@@ -587,7 +582,7 @@ Public Class ProcessManager
                                         Exit While
                                     End If
                                 End If
-                                
+
                                 Dim chk2 As Integer = 0
                                 For Each pipeName As String In listOfPipes
                                     If pipeName.Contains("RecTask_Server_Pipe_") Then
@@ -1153,5 +1148,3 @@ Public Class ProcessManager
         Return NHKmode
     End Function
 End Class
-
-
