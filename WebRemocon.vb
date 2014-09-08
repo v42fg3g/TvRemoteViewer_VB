@@ -463,6 +463,111 @@ Class WebRemocon
                                         Catch ex As Exception
                                             rez = ""
                                         End Try
+<<<<<<< HEAD
+                                    End If
+                                End If
+                                Dim d() As String = rez.Split("x")
+                                If d.Length = 2 Then
+                                    If Val(d(0)) > 0 And Val(d(1)) > 0 Then
+                                        rezx = Val(d(0))
+                                        rezy = Val(d(1))
+                                    Else
+                                        rez = ""
+                                    End If
+                                Else
+                                    rez = ""
+                                End If
+                                If rezx > 0 And rezy > 0 Then
+                                    s = s.Replace("%WIDTH%", rezx.ToString)
+                                    s = s.Replace("%HEIGHT%", rezy.ToString)
+                                Else
+                                    '値がなければデフォルトをセット
+                                    s = s.Replace("%WIDTH%", "640")
+                                    s = s.Replace("%HEIGHT%", "360")
+                                End If
+
+                                '配信中ならばnumからBonDriver_pathとBonDriverを取得
+                                If s.IndexOf("%SELECTCH") >= 0 Then
+                                    '%SELECTCHをhtmlに置換
+                                    Dim gt() As String = get_atags("%SELECTCH", s)
+                                    Dim vhtml As String
+                                    If rez_hlsopt = 0 Then
+                                        vhtml = replace_html_selectch(num, rez, gt, Me._NHK_dual_mono_mode)
+                                    Else
+                                        'hlsOptから解像度を取得した場合は値を渡さない（HLS_option.txtのオプションが使われてしまうため）
+                                        vhtml = replace_html_selectch(num, "", gt, Me._NHK_dual_mono_mode)
+                                    End If
+                                    If vhtml.Length > 0 Then
+                                        s = s.Replace("%SELECTCH" & gt(0) & "%", vhtml)
+                                    Else
+                                        s = s.Replace("%SELECTCH" & gt(0) & "%", gt(4))
+                                    End If
+                                End If
+
+                            End If
+
+                            '%FILEROOT%変換
+                            If s.IndexOf("%FILEROOT%") >= 0 Then
+                                Dim fileroot As String = Me._fileroot
+                                If Me._fileroot.Length = 0 Then
+                                    fileroot = Me._wwwroot
+                                End If
+                                '相対アドレスに変換
+                                fileroot = fileroot.Replace(Me._wwwroot, "")
+                                If fileroot.Length > 0 Then
+                                    '先頭が\なら削除
+                                    If fileroot.Substring(0, 1) = "\" Then
+                                        Try
+                                            fileroot = fileroot.Substring(1)
+                                        Catch ex As Exception
+                                        End Try
+                                    End If
+                                    fileroot = fileroot.Replace("\", "/")
+                                    fileroot &= "/"
+                                End If
+                                s = s.Replace("%FILEROOT%", fileroot)
+                            End If
+
+                            'ファイル選択ページ用
+                            If request_page = 6 Then
+                                Dim shtml As String = make_file_select_html()
+                                s = s.Replace("%SELECTVIDEO%", shtml)
+                            End If
+
+                            '配信中簡易リスト
+                            If s.IndexOf("%PROCBONLIST") >= 0 Then
+                                Dim gt() As String = get_atags("%PROCBONLIST", s)
+                                Dim js As String = Me._procMan.get_live_numbers_bon().Replace(vbCrLf, "<br>")
+                                If js.Length > 0 Then
+                                    js = gt(1) & js & gt(3)
+                                End If
+                                If js.Length > 0 Then
+                                    s = s.Replace("%PROCBONLIST" & gt(0) & "%", js)
+                                Else
+                                    s = s.Replace("%PROCBONLIST" & gt(0) & "%", gt(4))
+                                End If
+                            End If
+
+                            'リダイレクト
+                            If s.IndexOf("%REDIRECT%") >= 0 Then
+                                If redirect.Length > 3 Then
+                                    'リダイレクト指定があれば
+                                    s = s.Replace("%REDIRECT%", "<meta http-equiv=""refresh"" content=""0 ; URL=" & redirect & """>")
+                                Else
+                                    '無ければリダイレクト変数を消す
+                                    s = s.Replace("%REDIRECT%", "")
+                                End If
+                            End If
+
+                            '地デジ番組表（通常のネットから取得）
+                            If s.IndexOf("%TVPROGRAM-D%") >= 0 Then
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
+                                Else
+                                    s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
+                                End If
+                            End If
+=======
                                     End If
                                 End If
                                 Dim d() As String = rez.Split("x")
@@ -651,9 +756,212 @@ Class WebRemocon
                 log1write(httpEx.StackTrace)
             End Try
         End While
+>>>>>>> parent of 03299ab... TvRemoteViewer_VB version 0.48 HttpStream 0.01
+
+                            'TvRock番組表
+                            If s.IndexOf("%TVPROGRAM-TVROCK%") >= 0 Then
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
+                                Else
+                                    s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
+                                End If
+                            End If
+                            'TvRock番組表ボタン
+                            If s.IndexOf("%TVPROGRAM-TVROCK-BUTTON") >= 0 Then
+                                Dim gt() As String = get_atags("%TVPROGRAM-TVROCK-BUTTON", s)
+                                If TvProgram_tvrock_url.Length > 0 Then
+                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" value=""TvRock番組表"" onClick=""location.href='TvProgram_TvRock.html'"">") & gt(3)
+                                Else
+                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON" & gt(0) & "%", gt(4))
+                                End If
+                            End If
+
+<<<<<<< HEAD
+                            'EDCB番組表
+                            If s.IndexOf("%TVPROGRAM-EDCB%") >= 0 Then
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
+                                Else
+                                    s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
+                                End If
+                            End If
+                            'EDCB番組表ボタン
+                            If s.IndexOf("%TVPROGRAM-EDCB-BUTTON") >= 0 Then
+                                Dim gt() As String = get_atags("%TVPROGRAM-EDCB-BUTTON", s)
+                                If TvProgram_EDCB_url.Length > 0 Then
+                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" value=""EDCB番組表"" onClick=""location.href='TvProgram_EDCB.html'"">") & gt(3)
+                                Else
+                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(4))
+                                End If
+                            End If
+
+                            sw.WriteLine(s)
+                            'sw.Flush()
+
+                            log1write(path & "へのアクセスを受け付けました")
+
+                        Else
+                            'ローカルファイルが存在していない
+                            'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                            sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
+                            'sw.Flush()
+                            log1write(path & "が見つかりませんでした")
+                        End If
+
+                        sw.Flush()
+                    Else
+                        'HTML以外なら
+                        If File.Exists(path) Then
+                            ' ローカルファイルが存在すればレスポンス・ストリームに書き出す
+                            'm3u8、tsへの要求はこちらへ来る
+                            Dim content As Byte() = ReadAllBytes(path)
+                            res.OutputStream.Write(content, 0, content.Length)
+                            log1write(path & "へのアクセスを受け付けました")
+                        Else
+                            'ローカルファイルが存在していない
+                            Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                            sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
+                            sw.Flush()
+                            log1write(path & "が見つかりませんでした")
+                        End If
+                    End If
+                Else
+                    '認証エラー
+                    context.Response.StatusCode = 401
+                End If
+
+                res.Close()
+
+                Try
+                    context.Response.Close()
+                Catch ex As Exception
+                    ' client closed connection before the content was sent
+                End Try
+
+            Catch httpEx As HttpListenerException
+                log1write(httpEx.Message)
+                log1write(httpEx.StackTrace)
+            End Try
+        End While
 
     End Sub
 
+    '%変数に埋め込まれた前中後に挿入すべきhtmlタグを抽出
+    Private Function get_atags(ByVal tag As String, ByVal s As String) As Object
+        'tag="%～:" s=html
+        '返値　d(0)=抽出タグ文字列 d(1)=前 d(2)=中 d(3)=後 d(4)=要素がnothingだった場合に替わりに表示するタグ
+        Dim d() As String
+        ReDim Preserve d(4)
+        Dim vb1 As Integer = s.IndexOf(tag)
+        Dim vb2 As Integer = s.IndexOf("%", vb1 + 1)
+        Dim vbs As String = ""
+        If vb1 >= 0 And vb2 > vb1 Then
+            vbs = s.Substring(vb1 + tag.Length, vb2 - vb1 - tag.Length)
+        End If
+        Dim vbt() As String = vbs.Split(":")
+
+        d(0) = vbs
+        d(1) = ""
+        d(2) = ""
+        d(3) = ""
+        d(4) = ""
+        If vbt.Length = 2 Then
+            d(2) = vbt(1)
+        ElseIf vbt.Length = 3 Then
+            d(2) = vbt(1)
+            d(3) = vbt(2)
+        ElseIf vbt.Length = 4 Then
+            d(1) = vbt(1)
+            d(2) = vbt(2)
+            d(3) = vbt(3)
+        ElseIf vbt.Length = 5 Then
+            d(1) = vbt(1)
+            d(2) = vbt(2)
+            d(3) = vbt(3)
+            d(4) = vbt(4)
+        End If
+
+        Return d
+    End Function
+
+    '%SELECTCHをhtmlに置換して返す
+    Private Function replace_html_selectch(ByVal num As Integer, ByVal rez As String, ByVal atag() As String, ByVal NHKMODE As Integer) As String
+        Dim bon As String = Me._procMan.get_bondriver_name(num)
+
+        Dim bonp As String = Me._BonDriverPath
+        If bonp.Length = 0 Then
+            '指定が無い場合はUDPAPPと同じフォルダにあると見なす
+            bonp = filepath2path(Me._udpApp.ToString)
+        End If
+        Dim vhtml As String = WEB_search_ServiceID(bonp, bon, 1, num)
+        If vhtml.Length > 0 Then
+            vhtml = "<option value="""">---</option>" & vbCrLf & vhtml
+            vhtml = "<select name=""Bon_Sid_Ch"" id=""SEL2"" onChange=""changeSelect()"">" & vbCrLf & vhtml
+            vhtml = "<form action=""StartTV.html"">" & vbCrLf & vhtml
+            vhtml = atag(1) & vhtml
+            vhtml &= "</select>" & vbCrLf
+            vhtml &= atag(2)
+
+            'NHKかどうか調べる
+            'If Me._procMan.check_isNHK(num) = 1 Then
+            'NHKなら
+            If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                If NHKMODE = 3 Then
+                    Dim atag2(3) As String
+                    vhtml &= "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(atag2, num) & "</span>"
+                Else
+                    vhtml &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
+                End If
+            End If
+            'End If
+
+            vhtml &= "<input type=""submit"" value=""視聴"" />" & vbCrLf
+            vhtml &= "<input type=""hidden"" name=""num"" value=""" & num & """>" & vbCrLf
+            vhtml &= "<input type=""hidden"" name=""redirect"" value=""ViewTV" & num & ".html"">" & vbCrLf
+            If rez.Length > 0 Then
+                vhtml &= "<input type=""hidden"" name=""resolution"" value=""" & rez & """>" & vbCrLf
+            End If
+            vhtml &= "</form>" & vbCrLf
+            vhtml &= atag(3)
+        End If
+
+        Return vhtml
+    End Function
+
+    'ファイル再生ページ用　ビデオ選択htmlを作成する
+    Private Function make_file_select_html() As String
+        Dim shtml As String = ""
+
+        Dim i, k As Integer
+        If Me._videopath IsNot Nothing Then
+            If Me._videopath.Length > 0 Then
+                For i = 0 To Me._videopath.Length - 1
+                    If Me._videopath(i).Length > 0 Then
+                        Try
+                            For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
+                                Dim s As String = stFilePath & System.Environment.NewLine
+                                s = trim8(s)
+                                'フルパスファイル名がsに入る
+                                Dim fullpath As String = s
+                                Dim filename As String = ""
+                                If fullpath.IndexOf("\") >= 0 Then
+                                    'ファイル名だけを取り出す
+                                    k = fullpath.LastIndexOf("\")
+                                    filename = fullpath.Substring(k + 1)
+                                End If
+                                filename = trim8(filename)
+                                If filename.IndexOf(".db") < 0 Then
+                                    'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
+                                    fullpath = System.Web.HttpUtility.UrlEncode(fullpath)
+                                    shtml &= "<option value=""" & fullpath & """>" & filename & "</option>" & vbCrLf
+                                End If
+                            Next stFilePath
+                        Catch ex As Exception
+                        End Try
+                    End If
+                Next
+            End If
+=======
     '%変数に埋め込まれた前中後に挿入すべきhtmlタグを抽出
     Private Function get_atags(ByVal tag As String, ByVal s As String) As Object
         'tag="%～:" s=html
@@ -796,6 +1104,41 @@ Class WebRemocon
         r &= "<input type=""button"" value=""トップメニュー"" onClick=""location.href='index.html'"">" & vbCrLf
         If a = 1 Then
             r &= "<input type=""button"" Value=""再読み込み"" onClick=""location.reload();"">" & vbCrLf
+>>>>>>> parent of 03299ab... TvRemoteViewer_VB version 0.48 HttpStream 0.01
+        End If
+        r &= "<br><br>" & vbCrLf
+        r &= "<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">" & vbCrLf
+        r &= "</body>" & vbCrLf
+        r &= "</html>" & vbCrLf
+        Return r
+    End Function
+
+<<<<<<< HEAD
+        'If shtml.Length > 0 Then
+        shtml = "<option value="""">---</option>" & vbCrLf & shtml
+        shtml = "<select name=""VideoName"">" & vbCrLf & shtml
+
+        shtml &= "</select>" & vbCrLf
+        'End If
+
+        Return shtml
+    End Function
+
+    'エラーページ用ひな形
+    Public Function ERROR_PAGE(ByVal title As String, ByVal body As String, Optional ByVal a As Integer = 0) As String
+        Dim r As String = ""
+        r &= "<!doctype html>" & vbCrLf
+        r &= "<html>" & vbCrLf
+        r &= "<head>" & vbCrLf
+        r &= "<title>" & title & "</title>" & vbCrLf
+        r &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />" & vbCrLf
+        r &= "</head>" & vbCrLf
+        r &= "<body>" & vbCrLf
+        r &= body & vbCrLf
+        r &= "<br><br>" & vbCrLf
+        r &= "<input type=""button"" value=""トップメニュー"" onClick=""location.href='index.html'"">" & vbCrLf
+        If a = 1 Then
+            r &= "<input type=""button"" Value=""再読み込み"" onClick=""location.reload();"">" & vbCrLf
         End If
         r &= "<br><br>" & vbCrLf
         r &= "<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">" & vbCrLf
@@ -824,6 +1167,28 @@ Class WebRemocon
             html = html.Replace("value=""" & NHKmode.ToString & """", "value=""" & NHKmode.ToString & """" & " selected")
         End If
 
+=======
+    'ＮＨＫ音声選択用セレクト作成
+    Public Function WEB_make_NHKMODE_html(ByVal atag() As String, ByVal num As Integer) As String
+        Dim html As String = ""
+        Dim bst As String = ""
+        html &= atag(1)
+        html &= "<select name=""NHKMODE"">"
+        html &= vbCrLf & "<option value=""0"">主・副</option>" & vbCrLf
+        html &= "<option value=""1"">主</option>" & vbCrLf
+        html &= "<option value=""2"">副</option>" & vbCrLf
+        If BS1_hlsApp.Length > 0 Then
+            html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
+        End If
+        html &= "</select>" & vbCrLf
+        html &= atag(3)
+        '現在放映中なら選択する
+        Dim NHKmode As Integer = Me._procMan.get_NHKmode(num)
+        If NHKmode >= 0 Then
+            html = html.Replace("value=""" & NHKmode.ToString & """", "value=""" & NHKmode.ToString & """" & " selected")
+        End If
+
+>>>>>>> parent of 03299ab... TvRemoteViewer_VB version 0.48 HttpStream 0.01
         Return html
     End Function
 
@@ -949,6 +1314,7 @@ Class WebRemocon
 
         Return html
     End Function
+<<<<<<< HEAD
 
     'HTML内置換用　番組選局セレクトボックスを作成（WEB_make_select_Bondriver_html補助）
     Private Function WEB_search_ServiceID(ByVal bondriver_path As String, ByVal bondriver As String, ByVal BonDriverWrite As Integer, Optional ByVal num As Integer = 0) As String
@@ -995,6 +1361,54 @@ Class WebRemocon
                                 'html &= "<option value="" ," & s(5) & "," & s(1) & """>" & s(0) & "</option>" & vbCrLf
                                 'End If
 
+=======
+
+    'HTML内置換用　番組選局セレクトボックスを作成（WEB_make_select_Bondriver_html補助）
+    Private Function WEB_search_ServiceID(ByVal bondriver_path As String, ByVal bondriver As String, ByVal BonDriverWrite As Integer, Optional ByVal num As Integer = 0) As String
+        Dim html As String = ""
+        If bondriver.Length > 0 Then
+            Dim k As Integer = -1
+            If BonDriver_select_html IsNot Nothing Then
+                If BonDriver_select_html.Length > 0 Then
+                    k = Array.IndexOf(BonDriver_select_html, bondriver)
+                End If
+            End If
+            If k >= 0 Then
+                html = BonDriver_select_html(k).html
+            Else
+                '追加
+                Dim j As Integer = 0
+                If BonDriver_select_html IsNot Nothing Then
+                    j = BonDriver_select_html.Length
+                End If
+                ReDim Preserve BonDriver_select_html(j)
+
+                'サービスIDと放送局名用
+                Dim si As Integer = 0
+                If ch_list IsNot Nothing Then
+                    si = ch_list.Length
+                End If
+
+                Dim filename As String
+                If bondriver_path.Length > 0 Then
+                    filename = bondriver_path & "\" & bondriver.Replace(".dll", ".ch2")
+                Else
+                    filename = bondriver.Replace(".dll", ".ch2")
+                End If
+                Dim line() As String = file2line(filename)
+                If line IsNot Nothing Then
+                    For i As Integer = 0 To line.Length - 1
+                        If line(i).IndexOf(";") < 0 Then
+                            Dim s() As String = line(i).Split(",")
+                            If s.Length = 9 Then
+                                'If BonDriverWrite = 1 Then
+                                html &= "<option value=""" & bondriver & "," & s(5) & "," & s(1) & """>" & s(0) & "</option>" & vbCrLf
+                                'Else
+                                ''Bondriverはすでに設定済みなので字数節約のため空白
+                                'html &= "<option value="" ," & s(5) & "," & s(1) & """>" & s(0) & "</option>" & vbCrLf
+                                'End If
+
+>>>>>>> parent of 03299ab... TvRemoteViewer_VB version 0.48 HttpStream 0.01
                                 'serviceIDと放送局名を記録しておく
                                 If ch_list IsNot Nothing Then
                                     Dim chk As Integer = 0
@@ -1088,6 +1502,7 @@ Class WebRemocon
         s = Trim(s)
         Return s
     End Function
+<<<<<<< HEAD
 
     'HTTPサーバー停止
     Public Sub requestStop()
@@ -1218,6 +1633,136 @@ Class WebRemocon
         'カレントディレクトリ変更
         F_set_ppath4program()
 
+=======
+
+    'HTTPサーバー停止
+    Public Sub requestStop()
+        Me._isWebStart = False
+        Me._listener.Abort()
+    End Sub
+
+    '映像配信開始
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, Optional ByVal resolution As String = "")
+        'resolutionの指定が無ければフォーム上のHLSオプションを使用する
+
+        If fileroot.Length = 0 Then
+            'm3u8やtsの格納フォルダが指定されていなければwwwrootと同じ場所
+            fileroot = wwwroot
+        End If
+
+        '★リクエストパラメーターを取得
+        Dim opt_serviceID As String = "/sid " & sid.ToString
+        Dim opt_bondriver As String
+        If Me._BonDriverPath.Length > 0 Then
+            opt_bondriver = "/d """ & Me._BonDriverPath & "\" & bondriver & """"
+        Else
+            opt_bondriver = "/d " & bondriver
+        End If
+
+        Dim udpPortNumber As Integer = 0
+        '★UDPポート自動取得か確認
+        'If Me.checkBoxAutoUdpPort.Checked Then
+        udpPortNumber = Me._procMan.getEmptyUdpPort(num)
+        'End If
+
+        '★UDPオプションの生成
+        Dim udpOpt As String
+        udpOpt = "/udp /port " & udpPortNumber & " /chspace " & ChSpace.ToString & " " & opt_serviceID & " " & opt_bondriver
+        If udpOpt3.Length > 0 Then
+            udpOpt &= " " & Trim(udpOpt3)
+        End If
+
+        'log1write("UDP option=" & udpOpt)
+
+        '★HLSオプションの生成
+        Dim hlsOpt As String = ""
+        If resolution.Length > 0 Then
+            '解像度指定があれば
+            Dim chk As Integer = 0
+            If vlc_option IsNot Nothing Then
+                For i As Integer = 0 To vlc_option.Length - 1
+                    If vlc_option(i).resolution = resolution Then
+                        hlsOpt = vlc_option(i).opt
+                        chk = 1
+                        log1write("解像度指定がありました。" & resolution)
+                    End If
+                Next
+            End If
+            If chk = 0 Then
+                '該当がなければフォーム上のVLCオプション文字列を使用する
+                hlsOpt = hlsOpt2
+                resolution = ""
+            End If
+        Else
+            '解像度指定がなければフォーム上のVLCオプション文字列を使用する
+            hlsOpt = hlsOpt2
+        End If
+
+        'ファイル再生か？
+        Dim stream_mode As Integer = 0
+        If filename.Length > 0 Then
+            stream_mode = 1
+            'hlsオプションを書き換える
+            If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                'ffmpegのとき
+                hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename)
+            Else
+                'その他vlc
+                '今のところ未対応
+                Exit Sub
+            End If
+        End If
+
+        '"%HLSROOT/../%"用
+        Dim hlsroot2 As String = hlsroot
+        Dim sp As Integer = hlsroot2.LastIndexOf("\")
+        If sp > 0 Then
+            hlsroot2 = hlsroot2.Substring(0, sp)
+        End If
+        '文字列内変数を実際の値に変換
+        hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPortNumber.ToString)
+        hlsOpt = hlsOpt.Replace("mystream", "mystream" & num)
+        hlsOpt = hlsOpt.Replace("%WWWROOT%", wwwroot)
+        hlsOpt = hlsOpt.Replace("%FILEROOT%", fileroot)
+        hlsOpt = hlsOpt.Replace("%HLSROOT%", hlsroot)
+        hlsOpt = hlsOpt.Replace("%HLSROOT/../%", hlsroot2)
+        hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPortNumber.ToString)
+
+        'log1write("HLS option=" & hlsOpt)
+
+        Try
+            Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
+        Catch ex As Exception
+            '設定しないうちにスタートしようとすると例外が起こる
+            Exit Sub
+        End Try
+        '★プロセスを起動
+        Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)
+    End Sub
+
+    '現在のhlsOptをファイル再生用に書き換える
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String) As String
+        Dim sp As Integer = hlsOpt.IndexOf("-i ")
+        Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
+        If sp >= 0 And se > sp Then
+            hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & hlsOpt.Substring(se)
+            sp = hlsOpt.IndexOf("-segment_list_size ")
+            se = hlsOpt.IndexOf(" ", sp + "-segment_list_size ".Length)
+            If sp >= 0 And se > sp Then
+                hlsOpt = hlsOpt.Substring(0, sp) & hlsOpt.Substring(se)
+            End If
+        End If
+        Return hlsOpt
+    End Function
+
+    'HLS_option.txtから解像度とHLSオプションを読み込む
+    Public Sub read_vlc_option()
+        Dim i As Integer = 0
+
+        'カレントディレクトリ変更
+        F_set_ppath4program()
+
+>>>>>>> parent of 03299ab... TvRemoteViewer_VB version 0.48 HttpStream 0.01
         Try
             Dim line() As String = file2line("HLS_option.txt")
             If line Is Nothing Then
