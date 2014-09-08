@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.48"
+    Private version As String = "TvRemoteViewer_VB version 0.48_HttpStream"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -47,7 +47,7 @@ Public Class Form1
                             If s.Length = 3 Then
                                 sid = Val(s(1))
                                 Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
-                                Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select)
+                                Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, 0)
                             Else
                                 MsgBox("サービスIDを指定してください")
                             End If
@@ -298,7 +298,7 @@ Public Class Form1
             Next
         End If
 
-        '解像度コンボボックスをセット httpサーバースタート後にvlc_option()がセットされている
+        '解像度コンボボックスをセット httpサーバースタート後にhls_option()がセットされている
         search_ComboBoxResolution()
 
         'プロセスクラッシュ監視等開始
@@ -444,8 +444,8 @@ Public Class Form1
     Private Sub search_ComboBoxResolution()
         Try
             ComboBoxResolution.Items.Clear()
-            For i As Integer = 0 To Me._worker.vlc_option.Length - 1
-                ComboBoxResolution.Items.Add(Me._worker.vlc_option(i).resolution)
+            For i As Integer = 0 To Me._worker.hls_option.Length - 1
+                ComboBoxResolution.Items.Add(Me._worker.hls_option(i).resolution)
             Next
         Catch ex As Exception
         End Try
@@ -454,9 +454,9 @@ Public Class Form1
     '解像度コンボボックスの値が変更されたとき
     Private Sub ComboBoxResolution_SelectedIndexChanged(sender As System.Object, e As System.EventArgs) Handles ComboBoxResolution.SelectedIndexChanged
         Dim s As String = ComboBoxResolution.Text
-        For i As Integer = 0 To Me._worker.vlc_option.Length - 1
-            If Me._worker.vlc_option(i).resolution = s Then
-                textBoxHlsOpt2.Text = Me._worker.vlc_option(i).opt
+        For i As Integer = 0 To Me._worker.hls_option.Length - 1
+            If Me._worker.hls_option(i).resolution = s Then
+                textBoxHlsOpt2.Text = Me._worker.hls_option(i).opt
             End If
         Next
     End Sub
@@ -815,17 +815,5 @@ Public Class Form1
             Me.Visible = False
         End If
     End Sub
-
-    '================================================================
-    'etc.
-    '================================================================
-
-    '余計な改行等を削除
-    Public Function trim8(ByVal s As String) As String
-        s = Trim(s)
-        s = s.Replace(vbTab, "").Replace(vbCrLf, "").Replace("""", "")
-        s = Trim(s)
-        Return s
-    End Function
 
 End Class

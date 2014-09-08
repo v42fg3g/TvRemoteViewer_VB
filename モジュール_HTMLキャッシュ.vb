@@ -10,6 +10,7 @@
     Public Structure bh_structure
         Public BonDriver As String
         Public html As String
+        Public ichiran As String
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
             Dim pF As String = CType(obj, String) '検索内容を取得

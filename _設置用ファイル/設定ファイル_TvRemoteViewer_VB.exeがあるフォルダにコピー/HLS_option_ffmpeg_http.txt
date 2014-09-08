@@ -1,0 +1,7 @@
+[320x180]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -c:v libx264 -s 320x180 -crf 20 -maxrate 100k -bufsize 512k mystream.ts
+[480x270]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -c:v libx264 -s 480x270 -crf 20 -maxrate 225k -bufsize 1024k mystream.ts
+[640x360]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -c:v libx264 -s 640x360 -crf 20 -maxrate 400k -bufsize 1835k mystream.ts
+[720x480]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -c:v libx264 -s 720x480 -crf 20 -maxrate 600k -bufsize 2752k mystream.ts
+[960x540]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -c:v libx264 -s 960x540 -crf 20 -maxrate 900k -bufsize 4128k mystream.ts
+[1280x720]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -c:v libx264 -s 1280x720 -crf 20 -maxrate 1600k -bufsize 7340k mystream.ts
+[–³•ÏŠ·]-i udp://127.0.0.1:42425?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -acodec copy -vcodec copy mystream.ts

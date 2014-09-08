@@ -49,73 +49,6 @@ Public Class ProcessManager
         Return r
     End Function
 
-    'BS1用にffmpeg用オプションからvlcオプションに書き換え
-    Public Function translate_ffmpeg2vlc(hlsOpt As String) As String
-        Dim r As String = ""
-
-        'カレントディレクトリに変更
-        F_set_ppath4program()
-        'HLS_option_VLC.txtを読み込む
-        Dim ho_vlc() As String = file2line("HLS_option_VLC.txt")
-
-        If ho_vlc IsNot Nothing Then
-            If ho_vlc.Length > 0 Then
-                '解像度を抜き出す
-                '_listから取得resolutionを取得
-                Dim rez As String = ""
-                Dim sp1, sp2 As Integer
-                Try
-                    sp1 = hlsOpt.IndexOf("-s ")
-                    sp2 = hlsOpt.IndexOf(" ", sp1 + 3)
-                    rez = hlsOpt.Substring(sp1 + "-s ".Length, sp2 - sp1 - "-s ".Length)
-                Catch ex As Exception
-                    rez = ""
-                End Try
-                'チェック
-                Dim d() As String = rez.Split("x")
-                If d.Length = 2 Then
-                    If Val(d(0)) > 0 And Val(d(1)) > 0 Then
-                        'ok
-                    Else
-                        'エラーの場合はデフォルト
-                        rez = "640x360"
-                    End If
-                Else
-                    'エラーの場合はデフォルト
-                    rez = "640x360"
-                End If
-                rez = "[" & rez & "]"
-
-                '解像度に合ったオプションを取り出す
-                For i As Integer = 0 To ho_vlc.Length - 1
-                    If ho_vlc(i).IndexOf(rez) = 0 Then
-                        Try
-                            r = ho_vlc(i).Substring(rez.Length)
-                            Exit For
-                        Catch ex As Exception
-                            'エラーが起こったときは
-                            r = ""
-                        End Try
-                    End If
-                Next
-            End If
-        End If
-
-        If r.Length = 0 Then
-            'どうしてもエラーの場合は
-            r = "-I dummy udp://@:%UDPPORT% --sout ""#transcode{width=640,height=360,vcodec=h264,vb=1000,fps=29.97,venc=x264{aud,profile=baseline,level=30,keyint=30,bframes=0,ref=1,nocabac},acodec=aac,ab=128,channels=2,aenc=avcodec{strict=-2},samplerate=48000,audio-sync,hurry-up}:std{access=livehttp{seglen=5,delsegs=true,numsegs=5,index=%WWWROOT%\mystream.m3u8,index-url=mystream-########.ts},mux=ts{use-key-frames},dst=%WWWROOT%\mystream-########.ts}"" --no-ts-es-id-pid --sout-ts-pid-audio=68 --intf=""rc"" --rc-host=%rc-host% vlc://quit"""
-        End If
-
-        'VLCの場合はオプションんでフォルダ指定がされているので必要無し
-        ''カレントディレクトリを戻す
-        'Try
-        'Directory.SetCurrentDirectory(Me._fileroot) 'カレントディレクトリ変更
-        'Catch ex As Exception
-        'End Try
-
-        Return r
-    End Function
-
     Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String)
         '★起動している場合は既存のプロセスを止める
         stopProc(num)
@@ -132,7 +65,7 @@ Public Class ProcessManager
             '名前付きパイプ一覧取得でエラーが起これば1が入る
             Dim pipe_error As Integer = 0
 
-            If stream_mode = 0 Then
+            If stream_mode = 0 Or stream_mode = 2 Then
                 'UDPストリーム再生
                 Dim pipeListBefore As New List(Of Integer)()
                 If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
@@ -244,44 +177,6 @@ Public Class ProcessManager
 
                     System.Threading.Thread.Sleep(1000)
 
-                    'NHK BS1、BSプレミアム対策
-                    If hlsApp.IndexOf("ffmpeg") >= 0 Then
-                        'まずこの放送がＮＨＫかどうか
-                        Dim isNHK As Integer = check_isNHK(0, udpOpt)
-                        If isNHK = 1 Then
-                            If NHK_dual_mono_mode_select = 1 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                                '主モノラル固定
-                                hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
-                            ElseIf NHK_dual_mono_mode_select = 2 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                                '副モノラル固定
-                                hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
-                            ElseIf NHK_dual_mono_mode_select = 9 Then
-                                If BS1_hlsApp.Length > 0 Then
-                                    'hlsAppとhlsOptをVLCに置き換える
-                                    Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt)
-                                    If hlsOpt_temp.Length > 0 Then
-                                        hlsOpt = hlsOpt_temp
-                                        hlsApp = BS1_hlsApp
-                                        hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPort)
-                                        Dim fr As String = Me._fileroot
-                                        If fr.Length = 0 Then
-                                            fr = Me._wwwroot
-                                        End If
-                                        hlsOpt = hlsOpt.Replace("%WWWROOT%", fr) '必要ないが過去のHLS_option_VLC.txtとの互換性のため
-                                        hlsOpt = hlsOpt.Replace("%FILEROOT%", fr)
-                                        hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
-                                        hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".") 'ffmpeg,m3u8 無くしたいが互換性のため
-                                        hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-") 'vlc 無くしたいが互換性のため
-                                        hlsOpt = hlsOpt.Replace("%NUM%", num.ToString)
-                                    End If
-                                Else
-                                    NHK_dual_mono_mode_select = 0
-                                    log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
-                                End If
-                            End If
-                        End If
-                    End If
-
                     '★HLSソフトを実行
                     'ProcessStartInfoオブジェクトを作成する
                     Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
@@ -327,7 +222,7 @@ Public Class ProcessManager
                     log1write("No.=" & num & "　名前付きパイプ一覧取得に成功したにもかかわらずUDPアプリのパイプ名が見当たらないため、UDPアプリ起動に失敗したとみなして配信を停止します")
                 End If
 
-            ElseIf stream_mode = 1 Then
+            ElseIf stream_mode = 1 Or stream_mode = 3 Then
                 'ファイル再生
                 '★HLSソフトを実行
                 'ProcessStartInfoオブジェクトを作成する
@@ -410,7 +305,7 @@ Public Class ProcessManager
     'プロセスが順調に動いているかチェック
     Public Sub checkAllProc()
         For i As Integer = Me._list.Count - 1 To 0 Step -1
-            If Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And Me._list(i)._stream_mode = 0 Then
+            If Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 0 Or Me._list(i)._stream_mode = 2) Then
                 Dim chk As Integer = 0
                 Dim procudp As System.Diagnostics.Process = Nothing
                 Dim prochls As System.Diagnostics.Process = Nothing
@@ -770,6 +665,36 @@ Public Class ProcessManager
             Next
         End If
         Return js
+    End Function
+
+    '現在稼働中のlist(i)._stream_modeを取得
+    Public Function get_live_stream_mode() As Object
+        Dim r() As Integer = Nothing
+        Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
+        If d IsNot Nothing Then
+            For j As Integer = 0 To d.Length - 1
+                ReDim Preserve r(j)
+                r(j) = Me._list(j)._stream_mode
+            Next
+        End If
+        Return r
+    End Function
+
+    '現在稼働中のlist(i)._hlsAppの種類を取得 vlc=1 ffmpeg=2
+    Public Function get_live_hlsApp() As Object
+        Dim r() As Integer = Nothing
+        Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
+        If d IsNot Nothing Then
+            For j As Integer = 0 To d.Length - 1
+                ReDim Preserve r(j)
+                If Me._list(j)._hlsApp.IndexOf("vlc") >= 0 Then
+                    r(j) = 1
+                ElseIf Me._list(j)._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                    r(j) = 2
+                End If
+            Next
+        End If
+        Return r
     End Function
 
     '現在稼働中のlist(i)に関するBonDriver情報を併せて取得
@@ -1147,4 +1072,194 @@ Public Class ProcessManager
         End If
         Return NHKmode
     End Function
+
+    '===========================================================
+    'WEB インターフェース
+    '===========================================================
+    '配信可能なチャンネル情報
+    Public Function WI_GET_CHANNELS(ByVal BonDriverPath As String, ByVal udpApp As String, ByVal BonDriver_NGword() As String) As String
+        'BonDriver
+        'ServiceID, ch_space, チャンネル名
+        Dim r As String = ""
+
+        Dim bons() As String = Nothing
+        Dim bons_n As Integer = 0
+
+        '初めの1回　まだhtmlができていない
+        Dim bondriver_path As String = BonDriverPath.ToString
+        If bondriver_path.Length = 0 Then
+            '指定が無い場合はUDPAPPと同じフォルダにあると見なす
+            bondriver_path = filepath2path(udpApp.ToString)
+        End If
+        Try
+            For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
+                Dim s As String = stFilePath & System.Environment.NewLine
+                'フルパスファイル名がsに入る
+                Dim fpf As String = trim8(s)
+                If s.IndexOf("\") >= 0 Then
+                    'ファイル名だけを取り出す
+                    Dim k As Integer = s.LastIndexOf("\")
+                    s = trim8(s.Substring(k + 1))
+                End If
+                Dim sl As String = s.ToLower() '小文字に変換
+                '表示しないBonDriverかをチェック
+                If BonDriver_NGword IsNot Nothing Then
+                    For j As Integer = 0 To BonDriver_NGword.Length - 1
+                        If sl.IndexOf(BonDriver_NGword(j)) >= 0 Then
+                            sl = ""
+                        End If
+                    Next
+                End If
+                If sl.IndexOf("bondriver") = 0 Then
+                    'セレクトボックス用にBonDriverを記録しておく
+                    ReDim Preserve bons(bons_n)
+                    bons(bons_n) = sl
+                    bons_n += 1
+                End If
+            Next
+        Catch ex As Exception
+        End Try
+
+        Dim i As Integer = 0
+        If bons IsNot Nothing Then
+            If bons.Length > 0 Then
+                'BonDriver＆チャンネル一覧
+                For i = 0 To bons.Length - 1
+                    r &= "[" & bons(i) & "]" & vbCrLf
+                    '局名を書き込む
+                    r &= list_channel(bondriver_path, bons(i), 0)
+                Next
+            End If
+        End If
+
+        Return r
+    End Function
+
+    Public Function list_channel(ByVal bondriver_path As String, ByVal bondriver As String, ByVal a As Integer) As String
+        Dim ichiran As String = ""
+        If bondriver.Length > 0 Then
+            Dim k As Integer = -1
+            If BonDriver_select_html IsNot Nothing Then
+                If BonDriver_select_html.Length > 0 Then
+                    k = Array.IndexOf(BonDriver_select_html, bondriver)
+                End If
+            End If
+            If k >= 0 Then
+                ichiran = BonDriver_select_html(k).ichiran
+            Else
+                'サービスIDと放送局名用
+                Dim si As Integer = 0
+                If ch_list IsNot Nothing Then
+                    si = ch_list.Length
+                End If
+
+                Dim filename As String
+                If bondriver_path.Length > 0 Then
+                    filename = bondriver_path & "\" & bondriver.Replace(".dll", ".ch2")
+                Else
+                    filename = bondriver.Replace(".dll", ".ch2")
+                End If
+                Dim line() As String = file2line(filename)
+                If line IsNot Nothing Then
+                    For i As Integer = 0 To line.Length - 1
+                        If line(i).IndexOf(";") < 0 Then
+                            Dim s() As String = line(i).Split(",")
+                            If s.Length = 9 Then
+                                ichiran &= bondriver & "," & s(5) & "," & s(1) & "," & s(0) & vbCrLf
+
+                                'serviceIDと放送局名を記録しておく
+                                If ch_list IsNot Nothing Then
+                                    Dim chk As Integer = 0
+                                    For i2 As Integer = 0 To ch_list.Length - 1
+                                        If ch_list(i2).sid = Val(s(5)) And ch_list(i2).tsid = s(7) Then
+                                            'サービスIDとTSIDが一致した
+                                            'すでに登録済み
+                                            chk = 1
+                                            Exit For
+                                        End If
+                                    Next
+                                    If chk = 0 Then
+                                        'まだ登録されていなければ
+                                        ReDim Preserve ch_list(si)
+                                        ch_list(si).sid = Val(s(5))
+                                        ch_list(si).jigyousha = s(0)
+                                        ch_list(si).bondriver = bondriver
+                                        ch_list(si).chspace = Val(s(1))
+                                        ch_list(si).tsid = Val(s(7))
+                                        si += 1
+                                    End If
+                                Else
+                                    '最初の１つめ
+                                    ReDim Preserve ch_list(0)
+                                    ch_list(0).sid = Val(s(5))
+                                    ch_list(0).jigyousha = s(0)
+                                    ch_list(0).bondriver = bondriver
+                                    ch_list(0).chspace = Val(s(1))
+                                    ch_list(0).tsid = Val(s(7))
+                                    si += 1
+                                End If
+                            End If
+                        End If
+                    Next
+                End If
+            End If
+        End If
+
+        Return ichiran
+    End Function
+
+    '現在配信中のストリーム
+    Public Function WI_GET_LIVE_STREAM() As String
+        '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
+        'stopping, チャンネル名, hlsApp
+        Dim r As String = ""
+
+        Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
+        If d IsNot Nothing Then
+            For i As Integer = 0 To d.Length - 1
+                Dim ListNo As Integer = d(i)
+                Dim num As Integer = Me._list(d(i))._num
+                Dim udpOpt As String = Me._list(d(i))._udpOpt
+                Dim BonDriver As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0))
+                Dim ServiceID As String = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
+                Dim ch_space As String = Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
+                Dim udpPort As String = Trim(instr_pickup_para(udpOpt, "/port ", " ", 0))
+                Dim stream_mode As Integer = Me._list(d(i))._stream_mode
+                Dim NHKMODE As Integer = Me._list(d(i))._NHK_dual_mono_mode_select
+                Dim stopping As Integer = Me._list(d(i))._stopping
+                Dim channel_name As String = F_sid2channelname(Val(ServiceID))
+                Dim hlsApp As String = Me._list(d(i))._hlsApp
+                Dim hlsApp_name As String = ""
+                Dim sp As Integer = hlsApp.LastIndexOf("\")
+                If sp >= 0 Then
+                    'ファイル名だけを抜き出す()
+                    Try
+                        hlsApp_name = hlsApp.Substring(sp + 1)
+                    Catch ex As Exception
+                    End Try
+                Else
+                    hlsApp_name = hlsApp
+                End If
+                '最後に文字列に追加
+                Dim sep As String = ", "
+                r &= ListNo.ToString _
+                    & sep & num.ToString _
+                    & sep & udpPort _
+                    & sep & BonDriver _
+                    & sep & ServiceID _
+                    & sep & ch_space _
+                    & sep & stream_mode _
+                    & sep & NHKMODE _
+                    & sep & stopping _
+                    & sep & channel_name _
+                    & sep & hlsApp_name _
+                    & vbCrLf
+            Next
+        End If
+
+        Return r
+    End Function
+
 End Class
+
+

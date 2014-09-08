@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.47
+TvRemoteViewer_VB v0.48
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -155,7 +155,6 @@ TvRemoteViewer_VB v0.47
 	"%HLSROOT%"	HLSアプリが存在するフォルダ
 	"%HLSROOT/../%"	HLSアプリが存在するフォルダの１つ上の親フォルダ（ffmpeg解凍時のフォルダ構造に対応）
 	"%rc-host%"	"127.0.0.1:%UDPPORT%"に変換されます。
-	"%NUM"		配信ナンバー
 
 
 
@@ -289,6 +288,8 @@ TvRemoteViewer_VB v0.47
 	0.46	名前付きパイプ取得方法を変更（ご協力いただいた方々に感謝）
 	0.47	無駄なエラー処理を修正
 		細かいバグフィックス
+	0.48	HLSオプション中の%NUM%を変換するようにした
+		HLS_option.txtを少々修正
 
 
 
