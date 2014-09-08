@@ -270,9 +270,14 @@ Public Class ProcessManager
                                         hlsOpt = hlsOpt.Replace("%WWWROOT%", fr) '必要ないが過去のHLS_option_VLC.txtとの互換性のため
                                         hlsOpt = hlsOpt.Replace("%FILEROOT%", fr)
                                         hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPort)
+<<<<<<< HEAD
                                         hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".") 'ffmpeg,m3u8 無くしたいが互換性のため
                                         hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-") 'vlc 無くしたいが互換性のため
                                         hlsOpt = hlsOpt.Replace("%NUM%", num.ToString)
+=======
+                                        hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".")
+                                        hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-")
+>>>>>>> parent of 03299ab... TvRemoteViewer_VB version 0.48 HttpStream 0.01
                                     End If
                                 Else
                                     NHK_dual_mono_mode_select = 0
