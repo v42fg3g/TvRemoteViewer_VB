@@ -883,6 +883,10 @@ Class WebRemocon
                                 HTTPSTREAM_VLC_port = Val(youso(1).ToString)
                             Case "MAX_STREAM_NUMBER"
                                 MAX_STREAM_NUMBER = Val(youso(1).ToString)
+                            Case "UDP_PRIORITY"
+                                UDP_PRIORITY = trim8(youso(1).ToString)
+                            Case "HLS_PRIORITY"
+                                HLS_PRIORITY = trim8(youso(1).ToString)
                         End Select
                     End If
                 Next
@@ -989,9 +993,29 @@ Class WebRemocon
         Return r
     End Function
 
+    '■テスト
+    Public Function change_exe_name(ByVal s As String, ByVal num As Integer) As String
+        'Dim sp As Integer = s.LastIndexOf(".exe")
+        Dim sp As Integer = s.LastIndexOf("\")
+        If sp > 0 Then
+            s = s.Substring(0, sp) & num.ToString & s.Substring(sp)
+        End If
+        Return s
+    End Function
+
     '映像配信開始
     Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, Optional ByVal resolution As String = "")
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
+
+        '■テスト　多重テストを違うexeファイルで行う
+        Dim udpapp2 As String = change_exe_name(udpApp, num)
+        If file_exist(udpapp2) = 1 Then
+            udpApp = udpapp2
+        End If
+        Dim hlsapp2 As String = change_exe_name(hlsApp, num)
+        If file_exist(hlsapp2) = 1 Then
+            hlsApp = hlsapp2
+        End If
 
         If num > MAX_STREAM_NUMBER Or num < 0 Then
             log1write("最大配信ナンバーを超えています")
@@ -1607,9 +1631,6 @@ Class WebRemocon
                             'ElseIf request_page >= 2 Then
                             'パラメーターを置換する必要があるページ
                             Dim s As String = ReadAllTexts(path)
-
-                            Debug.Print("[path=" & path & "]")
-                            Debug.Print("[s=" & s & "]")
 
                             'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
 

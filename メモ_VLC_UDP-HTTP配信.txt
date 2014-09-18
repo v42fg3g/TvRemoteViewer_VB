@@ -1,0 +1,74 @@
+TvRemoteViewer_VBのHLSオプションに
+-i udp://127.0.0.1:42425?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -acodec copy -vcodec copy mystream.ts
+と入れてスタートさせた後、VLCのネットワークストリームを開くで
+http://127.0.0.1:40003/stream/mystream1.ts（filerootの設定により違い有り）
+を再生させると一見上手くいったように見えるがしばらくすると
+main debug: waiting decoder fifos to empty
+とエラーがログに出て止まってしまう。
+
+内蔵httpサーバーのせいかもしれない。解決策がありそうか無さそうか教えてエロい人
+
+
+
+■ffmpeg
+http://127.0.0.1:40003/stream/mystream1.ts
+
+[640x360]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -c:v libx264 -s 640x360 -crf 20 -maxrate 400k -bufsize 1835k mystream.ts
+[640x360]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -threads 2 -map 0:0 -map 0:1 -acodec libvo_aacenc -ar 48000 -ab 192k -ac 2 -vcodec libx264 -s 640x360 -aspect 16:9 -vb 1024k -fpre "%HLSROOT/../%\presets\libx264-ipod640.ffpreset" mystream.ts
+[無変換]-i udp://127.0.0.1:42425?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -acodec copy -vcodec copy mystream.ts
+
+
+-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -f segment -segment_format mpegts -segment_time 3 -segment_list_size 17 -segment_list mystream.m3u8 -threads auto -map 0:0 -map 0:1 -acodec libvo_aacenc -ar 48000 -ab 192k -ac 2 -vcodec libx264 -s 640x360 -aspect 16:9 -vb 1024k -fpre "%HLSROOT/../%\presets\libx264-ipod640.ffpreset" mystream-%08d.ts
+
+
+■VLC
+'■これで一応ＯＫ
+
+udp://@:42425
+Video = H.264 + AAC (TS)
+:sout=#transcode{vcodec=h264,vb=800,scale=1,acodec=mp4a,ab=128,channels=2,samplerate=44100}:http{dst=:8080/12345.ts} :no-sout-rtp-sap :no-sout-standard-sap :ttl=1 :sout-keep
+
+udp://@:42425
+無変換
+:sout=#http{dst=:8080/12345.ts} :no-sout-rtp-sap :no-sout-standard-sap :ttl=1 :sout-keep
+
+
+視聴
+http://127.0.0.1:42425/httpstream.ts
+
+
+■↓これで一応動いた
+-vvv udp://@:%UDPPORT% --sout=#transcode{width=640,height=360,vcodec=h264,vb=800,scale=1,acodec=mp4a,ab=128,channels=2,samplerate=44100}:http{dst=:8080/12345.ts} :no-sout-rtp-sap :no-sout-standard-sap :ttl=1 :sout-keep
+
+■↓これで動いた
+-I dummy udp://@:%UDPPORT% --sout=#transcode{width=640,height=360,vcodec=h264,vb=800,scale=1,acodec=mp4a,ab=128,channels=2,samplerate=44100}:http{dst=:8080/12345.ts} :no-sout-rtp-sap :no-sout-standard-sap :ttl=1 :sout-keep
+
+■↓これで動いた 終了もＯＫ
+-I dummy udp://@:%UDPPORT%  --no-ts-es-id-pid --sout-ts-pid-audio=68 --intf="rc" --rc-quiet --rc-host=%rc-host% vlc://quit :sout=#transcode{width=640,height=360,vcodec=h264,vb=800,scale=1,acodec=mp4a,ab=128,channels=2,samplerate=44100}:http{dst=:8080/12345.ts} :no-sout-rtp-sap :no-sout-standard-sap :ttl=1 :sout-keep
+
+■↓これで動いた 終了もＯＫ パラメーターを削った
+-I dummy udp://@:%UDPPORT% --intf="rc" --rc-host=%rc-host% vlc://quit --sout=#transcode{width=640,height=360,vcodec=h264,vb=800,scale=1,acodec=mp4a,ab=128,channels=2,samplerate=44100}:http{dst=:8080/12345.ts} :no-sout-rtp-sap :no-sout-standard-sap :ttl=1 :sout-keep
+
+-I dummy udp://@:%UDPPORT% --intf="rc" --rc-host=%rc-host% vlc://quit --sout=#http{dst=:8080/12345.ts} :no-sout-rtp-sap :no-sout-standard-sap :ttl=1 :sout-keep
+
+
+
+-I dummy udp://@:%UDPPORT% --intf="rc" --rc-quiet --rc-host=%rc-host% vlc://quit --sout=#transcode{width=640,height=360,vcodec=h264,vb=800,scale=1,acodec=mp4a,ab=128,channels=2,samplerate=44100}:http{dst=:8080/12345.ts} :no-sout-rtp-sap :no-sout-standard-sap :ttl=1 :sout-keep
+
+
+
+ --no-ts-es-id-pid --sout-ts-pid-audio=68 --intf="rc" --rc-quiet --rc-host=%rc-host% vlc://quit'
+========================================================
+-I dummy udp://@:%UDPPORT% --sout "#transcode{vcodec=h264,vb=1000,venc=x264{profile=main,keyint=60},width=640,height=360,acodec=mpga,ab=128,channels=2,afilter=audio_format,audio-sync,hurry-up,access=http{mime=video/mpeg},mux=ts{use-key-frames},dst=%dest%}"
+
+:std{access=livehttp{seglen=5,delsegs=true,numsegs=5,index=%FILEROOT%\mystream.m3u8,index-url=mystream-########.ts},mux=ts{use-key-frames},dst=%FILEROOT%\mystream-########.ts}" --no-ts-es-id-pid --sout-ts-pid-audio=68 --intf="rc" --rc-host=%rc-host% vlc://quit
+
+
+■RemoteTestオプション
+640x360,'-vvv %src% --sout=#duplicate{dst=transcode{vcodec=h264,vb=1000,venc=x264{profile=main,keyint=60},width=640,height=360},select="es=0",dst=transcode{acodec=mpga,ab=128,channels=2,afilter=audio_format},select="es=1"}:standard{access=http{mime=video/mpeg},mux=ts{use-key-frames},dst=%dest%} --no-ts-es-id-pid --sout-ts-pid-audio=68 --intf="rc" --rc-quiet --rc-host=%rc-host% vlc://quit'
+
+無変換,'-vvv %src% --sout=#duplicate{dst=transcode,select="es=0",dst=transcode{acodec=mpga,ab=128,channels=2,afilter=audio_format},select="es=1"}:standard{access=http{mime=video/mpeg},mux=ts,dst=%dest%} --no-ts-es-id-pid --sout-ts-pid-audio=68 --intf="rc" --rc-quiet --rc-host=%rc-host% vlc://quit'
+
+■TvRemoteViewer_VBオプション
+-I dummy udp://@:%UDPPORT% --sout "#transcode{width=640,height=360,vcodec=h264,vb=1000,fps=29.97,venc=x264{aud,profile=baseline,level=30,keyint=30,bframes=0,ref=1,nocabac},acodec=aac,ab=128,channels=2,aenc=avcodec{strict=-2},samplerate=48000,audio-sync,hurry-up}:std{access=livehttp{seglen=5,delsegs=true,numsegs=5,index=%FILEROOT%\mystream.m3u8,index-url=mystream-########.ts},mux=ts{use-key-frames},dst=%FILEROOT%\mystream-########.ts}" --no-ts-es-id-pid --sout-ts-pid-audio=68 --intf="rc" --rc-host=%rc-host% vlc://quit
+

@@ -110,8 +110,21 @@ Public Class ProcessManager
                 log1write("UDP option=" & udpOpt)
                 'アプリケーションを起動する
                 Dim udpProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(udpPsi)
-                udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-                log1write("No.=" & num & "のUDPアプリを起動しました。handle=" & udpProc.Handle.ToString)
+                Dim UDP_PRIORITY_STR As String = UDP_PRIORITY
+                Select Case UDP_PRIORITY
+                    Case "Idle"
+                        udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
+                    Case "Normal"
+                        udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
+                    Case "High"
+                        udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                    Case "RealTime"
+                        udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
+                    Case Else
+                        UDP_PRIORITY_STR = "無指定"
+                        'udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                End Select
+                log1write("No.=" & num & "のUDPアプリを起動しました。優先度：" & UDP_PRIORITY_STR & "　handle=" & udpProc.Handle.ToString)
 
                 'pipeindexを取得
                 Dim pipeIndex As Integer = 0
@@ -204,8 +217,22 @@ Public Class ProcessManager
                     log1write("HLS option=" & hlsOpt)
                     'アプリケーションを起動する
                     Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
+                    Dim HLS_PRIORITY_STR As String = HLS_PRIORITY
+                    Select Case HLS_PRIORITY
+                        Case "Idle"
+                            hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
+                        Case "Normal"
+                            hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
+                        Case "High"
+                            hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                        Case "RealTime"
+                            hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
+                        Case Else
+                            HLS_PRIORITY_STR = "無指定"
+                            'hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                    End Select
 
-                    log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
+                    log1write("No.=" & num & "のHLSアプリを起動しました。優先度：" & HLS_PRIORITY_STR & "　handle=" & hlsProc.Handle.ToString)
 
                     'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
                     Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)

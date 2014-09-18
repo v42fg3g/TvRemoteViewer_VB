@@ -2,6 +2,10 @@
     '最大配信ナンバー
     Public MAX_STREAM_NUMBER As Integer = 8
 
+    'アプリCPU優先度
+    Public UDP_PRIORITY As String = "" 'High
+    Public HLS_PRIORITY As String = ""
+
     'TvRemoteViewer_VBの起動時、終了時、全停止時にRecTaskを名前付きで停止するかどうか
     Public Stop_RecTask_at_StartEnd As Integer = 1
 
