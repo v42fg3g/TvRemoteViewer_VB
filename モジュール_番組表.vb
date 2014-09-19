@@ -133,14 +133,9 @@ Module モジュール_番組表
 
                                             html &= "<form action=""StartTV.html"">" & vbCrLf
                                             html &= "<select name=""num"">" & vbCrLf
-                                            html &= "<option>1</option>" & vbCrLf
-                                            html &= "<option>2</option>" & vbCrLf
-                                            html &= "<option>3</option>" & vbCrLf
-                                            html &= "<option>4</option>" & vbCrLf
-                                            html &= "<option>5</option>" & vbCrLf
-                                            html &= "<option>6</option>" & vbCrLf
-                                            html &= "<option>7</option>" & vbCrLf
-                                            html &= "<option>8</option>" & vbCrLf
+                                            For ix = 1 To MAX_STREAM_NUMBER
+                                                html &= "<option>" & ix.ToString & "</option>" & vbCrLf
+                                            Next
                                             html &= "</select>" & vbCrLf
                                             html &= bhtml & vbCrLf
                                             html &= "<input type=""hidden"" name=""ServiceID"" value=""" & d(2) & """>" & vbCrLf
