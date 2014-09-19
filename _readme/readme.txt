@@ -111,6 +111,7 @@ TvRemoteViewer_VB v0.49
 	%SELECTBONSIDCH%		index.html内でBonDriver＆ServiceID&ChSpaceを選択する<SELECT>セットを作成
 	%PROCBONLIST%			配信中のストリームナンバーとBonDriverをテキストで表示する
 	%VIEWBUTTONS%			ストリームの数だけ視聴ボタンを作成
+	%SELECTNUM%			ストリームナンバー選択
 
 
 	・ViewTV[n].htmlのみで使用できる変数
@@ -149,6 +150,7 @@ TvRemoteViewer_VB v0.49
 
 
 	・HLSオプションで実行時に変換される定数
+<<<<<<< HEAD
 	"%UDPPORT%"	ソフトで自動的に割り当てられたudpポート
 	"%WWWROOT%"	WWWのrootフォルダ
 	"%FILEROOT%"	m3u8やtsが作成されるフォルダ
@@ -185,6 +187,15 @@ TvRemoteViewer_VB v0.49
 	実現するなど素晴らしいものです。
 	結局、不安定なVLCを使用せざるをえず複数配信など不可能、
 	ならばRemoteTestというより良いソフトがあるということで私のチャレンジはここまでとします。
+=======
+	%UDPPORT%	ソフトで自動的に割り当てられたudpポート
+	%WWWROOT%	WWWのrootフォルダ
+	%FILEROOT%	m3u8やtsが作成されるフォルダ
+	%HLSROOT%	HLSアプリが存在するフォルダ
+	%HLSROOT/../%	HLSアプリが存在するフォルダの１つ上の親フォルダ（ffmpeg解凍時のフォルダ構造に対応）
+	%rc-host%	"127.0.0.1:%UDPPORT%"に変換されます。
+	%NUM%		ストリームナンバー
+>>>>>>> HTTP_Stream
 
 
 

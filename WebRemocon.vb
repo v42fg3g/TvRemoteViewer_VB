@@ -882,7 +882,9 @@ Class WebRemocon
                             Case "HTTPSTREAM_VLC_port"
                                 HTTPSTREAM_VLC_port = Val(youso(1).ToString)
                             Case "MAX_STREAM_NUMBER"
-                                MAX_STREAM_NUMBER = Val(youso(1).ToString)
+                                If Val(youso(1).ToString) > 0 Then
+                                    MAX_STREAM_NUMBER = Val(youso(1).ToString)
+                                End If
                             Case "UDP_PRIORITY"
                                 UDP_PRIORITY = trim8(youso(1).ToString)
                             Case "HLS_PRIORITY"
@@ -1659,6 +1661,17 @@ Class WebRemocon
                             'ストリーム番号
                             If s.IndexOf("%NUM%") >= 0 Then
                                 s = s.Replace("%NUM%", num.ToString)
+                            End If
+
+                            'ストリーム番号セレクト
+                            If s.IndexOf("%SELECTNUM%") >= 0 Then
+                                Dim selectnum_html As String = ""
+                                selectnum_html &= "<select name=""num"">" & vbCrLf
+                                For ix = 1 To MAX_STREAM_NUMBER
+                                    selectnum_html &= "<option>" & ix.ToString & "</option>" & vbCrLf
+                                Next
+                                selectnum_html &= "</select>" & vbCrLf
+                                s = s.Replace("%SELECTNUM%", selectnum_html)
                             End If
 
                             'NHK音声モード
