@@ -769,7 +769,7 @@ Class WebRemocon
                         Next
                         Select Case youso(0)
                             Case "VideoPath"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "")
                                 Dim clset() As String = youso(1).Split(",")
                                 If clset Is Nothing Then
                                 ElseIf clset.Length > 0 Then

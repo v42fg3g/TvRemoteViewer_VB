@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.49
+TvRemoteViewer_VB v0.50
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -150,42 +150,13 @@ TvRemoteViewer_VB v0.49
 
 
 	・HLSオプションで実行時に変換される定数
-	"%UDPPORT%"	ソフトで自動的に割り当てられたudpポート
-	"%WWWROOT%"	WWWのrootフォルダ
-	"%FILEROOT%"	m3u8やtsが作成されるフォルダ
-	"%HLSROOT%"	HLSアプリが存在するフォルダ
-	"%HLSROOT/../%"	HLSアプリが存在するフォルダの１つ上の親フォルダ（ffmpeg解凍時のフォルダ構造に対応）
-	"%rc-host%"	"127.0.0.1:%UDPPORT%"に変換されます。
-	"%NUM%		ストリームナンバー
-
-
-
-■HTTPストリーム配信につきまして 0.49に実験的に実装
-
-	単純なクライアントソフトのサンプルソースを
-	https://github.com/v42fg3g/TvRemoteViewer_VB_Client
-	に公開しています。
-
-	TvRemoteViewer_VB.iniにHTTPSTREAM_App=1（VLCを使用）と設定し
-	このクライアントソフトからStreamMode=2で呼び出した場合、
-	HLS_option_VLC_http.txtに書かれているオプションが使用され、
-	RemoteTest(Android,Windows用）と同様のHTTPストリーム配信を試みます。
-	
-	今のところffmpegにはサーバー機能は実装されていないようで、VLCでのみ使用できます。
-	配信開始後、VLCのストリームメディア再生で
-	http://サーバーのIPアドレス:42465/mystream1.ts
-	を指定してあげれば再生されるはずです。
-	サーバー側のVLC自体が配信サーバーとなり42465で待ち受けるような形です。
-
-	クライアントソフトはユーザーインターフェース、エラー処理等全く行っていません。
-	もしも後からプログラミングしてくださる奇特な方が現れた場合に参考になればという想いです。
-	サーバーへの命令はWEBインターフェースを使用していますのでVBである必要すらありません。
-	極端な話、ブラウザからでも命令可能だと思います。
-
-	RemoteTest(Android,Windows用)の最終版はBonDriverをフックして素早いチャンネル変更を
-	実現するなど素晴らしいものです。
-	結局、不安定なVLCを使用せざるをえず複数配信など不可能、
-	ならばRemoteTestというより良いソフトがあるということで私のチャレンジはここまでとします。
+	%UDPPORT%	ソフトで自動的に割り当てられたudpポート
+	%WWWROOT%	WWWのrootフォルダ
+	%FILEROOT%	m3u8やtsが作成されるフォルダ
+	%HLSROOT%	HLSアプリが存在するフォルダ
+	%HLSROOT/../%	HLSアプリが存在するフォルダの１つ上の親フォルダ（ffmpeg解凍時のフォルダ構造に対応）
+	%rc-host%	"127.0.0.1:%UDPPORT%"に変換されます。
+	%NUM%		ストリームナンバー
 
 
 
@@ -329,12 +300,12 @@ TvRemoteViewer_VB v0.49
 		【安定性実験】
 		UDP,HLS各exeを配信ナンバー毎に違うexeを使用できるようにした。
 		exeが存在するフォルダ名に配信ナンバーを追記したフォルダ内のexeを使用します。
-		例：HLSアプリにffmpegを使用している場合
+		例：HLSアプリにffmpegを使用し手いる場合
 		通常～\bin\ffmpeg.exeを使用しているときに
 		～\bin1\ffmpeg.exeを用意しておけば配信1のときに使用するようになります。
 		～\bin2\ffmpeg.exeを用意しておけば配信2のときに使用するようになります。
-		用意されていない場合は通常通り～\bin\ffmpeg.exeが使用されます。
 		UDPアプリにつきましても同様です。
+	0.50	iniのVideoPathに()が入っていた場合に動画一覧が正常に取得できなかったバグを修正
 
 
 
