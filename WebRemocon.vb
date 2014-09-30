@@ -272,23 +272,36 @@ Class WebRemocon
     'エラーページ用ひな形
     Public Function ERROR_PAGE(ByVal title As String, ByVal body As String, Optional ByVal a As Integer = 0) As String
         Dim r As String = ""
-        r &= "<!doctype html>" & vbCrLf
-        r &= "<html>" & vbCrLf
-        r &= "<head>" & vbCrLf
-        r &= "<title>" & title & "</title>" & vbCrLf
-        r &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />" & vbCrLf
-        r &= "</head>" & vbCrLf
-        r &= "<body>" & vbCrLf
-        r &= body & vbCrLf
-        r &= "<br><br>" & vbCrLf
-        r &= "<input type=""button"" value=""トップメニュー"" onClick=""location.href='/index.html'"">" & vbCrLf
-        If a = 1 Then
-            r &= "<input type=""button"" Value=""再読み込み"" onClick=""location.reload();"">" & vbCrLf
+        If file_exist(Me._wwwroot & "\ERROR.html") = 1 Then
+            r = ReadAllTexts(Me._wwwroot & "\ERROR.html")
+            r = r.Replace("%ERRORTITLE%", title)
+            r = r.Replace("%ERRORMESSAGE%", body)
+            Dim reload As String = ""
+            If a = 1 Then
+                reload = "<input type=""button"" Value=""再読み込み"" onClick=""location.reload();"">"
+            End If
+            r = r.Replace("%ERRORRELOAD%", reload)
+        Else
+            r &= "<!doctype html>" & vbCrLf
+            r &= "<html>" & vbCrLf
+            r &= "<head>" & vbCrLf
+            r &= "<title>" & title & "</title>" & vbCrLf
+            r &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />" & vbCrLf
+            'r &= "<meta name=""viewport"" content=""width=device-width"">"
+            r &= "</head>" & vbCrLf
+            r &= "<body>" & vbCrLf
+            r &= body & vbCrLf
+            r &= "<br><br>" & vbCrLf
+            r &= "<input type=""button"" value=""トップメニュー"" onClick=""location.href='/index.html'"">" & vbCrLf
+            If a = 1 Then
+                r &= "<input type=""button"" Value=""再読み込み"" onClick=""location.reload();"">" & vbCrLf
+            End If
+            r &= "<br><br>" & vbCrLf
+            r &= "<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">" & vbCrLf
+            r &= "</body>" & vbCrLf
+            r &= "</html>" & vbCrLf
         End If
-        r &= "<br><br>" & vbCrLf
-        r &= "<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">" & vbCrLf
-        r &= "</body>" & vbCrLf
-        r &= "</html>" & vbCrLf
+
         Return r
     End Function
 
@@ -1593,30 +1606,47 @@ Class WebRemocon
                             sw.WriteLine(WI_cmd_reply)
                         ElseIf request_page = 1 Or request_page = 11 Then
                             'waitingページを表示する
-                            'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                            sw.WriteLine("<!doctype html>")
-                            sw.WriteLine("<html>")
-                            sw.WriteLine("<head>")
-                            sw.WriteLine("<title>Waiting " & num.ToString & "</title>")
-                            sw.WriteLine("<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />")
-                            sw.WriteLine("<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">")
-                            sw.WriteLine("</head>")
-                            sw.WriteLine("<body>")
-                            If request_page = 1 Then
-                                sw.WriteLine("配信準備中です..(" & check_m3u8_ts.ToString & ")")
-                                log1write(num.ToString & ":配信準備中です")
-                            ElseIf request_page = 11 Then
-                                sw.WriteLine("配信されていません")
-                                log1write(num.ToString & ":配信されていません")
+                            Dim s As String = ""
+                            Dim path_waiting As String = path.Replace("ViewTV" & num.ToString & ".html", "Waiting.html")
+                            If file_exist(path_waiting) = 1 Then
+                                s = ReadAllTexts(path_waiting)
+                                Dim waitmessage As String = ""
+                                If request_page = 1 Then
+                                    waitmessage = "配信準備中です..(" & check_m3u8_ts.ToString & ")"
+                                ElseIf request_page = 11 Then
+                                    waitmessage = "配信されていません"
+                                End If
+                                s = s.Replace("%WAITING%", waitmessage)
+                                s = s.Replace("%NUM%", num.ToString)
+                                sw.WriteLine(s)
+                            Else
+                                '従来通り
+                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                                sw.WriteLine("<!doctype html>")
+                                sw.WriteLine("<html>")
+                                sw.WriteLine("<head>")
+                                sw.WriteLine("<title>Waiting " & num.ToString & "</title>")
+                                sw.WriteLine("<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />")
+                                'sw.WriteLine("<meta name=""viewport"" content=""width=device-width"">")
+                                sw.WriteLine("<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">")
+                                sw.WriteLine("</head>")
+                                sw.WriteLine("<body>")
+                                If request_page = 1 Then
+                                    sw.WriteLine("配信準備中です..(" & check_m3u8_ts.ToString & ")")
+                                    log1write(num.ToString & ":配信準備中です")
+                                ElseIf request_page = 11 Then
+                                    sw.WriteLine("配信されていません")
+                                    log1write(num.ToString & ":配信されていません")
+                                End If
+                                sw.WriteLine("<br><br>")
+                                sw.WriteLine("<input type=""button"" value=""トップメニュー"" onClick=""location.href='/index.html'"">")
+                                sw.WriteLine("<br><br>")
+                                sw.WriteLine("<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">")
+                                'sw.WriteLine("<input type=""button"" value=""地デジ番組表"" onClick=""location.href='TvProgram.html'"">")
+                                sw.WriteLine("</body>")
+                                sw.WriteLine("</html>")
+                                'sw.Flush()
                             End If
-                            sw.WriteLine("<br><br>")
-                            sw.WriteLine("<input type=""button"" value=""トップメニュー"" onClick=""location.href='/index.html'"">")
-                            sw.WriteLine("<br><br>")
-                            sw.WriteLine("<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">")
-                            'sw.WriteLine("<input type=""button"" value=""地デジ番組表"" onClick=""location.href='TvProgram.html'"">")
-                            sw.WriteLine("</body>")
-                            sw.WriteLine("</html>")
-                            'sw.Flush()
                         ElseIf request_page = 19 Then
                             Dim html19 As String = ""
                             html19 &= "VLC httpストリーミングで配信中です<br>"
@@ -1856,13 +1886,13 @@ Class WebRemocon
 
                             log1write(path & "へのアクセスを受け付けました")
 
-                        Else
-                            'ローカルファイルが存在していない
-                            'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                            sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
-                            'sw.Flush()
-                            log1write(path & "が見つかりませんでした")
-                        End If
+                            Else
+                                'ローカルファイルが存在していない
+                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                                sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
+                                'sw.Flush()
+                                log1write(path & "が見つかりませんでした")
+                            End If
 
                         sw.Flush()
                     Else

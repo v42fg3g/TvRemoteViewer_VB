@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.50
+TvRemoteViewer_VB v0.51
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -129,6 +129,18 @@ TvRemoteViewer_VB v0.50
 		===================
 		[ストリーム2を視聴]
 		ボタンを押してください
+
+
+	・Waiting.html
+	%NUM%				ストリームナンバー
+	%WAITING%			メッセージ（配信準備中 or 配信されていません）
+
+
+	・ERROR.html
+	%NUM%				ストリームナンバー
+	%ERRORTITLE%			エラーページタイトル
+	%ERRORMESSAGE%			エラーメッセージ
+	%ERRORRELOAD%			プログラムから指定された場合に再読込ボタンを表示する
 
 
 
@@ -306,6 +318,8 @@ TvRemoteViewer_VB v0.50
 		～\bin2\ffmpeg.exeを用意しておけば配信2のときに使用するようになります。
 		UDPアプリにつきましても同様です。
 	0.50	iniのVideoPathに()が入っていた場合に動画一覧が正常に取得できなかったバグを修正
+	0.51	配信準備中ページとしてWaiting.html、エラーページとしてERROR.htmlをWWWフォルダに追加
+		存在しない場合は従来通りプログラム生成で表示します
 
 
 
