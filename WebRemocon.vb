@@ -302,6 +302,8 @@ Class WebRemocon
             r &= "</html>" & vbCrLf
         End If
 
+        r = ADD_ClassName_ikkatsu(r)
+
         Return r
     End Function
 
@@ -1618,35 +1620,41 @@ Class WebRemocon
                                 End If
                                 s = s.Replace("%WAITING%", waitmessage)
                                 s = s.Replace("%NUM%", num.ToString)
-                                sw.WriteLine(s)
                             Else
                                 '従来通り
-                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                                sw.WriteLine("<!doctype html>")
-                                sw.WriteLine("<html>")
-                                sw.WriteLine("<head>")
-                                sw.WriteLine("<title>Waiting " & num.ToString & "</title>")
-                                sw.WriteLine("<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />")
-                                'sw.WriteLine("<meta name=""viewport"" content=""width=device-width"">")
-                                sw.WriteLine("<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">")
-                                sw.WriteLine("</head>")
-                                sw.WriteLine("<body>")
+                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis" & vbcrlf)
+                                s &= "<!doctype html>" & vbCrLf
+                                s &= "<html>" & vbCrLf
+                                s &= "<head>" & vbCrLf
+                                s &= "<title>Waiting " & num.ToString & "</title>" & vbCrLf
+                                s &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />" & vbCrLf
+                                's &= "<meta name=""viewport"" content=""width=device-width"">" & vbcrlf
+                                s &= "<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">" & vbCrLf
+                                s &= "</head>" & vbCrLf
+                                s &= "<body>" & vbCrLf
                                 If request_page = 1 Then
-                                    sw.WriteLine("配信準備中です..(" & check_m3u8_ts.ToString & ")")
+                                    s &= "配信準備中です..(" & check_m3u8_ts.ToString & " & vbcrlf" & vbCrLf
                                     log1write(num.ToString & ":配信準備中です")
                                 ElseIf request_page = 11 Then
-                                    sw.WriteLine("配信されていません")
+                                    s &= "配信されていません" & vbCrLf
                                     log1write(num.ToString & ":配信されていません")
                                 End If
-                                sw.WriteLine("<br><br>")
-                                sw.WriteLine("<input type=""button"" value=""トップメニュー"" onClick=""location.href='/index.html'"">")
-                                sw.WriteLine("<br><br>")
-                                sw.WriteLine("<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">")
-                                'sw.WriteLine("<input type=""button"" value=""地デジ番組表"" onClick=""location.href='TvProgram.html'"">")
-                                sw.WriteLine("</body>")
-                                sw.WriteLine("</html>")
+                                s &= "<br><br>" & vbCrLf
+                                s &= "<input type=""button"" value=""トップメニュー"" onClick=""location.href='/index.html'"">" & vbCrLf
+                                s &= "<br><br>" & vbCrLf
+                                s &= "<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">" & vbCrLf
+                                's &= "<input type=""button"" value=""地デジ番組表"" onClick=""location.href='TvProgram.html'"">" & vbcrlf
+                                s &= "</body>" & vbCrLf
+                                s &= "</html>" & vbCrLf
+
                                 'sw.Flush()
                             End If
+
+                            'clas=""追加
+                            s = ADD_ClassName_ikkatsu(s)
+
+                            sw.WriteLine(s)
+
                         ElseIf request_page = 19 Then
                             Dim html19 As String = ""
                             html19 &= "VLC httpストリーミングで配信中です<br>"
@@ -1881,18 +1889,21 @@ Class WebRemocon
                                 End If
                             End If
 
+                            'clas=""追加
+                            s = ADD_ClassName_ikkatsu(s)
+
                             sw.WriteLine(s)
                             'sw.Flush()
 
                             log1write(path & "へのアクセスを受け付けました")
 
-                            Else
-                                'ローカルファイルが存在していない
-                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
-                                sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
-                                'sw.Flush()
-                                log1write(path & "が見つかりませんでした")
-                            End If
+                        Else
+                            'ローカルファイルが存在していない
+                            'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                            sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
+                            'sw.Flush()
+                            log1write(path & "が見つかりませんでした")
+                        End If
 
                         sw.Flush()
                     Else
@@ -1930,6 +1941,19 @@ Class WebRemocon
             End Try
         End While
     End Sub
+
+    'タグにclass="名前"を追加する
+    Public Function ADD_ClassName_ikkatsu(ByVal html As String) As String
+        html = html.Replace("type=""text""", "type=""text"" class=""c_txt""")
+        html = html.Replace("type=""password""", "type=""password"" class=""c_pas""")
+        html = html.Replace("type=""button""", "type=""button"" class=""c_btn""")
+        html = html.Replace("type=""submit""", "type=""submit"" class=""c_smt""")
+        html = html.Replace("type=""checkbox""", "type=""submit"" class=""c_cbx""")
+        html = html.Replace("type=""radio""", "type=""submit"" class=""c_rdo""")
+        html = html.Replace("<select", "<select class=""c_sel""")
+        'html = html.Replace("<option", "<option class=""c_opt""")
+        Return html
+    End Function
 
     '===================================
     'WEBインターフェース
