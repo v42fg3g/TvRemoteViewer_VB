@@ -192,7 +192,7 @@ Class WebRemocon
         Dim vhtml As String = WEB_search_ServiceID(bonp, bon, 1, num)
         If vhtml.Length > 0 Then
             vhtml = "<option value="""">---</option>" & vbCrLf & vhtml
-            vhtml = "<select name=""Bon_Sid_Ch"" id=""SEL2"" onChange=""changeSelect()"">" & vbCrLf & vhtml
+            vhtml = "<select class=""c_sel_bonsidch"" name=""Bon_Sid_Ch"" id=""SEL2"" onChange=""changeSelect()"">" & vbCrLf & vhtml
             vhtml = "<form action=""StartTV.html"">" & vbCrLf & vhtml
             vhtml = atag(1) & vhtml
             vhtml &= "</select>" & vbCrLf
@@ -211,7 +211,7 @@ Class WebRemocon
             End If
             'End If
 
-            vhtml &= "<input type=""submit"" value=""視聴"" />" & vbCrLf
+            vhtml &= "<input type=""submit"" class=""c_smt_view"" value=""視聴"" />" & vbCrLf
             vhtml &= "<input type=""hidden"" name=""num"" value=""" & num & """>" & vbCrLf
             vhtml &= "<input type=""hidden"" name=""redirect"" value=""ViewTV" & num & ".html"">" & vbCrLf
             If rez.Length > 0 Then
@@ -261,7 +261,7 @@ Class WebRemocon
 
         'If shtml.Length > 0 Then
         shtml = "<option value="""">---</option>" & vbCrLf & shtml
-        shtml = "<select name=""VideoName"">" & vbCrLf & shtml
+        shtml = "<select class=""c_sel_videoname"" name=""VideoName"">" & vbCrLf & shtml
 
         shtml &= "</select>" & vbCrLf
         'End If
@@ -278,7 +278,7 @@ Class WebRemocon
             r = r.Replace("%ERRORMESSAGE%", body)
             Dim reload As String = ""
             If a = 1 Then
-                reload = "<input type=""button"" Value=""再読み込み"" onClick=""location.reload();"">"
+                reload = "<input type=""button"" class=""c_btn_reload"" Value=""再読み込み"" onClick=""location.reload();"">"
             End If
             r = r.Replace("%ERRORRELOAD%", reload)
         Else
@@ -292,17 +292,15 @@ Class WebRemocon
             r &= "<body>" & vbCrLf
             r &= body & vbCrLf
             r &= "<br><br>" & vbCrLf
-            r &= "<input type=""button"" value=""トップメニュー"" onClick=""location.href='/index.html'"">" & vbCrLf
+            r &= "<input type=""button"" class=""c_btn_topmenu"" value=""トップメニュー"" onClick=""location.href='/index.html'"">" & vbCrLf
             If a = 1 Then
-                r &= "<input type=""button"" Value=""再読み込み"" onClick=""location.reload();"">" & vbCrLf
+                r &= "<input type=""button"" class=""c_btn_reload"" Value=""再読み込み"" onClick=""location.reload();"">" & vbCrLf
             End If
             r &= "<br><br>" & vbCrLf
-            r &= "<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">" & vbCrLf
+            r &= "<input type=""button"" class=""c_btn_back"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">" & vbCrLf
             r &= "</body>" & vbCrLf
             r &= "</html>" & vbCrLf
         End If
-
-        r = ADD_ClassName_ikkatsu(r)
 
         Return r
     End Function
@@ -312,7 +310,7 @@ Class WebRemocon
         Dim html As String = ""
         Dim bst As String = ""
         html &= atag(1)
-        html &= "<select name=""NHKMODE"">"
+        html &= "<select class=""c_sel_nhkmode"" name=""NHKMODE"">"
         html &= vbCrLf & "<option value=""0"">主・副</option>" & vbCrLf
         html &= "<option value=""1"">主</option>" & vbCrLf
         html &= "<option value=""2"">副</option>" & vbCrLf
@@ -394,18 +392,18 @@ Class WebRemocon
                         'HTTPストリーム ffmpeg
                         Dim fileroot As String = get_soutaiaddress_from_fileroot()
                         If ChannelName.Length > 0 Then
-                            html &= "<input type=""button"" value=""" & chkstr & d(i) & "　" & ChannelName & sm_str2 & """ onClick=""location.href='" & fileroot & "mystream" & d(i).ToString & ".ts'"">" & vbCrLf
+                            html &= "<input type=""button"" class=""c_btn_stream"" value=""" & chkstr & d(i) & "　" & ChannelName & sm_str2 & """ onClick=""location.href='" & fileroot & "mystream" & d(i).ToString & ".ts'"">" & vbCrLf
                         Else
-                            html &= "<input type=""button"" value=""ストリーム" & chkstr & d(i) & "を視聴" & sm_str2 & """ onClick=""location.href='" & fileroot & "mystream" & d(i).ToString & ".ts'"">" & vbCrLf
+                            html &= "<input type=""button"" class=""c_btn_stream"" value=""ストリーム" & chkstr & d(i) & "を視聴" & sm_str2 & """ onClick=""location.href='" & fileroot & "mystream" & d(i).ToString & ".ts'"">" & vbCrLf
                         End If
                     Else
                         'HLS再生ボタン or HTTPストリームは再生できないボタン
                         If ChannelName.Length > 0 Then
                             'html &= "<input type=""button"" value=""" & chkstr & d(i) & "　" & ChannelName & """ onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
-                            html &= "<input type=""button"" value=""" & chkstr & d(i) & "　" & ChannelName & sm_str2 & """ onClick=""location.href='" & sm_str3 & "ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
+                            html &= "<input type=""button"" class=""c_btn_stream"" value=""" & chkstr & d(i) & "　" & ChannelName & sm_str2 & """ onClick=""location.href='" & sm_str3 & "ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
                         Else
                             'html &= "<input type=""button"" value=""ストリーム" & chkstr & d(i) & "を視聴"" onClick=""location.href='ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
-                            html &= "<input type=""button"" value=""ストリーム" & chkstr & d(i) & "を視聴" & sm_str2 & """ onClick=""location.href='" & sm_str3 & "ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
+                            html &= "<input type=""button"" class=""c_btn_stream"" value=""ストリーム" & chkstr & d(i) & "を視聴" & sm_str2 & """ onClick=""location.href='" & sm_str3 & "ViewTV" & d(i).ToString & ".html'"">" & vbCrLf
                         End If
                     End If
 
@@ -473,7 +471,7 @@ Class WebRemocon
                     'BonDriver一覧
 
                     html_selectbonsidch_a &= "<script type=""text/javascript"" src=""ConnectedSelect.js""></script>" & vbCrLf
-                    html_selectbonsidch_a &= "<select id=""SEL1"" name=""BonDriver"">" & vbCrLf
+                    html_selectbonsidch_a &= "<select class=""c_sel_bondriver"" id=""SEL1"" name=""BonDriver"">" & vbCrLf
                     html_selectbonsidch_a &= "<option value="""">---</option>" & vbCrLf
                     For i = 0 To bons.Length - 1
                         html_selectbonsidch_a &= "<option value=""" & bons(i) & """>" & bons(i) & "</option>" & vbCrLf
@@ -481,7 +479,7 @@ Class WebRemocon
                     html_selectbonsidch_a &= "</select>" & vbCrLf
 
                     '各BonDriverに対応したチャンネルを書き込む
-                    html_selectbonsidch_b &= "<select id=""SEL2"" name=""Bon_Sid_Ch"" onChange=""changeSelect()"">" & vbCrLf
+                    html_selectbonsidch_b &= "<select class=""c_sel_bonsidch"" id=""SEL2"" name=""Bon_Sid_Ch"" onChange=""changeSelect()"">" & vbCrLf
                     html_selectbonsidch_b &= "<option value="""">---</option>" & vbCrLf
                     For i = 0 To bons.Length - 1
                         html_selectbonsidch_b &= "<optgroup label=""" & bons(i) & """>" & vbCrLf
@@ -1640,18 +1638,15 @@ Class WebRemocon
                                     log1write(num.ToString & ":配信されていません")
                                 End If
                                 s &= "<br><br>" & vbCrLf
-                                s &= "<input type=""button"" value=""トップメニュー"" onClick=""location.href='/index.html'"">" & vbCrLf
+                                s &= "<input type=""button"" class=""c_btn_topmenu"" value=""トップメニュー"" onClick=""location.href='/index.html'"">" & vbCrLf
                                 s &= "<br><br>" & vbCrLf
-                                s &= "<input type=""button"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">" & vbCrLf
+                                s &= "<input type=""button"" class=""c_btn_back"" value=""直前のページへ戻る"" onClick=""history.go(-1);"">" & vbCrLf
                                 's &= "<input type=""button"" value=""地デジ番組表"" onClick=""location.href='TvProgram.html'"">" & vbcrlf
                                 s &= "</body>" & vbCrLf
                                 s &= "</html>" & vbCrLf
 
                                 'sw.Flush()
                             End If
-
-                            'clas=""追加
-                            s = ADD_ClassName_ikkatsu(s)
 
                             sw.WriteLine(s)
 
@@ -1704,7 +1699,7 @@ Class WebRemocon
                             'ストリーム番号セレクト
                             If s.IndexOf("%SELECTNUM%") >= 0 Then
                                 Dim selectnum_html As String = ""
-                                selectnum_html &= "<select name=""num"">" & vbCrLf
+                                selectnum_html &= "<select class=""c_sel_num"" name=""num"">" & vbCrLf
                                 For ix = 1 To MAX_STREAM_NUMBER
                                     selectnum_html &= "<option>" & ix.ToString & "</option>" & vbCrLf
                                 Next
@@ -1865,7 +1860,7 @@ Class WebRemocon
                             If s.IndexOf("%TVPROGRAM-TVROCK-BUTTON") >= 0 Then
                                 Dim gt() As String = get_atags("%TVPROGRAM-TVROCK-BUTTON", s)
                                 If TvProgram_tvrock_url.Length > 0 Then
-                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" value=""TvRock番組表"" onClick=""location.href='TvProgram_TvRock.html'"">") & gt(3)
+                                    s = s.Replace("%TVPROGRAM-TVROCK-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" class=""c_btn_ptvrock"" value=""TvRock番組表"" onClick=""location.href='TvProgram_TvRock.html'"">") & gt(3)
                                 Else
                                     s = s.Replace("%TVPROGRAM-TVROCK-BUTTON" & gt(0) & "%", gt(4))
                                 End If
@@ -1883,14 +1878,11 @@ Class WebRemocon
                             If s.IndexOf("%TVPROGRAM-EDCB-BUTTON") >= 0 Then
                                 Dim gt() As String = get_atags("%TVPROGRAM-EDCB-BUTTON", s)
                                 If TvProgram_EDCB_url.Length > 0 Then
-                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" value=""EDCB番組表"" onClick=""location.href='TvProgram_EDCB.html'"">") & gt(3)
+                                    s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" class=""c_btn_pedcb"" value=""EDCB番組表"" onClick=""location.href='TvProgram_EDCB.html'"">") & gt(3)
                                 Else
                                     s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(4))
                                 End If
                             End If
-
-                            'clas=""追加
-                            s = ADD_ClassName_ikkatsu(s)
 
                             sw.WriteLine(s)
                             'sw.Flush()
@@ -1941,19 +1933,6 @@ Class WebRemocon
             End Try
         End While
     End Sub
-
-    'タグにclass="名前"を追加する
-    Public Function ADD_ClassName_ikkatsu(ByVal html As String) As String
-        html = html.Replace("type=""text""", "type=""text"" class=""c_txt""")
-        html = html.Replace("type=""password""", "type=""password"" class=""c_pas""")
-        html = html.Replace("type=""button""", "type=""button"" class=""c_btn""")
-        html = html.Replace("type=""submit""", "type=""submit"" class=""c_smt""")
-        html = html.Replace("type=""checkbox""", "type=""submit"" class=""c_cbx""")
-        html = html.Replace("type=""radio""", "type=""submit"" class=""c_rdo""")
-        html = html.Replace("<select", "<select class=""c_sel""")
-        'html = html.Replace("<option", "<option class=""c_opt""")
-        Return html
-    End Function
 
     '===================================
     'WEBインターフェース
