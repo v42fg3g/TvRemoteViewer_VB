@@ -84,8 +84,16 @@ Module モジュール_番組表
                                         Dim endt As String = ""
                                         Try
                                             '時：分だけ取り出す
-                                            startt = p.startDateTime.Substring(p.startDateTime.IndexOf(" "))
-                                            endt = p.endDateTime.Substring(p.endDateTime.IndexOf(" "))
+                                            If p.startDateTime = "2038/01/01 23:59" Then
+                                                startt = ""
+                                            Else
+                                                startt = p.startDateTime.Substring(p.startDateTime.IndexOf(" "))
+                                            End If
+                                            If p.endDateTime = "2038/01/01 23:59" Then
+                                                endt = ""
+                                            Else
+                                                endt = p.endDateTime.Substring(p.endDateTime.IndexOf(" "))
+                                            End If
                                         Catch ex As Exception
                                         End Try
 
@@ -94,8 +102,10 @@ Module モジュール_番組表
                                         'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
 
                                         html &= "<span class=""p_name"">" & d(0) & "　<span class=""p_name2"">(" & p.stationDispName & ")</span></span><br>" & vbCrLf 'p.stationDispName
-                                        If startt.Length > 0 And endt.Length > 0 Then
+                                        If startt.Length > 0 Then
                                             html &= "<span class=""p_time"">" & startt & " ～" & endt & "</span><br>"
+                                        Else
+                                            html &= "<span class=""p_time"">　</span><br>"
                                         End If
                                         If p.programTitle.Length > 0 Or p.programContent.Length > 0 Then
                                             html &= "<span class=""p_title"">" & p.programTitle & "</span><br>" & vbCrLf
@@ -349,41 +359,105 @@ Module モジュール_番組表
                 log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)
             End Try
         ElseIf regionID > 0 Then
-            'ネットから地域の番組表を取得
+            '地デジ　関東(13)・大阪(27)　限定
             Try
-                Dim sTargetUrl As String = "http://www.tvguide.or.jp/TXML301PG.php?type=TVG&regionId=" & regionID.ToString
-                Dim objWeb As WebClient = New WebClient()
-                Dim objSrializer As JavaScriptSerializer = New JavaScriptSerializer()
-                Dim objEncode As Encoding = Encoding.UTF8
-                Dim bResult As Byte() = objWeb.DownloadData(sTargetUrl)
-                Dim sJson As String = objEncode.GetString(bResult)
-                Dim objHash As Hashtable = objSrializer.Deserialize(Of Hashtable)(sJson)
+                Dim url As String = ""
+                If regionID = 13 Then
+                    url = "http://tv.goo.ne.jp/index.html"
+                ElseIf regionID = 27 Then
+                    url = "http://tv.goo.ne.jp/kansai/index.html"
+                Else
+                    'それ以外の地域は対応していない
+                    Return r
+                    Exit Function
+                End If
 
-                Dim dict As Dictionary(Of String, Object) = objHash("ProgramScheduleInfomartion")
-                Dim MediaLocation As Dictionary(Of String, Object) = dict("MediaLocation")
-                Dim StationLocation() As Object = MediaLocation("StationLocation")
-                For Each station As Dictionary(Of String, Object) In StationLocation
-                    Dim j As Integer = 0
-                    If r Is Nothing Then
-                        j = 0
+                'ネットから地域の番組表を取得
+                Dim wc As WebClient = New WebClient()
+                Dim st As Stream = wc.OpenRead(url)
+                Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
+                Dim sr As StreamReader = New StreamReader(st, enc)
+                Dim html As String = sr.ReadToEnd()
+
+                Dim hosokyoku As String = ""
+                Dim programtitle As String = ""
+                Dim jikoku1 As String = ""
+                Dim sp As Integer = html.IndexOf("<!--番組表-->", 0)
+                Dim ep As Integer
+                sp = html.IndexOf("<dt><a href=", sp + 1)
+                While sp >= 0
+                    hosokyoku = Instr_pickup(html, "html"">", "<", sp)
+                    Debug.Print(hosokyoku & "]")
+
+                    If hosokyoku.Length = 0 Then
+                        Exit While
                     Else
-                        j = r.Length
-                    End If
-                    ReDim Preserve r(j)
-                    r(j).stationDispName = CType(station("stationDispName"), String)
-                    Dim program As Dictionary(Of String, Object) = station("ProgramInformation")
-                    r(j).startDateTime = CType(program("startDateTime"), String)
-                    r(j).endDateTime = CType(program("endDateTime"), String)
-                    r(j).programTitle = CType(program("programTitle"), String)
-                    'r(j).programSubTitle = CType(program("programSubTitle"), String) '空白
-                    r(j).programContent = CType(program("programContent"), String)
-                    'r(j).programExplanation = CType(program("programExplanation"), String) '空白
-                Next
+                        ep = html.IndexOf("<dt><a href=", sp + 1) 'ここまでで見つける
+                        If ep < 0 Then
+                            ep = 2147483640
+                        End If
+                        jikoku1 = get_time_from_goo(html, sp, ep)
+                        If jikoku1.Length > 0 Then
+                            jikoku1 = "1970/01/01 " & jikoku1
+                        Else
+                            jikoku1 = "2038/01/01 23:59"
+                        End If
+                        '終了時間はわからない
+                        Dim sp2 As Integer = html.IndexOf("<dd>", sp)
+                        If sp2 >= 0 Then
+                            programtitle = Instr_pickup(html, "html"">", "<", sp2, ep)
+                            If programtitle.Length = 0 Then
+                                programtitle = "　"
+                            End If
+                        End If
 
+                        Dim j As Integer = 0
+                        If r Is Nothing Then
+                            j = 0
+                        Else
+                            j = r.Length
+                        End If
+                        ReDim Preserve r(j)
+                        r(j).stationDispName = hosokyoku
+                        r(j).startDateTime = jikoku1
+                        r(j).endDateTime = "2038/01/01 23:59" '終了時間はわからない
+                        r(j).programTitle = programtitle
+                        'r(j).programSubTitle = CType(program("programSubTitle"), String) '空白
+                        r(j).programContent = "" '空白
+                        'r(j).programxplanation = CType(program("programExplanation"), String) '空白
+                    End If
+                    sp = html.IndexOf("<dt><a href=", sp + 1)
+                End While
             Catch ex As Exception
                 log1write("インターネットからの番組表取得に失敗しました。" & ex.Message)
             End Try
         End If
+
+        Return r
+    End Function
+
+    '指定位置から一番近い時刻を取得する sp < 時刻 < ep の位置
+    Public Function get_time_from_goo(ByRef html As String, ByVal sp As Integer, ByVal ep As Integer) As String
+        Dim r As String = ""
+        Dim jikoku As String = ""
+        sp = html.IndexOf("&nbsp;", sp)
+        While sp >= 0 And sp <= ep
+            jikoku = Instr_pickup(html, "&nbsp;", "</span>", sp, ep)
+            If jikoku.Length = 0 Then
+                'もう後ろには時刻はない
+                Exit While
+            End If
+            Dim d() As String = jikoku.Split(":")
+            If d.Length = 2 Then
+                Dim a As Double
+                If Double.TryParse(d(0), a) And Double.TryParse(d(1), a) Then
+                    '成功
+                    r = jikoku
+                    Exit While
+                End If
+            End If
+            sp = html.IndexOf("&nbsp;", sp + 1)
+        End While
 
         Return r
     End Function
@@ -407,7 +481,9 @@ Module モジュール_番組表
     Public Function bangumihyou2bondriver(ByVal hosokyoku As String, ByVal a As Integer) As Object
         Dim r(3) As String
         hosokyoku = StrConv(hosokyoku, VbStrConv.Wide) '全角に変換
+        Debug.Print("hosokyoku=" & hosokyoku)
         Dim h2 As String = rename_hosokyoku2jigyousha(hosokyoku, a)
+        Debug.Print("henkango=" & h2)
         Dim chk As Integer = 0
         If h2.Length > 0 Then
             hosokyoku = h2
