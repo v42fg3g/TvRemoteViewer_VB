@@ -148,6 +148,7 @@ Module モジュール_番組表
                                             Next
                                             html &= "</select>" & vbCrLf
                                             html &= bhtml & vbCrLf
+                                            html &= "%SELECTRESOLUTION%" & vbCrLf '解像度選択
                                             html &= "<input type=""hidden"" name=""ServiceID"" value=""" & d(2) & """>" & vbCrLf
                                             html &= "<input type=""hidden"" name=""ChSpace"" value=""" & d(3) & """>" & vbCrLf
                                             html &= "<span class=""p_hosokyoku""> " & d(0) & " </span>" & vbCrLf

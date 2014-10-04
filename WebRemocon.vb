@@ -211,12 +211,13 @@ Class WebRemocon
             End If
             'End If
 
+            'If rez.Length > 0 Then
+            'vhtml &= "<input type=""hidden"" name=""resolution"" value=""" & rez & """>" & vbCrLf
+            'End If
+            vhtml &= WEB_make_select_resolution(rez) & vbCrLf '解像度選択
             vhtml &= "<input type=""submit"" class=""c_smt_view"" value=""視聴"" />" & vbCrLf
             vhtml &= "<input type=""hidden"" name=""num"" value=""" & num & """>" & vbCrLf
             vhtml &= "<input type=""hidden"" name=""redirect"" value=""ViewTV" & num & ".html"">" & vbCrLf
-            If rez.Length > 0 Then
-                vhtml &= "<input type=""hidden"" name=""resolution"" value=""" & rez & """>" & vbCrLf
-            End If
             vhtml &= "</form>" & vbCrLf
             vhtml &= atag(3)
         End If
@@ -500,6 +501,28 @@ Class WebRemocon
         html &= atag(2)
         html &= html_selectbonsidch_b
         html &= atag(3)
+
+        Return html
+    End Function
+
+    'HTML内置換用　解像度選択セレクトボックスを作成
+    Private Function WEB_make_select_resolution(Optional ByVal rez As String = "") As String
+        Dim html As String = ""
+        Dim i As Integer
+
+        If hls_option IsNot Nothing Then
+            html &= "<select class=""c_sel_resolution"" name=""resolution"">" & vbCrLf
+            html &= "<option>---</option>" & vbCrLf
+            For i = 0 To hls_option.Length - 1
+                html &= "<option>" & hls_option(i).resolution & "</option>" & vbCrLf
+            Next
+            html &= "</select>" & vbCrLf
+
+            If rez.Length > 0 Then
+                '指定があれば選択
+                html = html.Replace("<option>" & rez & "</option>", "<option selected>" & rez & "</option>")
+            End If
+        End If
 
         Return html
     End Function
@@ -1882,6 +1905,12 @@ Class WebRemocon
                                 Else
                                     s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(4))
                                 End If
+                            End If
+                            '解像度セレクトボックス
+                            If s.IndexOf("%SELECTRESOLUTION") >= 0 Then
+                                Dim gt() As String = get_atags("%SELECTRESOLUTION", s)
+                                Dim selectresolution As String = WEB_make_select_resolution()
+                                s = s.Replace("%SELECTRESOLUTION" & gt(0) & "%", gt(1) & selectresolution & gt(3))
                             End If
 
                             sw.WriteLine(s)

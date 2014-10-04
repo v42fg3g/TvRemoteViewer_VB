@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.54
+TvRemoteViewer_VB v0.55
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -105,13 +105,14 @@ TvRemoteViewer_VB v0.54
 
 
 	・index.html、ViewTV[n].htmlで使用できる変数
-	html内に以下の変数を記入しておくと呼び出されたときに適切な値に変換されます
+	html内に以下の変数を記入しておくと呼び出されたときに適切な値またはHTMLに変換されます
 	変換前				変換後
 	%NUM%				ストリームナンバー
 	%SELECTBONSIDCH%		index.html内でBonDriver＆ServiceID&ChSpaceを選択する<SELECT>セットを作成
 	%PROCBONLIST%			配信中のストリームナンバーとBonDriverをテキストで表示する
 	%VIEWBUTTONS%			ストリームの数だけ視聴ボタンを作成
 	%SELECTNUM%			ストリームナンバー選択
+	%SELECTRESOLUTION%		解像度選択
 
 
 	・ViewTV[n].htmlのみで使用できる変数
@@ -121,7 +122,7 @@ TvRemoteViewer_VB v0.54
 	%FILEROOT%			.m3u8が存在する相対フォルダ
 
 
-	・なお、%PROCBONLIST%、%SELECTCH%、%VIEWBUTTONS%、%SELECTBONSIDCH%、%SELECTNHKMODE%　に対しては、要素の前中後に表示するhtmlタグを指定できます。要素自体が存在しない場合は表示されません。
+	・なお、%PROCBONLIST%、%SELECTCH%、%VIEWBUTTONS%、%SELECTBONSIDCH%、%SELECTNHKMODE%、%SELECTRESOLUTION%　に対しては、要素の前中後に表示するhtmlタグを指定できます。
 	書式	%VIEWBUTTONS:[前方に表示するhtmlタグ]:[ボタンとボタンの間に表示するhtmlタグ]:[後方に表示するhtmlタグ]:[要素が表示されない場合に替わりに表示されるhtmlタグ]%
 	例	%VIEWBUTTONS:視聴可能ストリーム<br>:<br>===================<br>:ボタンを押してください<br>%
 	結果	視聴可能ストリーム
@@ -323,6 +324,8 @@ TvRemoteViewer_VB v0.54
 	0.52	カスタマイズできるようプログラムが生成するHTMLフォーム要素にclass名を付加するようにした
 	0.53	インターネット番組表を変更（東京＆大阪のみ対応）
 	0.54	インターネット番組表を変更（全国対応・北海道の地域番号は1のみ）
+	0.55	番組表と視聴ページに解像度選択を付けた
+		HTML変換に解像度選択を追加
 
 
 
