@@ -429,9 +429,7 @@ Module モジュール_番組表
     Public Function bangumihyou2bondriver(ByVal hosokyoku As String, ByVal a As Integer) As Object
         Dim r(3) As String
         hosokyoku = StrConv(hosokyoku, VbStrConv.Wide) '全角に変換
-        Debug.Print("hosokyoku=" & hosokyoku)
         Dim h2 As String = rename_hosokyoku2jigyousha(hosokyoku, a)
-        Debug.Print("henkango=" & h2)
         Dim chk As Integer = 0
         If h2.Length > 0 Then
             hosokyoku = h2

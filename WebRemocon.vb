@@ -225,9 +225,24 @@ Class WebRemocon
         Return vhtml
     End Function
 
+    Public Structure videostructure
+        Implements IComparable
+        Public fullpathfilename As String
+        Public filename As String
+        Public encstr As String 'エンコード済フルパス
+        Public datestr As String 'yyyyMMdd
+        Public Function CompareTo(ByVal obj As Object) As Integer Implements IComparable.CompareTo
+            '並べ替え用
+            Return -Me.datestr.CompareTo(DirectCast(obj, videostructure).datestr)
+        End Function
+    End Structure
+
     'ファイル再生ページ用　ビデオ選択htmlを作成する
-    Private Function make_file_select_html() As String
+    Private Function make_file_select_html(ByVal videoexword As String) As String
         Dim shtml As String = ""
+
+        Dim video() As videostructure = Nothing
+        Dim cnt As Integer = 0
 
         Dim i, k As Integer
         If Me._videopath IsNot Nothing Then
@@ -236,36 +251,74 @@ Class WebRemocon
                     If Me._videopath(i).Length > 0 Then
                         Try
                             For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
-                                Dim s As String = stFilePath & System.Environment.NewLine
-                                s = trim8(s)
-                                'フルパスファイル名がsに入る
-                                Dim fullpath As String = s
-                                Dim filename As String = ""
-                                If fullpath.IndexOf("\") >= 0 Then
-                                    'ファイル名だけを取り出す
-                                    k = fullpath.LastIndexOf("\")
-                                    filename = fullpath.Substring(k + 1)
-                                End If
-                                filename = trim8(filename)
-                                If filename.IndexOf(".db") < 0 Then
+                                Dim fullpath As String = stFilePath & System.Environment.NewLine
+                                If fullpath.IndexOf(".db") < 0 And fullpath.IndexOf(".chapter") < 0 And fullpath.IndexOf(".srt") < 0 Then
+                                    'フルパス
+                                    fullpath = trim8(fullpath)
+                                    '更新日時
+                                    Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
+                                    Dim datestr As String = modifytime.ToString("yyyyMMddHH")
+                                    Dim filename As String = ""
+                                    If fullpath.IndexOf("\") >= 0 Then
+                                        'ファイル名だけを取り出す
+                                        k = fullpath.LastIndexOf("\")
+                                        Try
+                                            filename = fullpath.Substring(k + 1)
+                                        Catch ex As Exception
+                                        End Try
+                                    Else
+                                        filename = fullpath
+                                    End If
                                     'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
-                                    fullpath = System.Web.HttpUtility.UrlEncode(fullpath)
-                                    shtml &= "<option value=""" & fullpath & """>" & filename & "</option>" & vbCrLf
+                                    Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
+
+                                    '抽出
+                                    If videoexword.Length > 0 Then
+                                        If filename.IndexOf(videoexword) < 0 Then
+                                            '当てはまらなければスルー
+                                            filename = ""
+                                        End If
+                                    End If
+
+                                    If filename.Length > 0 Then
+                                        ReDim Preserve video(cnt)
+                                        video(cnt).fullpathfilename = fullpath
+                                        video(cnt).filename = filename
+                                        video(cnt).encstr = encstr
+                                        video(cnt).datestr = datestr
+                                        cnt += 1
+                                    End If
                                 End If
                             Next stFilePath
                         Catch ex As Exception
                         End Try
                     End If
                 Next
+
+                '並べ替え
+                If video IsNot Nothing Then
+                    Array.Sort(video)
+                    For i = 0 To video.Length - 1
+                        shtml &= "<option value=""" & video(i).datestr & "," & video(i).encstr & """>" & video(i).filename & "</option>" & vbCrLf
+                    Next
+                End If
             End If
         End If
 
         'If shtml.Length > 0 Then
         shtml = "<option value="""">---</option>" & vbCrLf & shtml
-        shtml = "<select class=""c_sel_videoname"" name=""VideoName"">" & vbCrLf & shtml
+        shtml = "<select class=""c_sel_videoname"" id=""VideoName"" name=""VideoName"" size=""15"">" & vbCrLf & shtml
 
         shtml &= "</select>" & vbCrLf
         'End If
+
+        '抽出テキストに抽出ワードを戻すスクリプトを追加
+        If videoexword.Length > 0 Then
+            shtml &= "<SCRIPT>" & vbCrLf
+            shtml &= "objSelect = document.getElementById('VideoExWord');" & vbCrLf
+            shtml &= "objSelect.value = '" & videoexword & "';" & vbCrLf
+            shtml &= "</SCRIPT>" & vbCrLf
+        End If
 
         Return shtml
     End Function
@@ -1483,8 +1536,26 @@ Class WebRemocon
                         Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
                         'ファイル名
                         Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
+                        Dim vname() As String = videoname.Split(",")
+                        If vname.Length = 2 Then
+                            'vname(0)には日付が入っているyyyyMMdd 20140101
+                            videoname = vname(1)
+                        End If
                         'URLエンコードしておいたフルパスを文字列に変換
                         videoname = System.Web.HttpUtility.UrlDecode(videoname)
+                        'ビデオファイル名抽出
+                        '                                ↓だとUTF-8で返ってきて修正不可能な文字化け
+                        Dim videoexword As String = "" '= System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
+                        If req.QueryString.Count > 0 Then
+                            'クエリから1つずつチェック
+                            For ii As Integer = 0 To req.QueryString.Count - 1
+                                If req.QueryString.Keys(ii) = "VideoExWord" Then
+                                    videoexword = req.QueryString.Item(ii)
+                                    Exit For
+                                End If
+                            Next
+                        End If
+
                         'NHKの音声モード
                         Dim NHK_dual_mono_mode_select As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & "")
                         If Me._NHK_dual_mono_mode <> 3 Then
@@ -1833,7 +1904,7 @@ Class WebRemocon
 
                             'ファイル選択ページ用
                             If s.IndexOf("%SELECTVIDEO") >= 0 Then
-                                Dim shtml As String = make_file_select_html()
+                                Dim shtml As String = make_file_select_html(videoexword)
                                 s = s.Replace("%SELECTVIDEO%", shtml)
                             End If
 

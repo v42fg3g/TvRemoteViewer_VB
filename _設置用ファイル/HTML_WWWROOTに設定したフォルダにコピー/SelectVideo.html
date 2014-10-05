@@ -9,24 +9,61 @@
         <br>
         <br>
 		<br>
+
+		<form name="myForm" action="SelectVideo.html">
+		<input type="text" name="VideoExWord" id="VideoExWord" style="width: 140px;">
+		<input type="submit" value="抽出">
+		</form>
+		
 		<form action="StartTv.html">
-		ストリーム番号：
-            <select name="num">
-               <option>1</option>
-               <option>2</option>
-               <option>3</option>
-               <option>4</option>
-               <option>5</option>
-               <option>6</option>
-               <option>7</option>
-               <option>8</option>
-            </select>
-		<br>
 		<br>
 		%SELECTVIDEO%
 		<br>
 		<br>
-		%SELECTRESOLUTION%
+<SCRIPT type="text/javascript" language="JavaScript">
+function SortSelect(blnAtoZ){
+	if(blnAtoZ == null){blnAtoZ = true}
+	objSelect = document.getElementById('VideoName');
+	for (i = 1; i < objSelect.length; i++) {
+		strInsert = objSelect.options[i].text;
+		for (j = 0; j <= i; j++ ) {
+			strCurrent = objSelect.options[j].text;
+			if (((blnAtoZ && strInsert <= strCurrent) || (!blnAtoZ && strInsert >= strCurrent)) && (i != j) && strCurrent != '---') {
+			   objInsert = objSelect.options[i];
+			   objWalk = objSelect.options[j];
+			   objSelect.insertBefore(objInsert, objWalk);
+			   j = i;
+			}
+		}
+	}
+	objSelect[0].selected = true
+}
+function SortSelectValue(blnAtoZ){
+	if(blnAtoZ == null){blnAtoZ = true}
+	objSelect = document.getElementById('VideoName');
+	for (i = 1; i < objSelect.length; i++) {
+		strInsert = objSelect.options[i].value;
+		for (j = 0; j <= i; j++ ) {
+			strCurrent = objSelect.options[j].value;
+			if (((blnAtoZ && strInsert <= strCurrent) || (!blnAtoZ && strInsert >= strCurrent)) && (i != j)  && strCurrent != '') {
+			   objInsert = objSelect.options[i];
+			   objWalk = objSelect.options[j];
+			   objSelect.insertBefore(objInsert, objWalk);
+			   j = i;
+			}
+		}
+	}
+	objSelect[0].selected = true
+}
+</SCRIPT>
+
+<input type="button" value="ファイル名昇順" onClick="SortSelect(true)">
+<input type="button" value="ファイル名降順" onClick="SortSelect(false)">
+<input type="button" value="更新日時昇順" onClick="SortSelectValue(true)">
+<input type="button" value="更新日時降順" onClick="SortSelectValue(false)">
+		<br>
+		<br>
+		%SELECTNUM%　%SELECTRESOLUTION%
 		<br>
 		<br>
 		<input type="submit" value="再生">

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.55
+TvRemoteViewer_VB v0.56
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -326,6 +326,8 @@ TvRemoteViewer_VB v0.55
 	0.54	インターネット番組表を変更（全国対応・北海道の地域番号は1のみ）
 	0.55	番組表と視聴ページに解像度選択を付けた
 		HTML変換に解像度選択を追加
+		SelectVideo.htmlの修正
+	0.56	ファイル再生ページを修正
 		SelectVideo.htmlの修正
 
 
