@@ -324,7 +324,7 @@ Module モジュール_番組表
                     Dim html As String = sr.ReadToEnd()
 
                     '<small>ＮＨＫＢＳ１ <small><i> のようになっている
-                    Dim sp2 As Integer = html.IndexOf("<small><i>")
+                    Dim sp2 As Integer = html.IndexOf(" <small><i>")
                     Dim sp As Integer = html.LastIndexOf("><small>", sp2 + 1)
                     While sp > 0
                         Dim j As Integer = 0
@@ -348,7 +348,7 @@ Module モジュール_番組表
                         sp3 = html.IndexOf("<font color=", sp3)
                         r(j).programContent = Trim(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
 
-                        sp2 = html.IndexOf("<small><i>", sp2 + 1)
+                        sp2 = html.IndexOf(" <small><i>", sp2 + 1)
                         sp = html.LastIndexOf("><small>", sp2 + 1)
                     End While
 

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.56
+TvRemoteViewer_VB v0.57
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -329,6 +329,8 @@ TvRemoteViewer_VB v0.56
 		SelectVideo.htmlの修正
 	0.56	ファイル再生ページを修正
 		SelectVideo.htmlの修正
+	0.57	TvRockのiphone番組表にて予約0以外を指定している場合に番組表の時刻がおかしくなる現象への対処
+		iniの NHK_dual_mono_mode に11と12を追加（NHK以外でもdual_monoを設定するときに使用）
 
 
 

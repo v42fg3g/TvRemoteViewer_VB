@@ -1190,6 +1190,16 @@ Class WebRemocon
                         log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
                     End If
                 End If
+            Else
+                'NHKではないがNHK_dual_mono_mode_select=11,12ならば-dual_mono_mode subを書き加える
+                'CS等でのNHK再放送モノに有効　元からモノラルの端末ならこちらのほうがいいかも
+                If NHK_dual_mono_mode_select = 11 Then
+                    '主モノラル固定
+                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
+                ElseIf NHK_dual_mono_mode_select = 12 Then
+                    '副モノラル固定
+                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
+                End If
             End If
         End If
 
