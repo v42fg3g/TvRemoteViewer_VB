@@ -75,6 +75,9 @@ Class WebRemocon
     Public _MIME_TYPE_DEFAULT As String = ""
     Public _MIME_TYPE() As String
 
+    'ビデオ一覧で表示する拡張子
+    Public VideoExtensions() As String
+
     Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String(), ByVal id As String, ByVal pass As String)
         'Public Sub New(udpPort As Integer, wwwroot As String, wwwport As Integer) ', num As Integer)
         '初期化 
@@ -252,9 +255,27 @@ Class WebRemocon
                         Try
                             For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
                                 Dim fullpath As String = stFilePath & System.Environment.NewLine
-                                If fullpath.IndexOf(".db") < 0 And fullpath.IndexOf(".chapter") < 0 And fullpath.IndexOf(".srt") < 0 Then
-                                    'フルパス
-                                    fullpath = trim8(fullpath)
+                                fullpath = trim8(fullpath)
+                                '拡張子を取得
+                                Dim ext As String = ""
+                                Dim sp As Integer = fullpath.LastIndexOf(".")
+                                If sp >= 0 Then
+                                    ext = fullpath.Substring(sp) 'ext=.ts
+                                End If
+                                '当てはまっているかチェック
+                                Dim chk As Integer = 0
+                                If VideoExtensions IsNot Nothing Then
+                                    chk = -1
+                                    For ii As Integer = 0 To VideoExtensions.Length - 1
+                                        If VideoExtensions(ii).Length > 0 Then
+                                            If fullpath.LastIndexOf(VideoExtensions(ii)) = fullpath.Length - VideoExtensions(ii).Length Then
+                                                chk = 1
+                                                Exit For
+                                            End If
+                                        End If
+                                    Next
+                                End If
+                                If chk = 1 Or (chk = 0 And fullpath.IndexOf(".db") < 0 And fullpath.IndexOf(".chapter") < 0 And fullpath.IndexOf(".srt") < 0) Then
                                     '更新日時
                                     Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
                                     Dim datestr As String = modifytime.ToString("yyyyMMddHH")
@@ -291,6 +312,7 @@ Class WebRemocon
                                 End If
                             Next stFilePath
                         Catch ex As Exception
+                            log1write("ビデオフォルダの読み込みに失敗しました" & ex.Message)
                         End Try
                     End If
                 Next
@@ -837,20 +859,20 @@ Class WebRemocon
 
         Dim i, j As Integer
 
-        Try
-            If line Is Nothing Then
-            ElseIf line.Length > 0 Then
-                '読み込み完了
-                For i = 0 To line.Length - 1
-                    line(i) = trim8(line(i))
-                    'コメント削除
-                    If line(i).IndexOf(";") >= 0 Then
-                        line(i) = line(i).Substring(0, line(i).IndexOf(";"))
-                    End If
-                    If line(i).IndexOf("#") >= 0 Then
-                        line(i) = line(i).Substring(0, line(i).IndexOf("#"))
-                    End If
-                    Dim youso() As String = line(i).Split("=")
+        If line Is Nothing Then
+        ElseIf line.Length > 0 Then
+            '読み込み完了
+            For i = 0 To line.Length - 1
+                line(i) = trim8(line(i))
+                'コメント削除
+                If line(i).IndexOf(";") >= 0 Then
+                    line(i) = line(i).Substring(0, line(i).IndexOf(";"))
+                End If
+                If line(i).IndexOf("#") >= 0 Then
+                    line(i) = line(i).Substring(0, line(i).IndexOf("#"))
+                End If
+                Dim youso() As String = line(i).Split("=")
+                Try
                     If youso Is Nothing Then
                     ElseIf youso.Length > 1 Then
                         For j = 0 To youso.Length - 1
@@ -943,6 +965,45 @@ Class WebRemocon
                                         TvProgramD_sort(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
                                     Next
                                 End If
+                            Case "VideoExtensions"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    For j = 0 To clset.Length - 1
+                                        clset(j) = trim8(clset(j))
+                                        If clset(j).Length > 0 Then
+                                            '.が先頭になければ追加
+                                            If clset(j).Substring(0, 1) <> "." Then
+                                                clset(j) = "." & clset(j)
+                                            End If
+                                            If VideoExtensions Is Nothing Then
+                                                ReDim Preserve VideoExtensions(0)
+                                            Else
+                                                ReDim Preserve VideoExtensions(VideoExtensions.Length)
+                                            End If
+                                            VideoExtensions(VideoExtensions.Length - 1) = clset(j)
+                                        End If
+                                    Next
+                                End If
+                            Case "BonDriver_NGword"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    '既存のBonDriver_NGwordに追加
+                                    Dim k As Integer = Me._BonDriver_NGword.Length
+                                    For j = 0 To clset.Length - 1
+                                        If clset(j).Length > 0 Then
+                                            If Me._BonDriver_NGword Is Nothing Then
+                                                ReDim Preserve Me._BonDriver_NGword(0)
+                                            Else
+                                                ReDim Preserve Me._BonDriver_NGword(Me._BonDriver_NGword.Length)
+                                            End If
+                                            Me._BonDriver_NGword(Me._BonDriver_NGword.Length - 1) = trim8(clset(j))
+                                        End If
+                                    Next
+                                End If
                             Case "Stop_RecTask_at_StartQuit", "Stop_RecTask_at_StartEnd"
                                 Stop_RecTask_at_StartEnd = Val(youso(1).ToString)
                             Case "NHK_dual_mono_mode"
@@ -980,10 +1041,11 @@ Class WebRemocon
                                 HLS_PRIORITY = trim8(youso(1).ToString)
                         End Select
                     End If
-                Next
-            End If
-        Catch ex As Exception
-        End Try
+                Catch ex As Exception
+                    log1write("パラメーター " & youso(0) & " の読み込みに失敗しました。" & ex.Message)
+                End Try
+            Next
+        End If
 
     End Sub
 

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.57
+TvRemoteViewer_VB v0.58
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -331,6 +331,8 @@ TvRemoteViewer_VB v0.57
 		SelectVideo.htmlの修正
 	0.57	TvRockのiphone番組表にて予約0以外を指定している場合に番組表の時刻がおかしくなる現象への対処
 		iniの NHK_dual_mono_mode に11と12を追加（NHK以外でもdual_monoを設定するときに使用）
+	0.58	ビデオファイル一覧に表示するファイルの拡張子を指定できるようiniにオプションを追加
+		WEB上のBonDriver一覧に表示したくないBonDriverを指定できるようiniにオプションを追加
 
 
 
