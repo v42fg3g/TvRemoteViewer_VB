@@ -2199,21 +2199,21 @@ Class WebRemocon
     '地デジ番組表取得
     Public Function WI_GET_PROGRAM_D() As String
         Dim r As String = ""
-
+        r = program_translate4WI(0)
         Return r
     End Function
 
     'EDCB番組表取得
     Public Function WI_GET_PROGRAM_EDCB(Optional ByVal t1 As Integer = 0, Optional ByVal t2 As Integer = 2147400000) As String
         Dim r As String = ""
-
+        r = program_translate4WI(998)
         Return r
     End Function
 
     'TVROCK番組表取得
     Public Function WI_GET_PROGRAM_TVROCK() As String
         Dim r As String = ""
-
+        r = program_translate4WI(999)
         Return r
     End Function
 

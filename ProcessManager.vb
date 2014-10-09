@@ -41,8 +41,8 @@ Public Class ProcessManager
         Dim r As Integer = 0
         For i As Integer = Me._list.Count - 1 To 0 Step -1
             If Me._list(i)._num = num Then
-                If Me._list(i)._stopping = 1 Then
-                    r = 1
+                If Me._list(i)._stopping > 0 Then
+                    r = Me._list(i)._stopping
                 End If
             End If
         Next
@@ -50,8 +50,30 @@ Public Class ProcessManager
     End Function
 
     Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String)
+        'numが放映中でかつBonDriverが同一ならばパイプを使用してチャンネル変更だけを行う
+        'ffmpegだけを停止しチャンネル変更が完了するまで.stopping=2にして完了したら.stopping=0にする
+        Dim hls_only As Integer = 0
+        Dim i As Integer = num2i(num)
+        Dim hls_only_sid As String = ""
+        Dim hls_only_chspace As String = ""
+        If i >= 0 And get_stopping_status(num) = 0 Then
+            'すでに同num=iで配信中である
+            Dim BonDriver_prev As String = Trim(instr_pickup_para(Me._list(i)._udpOpt, "/d ", " ", 0))
+            Dim BonDriver_next As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0))
+            If BonDriver_prev.Length > 0 And BonDriver_next.Length > 0 And BonDriver_prev = BonDriver_next Then
+                '同一BonDriverだった場合はRectaskを再起動せずパイプでのチャンネル変更をする
+                '/udp /port 42425 /chspace 0 /sid 51208 /d BonDriver_Spinel_PT3_t0.dll /sendservice 1
+                '切り替えるServiceIDとChSpaceを取得
+                hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
+                hls_only_chspace = Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
+                If hls_only_sid.Length > 0 And hls_only_chspace.Length > 0 Then
+                    hls_only = 1
+                End If
+            End If
+        End If
+
         '★起動している場合は既存のプロセスを止める
-        stopProc(num)
+        stopProc(num, hls_only)
 
         If get_stopping_status(num) = 1 Then
             '停止段階で失敗している
@@ -67,118 +89,151 @@ Public Class ProcessManager
 
             If stream_mode = 0 Or stream_mode = 2 Then
                 'UDPストリーム再生
-                Dim pipeListBefore As New List(Of Integer)()
-                If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
-                    '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
-                    Dim listOfPipes As String() = Nothing
-                    'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                    listOfPipes = GetPipes()
-                    If listOfPipes Is Nothing Then
-                        '名前付きパイプ一覧取得でエラーが起こった
-                        '外部プログラムによりパイプ一覧取得を試みる
-                        listOfPipes = F_get_NamedPipeList_from_program()
-                    End If
-                    If listOfPipes IsNot Nothing Then
-                        For Each pipeName As String In listOfPipes
-                            If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                Dim pindex1 As Integer = 0
-                                Try
-                                    pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + "RecTask_Server_Pipe_".Length))
-                                Catch ex As Exception
-                                End Try
-                                If pindex1 > 0 Then
-                                    pipeListBefore.Add(pindex1)
-                                    'log1write("Before PipeName=" & pipeName & " PipeIndex=" & pindex1)
-                                End If
-                            End If
-                        Next
+                Dim pipeIndex As Integer
+                Dim udpProc As System.Diagnostics.Process
+
+                'まず名前付きパイプでのチャンネル変更を試みる
+                If hls_only = 1 Then
+                    'パイプでチャンネルのみ変更
+                    '既存のpipeindex
+                    pipeIndex = Me._list(i).GetProcUdpPipeIndex
+                    'ここでパイプを使ってチャンネル変更
+                    Dim ks As String = Pipe_change_channel(pipeIndex, hls_only_sid, hls_only_chspace)
+                    If ks.IndexOf("""OK""") > 0 Then
+                        '成功
+                        '実際にチャンネルが変わったかどうかパイプで確認してから次へ
+                        'GetChannelでサービスIDが変わっているかチェック
+                        Dim j As Integer = 100 '最大5秒待つ
+                        While Pipe_get_channel(pipeIndex, hls_only_sid) = 0 And j >= 0
+                            j -= 1
+                            System.Threading.Thread.Sleep(50)
+                        End While
+                        '既存プロセス
+                        udpProc = Me._list(i).GetUdpProc
+                        log1write("名前付きパイプを使用してチャンネルを変更しました")
                     Else
-                        '何をやってもエラー
-                        pipe_error = 1
+                        '失敗したら引き続き通常起動を試みる
+                        log1write("名前付きパイプを使用してのチャンネル変更に失敗しました。通常起動を試みます")
+                        hls_only = 0
+                        stopProc(num)
                     End If
                 End If
 
-                '★UDPソフトを実行
-                'ProcessStartInfoオブジェクトを作成する
-                Dim udpPsi As New System.Diagnostics.ProcessStartInfo()
-                '起動するファイルのパスを指定する
-                udpPsi.FileName = udpApp
-                'コマンドライン引数を指定する
-                udpPsi.Arguments = udpOpt
-                'ログ表示
-                log1write("UDP アプリ=" & udpApp)
-                log1write("UDP option=" & udpOpt)
-                'アプリケーションを起動する
-                Dim udpProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(udpPsi)
-                Dim UDP_PRIORITY_STR As String = UDP_PRIORITY
-                Select Case UDP_PRIORITY
-                    Case "Idle"
-                        udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
-                    Case "Normal"
-                        udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
-                    Case "High"
-                        udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-                    Case "RealTime"
-                        udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
-                    Case Else
-                        UDP_PRIORITY_STR = "無指定"
-                        'udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-                End Select
-                log1write("No.=" & num & "のUDPアプリを起動しました。優先度：" & UDP_PRIORITY_STR & "　handle=" & udpProc.Handle.ToString)
-
-                'pipeindexを取得
-                Dim pipeIndex As Integer = 0
-                Dim chk As Integer = 0
-                If pipe_error = 0 Then
-                    While chk < 200
-                        'RecTaskのパイプが増加するまで繰り返す
-                        If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
-                            '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
-                            Dim listOfPipes As String() = Nothing
-                            'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                            listOfPipes = GetPipes()
-                            If listOfPipes Is Nothing Then
-                                '名前付きパイプ一覧取得でエラーが起こった
-                                '外部プログラムによりパイプ一覧取得を試みる
-                                listOfPipes = F_get_NamedPipeList_from_program()
-                                If listOfPipes Is Nothing Then
-                                    '何をやってもエラー
-                                    pipe_error = 2
-                                    Exit While
-                                End If
-                            End If
-
+                If hls_only = 0 Then
+                    '通常起動
+                    Dim pipeListBefore As New List(Of Integer)()
+                    If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                        '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
+                        Dim listOfPipes As String() = Nothing
+                        'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                        listOfPipes = GetPipes()
+                        If listOfPipes Is Nothing Then
+                            '名前付きパイプ一覧取得でエラーが起こった
+                            '外部プログラムによりパイプ一覧取得を試みる
+                            listOfPipes = F_get_NamedPipeList_from_program()
+                        End If
+                        If listOfPipes IsNot Nothing Then
                             For Each pipeName As String In listOfPipes
                                 If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                    Dim pindex2 As Integer = 0
+                                    Dim pindex1 As Integer = 0
                                     Try
-                                        pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
+                                        pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + "RecTask_Server_Pipe_".Length))
                                     Catch ex As Exception
                                     End Try
-                                    If pindex2 > 0 Then
-                                        'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
-                                        Dim c2 As Integer = 0
-                                        '起動前のパイプindexに存在しなければOK
-                                        For Each pt As Integer In pipeListBefore
-                                            If pindex2 = pt Then
-                                                c2 += 100
-                                            End If
-                                        Next
-                                        '該当するpipeindexが見つからなければ新規
-                                        If c2 = 0 Then
-                                            pipeIndex = pindex2
-                                            Exit While
-                                        End If
-                                    Else
-                                        pipeIndex = pindex2
-                                        Exit While
+                                    If pindex1 > 0 Then
+                                        pipeListBefore.Add(pindex1)
+                                        'log1write("Before PipeName=" & pipeName & " PipeIndex=" & pindex1)
                                     End If
                                 End If
                             Next
+                        Else
+                            '何をやってもエラー
+                            pipe_error = 1
                         End If
-                        System.Threading.Thread.Sleep(50)
-                        chk += 1
-                    End While
+                    End If
+
+                    '★UDPソフトを実行
+                    'ProcessStartInfoオブジェクトを作成する
+                    Dim udpPsi As New System.Diagnostics.ProcessStartInfo()
+                    '起動するファイルのパスを指定する
+                    udpPsi.FileName = udpApp
+                    'コマンドライン引数を指定する
+                    udpPsi.Arguments = udpOpt
+                    'ログ表示
+                    log1write("UDP アプリ=" & udpApp)
+                    log1write("UDP option=" & udpOpt)
+                    'アプリケーションを起動する
+                    udpProc = System.Diagnostics.Process.Start(udpPsi)
+                    Dim UDP_PRIORITY_STR As String = UDP_PRIORITY
+                    Select Case UDP_PRIORITY
+                        Case "Idle"
+                            udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
+                        Case "Normal"
+                            udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
+                        Case "High"
+                            udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                        Case "RealTime"
+                            udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
+                        Case Else
+                            UDP_PRIORITY_STR = "無指定"
+                            'udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                    End Select
+                    log1write("No.=" & num & "のUDPアプリを起動しました。優先度：" & UDP_PRIORITY_STR & "　handle=" & udpProc.Handle.ToString)
+
+                    'pipeindexを取得
+                    pipeIndex = 0
+                    Dim chk As Integer = 0
+                    If pipe_error = 0 Then
+                        While chk < 200
+                            'RecTaskのパイプが増加するまで繰り返す
+                            If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                                '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
+                                Dim listOfPipes As String() = Nothing
+                                'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                                listOfPipes = GetPipes()
+                                If listOfPipes Is Nothing Then
+                                    '名前付きパイプ一覧取得でエラーが起こった
+                                    '外部プログラムによりパイプ一覧取得を試みる
+                                    listOfPipes = F_get_NamedPipeList_from_program()
+                                    If listOfPipes Is Nothing Then
+                                        '何をやってもエラー
+                                        pipe_error = 2
+                                        Exit While
+                                    End If
+                                End If
+
+                                For Each pipeName As String In listOfPipes
+                                    If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                        Dim pindex2 As Integer = 0
+                                        Try
+                                            pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
+                                        Catch ex As Exception
+                                        End Try
+                                        If pindex2 > 0 Then
+                                            'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
+                                            Dim c2 As Integer = 0
+                                            '起動前のパイプindexに存在しなければOK
+                                            For Each pt As Integer In pipeListBefore
+                                                If pindex2 = pt Then
+                                                    c2 += 100
+                                                End If
+                                            Next
+                                            '該当するpipeindexが見つからなければ新規
+                                            If c2 = 0 Then
+                                                pipeIndex = pindex2
+                                                Exit While
+                                            End If
+                                        Else
+                                            pipeIndex = pindex2
+                                            Exit While
+                                        End If
+                                    End If
+                                Next
+                            End If
+                            System.Threading.Thread.Sleep(50)
+                            chk += 1
+                        End While
+                    End If
                 End If
 
                 If pipeIndex > 0 Or pipe_error > 0 Then
@@ -188,7 +243,7 @@ Public Class ProcessManager
                         log1write("No.=" & num & "のパイプインデックスは取得できませんでした。パイプを使用せずに続行します。")
                     End If
 
-                    System.Threading.Thread.Sleep(1000)
+                    System.Threading.Thread.Sleep(500) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
 
                     '★HLSソフトを実行
                     'ProcessStartInfoオブジェクトを作成する
@@ -234,10 +289,14 @@ Public Class ProcessManager
 
                     log1write("No.=" & num & "のHLSアプリを起動しました。優先度：" & HLS_PRIORITY_STR & "　handle=" & hlsProc.Handle.ToString)
 
+                    If hls_only = 1 Then
+                        '既存のリストを削除してから改めて追加
+                        Me._list.RemoveAt(i)
+                    End If
+
                     'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
                     Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)
                     Me._list.Add(pb)
-
                 Else
                     Try
                         'UDPアプリ終了　pipeindexがわからないので強制終了
@@ -399,7 +458,7 @@ Public Class ProcessManager
     End Sub
 
     '指定numberプロセスを停止する
-    Public Sub stopProc(num As Integer)
+    Public Sub stopProc(num As Integer, Optional ByVal hls_only As Integer = 0)
         'index = -1 の場合は全て停止
         Dim proc As System.Diagnostics.Process = Nothing
 
@@ -408,13 +467,14 @@ Public Class ProcessManager
 
         For i As Integer = Me._list.Count - 1 To 0 Step -1
             If Me._list(i)._num = num Or num <= -1 Then
+
+                log1write("No.=" & num & "のプロセスを停止しています")
+
+                '停止フラグを書き込んでおいたほうがいいかな
+                Me._list(i)._stopping = 1 'checkAllProc()でチェックさせないため・・
+
+                '★ HLS
                 Try
-                    log1write("No.=" & num & "のプロセスを停止しています")
-
-                    '停止フラグを書き込んでおいたほうがいいかな
-                    Me._list(i)._stopping = 1 'checkAllProc()でチェックさせないため・・
-
-                    '★ HLS
                     proc = Me._list(i).GetHlsProc()
                     If proc IsNot Nothing AndAlso Not proc.HasExited Then
                         If Me._list(i)._hlsApp.IndexOf("vlc") >= 0 Then
@@ -442,7 +502,6 @@ Public Class ProcessManager
                                 'proc.WaitForExit()
                                 proc.Close()
                                 proc.Dispose()
-                                'System.Threading.Thread.Sleep(1000)
                             End If
                         ElseIf Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Then
                             'ffmpeg
@@ -473,95 +532,114 @@ Public Class ProcessManager
                             End If
                             proc.Close()
                             proc.Dispose()
-                            ''System.Threading.Thread.Sleep(1000)
                         End If
+
+                        'ウェイトを入れないと関連ファイル削除に失敗することがある →　ファイル削除のところで対処
+                        'System.Threading.Thread.Sleep(1000)
                     Else
                         'プロセスが無い
                         hls_stop = 1
                     End If
+                Catch ex As Exception
+                    'Procが存在しない
+                    log1write("No.=" & num & "のHLSプロセスが見つかりません。" & ex.Message)
+                    hls_stop = 1
+                End Try
 
+                If hls_only = 0 Then
                     '★ UDP
-                    proc = Me._list(i).GetUdpProc()
-                    If proc IsNot Nothing AndAlso Not proc.HasExited Then
-                        Dim udpPipeIndex As Integer = Me._list(i).GetProcUdpPipeIndex
-                        If udpPipeIndex > 0 Then
-                            Dim rr As String = sendRecTaskMsg("EndTask", udpPipeIndex)
+                    Try
+                        proc = Me._list(i).GetUdpProc()
+                        If proc IsNot Nothing AndAlso Not proc.HasExited Then
+                            Dim udpPipeIndex As Integer = Me._list(i).GetProcUdpPipeIndex
+                            If udpPipeIndex > 0 Then
+                                Dim rr As String = sendRecTaskMsg("EndTask", udpPipeIndex)
 
-                            'UDPソフトが終了するまで待つ
-                            '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
-                            Dim chk As Integer = 1000
-                            While chk > 0
-                                Dim listOfPipes As String() = Nothing
-                                'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                                listOfPipes = GetPipes()
-                                If listOfPipes Is Nothing Then
-                                    '名前付きパイプ一覧取得でエラーが起こった
-                                    '外部プログラムによりパイプ一覧取得を試みる
-                                    listOfPipes = F_get_NamedPipeList_from_program()
+                                'UDPソフトが終了するまで待つ
+                                '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
+                                Dim chk As Integer = 1000
+                                While chk > 0
+                                    Dim listOfPipes As String() = Nothing
+                                    'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                                    listOfPipes = GetPipes()
                                     If listOfPipes Is Nothing Then
-                                        '何をやってもエラー
-                                        chk = -1
-                                        Exit While
-                                    End If
-                                End If
-
-                                Dim chk2 As Integer = 0
-                                For Each pipeName As String In listOfPipes
-                                    If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                        Dim pindex1 As Integer = 0
-                                        Try
-                                            pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20))
-                                        Catch ex As Exception
-                                        End Try
-                                        If pindex1 = udpPipeIndex Then
-                                            'まだ起動中
-                                            chk2 = 1
+                                        '名前付きパイプ一覧取得でエラーが起こった
+                                        '外部プログラムによりパイプ一覧取得を試みる
+                                        listOfPipes = F_get_NamedPipeList_from_program()
+                                        If listOfPipes Is Nothing Then
+                                            '何をやってもエラー
+                                            chk = -1
+                                            Exit While
                                         End If
                                     End If
-                                Next
-                                If chk2 = 0 Then
-                                    'パイプ一覧に該当が無くなった
-                                    Exit While
-                                End If
-                                System.Threading.Thread.Sleep(10)
-                                chk -= 1
-                            End While
-                            If chk >= 0 Then
-                                log1write("No.=" & num & "のUDPアプリを終了しました")
-                            Else
-                                'タイムアウト
-                                log1write("No.=" & num & "のUDPアプリの終了に失敗しました")
-                            End If
-                            '最後にプロセスチェック
-                            If wait_stop_proc(proc) = 1 Then
-                                'log1write("No.=" & num & "のudpアプリを強制終了しました")
-                                udp_stop = 1
-                            Else
-                                log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
-                            End If
-                            proc.Close()
-                            proc.Dispose()
-                        Else
-                            'パイプが見当たらない
-                            '強制的に終了
-                            'proc.CloseMainWindow()
-                            proc.Kill()
-                            'proc.WaitForExit()
-                            If wait_stop_proc(proc) = 1 Then
-                                log1write("No.=" & num & "のudpアプリを強制終了しました")
-                                udp_stop = 1
-                            Else
-                                log1write("No.=" & num & "のudpアプリ強制終了に失敗しました")
-                            End If
-                            proc.Close()
-                            proc.Dispose()
-                        End If
-                    Else
-                        'プロセスが無い
-                        udp_stop = 1
-                    End If
 
-                    '★ リストから取り除く
+                                    Dim chk2 As Integer = 0
+                                    For Each pipeName As String In listOfPipes
+                                        If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                            Dim pindex1 As Integer = 0
+                                            Try
+                                                pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20))
+                                            Catch ex As Exception
+                                            End Try
+                                            If pindex1 = udpPipeIndex Then
+                                                'まだ起動中
+                                                chk2 = 1
+                                            End If
+                                        End If
+                                    Next
+                                    If chk2 = 0 Then
+                                        'パイプ一覧に該当が無くなった
+                                        Exit While
+                                    End If
+                                    System.Threading.Thread.Sleep(10)
+                                    chk -= 1
+                                End While
+                                If chk >= 0 Then
+                                    log1write("No.=" & num & "のUDPアプリを終了しました")
+                                Else
+                                    'タイムアウト
+                                    log1write("No.=" & num & "のUDPアプリの終了に失敗しました")
+                                End If
+                                '最後にプロセスチェック
+                                If wait_stop_proc(proc) = 1 Then
+                                    'log1write("No.=" & num & "のudpアプリを強制終了しました")
+                                    udp_stop = 1
+                                Else
+                                    log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
+                                End If
+                                proc.Close()
+                                proc.Dispose()
+                            Else
+                                'パイプが見当たらない
+                                '強制的に終了
+                                'proc.CloseMainWindow()
+                                proc.Kill()
+                                'proc.WaitForExit()
+                                If wait_stop_proc(proc) = 1 Then
+                                    log1write("No.=" & num & "のudpアプリを強制終了しました")
+                                    udp_stop = 1
+                                Else
+                                    log1write("No.=" & num & "のudpアプリ強制終了に失敗しました")
+                                End If
+                                proc.Close()
+                                proc.Dispose()
+                            End If
+                        Else
+                            'プロセスが無い
+                            udp_stop = 1
+                        End If
+                    Catch ex As Exception
+                        'Procが存在しない
+                        log1write("No.=" & num & "のUDPプロセスが見つかりません。" & ex.Message)
+                        udp_stop = 1
+                    End Try
+                Else
+                    'パイプでのチャンネル変更によって、停止するように指定されていない
+                    udp_stop = 1
+                End If
+
+                '★ リストから取り除く
+                If hls_only = 0 Then
                     If num = -2 Then
                         '強制全停止　実際に停止されたかどうかかまわず
                         Me._list.RemoveAt(i)
@@ -575,30 +653,37 @@ Public Class ProcessManager
                         log1write("No.=" & num & "のプロセス停止に失敗しました")
                         'me._list(i)._stopping=1のまま残るので後で判別できる
                     End If
-                Catch ex As Exception
-                    'おそらく停止ボタンや再生ボタンを立て続けに押された場合に例外エラー発生
-                    log1write("No.=" & num & "のプロセスが見つかりません。" & ex.Message)
-                End Try
+                ElseIf hls_only = 1 Then
+                    'Me._listからの削除はしない
+                    If hls_stop = 1 Then 'udpは起動し続けている
+                        log1write("No.=" & num & "のHLSプロセスを停止しました")
+                        Me._list(i)._stopping = 2 '後で無事起動したときに0にする
+                    Else
+                        log1write("No.=" & num & "のHLSプロセス停止に失敗しました")
+                        'me._list(i)._stopping=1のまま残るので後で判別できる
+                    End If
+                End If
 
                 'System.Threading.Thread.Sleep(1000)
-
             End If
         Next
 
-        If num = -2 Then
-            log1write("関連アプリのプロセスを停止しています")
-            stopProcName("vlc")
-            stopProcName("ffmpeg")
-            If Stop_RecTask_at_StartEnd = 1 Then
-                stopProcName("RecTask")
+        If hls_only = 0 Then
+            If num = -2 Then
+                log1write("関連アプリのプロセスを停止しています")
+                stopProcName("vlc")
+                stopProcName("ffmpeg")
+                If Stop_RecTask_at_StartEnd = 1 Then
+                    stopProcName("RecTask")
+                End If
+                Me._list.Clear() 'リストクリア
+                log1write("関連アプリのプロセスを停止しました")
             End If
-            Me._list.Clear() 'リストクリア
-            log1write("関連アプリのプロセスを停止しました")
-        End If
 
-        '現在稼働中のlist(i)._numをログに表示
-        Dim js As String = get_live_numbers()
-        log1write("現在稼働中のNumber：" & js)
+            '現在稼働中のlist(i)._numをログに表示
+            Dim js As String = get_live_numbers()
+            log1write("現在稼働中のNumber：" & js)
+        End If
     End Sub
 
     'ストリームnumの放送局名を取得する
@@ -684,7 +769,7 @@ Public Class ProcessManager
         Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
         If d IsNot Nothing Then
             For j As Integer = 0 To d.Length - 1
-                If Me._list(d(j))._stopping = 1 Then
+                If Me._list(d(j))._stopping > 0 Then
                     js &= "x" & Me._list(d(j))._num.ToString & " "
                 Else
                     js &= Me._list(d(j))._num.ToString & " "
@@ -730,7 +815,7 @@ Public Class ProcessManager
         Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
         If d IsNot Nothing Then
             For j As Integer = 0 To d.Length - 1
-                If Me._list(d(j))._stopping = 1 Then
+                If Me._list(d(j))._stopping > 0 Then
                     js &= "x"
                 End If
                 Dim s As String = Me._list(d(j))._udpOpt
@@ -800,18 +885,18 @@ Public Class ProcessManager
         '
         '                    pipeClient.WaitForPipeDrain();
         '                    int read = ss.WriteString(msg);
-        '                    System.Console.WriteLine(read);
+        '                    debug.print(read);
         '
         '                    pipeClient.WaitForPipeDrain();
         '                    string temp = ss.ReadString();
-        '                    System.Console.WriteLine(temp);
+        '                    debug.print(temp);
         '
         '                    pipeClient.Close();
         '                    return temp;
         '                }
         '                else
         '                {
-        '                    System.Console.WriteLine("not Connect");
+        '                    debug.print("not Connect");
         '                    return "";
         '                }
         '            }
@@ -939,7 +1024,11 @@ Public Class ProcessManager
     Public Sub delete_mystreamnum(ByVal num As Integer)
         For Each tempFile As String In System.IO.Directory.GetFiles(Me._fileroot)
             If tempFile.IndexOf("mystream" & num.ToString & "-") >= 0 Or tempFile.IndexOf("mystream" & num.ToString & ".") >= 0 Then
-                deletefile(tempFile)
+                Dim i As Integer = 20 '2秒間は再チャレンジする
+                While deletefile(tempFile) = 0 And i >= 0
+                    System.Threading.Thread.Sleep(100)
+                    i -= 1
+                End While
             End If
         Next
     End Sub

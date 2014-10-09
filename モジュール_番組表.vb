@@ -567,4 +567,124 @@ Module モジュール_番組表
         Return r
     End Function
 
+    'WEBインターフェース用　データを整形して返す
+    Public Function program_translate4WI(ByVal a As Integer) As String
+        'a=0 通常のインターネットから取得　 a=998 EDCBから取得　 a=999 tvrockから取得
+        Dim chkstr As String = ":" '重複防止用
+        Dim html_all As String = ""
+        Dim cnt As Integer = 0
+        Dim TvProgram_html() As TVprogram_html_structure = Nothing
+
+        'ＮＧワード文字列
+        Dim ngword As String = ":"
+        If TvProgram_NGword IsNot Nothing Then
+            For i = 0 To TvProgram_NGword.Length - 1
+                ngword &= StrConv(TvProgram_NGword(i), VbStrConv.Wide) & ":"
+            Next
+        End If
+
+        Dim TvProgram_ch2() As Integer = Nothing
+        If a = 0 Then
+            '通常のインターネットから取得
+            TvProgram_ch2 = TvProgram_ch
+        ElseIf a = 998 Then
+            'EDCBから取得
+            ReDim Preserve TvProgram_ch2(0)
+            TvProgram_ch2(0) = 998
+        ElseIf a = 999 Then
+            'tvrockから取得
+            ReDim Preserve TvProgram_ch2(0)
+            TvProgram_ch2(0) = 999
+        End If
+
+        If TvProgram_ch2 IsNot Nothing Then
+            For i As Integer = 0 To TvProgram_ch2.Length - 1
+                If TvProgram_ch2(i) > 0 Then
+                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i))
+                    If program IsNot Nothing Then
+                        For Each p As TVprogramstructure In program
+                            Dim html As String = ""
+                            Dim hosokyoku As String = ""
+                            Dim s4 As String = StrConv(p.stationDispName, VbStrConv.Wide) 'p.stationDispName
+                            If s4.Length > 0 Then
+                                If chkstr.IndexOf(":" & s4 & ":") < 0 Then '重複していないかチェック
+                                    Dim chk As Integer = 0
+                                    If ngword.IndexOf(":" & StrConv(p.stationDispName, VbStrConv.Wide) & ":") >= 0 Then
+                                        chk = 1
+                                    End If
+
+                                    If chk = 0 Then
+                                        Dim startt As String = ""
+                                        Dim endt As String = ""
+                                        Try
+                                            '時：分だけ取り出す
+                                            If p.startDateTime = "2038/01/01 23:59" Then
+                                                startt = ""
+                                            Else
+                                                startt = p.startDateTime.Substring(p.startDateTime.IndexOf(" "))
+                                            End If
+                                            If p.endDateTime = "2038/01/01 23:59" Then
+                                                endt = ""
+                                            Else
+                                                endt = p.endDateTime.Substring(p.endDateTime.IndexOf(" "))
+                                            End If
+                                        Catch ex As Exception
+                                        End Try
+
+                                        'BonDriver, sid, 事業者を取得
+                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a)
+                                        'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
+
+                                        If d(0).Length > 0 Then
+                                            hosokyoku = StrConv(d(0), VbStrConv.Wide)
+                                        End If
+
+                                        html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & p.programTitle & "," & p.programContent & vbCrLf
+
+                                        chkstr &= s4 & ":"
+                                    End If
+                                End If
+                            End If
+
+                            ReDim Preserve TvProgram_html(cnt)
+                            TvProgram_html(cnt).stationDispName = StrConv(p.stationDispName, VbStrConv.Wide)
+                            TvProgram_html(cnt).hosokyoku = hosokyoku
+                            TvProgram_html(cnt).html = html
+                            TvProgram_html(cnt).done = 0
+                            cnt += 1
+                        Next
+                    End If
+                End If
+            Next
+        End If
+
+        '並び替え
+        If TvProgramD_sort IsNot Nothing Then
+            For i As Integer = 0 To TvProgramD_sort.Length - 1
+                If TvProgram_html IsNot Nothing Then
+                    For j As Integer = 0 To TvProgram_html.Length - 1
+                        If TvProgram_html(j).done = 0 Then
+                            If TvProgram_html(j).stationDispName = TvProgramD_sort(i) Or TvProgram_html(j).hosokyoku = TvProgramD_sort(i) Then
+                                html_all &= TvProgram_html(j).html
+                                TvProgram_html(j).done = 1
+                                Exit For
+                            End If
+                        End If
+                    Next
+                End If
+            Next
+        End If
+        '並び替え指定が無いものを追加
+        If TvProgram_html IsNot Nothing Then
+            For j As Integer = 0 To TvProgram_html.Length - 1
+                If TvProgram_html(j).done = 0 Then
+                    html_all &= TvProgram_html(j).html
+                    TvProgram_html(j).done = 1
+                End If
+            Next
+        End If
+
+        Return html_all
+    End Function
+
 End Module

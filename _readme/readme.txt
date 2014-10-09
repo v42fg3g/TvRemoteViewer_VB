@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.58
+TvRemoteViewer_VB v0.59
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -333,6 +333,9 @@ TvRemoteViewer_VB v0.58
 		iniの NHK_dual_mono_mode に11と12を追加（NHK以外でもdual_monoを設定するときに使用）
 	0.58	ビデオファイル一覧に表示するファイルの拡張子を指定できるようiniにオプションを追加
 		WEB上のBonDriver一覧に表示したくないBonDriverを指定できるようiniにオプションを追加
+	0.59	同一BonDriver上でのチャンネル変更ならば名前付きパイプを使用することにした
+		停止ルーチンのバグ修正
+		WEBインターフェース用の番組表APIを追加
 
 
 

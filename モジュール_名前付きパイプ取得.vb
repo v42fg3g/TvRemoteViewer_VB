@@ -1,5 +1,8 @@
 ﻿Imports System.Text
 Imports System.Runtime.InteropServices
+Imports System.IO.Pipes
+Imports System.IO
+Imports System.IO.MemoryMappedFiles
 
 Module モジュール_名前付きパイプ取得
     '====================================================
@@ -150,5 +153,108 @@ Module モジュール_名前付きパイプ取得
 
         Return r
     End Function
+
+
+    '==========================================================
+    'RecTask現在配信中のチャンネルを取得
+    Public Function Pipe_get_channel(ByVal pipeindex As Integer, ByVal sidstr As String) As Integer
+        Dim r As Integer = 0
+        Dim cmd As String = "GetChannel"
+        Dim rstr As String = Pipe_Send_Command(pipeindex, cmd)
+        If rstr.IndexOf("ServiceID:" & sidstr) >= 0 Then
+            r = 1
+        End If
+        Return r
+    End Function
+
+    'RecTaskチャンネル変更エントリー
+    Public Function Pipe_change_channel(ByVal pipeindex As Integer, ByVal sidstr As String, ByVal chspacestr As String) As String
+        Dim r As String = ""
+        Dim cmd As String = "SetChannel" & vbCrLf _
+                            & "ServiceID:" & sidstr & vbCrLf _
+                            & "TuningSpace:" & chspacestr
+        r = Pipe_Send_Command(pipeindex, cmd)
+        Return r
+    End Function
+
+    '名前付きパイプ　コマンド
+    'https://github.com/nullpohoge/PipeTest
+    'のソースを使用させていただいております
+    Public Function Pipe_Send_Command(ByVal pipeindex As Integer, ByVal cmdstr As String) As String
+        Dim r As String = ""
+        Dim Pipe As NamedPipeClientStream = New NamedPipeClientStream(".", "RecTask_Server_Pipe_" & pipeindex.ToString, PipeDirection.InOut, PipeOptions.None)
+        Try
+            Pipe.Connect(5000)
+            If Pipe.IsConnected Then
+                Dim msg As Byte() = Encoding.Unicode.GetBytes(cmdstr)
+                Dim wb As UInteger = 0
+                Dim ret As Boolean
+
+                Dim wsize As Byte() = New Byte() {CByte(msg.Length), 0, 0, 0}
+                Dim sendSize As UInteger = CUInt(msg.Length)
+
+                Pipe.Write(wsize, 0, wsize.Length)
+                Pipe.Flush()
+                Pipe.WaitForPipeDrain()
+                Pipe.Write(msg, 0, sendSize)
+                Pipe.Flush()
+                System.Console.WriteLine("debug:WriteFile1")
+                System.Console.WriteLine("debug:" & wb)
+                System.Console.WriteLine("debug:" & ret)
+
+                Dim receiveField(300000) As Byte
+                Dim reclen As Integer = Pipe.Read(receiveField, 0, receiveField.Length)
+                '長さ情報が4byteの場合
+                r = "1st Msg Len :" +
+                    reclen.ToString + vbCrLf + "1st Msg Data:" + vbCrLf
+                If reclen = 4 Then
+                    r +=
+                        Convert.ToInt32(receiveField(0)).ToString("x2") + " " +
+                        Convert.ToInt32(receiveField(1)).ToString("x2") + " " +
+                        Convert.ToInt32(receiveField(2)).ToString("x2") + " " +
+                        Convert.ToInt32(receiveField(3)).ToString("x2") + vbCrLf
+                    Dim datalen As Long = 0
+                    datalen = BitConverter.ToInt32(receiveField, 0)
+                    r += "2nd Msg Len :" + datalen.ToString + vbCrLf
+                    reclen = Pipe.Read(receiveField, 0, datalen)
+                    r += "2nd Msg Data:" + vbCrLf +
+                        Encoding.Unicode.GetString(receiveField).Replace(vbLf, vbCrLf)
+                Else
+                    'reclen = Pipe.Read(receiveField, 0, reclen)
+                    'TextBox3.Text += Encoding.Unicode.GetString(receiveField).Replace(vbLf, vbCrLf)
+                    'datalen = BitConverter.ToInt64(receiveField, 0)
+                    'Dim i As Integer = 0
+                    'For i = 0 To reclen - 1
+                    '    TextBox3.Text +=
+                    '        Convert.ToInt32(receiveField(i)).ToString("x2") + " "
+                    'Next
+                    r += Encoding.Unicode.GetString(receiveField, 4, reclen - 4).Replace(vbLf, vbCrLf)
+                End If
+                Pipe.Close()
+
+                'RecTaskが作るSharedMemoryを読み取るための処理
+                '中身不明なのでとりあえずコメント
+                'Dim mmf As MemoryMappedFile = MemoryMappedFile.OpenExisting("RecTask_Server_SharedMemory_1")
+                'Dim mma As MemoryMappedViewAccessor = mmf.CreateViewAccessor()
+                'Dim buffer(100) As Byte
+                'Dim i As Integer = 0
+                'For i = 0 To 87
+                '    buffer(i) = mma.ReadByte(i)
+                'Next
+
+                'Dim fs As FileStream = File.OpenWrite("./SharedMemory.dump")
+                'fs.Write(buffer, 0, 88)
+                'fs.Close()
+            End If
+
+        Catch ex As Exception
+            r = ex.ToString
+        End Try
+
+        Return r
+    End Function
+
+    'http://internetcom.jp/developer/20090922/26.html
+    'http://www.codeproject.com/Tips/492231/Csharp-Async-Named-Pipes
 
 End Module
