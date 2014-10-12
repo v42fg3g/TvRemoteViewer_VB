@@ -1039,6 +1039,8 @@ Class WebRemocon
                                 UDP_PRIORITY = trim8(youso(1).ToString)
                             Case "HLS_PRIORITY"
                                 HLS_PRIORITY = trim8(youso(1).ToString)
+                            Case "UDP2HLS_WAIT"
+                                UDP2HLS_WAIT = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -1690,6 +1692,14 @@ Class WebRemocon
                                     '作られている.tsの数
                                     WI_cmd_reply = Me.WI_GET_TSFILE_COUNT(num)
                                     WI_cmd_reply_force = 1
+                                Case "WI_GET_RESOLUTION"
+                                    '解像度
+                                    WI_cmd_reply = Me.WI_GET_RESOLUTION()
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_VIDEOFILES"
+                                    'ビデオファイル
+                                    WI_cmd_reply = Me.WI_GET_VIDEOFILES()
+                                    WI_cmd_reply_force = 1
                             End Select
                         End If
 
@@ -2118,6 +2128,7 @@ Class WebRemocon
         r &= "【全般】" & vbCrLf
         r &= "_tsfile_wait=" & Me._tsfile_wait & vbCrLf
         r &= "Stop_RecTask_at_StartEnd=" & Stop_RecTask_at_StartEnd & vbCrLf
+        r &= "MAX_STREAM_NUMBER=" & MAX_STREAM_NUMBER & vbCrLf
         r &= vbCrLf
         r &= "【UDPアプリ】" & vbCrLf
         r &= "_udpApp=" & Me._udpApp & vbCrLf
@@ -2217,10 +2228,50 @@ Class WebRemocon
         Return r
     End Function
 
-    '■テスト
+    '解像度取得 stream_mode = 0 and 2
+    Public Function WI_GET_RESOLUTION() As String
+        Dim r As String = ""
+        Dim i As Integer = 0
+
+        r &= "[stream_mode=0]" & vbCrLf
+        If hls_option IsNot Nothing Then
+            For i = 0 To hls_option.Length - 1
+                r &= hls_option(i).resolution & vbCrLf
+            Next
+        End If
+
+        r &= vbCrLf
+        r &= "[stream_mode=2]" & vbCrLf
+        If HTTPSTREAM_App = 1 Then
+            'VLC
+            If vlc_http_option IsNot Nothing Then
+                For i = 0 To vlc_http_option.Length - 1
+                    r &= vlc_http_option(i).resolution & vbCrLf
+                Next
+            End If
+        ElseIf HTTPSTREAM_App = 2 Then
+            'ffmpeg
+            If ffmpeg_http_option IsNot Nothing Then
+                For i = 0 To ffmpeg_http_option.Length - 1
+                    r &= ffmpeg_http_option(i).resolution & vbCrLf
+                Next
+            End If
+        End If
+
+        Return r
+    End Function
+
+    'ビデオファイルネーム取得
+    Public Function WI_GET_VIDEOFILES() As String
+        Return make_file_select_html("")
+    End Function
+
+    '　本体はProcessManager.vbに
     Public Function WI_GET_LIVE_STREAM() As String
         Return Me._procMan.WI_GET_LIVE_STREAM()
     End Function
+
+    '　本体はProcessManager.vbに
     Public Function WI_GET_CHANNELS() As String
         Return Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp, Me._BonDriver_NGword)
     End Function

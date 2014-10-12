@@ -243,7 +243,7 @@ Public Class ProcessManager
                         log1write("No.=" & num & "のパイプインデックスは取得できませんでした。パイプを使用せずに続行します。")
                     End If
 
-                    System.Threading.Thread.Sleep(500) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+                    System.Threading.Thread.Sleep(UDP2HLS_WAIT) 'ffmpegなら500でおｋ　VLCだと環境によって2000程度無いと不安定の場合有り
 
                     '★HLSソフトを実行
                     'ProcessStartInfoオブジェクトを作成する
@@ -310,6 +310,15 @@ Public Class ProcessManager
 
             ElseIf stream_mode = 1 Or stream_mode = 3 Then
                 'ファイル再生
+                'VLCは上の非表示コマンドが効かないのでオプションを書き換える
+                If ShowConsole = False And hlsApp.IndexOf("vlc") >= 0 Then
+                    If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
+                        hlsOpt = hlsOpt.Replace("-I dummy", "-I dummy --dummy-quiet")
+                    End If
+                    If hlsOpt.IndexOf("--rc-quiet") < 0 And hlsOpt.IndexOf("--rc-host=") >= 0 Then
+                        hlsOpt = hlsOpt.Replace("--rc-host=", "--rc-quiet --rc-host=")
+                    End If
+                End If
                 '★HLSソフトを実行
                 'ProcessStartInfoオブジェクトを作成する
                 Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
@@ -638,31 +647,35 @@ Public Class ProcessManager
                     udp_stop = 1
                 End If
 
-                '★ リストから取り除く
-                If hls_only = 0 Then
-                    If num = -2 Then
-                        '強制全停止　実際に停止されたかどうかかまわず
-                        Me._list.RemoveAt(i)
-                        'delete_mystreamnum(num) 'm3u8,tsを削除
-                        log1write("No.=" & num & "のプロセスを停止しました")
-                    ElseIf hls_stop = 1 And udp_stop = 1 Then
-                        Me._list.RemoveAt(i)
-                        'delete_mystreamnum(num) 'm3u8,tsを削除
-                        log1write("No.=" & num & "のプロセスを停止しました")
-                    Else
-                        log1write("No.=" & num & "のプロセス停止に失敗しました")
-                        'me._list(i)._stopping=1のまま残るので後で判別できる
+                Try
+                    '★ リストから取り除く
+                    If hls_only = 0 Then
+                        If num = -2 Then
+                            '強制全停止　実際に停止されたかどうかかまわず
+                            Me._list.RemoveAt(i)
+                            'delete_mystreamnum(num) 'm3u8,tsを削除
+                            log1write("No.=" & num & "のプロセスを停止しました")
+                        ElseIf hls_stop = 1 And udp_stop = 1 Then
+                            Me._list.RemoveAt(i)
+                            'delete_mystreamnum(num) 'm3u8,tsを削除
+                            log1write("No.=" & num & "のプロセスを停止しました")
+                        Else
+                            log1write("No.=" & num & "のプロセス停止に失敗しました")
+                            'me._list(i)._stopping=1のまま残るので後で判別できる
+                        End If
+                    ElseIf hls_only = 1 Then
+                        'Me._listからの削除はしない
+                        If hls_stop = 1 Then 'udpは起動し続けている
+                            log1write("No.=" & num & "のHLSプロセスを停止しました")
+                            Me._list(i)._stopping = 2 '後で無事起動したときに0にする
+                        Else
+                            log1write("No.=" & num & "のHLSプロセス停止に失敗しました")
+                            'me._list(i)._stopping=1のまま残るので後で判別できる
+                        End If
                     End If
-                ElseIf hls_only = 1 Then
-                    'Me._listからの削除はしない
-                    If hls_stop = 1 Then 'udpは起動し続けている
-                        log1write("No.=" & num & "のHLSプロセスを停止しました")
-                        Me._list(i)._stopping = 2 '後で無事起動したときに0にする
-                    Else
-                        log1write("No.=" & num & "のHLSプロセス停止に失敗しました")
-                        'me._list(i)._stopping=1のまま残るので後で判別できる
-                    End If
-                End If
+                Catch ex As Exception
+                    log1write("停止時listから取り除く際のエラー:" & ex.Message)
+                End Try
 
                 'System.Threading.Thread.Sleep(1000)
             End If
@@ -1077,7 +1090,7 @@ Public Class ProcessManager
         For j As Integer = 0 To Me._list.Count - 1
             If Me._list(j)._num = num Then
                 Dim s As String = Me._list(j)._udpOpt
-                Dim sp As Integer = s.ToLower.IndexOf("bondriver")
+                Dim sp As Integer = s.ToLower.LastIndexOf("bondriver")
                 Dim ep As Integer = s.IndexOf(".dll")
                 Dim bon As String = ""
                 If sp >= 0 And ep > sp Then
