@@ -1041,6 +1041,9 @@ Class WebRemocon
                                 HLS_PRIORITY = trim8(youso(1).ToString)
                             Case "UDP2HLS_WAIT"
                                 UDP2HLS_WAIT = Val(youso(1).ToString)
+                                If UDP2HLS_WAIT < 100 Then
+                                    UDP2HLS_WAIT = 100
+                                End If
                         End Select
                     End If
                 Catch ex As Exception

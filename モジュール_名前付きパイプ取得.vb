@@ -195,7 +195,7 @@ Module モジュール_名前付きパイプ取得
 
                 Pipe.Write(wsize, 0, wsize.Length)
                 Pipe.Flush()
-                Pipe.WaitForPipeDrain()
+                Pipe.WaitForPipeDrain() 'ここで応答無しになることがある
                 Pipe.Write(msg, 0, sendSize)
                 Pipe.Flush()
                 System.Console.WriteLine("debug:WriteFile1")
