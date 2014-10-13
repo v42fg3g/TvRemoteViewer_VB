@@ -194,10 +194,10 @@ Module モジュール_名前付きパイプ取得
                 Dim sendSize As UInteger = CUInt(msg.Length)
 
                 Pipe.Write(wsize, 0, wsize.Length)
-                Pipe.Flush()
+                'Pipe.Flush()
                 Pipe.WaitForPipeDrain() 'ここで応答無しになることがある
                 Pipe.Write(msg, 0, sendSize)
-                Pipe.Flush()
+                'Pipe.Flush()
                 System.Console.WriteLine("debug:WriteFile1")
                 System.Console.WriteLine("debug:" & wb)
                 System.Console.WriteLine("debug:" & ret)
