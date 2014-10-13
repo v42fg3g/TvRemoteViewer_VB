@@ -123,6 +123,7 @@
     </Compile>
     <Compile Include="ProcessBeans.vb" />
     <Compile Include="ProcessManager.vb" />
+    <Compile Include="SharedMemory.vb" />
     <Compile Include="WebRemocon.vb" />
     <Compile Include="モジュール_HTMLキャッシュ.vb" />
     <Compile Include="モジュール_NHKBS対策_暫定.vb" />

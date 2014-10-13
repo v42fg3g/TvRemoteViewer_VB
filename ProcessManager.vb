@@ -67,13 +67,13 @@ Public Class ProcessManager
                 hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
                 hls_only_chspace = Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
                 If hls_only_sid.Length > 0 And hls_only_chspace.Length > 0 Then
-                    hls_only = 1
+                    hls_only = 1 'パイプでチャンネル変更を行う
                 End If
             End If
         End If
 
         '★起動している場合は既存のプロセスを止める
-        stopProc(num, hls_only)
+        stopProc(num, hls_only) 'hls_only=1ならばHLSアプリのみを停止する
 
         If get_stopping_status(num) = 1 Then
             '停止段階で失敗している
@@ -83,9 +83,6 @@ Public Class ProcessManager
             delete_mystreamnum(num)
 
             'If Me._list.Count < Me._maxSize Then
-
-            '名前付きパイプ一覧取得でエラーが起これば1が入る
-            Dim pipe_error As Integer = 0
 
             If stream_mode = 0 Or stream_mode = 2 Then
                 'UDPストリーム再生
@@ -101,21 +98,9 @@ Public Class ProcessManager
                     Dim ks As String = Pipe_change_channel(pipeIndex, hls_only_sid, hls_only_chspace)
                     If ks.IndexOf("""OK""") > 0 Then
                         '成功
-                        '実際にチャンネルが変わったかどうかパイプで確認してから次へ
-                        'GetChannelでサービスIDが変わっているかチェック
-                        Dim j As Integer = 100 '最大5秒待つ
-                        While Pipe_get_channel(pipeIndex, hls_only_sid) = 0 And j >= 0
-                            log1write("UDPの配信チャンネルが切り替わるまで待機しています")
-                            j -= 1
-                            System.Threading.Thread.Sleep(50)
-                        End While
-                        If j >= 0 Then
-                            log1write("UDPの配信チャンネル切り替えに成功しました")
-                        Else
-                            log1write("UDPの配信チャンネル切り替えに失敗しました")
-                        End If
                         '既存プロセス
                         udpProc = Me._list(i).GetUdpProc
+                        udpProc.WaitForInputIdle()
                         log1write("名前付きパイプを使用してチャンネルを変更しました")
                     Else
                         '失敗したら引き続き通常起動を試みる
@@ -127,37 +112,6 @@ Public Class ProcessManager
 
                 If hls_only = 0 Then
                     '通常起動
-                    Dim pipeListBefore As New List(Of Integer)()
-                    If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
-
-                        '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
-                        Dim listOfPipes As String() = Nothing
-                        'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                        listOfPipes = GetPipes()
-                        If listOfPipes Is Nothing Then
-                            '名前付きパイプ一覧取得でエラーが起こった
-                            '外部プログラムによりパイプ一覧取得を試みる
-                            listOfPipes = F_get_NamedPipeList_from_program()
-                        End If
-                        If listOfPipes IsNot Nothing Then
-                            For Each pipeName As String In listOfPipes
-                                If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                    Dim pindex1 As Integer = 0
-                                    Try
-                                        pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + "RecTask_Server_Pipe_".Length))
-                                    Catch ex As Exception
-                                    End Try
-                                    If pindex1 > 0 Then
-                                        pipeListBefore.Add(pindex1)
-                                        'log1write("Before PipeName=" & pipeName & " PipeIndex=" & pindex1)
-                                    End If
-                                End If
-                            Next
-                        Else
-                            '何をやってもエラー
-                            pipe_error = 1
-                        End If
-                    End If
 
                     '★UDPソフトを実行
                     'ProcessStartInfoオブジェクトを作成する
@@ -188,85 +142,31 @@ Public Class ProcessManager
                     log1write("No.=" & num & "のUDPアプリを起動しました。優先度：" & UDP_PRIORITY_STR & "　handle=" & udpProc.Handle.ToString)
 
                     'pipeindexを取得
-                    pipeIndex = 0
-                    Dim chk As Integer = 0
-                    If pipe_error = 0 Then
-                        While chk < 200
-                            'RecTaskのパイプが増加するまで繰り返す
-                            If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
-                                '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
-                                Dim listOfPipes As String() = Nothing
-                                'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                                listOfPipes = GetPipes()
-                                If listOfPipes Is Nothing Then
-                                    '名前付きパイプ一覧取得でエラーが起こった
-                                    '外部プログラムによりパイプ一覧取得を試みる
-                                    listOfPipes = F_get_NamedPipeList_from_program()
-                                    If listOfPipes Is Nothing Then
-                                        '何をやってもエラー
-                                        pipe_error = 2
-                                        Exit While
-                                    End If
-                                End If
+                    udpProc.WaitForInputIdle()
+                    Dim pipe_sm As New SharedMemory
+                    pipeIndex = pipe_sm.Read(udpProc.Id)
 
-                                For Each pipeName As String In listOfPipes
-                                    If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                        Dim pindex2 As Integer = 0
-                                        Try
-                                            pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
-                                        Catch ex As Exception
-                                        End Try
-                                        If pindex2 > 0 Then
-                                            'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
-                                            Dim c2 As Integer = 0
-                                            '起動前のパイプindexに存在しなければOK
-                                            For Each pt As Integer In pipeListBefore
-                                                If pindex2 = pt Then
-                                                    c2 += 100
-                                                End If
-                                            Next
-                                            '該当するpipeindexが見つからなければ新規
-                                            If c2 = 0 Then
-                                                pipeIndex = pindex2
-                                                Exit While
-                                            End If
-                                        Else
-                                            pipeIndex = pindex2
-                                            Exit While
-                                        End If
-                                    End If
-                                Next
-                            End If
-                            System.Threading.Thread.Sleep(50)
-                            chk += 1
-                        End While
+                    '配信が期待されるサービスID
+                    hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
 
-                        System.Threading.Thread.Sleep(UDP2HLS_WAIT) 'これを入れないとpipeから反応が返ってこずハングする現象が多発
-                        If pipeIndex > 0 Then
-                            '配信が期待されるサービスID
-                            hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
-                            '実際にチャンネルが変わったかどうかパイプで確認してから次へ
-                            'GetChannelでサービスIDが変わっているかチェック
-                            Dim j As Integer = 100 '100 '最大5秒待つ
-                            While Pipe_get_channel(pipeIndex, hls_only_sid) = 0 And j >= 0
-                                log1write("UDPの配信チャンネルが切り替わるまで待機しています")
-                                j -= 1
-                                System.Threading.Thread.Sleep(50)
-                            End While
-                            If j >= 0 Then
-                                log1write("UDPの配信チャンネル切り替えに成功しました")
-                            Else
-                                log1write("UDPの配信チャンネル切り替えに失敗しました")
-                            End If
-                        End If
-                    End If
+                    'System.Threading.Thread.Sleep(UDP2HLS_WAIT) 'これを入れないとpipeから反応が返ってこずハングする現象が多発
                 End If
 
-                If pipeIndex > 0 Or pipe_error > 0 Then
-                    If pipe_error = 0 Then
-                        log1write("No.=" & num & "のパイプインデックスを取得しました。pipeindex=" & pipeIndex.ToString)
+                If pipeIndex > 0 Then
+                    log1write("No.=" & num & "のパイプインデックスを取得しました。pipeindex=" & pipeIndex.ToString)
+
+                    '実際にチャンネルが変わったかどうかパイプで確認してから次へ
+                    'GetChannelでサービスIDが変わっているかチェック
+                    Dim j As Integer = 100 '最大5秒待つ
+                    While Pipe_get_channel(pipeIndex, hls_only_sid) = 0 And j >= 0
+                        log1write("UDPの配信チャンネルが切り替わるまで待機しています")
+                        j -= 1
+                        System.Threading.Thread.Sleep(50)
+                    End While
+                    If j >= 0 Then
+                        log1write("UDPの配信チャンネル切り替えに成功しました")
                     Else
-                        log1write("No.=" & num & "のパイプインデックスは取得できませんでした。パイプを使用せずに続行します。")
+                        log1write("UDPの配信チャンネル切り替えに失敗しました")
                     End If
 
                     'System.Threading.Thread.Sleep(UDP2HLS_WAIT) 'ffmpegなら500でおｋ　VLCだと環境によって2000程度無いと不安定の場合有り
