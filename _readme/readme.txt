@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.65
+TvRemoteViewer_VB v0.66
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -347,6 +347,8 @@ TvRemoteViewer_VB v0.65
 	0.63	名前付きパイプコードの修正
 	0.64	UDPアプリが配信開始してからHLSアプリが起動するまでに入れる待ち時間指定をiniに復活
 	0.65	配信時にUDPアプリより先にHLSアプリを起動するようにした
+	0.66	WEBインターフェースを追加
+		TvRemoteViewer_VB_client 1.01に対応
 
 
 

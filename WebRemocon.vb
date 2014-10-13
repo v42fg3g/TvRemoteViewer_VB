@@ -1700,6 +1700,10 @@ Class WebRemocon
                                     'ビデオファイル
                                     WI_cmd_reply = Me.WI_GET_VIDEOFILES()
                                     WI_cmd_reply_force = 1
+                                Case "WI_GET_ERROR_STREAM"
+                                    '再起動中のストリームを返す
+                                    WI_cmd_reply = Me.WI_GET_ERROR_STREAM()
+                                    WI_cmd_reply_force = 1
                             End Select
                         End If
 
@@ -2276,6 +2280,10 @@ Class WebRemocon
         Return Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp, Me._BonDriver_NGword)
     End Function
 
+    '　本体はProcessManager.vbに
+    Public Function WI_GET_ERROR_STREAM() As String
+        Return Me._procMan.WI_GET_ERROR_STREAM()
+    End Function
 End Class
 
 

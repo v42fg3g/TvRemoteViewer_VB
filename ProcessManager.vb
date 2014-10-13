@@ -275,7 +275,7 @@ Public Class ProcessManager
                 Me._list.Add(pb)
             End If
             'End If
-            End If
+        End If
 
         '現在稼働中のlist(i)._numをログに表示
         Dim js As String = get_live_numbers()
@@ -386,7 +386,7 @@ Public Class ProcessManager
                     Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
                     Dim p10 As String = Me._list(i)._resolution
                     'プロセスを停止
-                    stopProc(p5)
+                    'stopProc(p5) 'startprocでも冒頭で停止処理をするので割愛
                     'System.Threading.Thread.Sleep(500)
                     'プロセスを開始
                     startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)
@@ -1319,6 +1319,20 @@ Public Class ProcessManager
         Return r
     End Function
 
+    '再起動が起こっているnumを返す
+    Public Function WI_GET_ERROR_STREAM() As String
+        Dim r As String = ":"
+        Dim i As Integer = 0
+        If Me._list.Count > 0 Then
+            For i = 0 To Me._list.Count - 1
+                If Me._list(i)._chk_proc > 0 Then
+                    'エラーがあればnumを返す
+                    r &= Me._list(i)._num.ToString & ":"
+                End If
+            Next
+        End If
+        Return r
+    End Function
 End Class
 
 
