@@ -169,8 +169,9 @@ Public Class ProcessManager
                         log1write("UDPの配信チャンネル切り替えに失敗しました")
                     End If
 
-                    'System.Threading.Thread.Sleep(UDP2HLS_WAIT) 'ffmpegなら500でおｋ　VLCだと環境によって2000程度無いと不安定の場合有り
-                    '上に移動、同一BonDriverでpipeでチャンネル切り替えならウェイトは入らない
+                    If UDP2HLS_WAIT > 0 Then
+                        System.Threading.Thread.Sleep(UDP2HLS_WAIT) 'ffmpegなら500でおｋ　VLCだと環境によって2000程度無いと不安定の場合有り
+                    End If
 
                     '★HLSソフトを実行
                     'ProcessStartInfoオブジェクトを作成する

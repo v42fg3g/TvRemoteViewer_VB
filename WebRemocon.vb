@@ -1039,6 +1039,8 @@ Class WebRemocon
                                 UDP_PRIORITY = trim8(youso(1).ToString)
                             Case "HLS_PRIORITY"
                                 HLS_PRIORITY = trim8(youso(1).ToString)
+                            Case "UDP2HLS_WAIT"
+                                UDP2HLS_WAIT = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
