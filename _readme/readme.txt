@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.66
+TvRemoteViewer_VB v0.67
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -349,6 +349,9 @@ TvRemoteViewer_VB v0.66
 	0.65	配信時にUDPアプリより先にHLSアプリを起動するようにした
 	0.66	WEBインターフェースを追加
 		TvRemoteViewer_VB_client 1.01に対応
+	0.66b	配信開始手順のみ0.59そのものに戻した実験バージョン（iniの UDP2HLS_WAIT = 500）
+	0.67	0.66bをベースにパイプ番号取得方法変更とUDP配信確認を追加（iniのUDP2HLS_WAIT=500推奨）
+		起動時にチャンネル情報を取得することにした
 
 
 
