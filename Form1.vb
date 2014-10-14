@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.66"
+    Private version As String = "TvRemoteViewer_VB version 0.67"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -258,6 +258,9 @@ Public Class Form1
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止
         Me._worker.stopProc(-2)
+
+        'チャンネル情報を取得　今までは表示要求があった時点で１つ１つ取得していた
+        Me._worker.WI_GET_CHANNELS()
 
         'ファイル再生用パス読み込み
         Me._worker.read_videopath()
