@@ -1041,6 +1041,8 @@ Class WebRemocon
                                 HLS_PRIORITY = trim8(youso(1).ToString)
                             Case "UDP2HLS_WAIT"
                                 UDP2HLS_WAIT = Val(youso(1).ToString)
+                            Case "ALLOW_IDPASS2HTML"
+                                ALLOW_IDPASS2HTML = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -2070,6 +2072,15 @@ Class WebRemocon
                                 s = s.Replace("%SELECTRESOLUTION" & gt(0) & "%", gt(1) & selectresolution & gt(3))
                             End If
 
+                            'ユーザー名とパスワード変換
+                            If s.IndexOf("%IDPASS%") >= 0 Then
+                                If ALLOW_IDPASS2HTML = 1 And Me._id.Length > 0 And Me._pass.Length > 0 Then
+                                    s = s.Replace("%IDPASS%", Me._id & ":" & Me._pass & "@")
+                                Else
+                                    s = s.Replace("%IDPASS%", "")
+                                End If
+                            End If
+
                             sw.WriteLine(s)
                             'sw.Flush()
 
@@ -2165,6 +2176,10 @@ Class WebRemocon
                 r &= "_MIME_TYPE=" & Me._MIME_TYPE(i) & vbCrLf
             Next
         End If
+        r &= vbCrLf
+        r &= "【番組表】" & vbCrLf
+        r &= "TvProgram_tvrock_url=" & TvProgram_tvrock_url & vbCrLf
+        r &= "TvProgram_EDCB_url=" & TvProgram_EDCB_url & vbCrLf
         r &= vbCrLf
         r &= "【ファイル再生】" & vbCrLf
         If Me._videopath IsNot Nothing Then

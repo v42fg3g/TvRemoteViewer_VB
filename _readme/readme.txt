@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.67
+TvRemoteViewer_VB v0.68
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -114,6 +114,9 @@ TvRemoteViewer_VB v0.67
 	%VIEWBUTTONS%			ストリームの数だけ視聴ボタンを作成
 	%SELECTNUM%			ストリームナンバー選択
 	%SELECTRESOLUTION%		解像度選択
+	%IDPASS%			「ユーザー名:パスワード@」に変換（iniでALLOW_IDPASS2HTML=1のとき）
+					使用例　http://%IDPASS%" + location.host + "/%FILEROOT%mystream%NUM%.m3u8";
+					IEなどではセキュリティ設定でURL内パスワードを許可しないと見れなくなります
 
 
 	・ViewTV[n].htmlのみで使用できる変数
@@ -352,6 +355,8 @@ TvRemoteViewer_VB v0.67
 	0.66b	配信開始手順のみ0.59そのものに戻した実験バージョン（iniの UDP2HLS_WAIT = 500）
 	0.67	0.66bをベースにパイプ番号取得方法変更とUDP配信確認を追加（iniのUDP2HLS_WAIT=500推奨）
 		起動時にチャンネル情報を取得することにした
+	0.68	WEBインターフェースを修正
+		HTML内で「ユーザー名:パスワード@」に変換できるようにした（iniで許可する必要有り）
 
 
 
