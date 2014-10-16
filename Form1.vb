@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.68"
+    Private version As String = "TvRemoteViewer_VB version 0.69"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -117,15 +117,15 @@ Public Class Form1
         End If
 
         'ログ処理
-        If log1.Length > 20000 Then
-            '10000文字以上になったらカット
-            log1 = log1.Substring(0, 20000)
-        End If
-        If log1 <> TextBoxLog.Text Then
+        If log1 <> log1_dummy Then
+            If log1.Length > 30000 Then
+                '30000文字以上になったらカット
+                log1 = log1.Substring(0, 30000)
+            End If
             TextBoxLog.Text = log1
+            log1_dummy = log1
+            TextBoxLog.Refresh()
         End If
-        Refresh()
-        TextBoxLog.Refresh()
 
     End Sub
 

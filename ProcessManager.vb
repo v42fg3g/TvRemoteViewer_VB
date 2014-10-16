@@ -79,6 +79,8 @@ Public Class ProcessManager
             '停止段階で失敗している
             log1write("No.=" & num & "のプロセスは使用できません。前回使用時の停止に失敗したようです")
         Else
+            'get_stopping_status(num) = 2(HLSアプリのみストップ）は素通りしてくる
+
             '関連するファイルを削除
             delete_mystreamnum(num)
 
@@ -101,10 +103,12 @@ Public Class ProcessManager
                         '既存プロセス
                         udpProc = Me._list(i).GetUdpProc
                         udpProc.WaitForInputIdle()
-                        log1write("名前付きパイプを使用してチャンネルを変更しました")
+                        log1write("No.=" & num & "名前付きパイプを使用してチャンネルを変更しました")
                     Else
+                        log1write(ks)
                         '失敗したら引き続き通常起動を試みる
-                        log1write("名前付きパイプを使用してのチャンネル変更に失敗しました。通常起動を試みます")
+                        log1write("No.=" & num & "名前付きパイプを使用してのチャンネル変更に失敗しました。通常起動を試みます")
+                        log1write("No.=" & num & "過去のUDPアプリ配信が失敗していた可能性があります")
                         hls_only = 0
                         stopProc(num)
                     End If
@@ -121,8 +125,8 @@ Public Class ProcessManager
                     'コマンドライン引数を指定する
                     udpPsi.Arguments = udpOpt
                     'ログ表示
-                    log1write("UDP アプリ=" & udpApp)
-                    log1write("UDP option=" & udpOpt)
+                    log1write("No.=" & num & "UDP アプリ=" & udpApp)
+                    log1write("No.=" & num & "UDP option=" & udpOpt)
                     'アプリケーションを起動する
                     udpProc = System.Diagnostics.Process.Start(udpPsi)
                     Dim UDP_PRIORITY_STR As String = UDP_PRIORITY
@@ -159,14 +163,14 @@ Public Class ProcessManager
                     'GetChannelでサービスIDが変わっているかチェック
                     Dim j As Integer = 100 '最大5秒待つ
                     While Pipe_get_channel(pipeIndex, hls_only_sid) = 0 And j >= 0
-                        log1write("UDPの配信チャンネルが切り替わるまで待機しています")
+                        log1write("No.=" & num & "UDPの配信チャンネルが切り替わるまで待機しています")
                         j -= 1
                         System.Threading.Thread.Sleep(50)
                     End While
                     If j >= 0 Then
-                        log1write("UDPの配信チャンネル切り替えに成功しました")
+                        log1write("No.=" & num & "UDPの配信チャンネル切り替えに成功しました")
                     Else
-                        log1write("UDPの配信チャンネル切り替えに失敗しました")
+                        log1write("No.=" & num & "UDPの配信チャンネル切り替えに失敗しました")
                     End If
 
                     System.Threading.Thread.Sleep(UDP2HLS_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
@@ -194,8 +198,8 @@ Public Class ProcessManager
                         hlsPsi.UseShellExecute = False
                     End If
                     'ログ表示
-                    log1write("HLS アプリ=" & hlsApp)
-                    log1write("HLS option=" & hlsOpt)
+                    log1write("No.=" & num & "HLS アプリ=" & hlsApp)
+                    log1write("No.=" & num & "HLS option=" & hlsOpt)
                     'アプリケーションを起動する
                     Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
                     Dim HLS_PRIORITY_STR As String = HLS_PRIORITY
@@ -250,8 +254,8 @@ Public Class ProcessManager
                     hlsPsi.UseShellExecute = False
                 End If
                 'ログ表示
-                log1write("HLS アプリ=" & hlsApp)
-                log1write("HLS option=" & hlsOpt)
+                log1write("No.=" & num & "HLS アプリ=" & hlsApp)
+                log1write("No.=" & num & "HLS option=" & hlsOpt)
                 'アプリケーションを起動する
                 Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
 
@@ -316,71 +320,76 @@ Public Class ProcessManager
 
     'プロセスが順調に動いているかチェック
     Public Sub checkAllProc()
-        For i As Integer = Me._list.Count - 1 To 0 Step -1
-            If Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 0 Or Me._list(i)._stream_mode = 2) Then
-                Dim chk As Integer = 0
-                Dim procudp As System.Diagnostics.Process = Nothing
-                Dim prochls As System.Diagnostics.Process = Nothing
-                procudp = Me._list(i).GetUdpProc()
-                prochls = Me._list(i).GetHlsProc()
-                If procudp IsNot Nothing AndAlso Not procudp.HasExited Then
-                Else
-                    'エラー
-                    Me._list(i)._chk_proc += 100
-                    chk += 1
-                    log1write("No.=" & Me._list(i)._num.ToString & " UDPアプリが応答しません")
-                End If
-                'If procudp.Responding Then
-                'Else
-                '応答しない
-                'Me._list(i)._chk_proc += 10
-                'chk += 1
-                'log1write("UDPアプリが応答しません[B] No.=" & Me._list(i)._num.ToString)
-                'End If
-                If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
-                Else
-                    'エラー
-                    Me._list(i)._chk_proc += 100
-                    chk += 1
-                    log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
-                End If
-                'If prochls.Responding Then
-                'Else
-                '応答しない
-                'Me._list(i)._chk_proc += 10
-                'chk += 1
-                'log1write("HLSアプリが応答しません[B] No.=" & Me._list(i)._num.ToString)
-                'End If
+        Try
+            For i As Integer = Me._list.Count - 1 To 0 Step -1
+                If Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 0 Or Me._list(i)._stream_mode = 2) Then
+                    Dim chk As Integer = 0
+                    Dim procudp As System.Diagnostics.Process = Nothing
+                    Dim prochls As System.Diagnostics.Process = Nothing
+                    procudp = Me._list(i).GetUdpProc()
+                    prochls = Me._list(i).GetHlsProc()
+                    If procudp IsNot Nothing AndAlso Not procudp.HasExited Then
+                    Else
+                        'エラー
+                        Me._list(i)._chk_proc += 100
+                        chk += 1
+                        log1write("No.=" & Me._list(i)._num.ToString & " UDPアプリが応答しません")
+                    End If
+                    'If procudp.Responding Then
+                    'Else
+                    '応答しない
+                    'Me._list(i)._chk_proc += 10
+                    'chk += 1
+                    'log1write("UDPアプリが応答しません[B] No.=" & Me._list(i)._num.ToString)
+                    'End If
+                    If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
+                    Else
+                        'エラー
+                        Me._list(i)._chk_proc += 100
+                        chk += 1
+                        log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
+                    End If
+                    'If prochls.Responding Then
+                    'Else
+                    '応答しない
+                    'Me._list(i)._chk_proc += 10
+                    'chk += 1
+                    'log1write("HLSアプリが応答しません[B] No.=" & Me._list(i)._num.ToString)
+                    'End If
 
-                If chk = 0 Then
-                    'エラーがなければエラーカウンタをリセット
-                    Me._list(i)._chk_proc = 0
-                End If
+                    If chk = 0 Then
+                        'エラーがなければエラーカウンタをリセット
+                        Me._list(i)._chk_proc = 0
+                    End If
 
-                If Me._list(i)._chk_proc >= 300 Then 'プロセスが無いか3秒応答がなければ
-                    'エラーカウンタをリセット
-                    Me._list(i)._chk_proc = 0
-                    '終了して再起動
-                    'stopProcする前に起動パラメーターを一時待避
-                    Dim p1 As String = Me._list(i)._udpApp
-                    Dim p2 As String = Me._list(i)._udpOpt
-                    Dim p3 As String = Me._list(i)._hlsApp
-                    Dim p4 As String = Me._list(i)._hlsOpt
-                    Dim p5 As Integer = Me._list(i)._num
-                    Dim p6 As Integer = Me._list(i)._udpPort
-                    Dim p7 As Boolean = Me._list(i)._ShowConsole
-                    Dim p8 As Integer = Me._list(i)._stream_mode
-                    Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
-                    Dim p10 As String = Me._list(i)._resolution
-                    'プロセスを停止
-                    'stopProc(p5) 'startprocでも冒頭で停止処理をするので割愛
-                    'System.Threading.Thread.Sleep(500)
-                    'プロセスを開始
-                    startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)
-                    log1write("No.=" & p5 & "のプロセスを再起動しました")
+                    If Me._list(i)._chk_proc >= 300 Then 'プロセスが無いか3秒応答がなければ
+                        'エラーカウンタをリセット
+                        Me._list(i)._chk_proc = 0
+                        '終了して再起動
+                        'stopProcする前に起動パラメーターを一時待避
+                        Dim p1 As String = Me._list(i)._udpApp
+                        Dim p2 As String = Me._list(i)._udpOpt
+                        Dim p3 As String = Me._list(i)._hlsApp
+                        Dim p4 As String = Me._list(i)._hlsOpt
+                        Dim p5 As Integer = Me._list(i)._num
+                        Dim p6 As Integer = Me._list(i)._udpPort
+                        Dim p7 As Boolean = Me._list(i)._ShowConsole
+                        Dim p8 As Integer = Me._list(i)._stream_mode
+                        Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
+                        Dim p10 As String = Me._list(i)._resolution
+                        'プロセスを停止
+                        'stopProc(p5) 'startprocでも冒頭で停止処理をするので割愛
+                        'System.Threading.Thread.Sleep(500)
+                        'プロセスを開始
+                        startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)
+                        log1write("No.=" & p5 & "のプロセスを再起動しました")
+                    End If
                 End If
-            End If
-        Next
+            Next
+
+        Catch ex As Exception
+            '終了時などに希に既に存在していないMe._list(i)へのアクセス
+        End Try
     End Sub
 
     '指定numberプロセスを停止する
@@ -520,18 +529,29 @@ Public Class ProcessManager
                                     System.Threading.Thread.Sleep(10)
                                     chk -= 1
                                 End While
-                                If chk >= 0 Then
-                                    log1write("No.=" & num & "のUDPアプリを終了しました")
+                                If chk > 0 Then
+                                    '最後にプロセスチェック
+                                    If wait_stop_proc(proc) = 1 Then
+                                        log1write("No.=" & num & "のUDPアプリを終了しました。")
+                                        udp_stop = 1
+                                    Else
+                                        log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了が行われたはずにもかかわらず")
+                                        log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
+                                    End If
                                 Else
                                     'タイムアウト
-                                    log1write("No.=" & num & "のUDPアプリの終了に失敗しました")
-                                End If
-                                '最後にプロセスチェック
-                                If wait_stop_proc(proc) = 1 Then
-                                    'log1write("No.=" & num & "のudpアプリを強制終了しました")
-                                    udp_stop = 1
-                                Else
-                                    log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
+                                    log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了に失敗しました")
+                                    log1write("No.=" & num & "のUDPアプリの強制終了を試みます")
+                                    '引き続き強制終了を試みる
+                                    proc.Kill()
+                                    '最後にプロセスチェック
+                                    If wait_stop_proc(proc) = 1 Then
+                                        log1write("No.=" & num & "のudpアプリを強制終了しました")
+                                        udp_stop = 1
+                                    Else
+                                        log1write("No.=" & num & "のUDPアプリの強制終了に失敗しました")
+                                        log1write("No.=" & num & "のUDPアプリのプロセスが残っています")
+                                    End If
                                 End If
                                 proc.Close()
                                 proc.Dispose()
