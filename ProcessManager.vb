@@ -108,9 +108,16 @@ Public Class ProcessManager
                         log1write(ks)
                         '失敗したら引き続き通常起動を試みる
                         log1write("No.=" & num & "名前付きパイプを使用してのチャンネル変更に失敗しました。通常起動を試みます")
-                        log1write("No.=" & num & "過去のUDPアプリ配信が失敗していた可能性があります")
+                        log1write("No.=" & num & "UDPアプリの再起動を試みます")
                         hls_only = 0
                         stopProc(num)
+                        If get_stopping_status(num) > 0 Then
+                            '結局何をやっても失敗
+                            log1write("No.=" & num & "のプロセスは使用できません。UDPアプリの停止に失敗したようです")
+                            '現在稼働中のlist(i)._numをログに表示
+                            log1write("現在稼働中のNumber：" & get_live_numbers())
+                            Exit Sub
+                        End If
                     End If
                 End If
 
