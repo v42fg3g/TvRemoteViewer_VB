@@ -295,10 +295,14 @@ Class WebRemocon
 
                                     '抽出
                                     If videoexword.Length > 0 Then
-                                        If filename.IndexOf(videoexword) < 0 Then
-                                            '当てはまらなければスルー
-                                            filename = ""
-                                        End If
+                                        videoexword = videoexword.Replace("　", " ")
+                                        Dim v() As String = videoexword.Split(" ")
+                                        '全てのワードに当てはまるかチェック
+                                        For j As Integer = 0 To v.Length - 1
+                                            If filename.IndexOf(v(j)) < 0 Then
+                                                filename = ""
+                                            End If
+                                        Next
                                     End If
 
                                     If filename.Length > 0 Then

@@ -123,6 +123,30 @@ Public Class ProcessManager
 
                 If hls_only = 0 Then
                     '通常起動
+                    Dim pipeListBefore As New List(Of Integer)()
+                    If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                        '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
+                        Dim listOfPipes As String() = Nothing
+                        listOfPipes = GetPipes()
+                        If listOfPipes IsNot Nothing Then
+                            For Each pipeName As String In listOfPipes
+                                If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                    Dim pindex1 As Integer = 0
+                                    Try
+                                        pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + "RecTask_Server_Pipe_".Length))
+                                    Catch ex As Exception
+                                    End Try
+                                    If pindex1 > 0 Then
+                                        pipeListBefore.Add(pindex1)
+                                    End If
+                                End If
+                            Next
+                        Else
+                            '何をやってもエラー
+                            log1write("No.=" & num & "のUDPアプリ実行前パイプ一覧取得に失敗しました")
+                            Exit Sub
+                        End If
+                    End If
 
                     '★UDPソフトを実行
                     'ProcessStartInfoオブジェクトを作成する
@@ -132,8 +156,8 @@ Public Class ProcessManager
                     'コマンドライン引数を指定する
                     udpPsi.Arguments = udpOpt
                     'ログ表示
-                    log1write("No.=" & num & "UDP アプリ=" & udpApp)
-                    log1write("No.=" & num & "UDP option=" & udpOpt)
+                    log1write("UDP アプリ=" & udpApp)
+                    log1write("UDP option=" & udpOpt)
                     'アプリケーションを起動する
                     udpProc = System.Diagnostics.Process.Start(udpPsi)
                     Dim UDP_PRIORITY_STR As String = UDP_PRIORITY
@@ -153,9 +177,58 @@ Public Class ProcessManager
                     log1write("No.=" & num & "のUDPアプリを起動しました。優先度：" & UDP_PRIORITY_STR & "　handle=" & udpProc.Handle.ToString)
 
                     'pipeindexを取得
-                    udpProc.WaitForInputIdle()
-                    Dim pipe_sm As New SharedMemory
-                    pipeIndex = pipe_sm.Read(udpProc.Id)
+                    pipeIndex = 0
+                    Dim chk As Integer = 0
+                    While chk < 200
+                        'RecTaskのパイプが増加するまで繰り返す
+                        If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                            '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
+                            Dim listOfPipes As String() = Nothing
+                            'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                            listOfPipes = GetPipes()
+                            If listOfPipes Is Nothing Then
+                                log1write("No.=" & num & "のUDPアプリ実行後パイプ一覧取得に失敗しました")
+                                Try
+                                    udpProc.Kill()
+                                    udpProc.Dispose()
+                                    udpProc.Close()
+                                Catch ex As Exception
+                                End Try
+                                log1write("No.=" & num & "のUDPアプリを強制終了しました")
+                                Exit Sub
+                            End If
+
+                            For Each pipeName As String In listOfPipes
+                                If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                    Dim pindex2 As Integer = 0
+                                    Try
+                                        pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
+                                    Catch ex As Exception
+                                    End Try
+                                    If pindex2 > 0 Then
+                                        'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
+                                        Dim c2 As Integer = 0
+                                        '起動前のパイプindexに存在しなければOK
+                                        For Each pt As Integer In pipeListBefore
+                                            If pindex2 = pt Then
+                                                c2 += 100
+                                            End If
+                                        Next
+                                        '該当するpipeindexが見つからなければ新規
+                                        If c2 = 0 Then
+                                            pipeIndex = pindex2
+                                            Exit While
+                                        End If
+                                    Else
+                                        pipeIndex = pindex2
+                                        Exit While
+                                    End If
+                                End If
+                            Next
+                        End If
+                        System.Threading.Thread.Sleep(50)
+                        chk += 1
+                    End While
 
                     '配信が期待されるサービスID
                     hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
@@ -242,7 +315,7 @@ Public Class ProcessManager
                         udpProc.Close()
                     Catch ex As Exception
                     End Try
-                    log1write("No.=" & num & "　名前付きパイプ一覧取得に成功したにもかかわらずUDPアプリのパイプ名が見当たらないため、UDPアプリ起動に失敗したとみなして配信を停止します")
+                    log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリを終了しました")
                 End If
 
             ElseIf stream_mode = 1 Or stream_mode = 3 Then
