@@ -1938,12 +1938,6 @@ Class WebRemocon
                                 s = s.Replace("%SELECTVIDEO%", shtml)
                             End If
 
-                            '解像度セレクトボックス
-                            If s.IndexOf("%SELECTRESOLUTION%") >= 0 Then
-                                Dim selectresolution As String = WEB_make_select_resolution()
-                                s = s.Replace("%SELECTRESOLUTION%", selectresolution)
-                            End If
-
                             '地デジ番組表（通常のネットから取得）
                             If s.IndexOf("%TVPROGRAM-D%") >= 0 Then
                                 If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
@@ -1998,6 +1992,12 @@ Class WebRemocon
                                     s = s.Replace("%SELECTBONSIDCH" & gt(0) & "%", gt(4))
                                 End If
                             End While
+
+                            '解像度セレクトボックス '%SELECTBONSIDCHより後でないといけない
+                            If s.IndexOf("%SELECTRESOLUTION%") >= 0 Then
+                                Dim selectresolution As String = WEB_make_select_resolution()
+                                s = s.Replace("%SELECTRESOLUTION%", selectresolution)
+                            End If
 
                             'ViewTV.html用
                             If chk_viewtv_ok = 1 And num > 0 Then
