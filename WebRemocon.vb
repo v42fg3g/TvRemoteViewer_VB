@@ -1599,74 +1599,11 @@ Class WebRemocon
                         End If
                     End If
 
-                    '===========================================
-                    '★リクエストパラメーターを取得
-                    '===========================================
-                    'スレッドナンバー
-                    Dim num As Integer = 0
-                    num = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num") & "")
-                    'Int32.TryParse(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num"), num)
-                    'BonDriver指定
-                    Dim bondriver As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("BonDriver") & ""
-                    'サービスＩＤ指定
-                    Dim sid As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ServiceID") & ""
-                    'chspace指定
-                    Dim chspace As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ChSpace") & ""
-                    'Bon_Sid_Ch一括指定があった場合（JavaScript等でBon_Sid_Ch="BonDriver_t0.dll,12345,0"というように指定された場合）
-                    Dim bon_sid_ch_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("Bon_Sid_Ch") & ""
-                    Dim bon_sid_ch() As String = bon_sid_ch_str.Split(",")
-                    If bon_sid_ch.Length = 3 Then
-                        '個別に値が決まっていなければセット
-                        If bondriver.Length = 0 Then bondriver = Trim(bon_sid_ch(0))
-                        If sid.Length = 0 Then sid = Trim(bon_sid_ch(1))
-                        If chspace.Length = 0 Then chspace = Trim(bon_sid_ch(2))
-                    End If
-                    'redirect指定
-                    Dim redirect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("redirect") & ""
-                    'm3u8,tsの準備状況
-                    Dim check_m3u8_ts As Integer = 0
-                    'ストリームモード 0=UDP 1=ファイル再生
-                    Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
-
-                    'NHKの音声モード
-                    Dim NHK_dual_mono_mode_select As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & "")
-                    If Me._NHK_dual_mono_mode <> 3 Then
-                        NHK_dual_mono_mode_select = Me._NHK_dual_mono_mode
-                    End If
-
-                    'ファイル名
-                    Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
-                    Dim vname() As String = videoname.Split(",")
-                    If vname.Length = 2 Then
-                        'vname(0)には日付が入っているyyyyMMdd 20140101
-                        videoname = vname(1)
-                    End If
-                    'URLエンコードしておいたフルパスを文字列に変換
-                    videoname = System.Web.HttpUtility.UrlDecode(videoname)
-
-                    '文字化け可能性のある項目
-                    '解像度指定 "640x360"等
-                    Dim resolution As String = "" 'System.Web.HttpUtility.ParseQueryString(req.Url.Query)("resolution") & ""
-                    'ビデオファイル名抽出             ↓だとUTF-8で返ってきて修正不可能な文字化け
-                    Dim videoexword As String = "" '= System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
-                    If req.QueryString.Count > 0 Then
-                        'クエリから1つずつチェック
-                        For ii As Integer = 0 To req.QueryString.Count - 1
-                            Select Case req.QueryString.Keys(ii)
-                                Case "VideoExWord"
-                                    videoexword = req.QueryString.Item(ii)
-                                Case "resolution"
-                                    resolution = req.QueryString.Item(ii)
-                            End Select
-                        Next
-                    End If
-
-                    '===========================================
                     'リクエストされたURL
                     Dim req_Url As String = req.Url.LocalPath
 
-                    'HTMLなら
                     If path.IndexOf(".htm") > 0 Then
+                        'HTMLなら
 
                         '反応が速くなるかなとこの1行を前に出してみたが何も変わらなかった・・
                         Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
@@ -1675,6 +1612,64 @@ Class WebRemocon
                         Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
                         Dim request_page As Integer = 0 '特別なリクエストかどうか
                         Dim chk_viewtv_ok As Integer = 0 'ViewTV.htmlへのリクエストなら1になる
+
+                        '===========================================
+                        '★リクエストパラメーターを取得
+                        '===========================================
+                        'スレッドナンバー
+                        Dim num As Integer = 0
+                        num = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num") & "")
+                        'Int32.TryParse(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num"), num)
+                        'BonDriver指定
+                        Dim bondriver As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("BonDriver") & ""
+                        'サービスＩＤ指定
+                        Dim sid As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ServiceID") & ""
+                        'chspace指定
+                        Dim chspace As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ChSpace") & ""
+                        'Bon_Sid_Ch一括指定があった場合（JavaScript等でBon_Sid_Ch="BonDriver_t0.dll,12345,0"というように指定された場合）
+                        Dim bon_sid_ch_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("Bon_Sid_Ch") & ""
+                        Dim bon_sid_ch() As String = bon_sid_ch_str.Split(",")
+                        If bon_sid_ch.Length = 3 Then
+                            '個別に値が決まっていなければセット
+                            If bondriver.Length = 0 Then bondriver = Trim(bon_sid_ch(0))
+                            If sid.Length = 0 Then sid = Trim(bon_sid_ch(1))
+                            If chspace.Length = 0 Then chspace = Trim(bon_sid_ch(2))
+                        End If
+                        '解像度指定 "640x360"等
+                        Dim resolution As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("resolution") & ""
+                        'redirect指定
+                        Dim redirect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("redirect") & ""
+                        'm3u8,tsの準備状況
+                        Dim check_m3u8_ts As Integer = 0
+                        'ストリームモード 0=UDP 1=ファイル再生
+                        Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
+                        'ファイル名
+                        Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
+                        Dim vname() As String = videoname.Split(",")
+                        If vname.Length = 2 Then
+                            'vname(0)には日付が入っているyyyyMMdd 20140101
+                            videoname = vname(1)
+                        End If
+                        'URLエンコードしておいたフルパスを文字列に変換
+                        videoname = System.Web.HttpUtility.UrlDecode(videoname)
+                        'ビデオファイル名抽出
+                        '                                ↓だとUTF-8で返ってきて修正不可能な文字化け
+                        Dim videoexword As String = "" '= System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
+                        If req.QueryString.Count > 0 Then
+                            'クエリから1つずつチェック
+                            For ii As Integer = 0 To req.QueryString.Count - 1
+                                If req.QueryString.Keys(ii) = "VideoExWord" Then
+                                    videoexword = req.QueryString.Item(ii)
+                                    Exit For
+                                End If
+                            Next
+                        End If
+
+                        'NHKの音声モード
+                        Dim NHK_dual_mono_mode_select As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & "")
+                        If Me._NHK_dual_mono_mode <> 3 Then
+                            NHK_dual_mono_mode_select = Me._NHK_dual_mono_mode
+                        End If
 
                         '===========================================
                         'WEBインターフェース
