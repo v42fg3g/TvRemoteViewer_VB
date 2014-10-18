@@ -78,8 +78,6 @@ Class WebRemocon
     'ビデオ一覧で表示する拡張子
     Public VideoExtensions() As String
 
-    Private ReadOnly lockObj As New Object()
-
     Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String(), ByVal id As String, ByVal pass As String)
         'Public Sub New(udpPort As Integer, wwwroot As String, wwwport As Integer) ', num As Integer)
         '初期化 
@@ -756,10 +754,7 @@ Class WebRemocon
     Public Sub requestStop()
         Me._isWebStart = False
         Try
-            'Me._listener.Abort()
-            SyncLock Me.lockObj
-                Me._listener.Close()
-            End SyncLock
+            Me._listener.Abort() 'Close()
         Catch ex As Exception
             log1write(ex.Message)
         End Try
@@ -1545,14 +1540,9 @@ Class WebRemocon
             listener.BeginGetContext(AddressOf Me.OnRequested, listener)
 
             If Not listener.IsListening Then
-                'log1write("listening finished.")
+                log1write("listening finished.")
                 Return
             End If
-
-            'log1write("OnRequested start.")
-            'log1write("OnRequested result.IsCompleted " & result.IsCompleted)
-            'log1write("OnRequested result.CompletedSynchronously " & result.CompletedSynchronously)
-            'log1write("OnRequested listener.IsListening " & listener.IsListening)
 
             Dim context As HttpListenerContext = listener.EndGetContext(result)
             Dim req As HttpListenerRequest = Nothing
@@ -1566,7 +1556,6 @@ Class WebRemocon
 
                 'reader = New StreamReader(req.InputStream)
                 'Dim received As String = reader.ReadToEnd()
-                'Debug.Print(received)
 
                 'MIME TYPE
                 Dim mimetype As String = get_mimetype(req.Url.LocalPath)
@@ -1898,27 +1887,8 @@ Class WebRemocon
 
                             'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
 
-                            'BonDriverと番組名連携選択
-                            If s.IndexOf("%SELECTBONSIDCH") >= 0 Then
-                                Dim gt() As String = get_atags("%SELECTBONSIDCH", s)
-                                Dim selectbon As String = WEB_make_select_Bondriver_html(gt)
-                                If selectbon.Length > 0 Then
-                                    s = s.Replace("%SELECTBONSIDCH" & gt(0) & "%", selectbon)
-                                Else
-                                    s = s.Replace("%SELECTBONSIDCH" & gt(0) & "%", gt(4))
-                                End If
-                            End If
-
-                            'Viewボタン作成
-                            If s.IndexOf("%VIEWBUTTONS") >= 0 Then
-                                Dim gt() As String = get_atags("%VIEWBUTTONS", s)
-                                Dim viewbutton_html As String = WEB_make_ViewLink_html(gt)
-                                If viewbutton_html.Length > 0 Then
-                                    s = s.Replace("%VIEWBUTTONS" & gt(0) & "%", viewbutton_html)
-                                Else
-                                    s = s.Replace("%VIEWBUTTONS" & gt(0) & "%", gt(4))
-                                End If
-                            End If
+                            '★表示状態により変換内容変更が無いパラメーター
+                            'これらは一括変換できる
 
                             'ストリーム番号
                             If s.IndexOf("%NUM%") >= 0 Then
@@ -1936,8 +1906,75 @@ Class WebRemocon
                                 s = s.Replace("%SELECTNUM%", selectnum_html)
                             End If
 
+                            'ユーザー名とパスワード変換
+                            If s.IndexOf("%IDPASS%") >= 0 Then
+                                If ALLOW_IDPASS2HTML = 1 And Me._id.Length > 0 And Me._pass.Length > 0 Then
+                                    s = s.Replace("%IDPASS%", Me._id & ":" & Me._pass & "@")
+                                Else
+                                    s = s.Replace("%IDPASS%", "")
+                                End If
+                            End If
+
+                            '%FILEROOT%変換
+                            If s.IndexOf("%FILEROOT%") >= 0 Then
+                                Dim fileroot As String = get_soutaiaddress_from_fileroot()
+                                s = s.Replace("%FILEROOT%", fileroot)
+                            End If
+
+                            'リダイレクト
+                            If s.IndexOf("%REDIRECT%") >= 0 Then
+                                If redirect.Length > 3 Then
+                                    'リダイレクト指定があれば
+                                    s = s.Replace("%REDIRECT%", "<meta http-equiv=""refresh"" content=""0 ; URL=" & redirect & """>")
+                                Else
+                                    '無ければリダイレクト変数を消す
+                                    s = s.Replace("%REDIRECT%", "")
+                                End If
+                            End If
+
+                            'ファイル選択ページ用
+                            If s.IndexOf("%SELECTVIDEO%") >= 0 Then
+                                Dim shtml As String = make_file_select_html(videoexword)
+                                s = s.Replace("%SELECTVIDEO%", shtml)
+                            End If
+
+                            '解像度セレクトボックス
+                            If s.IndexOf("%SELECTRESOLUTION%") >= 0 Then
+                                Dim selectresolution As String = WEB_make_select_resolution()
+                                s = s.Replace("%SELECTRESOLUTION%", selectresolution)
+                            End If
+
+                            '地デジ番組表（通常のネットから取得）
+                            If s.IndexOf("%TVPROGRAM-D%") >= 0 Then
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
+                                Else
+                                    s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
+                                End If
+                            End If
+
+                            'TvRock番組表
+                            If s.IndexOf("%TVPROGRAM-TVROCK%") >= 0 Then
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
+                                Else
+                                    s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
+                                End If
+                            End If
+
+                            'EDCB番組表
+                            If s.IndexOf("%TVPROGRAM-EDCB%") >= 0 Then
+                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
+                                Else
+                                    s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
+                                End If
+                            End If
+
+                            '★表示状態により変換内容変更されるパラメーター
+
                             'NHK音声モード
-                            If s.IndexOf("%SELECTNHKMODE") >= 0 Then
+                            While s.IndexOf("%SELECTNHKMODE") >= 0
                                 Dim gt() As String = get_atags("%SELECTNHKMODE", s)
                                 If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
                                     If Me._NHK_dual_mono_mode = 3 Then
@@ -1949,7 +1986,18 @@ Class WebRemocon
                                 Else
                                     s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", gt(4))
                                 End If
-                            End If
+                            End While
+
+                            'BonDriverと番組名連携選択
+                            While s.IndexOf("%SELECTBONSIDCH") >= 0
+                                Dim gt() As String = get_atags("%SELECTBONSIDCH", s)
+                                Dim selectbon As String = WEB_make_select_Bondriver_html(gt)
+                                If selectbon.Length > 0 Then
+                                    s = s.Replace("%SELECTBONSIDCH" & gt(0) & "%", selectbon)
+                                Else
+                                    s = s.Replace("%SELECTBONSIDCH" & gt(0) & "%", gt(4))
+                                End If
+                            End While
 
                             'ViewTV.html用
                             If chk_viewtv_ok = 1 And num > 0 Then
@@ -2012,7 +2060,7 @@ Class WebRemocon
                                 End If
 
                                 '配信中ならばnumからBonDriver_pathとBonDriverを取得
-                                If s.IndexOf("%SELECTCH") >= 0 Then
+                                While s.IndexOf("%SELECTCH") >= 0
                                     '%SELECTCHをhtmlに置換
                                     Dim gt() As String = get_atags("%SELECTCH", s)
                                     Dim vhtml As String
@@ -2027,24 +2075,12 @@ Class WebRemocon
                                     Else
                                         s = s.Replace("%SELECTCH" & gt(0) & "%", gt(4))
                                     End If
-                                End If
+                                End While
 
-                            End If
-
-                            '%FILEROOT%変換
-                            If s.IndexOf("%FILEROOT%") >= 0 Then
-                                Dim fileroot As String = get_soutaiaddress_from_fileroot()
-                                s = s.Replace("%FILEROOT%", fileroot)
-                            End If
-
-                            'ファイル選択ページ用
-                            If s.IndexOf("%SELECTVIDEO") >= 0 Then
-                                Dim shtml As String = make_file_select_html(videoexword)
-                                s = s.Replace("%SELECTVIDEO%", shtml)
                             End If
 
                             '配信中簡易リスト
-                            If s.IndexOf("%PROCBONLIST") >= 0 Then
+                            While s.IndexOf("%PROCBONLIST") >= 0
                                 Dim gt() As String = get_atags("%PROCBONLIST", s)
                                 Dim js As String = Me._procMan.get_live_numbers_bon().Replace(vbCrLf, "<br>")
                                 If js.Length > 0 Then
@@ -2055,78 +2091,38 @@ Class WebRemocon
                                 Else
                                     s = s.Replace("%PROCBONLIST" & gt(0) & "%", gt(4))
                                 End If
-                            End If
+                            End While
 
-                            'リダイレクト
-                            If s.IndexOf("%REDIRECT%") >= 0 Then
-                                If redirect.Length > 3 Then
-                                    'リダイレクト指定があれば
-                                    s = s.Replace("%REDIRECT%", "<meta http-equiv=""refresh"" content=""0 ; URL=" & redirect & """>")
+                            'Viewボタン作成
+                            While s.IndexOf("%VIEWBUTTONS") >= 0
+                                Dim gt() As String = get_atags("%VIEWBUTTONS", s)
+                                Dim viewbutton_html As String = WEB_make_ViewLink_html(gt)
+                                If viewbutton_html.Length > 0 Then
+                                    s = s.Replace("%VIEWBUTTONS" & gt(0) & "%", viewbutton_html)
                                 Else
-                                    '無ければリダイレクト変数を消す
-                                    s = s.Replace("%REDIRECT%", "")
+                                    s = s.Replace("%VIEWBUTTONS" & gt(0) & "%", gt(4))
                                 End If
-                            End If
+                            End While
 
-                            '地デジ番組表（通常のネットから取得）
-                            If s.IndexOf("%TVPROGRAM-D%") >= 0 Then
-                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                                    s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
-                                Else
-                                    s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
-                                End If
-                            End If
-
-                            'TvRock番組表
-                            If s.IndexOf("%TVPROGRAM-TVROCK%") >= 0 Then
-                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                                    s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
-                                Else
-                                    s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
-                                End If
-                            End If
                             'TvRock番組表ボタン
-                            If s.IndexOf("%TVPROGRAM-TVROCK-BUTTON") >= 0 Then
+                            While s.IndexOf("%TVPROGRAM-TVROCK-BUTTON") >= 0
                                 Dim gt() As String = get_atags("%TVPROGRAM-TVROCK-BUTTON", s)
                                 If TvProgram_tvrock_url.Length > 0 Then
                                     s = s.Replace("%TVPROGRAM-TVROCK-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" class=""c_btn_ptvrock"" value=""TvRock番組表"" onClick=""location.href='TvProgram_TvRock.html'"">") & gt(3)
                                 Else
                                     s = s.Replace("%TVPROGRAM-TVROCK-BUTTON" & gt(0) & "%", gt(4))
                                 End If
-                            End If
+                            End While
 
-                            'EDCB番組表
-                            If s.IndexOf("%TVPROGRAM-EDCB%") >= 0 Then
-                                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                                    s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
-                                Else
-                                    s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
-                                End If
-                            End If
                             'EDCB番組表ボタン
-                            If s.IndexOf("%TVPROGRAM-EDCB-BUTTON") >= 0 Then
+                            While s.IndexOf("%TVPROGRAM-EDCB-BUTTON") >= 0
                                 Dim gt() As String = get_atags("%TVPROGRAM-EDCB-BUTTON", s)
                                 If TvProgram_EDCB_url.Length > 0 Then
                                     s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" class=""c_btn_pedcb"" value=""EDCB番組表"" onClick=""location.href='TvProgram_EDCB.html'"">") & gt(3)
                                 Else
                                     s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(4))
                                 End If
-                            End If
-                            '解像度セレクトボックス
-                            If s.IndexOf("%SELECTRESOLUTION") >= 0 Then
-                                Dim gt() As String = get_atags("%SELECTRESOLUTION", s)
-                                Dim selectresolution As String = WEB_make_select_resolution()
-                                s = s.Replace("%SELECTRESOLUTION" & gt(0) & "%", gt(1) & selectresolution & gt(3))
-                            End If
-
-                            'ユーザー名とパスワード変換
-                            If s.IndexOf("%IDPASS%") >= 0 Then
-                                If ALLOW_IDPASS2HTML = 1 And Me._id.Length > 0 And Me._pass.Length > 0 Then
-                                    s = s.Replace("%IDPASS%", Me._id & ":" & Me._pass & "@")
-                                Else
-                                    s = s.Replace("%IDPASS%", "")
-                                End If
-                            End If
+                            End While
 
                             sw.WriteLine(s)
                             'sw.Flush()

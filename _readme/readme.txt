@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.70
+TvRemoteViewer_VB v0.71
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -363,6 +363,8 @@ TvRemoteViewer_VB v0.70
 	0.70	名前付きパイプ取得方法を古い方式に戻した
 		ファイル再生においてスペース区切り(半角or全角)で複数ワードによる抽出に対応
 		SelectVideo.htmlにNHK音声選択を追加
+	0.71	HTTPリクエストの非同期化
+		HTMLページ内変数の変換を修正
 
 
 
