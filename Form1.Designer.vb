@@ -82,6 +82,8 @@ Partial Class Form1
         Me.Label12 = New System.Windows.Forms.Label()
         Me.Label13 = New System.Windows.Forms.Label()
         Me.Label14 = New System.Windows.Forms.Label()
+        Me.Label15 = New System.Windows.Forms.Label()
+        Me.ComboBoxHLSorHTTP = New System.Windows.Forms.ComboBox()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -598,11 +600,33 @@ Partial Class Form1
         Me.Label14.TabIndex = 96
         Me.Label14.Text = "PASS"
         '
+        'Label15
+        '
+        Me.Label15.AutoSize = True
+        Me.Label15.Location = New System.Drawing.Point(182, 492)
+        Me.Label15.Name = "Label15"
+        Me.Label15.Size = New System.Drawing.Size(53, 12)
+        Me.Label15.TabIndex = 98
+        Me.Label15.Text = "配信方式"
+        '
+        'ComboBoxHLSorHTTP
+        '
+        Me.ComboBoxHLSorHTTP.FormattingEnabled = True
+        Me.ComboBoxHLSorHTTP.Items.AddRange(New Object() {"HLS", "HTTP"})
+        Me.ComboBoxHLSorHTTP.Location = New System.Drawing.Point(241, 489)
+        Me.ComboBoxHLSorHTTP.Name = "ComboBoxHLSorHTTP"
+        Me.ComboBoxHLSorHTTP.Size = New System.Drawing.Size(51, 20)
+        Me.ComboBoxHLSorHTTP.TabIndex = 97
+        Me.ComboBoxHLSorHTTP.TabStop = False
+        Me.ComboBoxHLSorHTTP.Text = "HLS"
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(530, 685)
+        Me.Controls.Add(Me.Label15)
+        Me.Controls.Add(Me.ComboBoxHLSorHTTP)
         Me.Controls.Add(Me.Label14)
         Me.Controls.Add(Me.Label13)
         Me.Controls.Add(Me.Label12)
@@ -724,5 +748,7 @@ Partial Class Form1
     Private WithEvents Label12 As System.Windows.Forms.Label
     Private WithEvents Label13 As System.Windows.Forms.Label
     Private WithEvents Label14 As System.Windows.Forms.Label
+    Private WithEvents Label15 As System.Windows.Forms.Label
+    Friend WithEvents ComboBoxHLSorHTTP As System.Windows.Forms.ComboBox
 
 End Class

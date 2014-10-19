@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.71
+TvRemoteViewer_VB v0.72
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -365,6 +365,9 @@ TvRemoteViewer_VB v0.71
 		SelectVideo.htmlにNHK音声選択を追加
 	0.71	HTTPリクエストの非同期化
 		HTMLページ内変数の変換を修正
+	0.72	ffmpegのHTTPストリーミング配信に対応（要クライアント）
+		HLS_option_ffmpeg_http.txtの修正
+		iniにストリーム切断時に配信終了までの秒数を設定する項目を追加
 
 
 

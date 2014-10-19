@@ -49,303 +49,359 @@ Public Class ProcessManager
         Return r
     End Function
 
-    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String)
-        'numが放映中でかつBonDriverが同一ならばパイプを使用してチャンネル変更だけを行う
-        'ffmpegだけを停止しチャンネル変更が完了するまで.stopping=2にして完了したら.stopping=0にする
-        Dim hls_only As Integer = 0
+    '本体はProcessBeans内
+    Public Sub ffmpeg_http_stream_Start(ByVal num As Integer, output As Stream)
         Dim i As Integer = num2i(num)
-        Dim hls_only_sid As String = ""
-        Dim hls_only_chspace As String = ""
-        If i >= 0 And get_stopping_status(num) = 0 Then
-            'すでに同num=iで配信中である
-            Dim BonDriver_prev As String = Trim(instr_pickup_para(Me._list(i)._udpOpt, "/d ", " ", 0))
-            Dim BonDriver_next As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0))
-            If BonDriver_prev.Length > 0 And BonDriver_next.Length > 0 And BonDriver_prev = BonDriver_next Then
-                '同一BonDriverだった場合はRectaskを再起動せずパイプでのチャンネル変更をする
-                '/udp /port 42425 /chspace 0 /sid 51208 /d BonDriver_Spinel_PT3_t0.dll /sendservice 1
-                '切り替えるServiceIDとChSpaceを取得
-                hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
-                hls_only_chspace = Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
-                If hls_only_sid.Length > 0 And hls_only_chspace.Length > 0 Then
-                    hls_only = 1 'パイプでチャンネル変更を行う
+        If i >= 0 Then
+            Me._list(i).ffmpeg_http_stream_Start(output)
+        Else
+            log1write("No." & num.ToString & "のプロセスが見つかりません[1]")
+        End If
+    End Sub
+
+    '本体はProcessBeans内
+    Public Sub ffmpeg_http_stream_Stop(ByVal num As Integer)
+        Dim i As Integer = num2i(num)
+        If i >= 0 Then
+            Me._list(i).ffmpeg_http_stream_Stop()
+        Else
+            log1write("No." & num.ToString & "のプロセスが見つかりません[2]")
+        End If
+    End Sub
+
+    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String)
+        Dim stopping As Integer = get_stopping_status(num)
+        If stopping = 0 Then
+            'numが放映中でかつBonDriverが同一ならばパイプを使用してチャンネル変更だけを行う
+            'ffmpegだけを停止しチャンネル変更が完了するまで.stopping=2にして完了したら.stopping=0にする
+            Dim hls_only As Integer = 0
+            Dim i As Integer = num2i(num)
+            Dim hls_only_sid As String = ""
+            Dim hls_only_chspace As String = ""
+            If i >= 0 And get_stopping_status(num) = 0 Then
+                'すでに同num=iで配信中である
+                Dim BonDriver_prev As String = Trim(instr_pickup_para(Me._list(i)._udpOpt, "/d ", " ", 0))
+                Dim BonDriver_next As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0))
+                If BonDriver_prev.Length > 0 And BonDriver_next.Length > 0 And BonDriver_prev = BonDriver_next Then
+                    '同一BonDriverだった場合はRectaskを再起動せずパイプでのチャンネル変更をする
+                    '/udp /port 42425 /chspace 0 /sid 51208 /d BonDriver_Spinel_PT3_t0.dll /sendservice 1
+                    '切り替えるServiceIDとChSpaceを取得
+                    hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
+                    hls_only_chspace = Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
+                    If hls_only_sid.Length > 0 And hls_only_chspace.Length > 0 Then
+                        hls_only = 1 'パイプでチャンネル変更を行う
+                    End If
                 End If
             End If
-        End If
 
-        '★起動している場合は既存のプロセスを止める
-        stopProc(num, hls_only) 'hls_only=1ならばHLSアプリのみを停止する
+            '★起動している場合は既存のプロセスを止める
+            stopProc(num, hls_only) 'hls_only=1ならばHLSアプリのみを停止する
 
-        If get_stopping_status(num) = 1 Then
-            '停止段階で失敗している
-            log1write("No.=" & num & "のプロセスは使用できません。前回使用時の停止に失敗したようです")
-        Else
-            'get_stopping_status(num) = 2(HLSアプリのみストップ）は素通りしてくる
+            stopping = get_stopping_status(num)
+            If stopping = 0 Or stopping = 2 Then
+                'get_stopping_status(num) = 2(HLSアプリのみストップ）は素通りしてくる
 
-            '関連するファイルを削除
-            delete_mystreamnum(num)
+                '関連するファイルを削除
+                delete_mystreamnum(num)
 
-            'If Me._list.Count < Me._maxSize Then
+                'If Me._list.Count < Me._maxSize Then
 
-            If stream_mode = 0 Or stream_mode = 2 Then
-                'UDPストリーム再生
-                Dim pipeIndex As Integer
-                Dim udpProc As System.Diagnostics.Process
+                If stream_mode = 0 Or stream_mode = 2 Then
+                    'UDPストリーム再生
+                    Dim pipeIndex As Integer
+                    Dim udpProc As System.Diagnostics.Process
 
-                'まず名前付きパイプでのチャンネル変更を試みる
-                If hls_only = 1 Then
-                    'パイプでチャンネルのみ変更
-                    '既存のpipeindex
-                    pipeIndex = Me._list(i).GetProcUdpPipeIndex
-                    'ここでパイプを使ってチャンネル変更
-                    Dim ks As String = Pipe_change_channel(pipeIndex, hls_only_sid, hls_only_chspace)
-                    If ks.IndexOf("""OK""") > 0 Then
-                        '成功
-                        '既存プロセス
-                        udpProc = Me._list(i).GetUdpProc
-                        udpProc.WaitForInputIdle()
-                        log1write("No.=" & num & "名前付きパイプを使用してチャンネルを変更しました")
-                    Else
-                        log1write(ks)
-                        '失敗したら引き続き通常起動を試みる
-                        log1write("No.=" & num & "名前付きパイプを使用してのチャンネル変更に失敗しました。通常起動を試みます")
-                        log1write("No.=" & num & "UDPアプリの再起動を試みます")
-                        hls_only = 0
-                        stopProc(num)
-                        If get_stopping_status(num) > 0 Then
-                            '結局何をやっても失敗
-                            log1write("No.=" & num & "のプロセスは使用できません。UDPアプリの停止に失敗したようです")
-                            '現在稼働中のlist(i)._numをログに表示
-                            log1write("現在稼働中のNumber：" & get_live_numbers())
-                            Exit Sub
-                        End If
-                    End If
-                End If
-
-                If hls_only = 0 Then
-                    '通常起動
-                    Dim pipeListBefore As New List(Of Integer)()
-                    If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
-                        '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
-                        Dim listOfPipes As String() = Nothing
-                        listOfPipes = GetPipes()
-                        If listOfPipes IsNot Nothing Then
-                            For Each pipeName As String In listOfPipes
-                                If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                    Dim pindex1 As Integer = 0
-                                    Try
-                                        pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + "RecTask_Server_Pipe_".Length))
-                                    Catch ex As Exception
-                                    End Try
-                                    If pindex1 > 0 Then
-                                        pipeListBefore.Add(pindex1)
-                                    End If
-                                End If
-                            Next
+                    'まず名前付きパイプでのチャンネル変更を試みる
+                    If hls_only = 1 Then
+                        'パイプでチャンネルのみ変更
+                        '既存のpipeindex
+                        pipeIndex = Me._list(i).GetProcUdpPipeIndex
+                        'ここでパイプを使ってチャンネル変更
+                        Dim ks As String = Pipe_change_channel(pipeIndex, hls_only_sid, hls_only_chspace)
+                        If ks.IndexOf("""OK""") > 0 Then
+                            '成功
+                            '既存プロセス
+                            udpProc = Me._list(i).GetUdpProc
+                            udpProc.WaitForInputIdle()
+                            log1write("No.=" & num & "名前付きパイプを使用してチャンネルを変更しました")
                         Else
-                            '何をやってもエラー
-                            log1write("No.=" & num & "のUDPアプリ実行前パイプ一覧取得に失敗しました")
-                            Exit Sub
-                        End If
-                    End If
-
-                    '★UDPソフトを実行
-                    'ProcessStartInfoオブジェクトを作成する
-                    Dim udpPsi As New System.Diagnostics.ProcessStartInfo()
-                    '起動するファイルのパスを指定する
-                    udpPsi.FileName = udpApp
-                    'コマンドライン引数を指定する
-                    udpPsi.Arguments = udpOpt
-                    'ログ表示
-                    log1write("UDP アプリ=" & udpApp)
-                    log1write("UDP option=" & udpOpt)
-                    'アプリケーションを起動する
-                    udpProc = System.Diagnostics.Process.Start(udpPsi)
-                    Dim UDP_PRIORITY_STR As String = UDP_PRIORITY
-                    Select Case UDP_PRIORITY
-                        Case "Idle"
-                            udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
-                        Case "Normal"
-                            udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
-                        Case "High"
-                            udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-                        Case "RealTime"
-                            udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
-                        Case Else
-                            UDP_PRIORITY_STR = "無指定"
-                            'udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-                    End Select
-                    log1write("No.=" & num & "のUDPアプリを起動しました。優先度：" & UDP_PRIORITY_STR & "　handle=" & udpProc.Handle.ToString)
-
-                    'pipeindexを取得
-                    pipeIndex = 0
-                    Dim chk As Integer = 0
-                    While chk < 200
-                        'RecTaskのパイプが増加するまで繰り返す
-                        If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
-                            '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
-                            Dim listOfPipes As String() = Nothing
-                            'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                            listOfPipes = GetPipes()
-                            If listOfPipes Is Nothing Then
-                                log1write("No.=" & num & "のUDPアプリ実行後パイプ一覧取得に失敗しました")
-                                Try
-                                    udpProc.Kill()
-                                    udpProc.Dispose()
-                                    udpProc.Close()
-                                Catch ex As Exception
-                                End Try
-                                log1write("No.=" & num & "のUDPアプリを強制終了しました")
+                            log1write(ks)
+                            '失敗したら引き続き通常起動を試みる
+                            log1write("No.=" & num & "名前付きパイプを使用してのチャンネル変更に失敗しました。通常起動を試みます")
+                            log1write("No.=" & num & "UDPアプリの再起動を試みます")
+                            hls_only = 0
+                            stopProc(num)
+                            If get_stopping_status(num) > 0 Then
+                                '結局何をやっても失敗
+                                log1write("No.=" & num & "のプロセスは使用できません。UDPアプリの停止に失敗したようです")
+                                '現在稼働中のlist(i)._numをログに表示
+                                log1write("現在稼働中のNumber：" & get_live_numbers())
                                 Exit Sub
                             End If
+                        End If
+                    End If
 
-                            For Each pipeName As String In listOfPipes
-                                If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                    Dim pindex2 As Integer = 0
+                    If hls_only = 0 Then
+                        '通常起動
+                        Dim pipeListBefore As New List(Of Integer)()
+                        If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                            '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
+                            Dim listOfPipes As String() = Nothing
+                            listOfPipes = GetPipes()
+                            If listOfPipes IsNot Nothing Then
+                                For Each pipeName As String In listOfPipes
+                                    If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                        Dim pindex1 As Integer = 0
+                                        Try
+                                            pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + "RecTask_Server_Pipe_".Length))
+                                        Catch ex As Exception
+                                        End Try
+                                        If pindex1 > 0 Then
+                                            pipeListBefore.Add(pindex1)
+                                        End If
+                                    End If
+                                Next
+                            Else
+                                '何をやってもエラー
+                                log1write("No.=" & num & "のUDPアプリ実行前パイプ一覧取得に失敗しました")
+                                Exit Sub
+                            End If
+                        End If
+
+                        '★UDPソフトを実行
+                        'ProcessStartInfoオブジェクトを作成する
+                        Dim udpPsi As New System.Diagnostics.ProcessStartInfo()
+                        '起動するファイルのパスを指定する
+                        udpPsi.FileName = udpApp
+                        'コマンドライン引数を指定する
+                        udpPsi.Arguments = udpOpt
+                        'ログ表示
+                        log1write("UDP アプリ=" & udpApp)
+                        log1write("UDP option=" & udpOpt)
+                        'アプリケーションを起動する
+                        udpProc = System.Diagnostics.Process.Start(udpPsi)
+                        Dim UDP_PRIORITY_STR As String = UDP_PRIORITY
+                        Select Case UDP_PRIORITY
+                            Case "Idle"
+                                udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
+                            Case "Normal"
+                                udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
+                            Case "High"
+                                udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                            Case "RealTime"
+                                udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
+                            Case Else
+                                UDP_PRIORITY_STR = "無指定"
+                                'udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                        End Select
+                        log1write("No.=" & num & "のUDPアプリを起動しました。優先度：" & UDP_PRIORITY_STR & "　handle=" & udpProc.Handle.ToString)
+
+                        'pipeindexを取得
+                        pipeIndex = 0
+                        Dim chk As Integer = 0
+                        While chk < 200
+                            'RecTaskのパイプが増加するまで繰り返す
+                            If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                                '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
+                                Dim listOfPipes As String() = Nothing
+                                'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                                listOfPipes = GetPipes()
+                                If listOfPipes Is Nothing Then
+                                    log1write("No.=" & num & "のUDPアプリ実行後パイプ一覧取得に失敗しました")
                                     Try
-                                        pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
+                                        udpProc.Kill()
+                                        udpProc.Dispose()
+                                        udpProc.Close()
                                     Catch ex As Exception
                                     End Try
-                                    If pindex2 > 0 Then
-                                        'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
-                                        Dim c2 As Integer = 0
-                                        '起動前のパイプindexに存在しなければOK
-                                        For Each pt As Integer In pipeListBefore
-                                            If pindex2 = pt Then
-                                                c2 += 100
+                                    log1write("No.=" & num & "のUDPアプリを強制終了しました")
+                                    Exit Sub
+                                End If
+
+                                For Each pipeName As String In listOfPipes
+                                    If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                        Dim pindex2 As Integer = 0
+                                        Try
+                                            pindex2 = pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20)
+                                        Catch ex As Exception
+                                        End Try
+                                        If pindex2 > 0 Then
+                                            'log1write("After PipeName=" & pipeName & " PipeIndex=" & pindex2)
+                                            Dim c2 As Integer = 0
+                                            '起動前のパイプindexに存在しなければOK
+                                            For Each pt As Integer In pipeListBefore
+                                                If pindex2 = pt Then
+                                                    c2 += 100
+                                                End If
+                                            Next
+                                            '該当するpipeindexが見つからなければ新規
+                                            If c2 = 0 Then
+                                                pipeIndex = pindex2
+                                                Exit While
                                             End If
-                                        Next
-                                        '該当するpipeindexが見つからなければ新規
-                                        If c2 = 0 Then
+                                        Else
                                             pipeIndex = pindex2
                                             Exit While
                                         End If
-                                    Else
-                                        pipeIndex = pindex2
-                                        Exit While
                                     End If
+                                Next
+                            End If
+                            System.Threading.Thread.Sleep(50)
+                            chk += 1
+                        End While
+
+                        '配信が期待されるサービスID
+                        hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
+                    End If
+
+                    If pipeIndex > 0 Then
+                        log1write("No.=" & num & "のパイプインデックスを取得しました。pipeindex=" & pipeIndex.ToString)
+
+                        udpProc.WaitForInputIdle()
+
+                        '実際にチャンネルが変わったかどうかパイプで確認してから次へ
+                        'GetChannelでサービスIDが変わっているかチェック
+                        Dim j As Integer = 10 '最大10回チャレンジ
+                        While Pipe_get_channel(pipeIndex, hls_only_sid) = 0 And j >= 0
+                            log1write("No.=" & num & "UDPの配信チャンネルが切り替わるまで待機しています")
+                            j -= 1
+                            System.Threading.Thread.Sleep(50)
+                        End While
+                        If j >= 0 Then
+                            log1write("No.=" & num & "UDPの配信チャンネル切り替えに成功しました")
+                        Else
+                            log1write("No.=" & num & "UDPの配信チャンネル切り替えに失敗しました")
+                        End If
+
+                        System.Threading.Thread.Sleep(UDP2HLS_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+
+                        If HTTPSTREAM_App = 2 And hlsApp.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
+                            'ffmpeg HTTPストリーム
+                            'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
+                            'ProcessBeans作成
+                            If hls_only = 1 Then
+                                '既存のリストを削除してから改めて追加
+                                Me._list.RemoveAt(i)
+                            End If
+                            '                                  ↓Processはまだ決まっていない
+                            Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)
+                            Me._list.Add(pb)
+
+                            '1秒毎のプロセスチェックさせない
+                            Me._list(num2i(num))._stopping = 3
+                        Else
+                            '通常
+                            '★HLSソフトを実行
+                            'ProcessStartInfoオブジェクトを作成する
+                            Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
+                            '起動するファイルのパスを指定する
+                            hlsPsi.FileName = hlsApp
+                            'VLCは上の非表示コマンドが効かないのでオプションを書き換える
+                            If ShowConsole = False And hlsApp.IndexOf("vlc") >= 0 Then
+                                If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
+                                    hlsOpt = hlsOpt.Replace("-I dummy", "-I dummy --dummy-quiet")
                                 End If
-                            Next
+                                If hlsOpt.IndexOf("--rc-quiet") < 0 And hlsOpt.IndexOf("--rc-host=") >= 0 Then
+                                    hlsOpt = hlsOpt.Replace("--rc-host=", "--rc-quiet --rc-host=")
+                                End If
+                            End If
+                            'コマンドライン引数を指定する
+                            hlsPsi.Arguments = hlsOpt
+                            If ShowConsole = False Then
+                                ' コンソール・ウィンドウを開かない
+                                hlsPsi.CreateNoWindow = True
+                                ' シェル機能を使用しない
+                                hlsPsi.UseShellExecute = False
+                            End If
+                            'ログ表示
+                            log1write("No.=" & num & "HLS アプリ=" & hlsApp)
+                            log1write("No.=" & num & "HLS option=" & hlsOpt)
+                            'アプリケーションを起動する
+                            Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
+                            Dim HLS_PRIORITY_STR As String = HLS_PRIORITY
+                            Select Case HLS_PRIORITY
+                                Case "Idle"
+                                    hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
+                                Case "Normal"
+                                    hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
+                                Case "High"
+                                    hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                                Case "RealTime"
+                                    hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
+                                Case Else
+                                    HLS_PRIORITY_STR = "無指定"
+                                    'hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                            End Select
+
+                            log1write("No.=" & num & "のHLSアプリを起動しました。優先度：" & HLS_PRIORITY_STR & "　handle=" & hlsProc.Handle.ToString)
+
+                            If hls_only = 1 Then
+                                '既存のリストを削除してから改めて追加
+                                Me._list.RemoveAt(i)
+                            End If
+
+                            'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
+                            Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)
+                            Me._list.Add(pb)
                         End If
-                        System.Threading.Thread.Sleep(50)
-                        chk += 1
-                    End While
-
-                    '配信が期待されるサービスID
-                    hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
-                End If
-
-                If pipeIndex > 0 Then
-                    log1write("No.=" & num & "のパイプインデックスを取得しました。pipeindex=" & pipeIndex.ToString)
-
-                    udpProc.WaitForInputIdle()
-
-                    '実際にチャンネルが変わったかどうかパイプで確認してから次へ
-                    'GetChannelでサービスIDが変わっているかチェック
-                    Dim j As Integer = 100 '最大5秒待つ
-                    While Pipe_get_channel(pipeIndex, hls_only_sid) = 0 And j >= 0
-                        log1write("No.=" & num & "UDPの配信チャンネルが切り替わるまで待機しています")
-                        j -= 1
-                        System.Threading.Thread.Sleep(50)
-                    End While
-                    If j >= 0 Then
-                        log1write("No.=" & num & "UDPの配信チャンネル切り替えに成功しました")
                     Else
-                        log1write("No.=" & num & "UDPの配信チャンネル切り替えに失敗しました")
+                        Try
+                            'UDPアプリ終了　pipeindexがわからないので強制終了
+                            udpProc.Kill()
+                            udpProc.Dispose()
+                            udpProc.Close()
+                        Catch ex As Exception
+                        End Try
+                        log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリを終了しました")
                     End If
 
-                    System.Threading.Thread.Sleep(UDP2HLS_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+                ElseIf stream_mode = 1 Or stream_mode = 3 Then
+                    'ファイル再生
+                    If HTTPSTREAM_App = 3 And hlsApp.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
+                        'ffmpeg HTTPストリーム ファイル再生
+                        'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
+                        'ProcessBeans作成
+                        '                                  ↓Processはまだ決まっていない
+                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
+                        Me._list.Add(pb)
 
-                    '★HLSソフトを実行
-                    'ProcessStartInfoオブジェクトを作成する
-                    Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
-                    '起動するファイルのパスを指定する
-                    hlsPsi.FileName = hlsApp
-                    'VLCは上の非表示コマンドが効かないのでオプションを書き換える
-                    If ShowConsole = False And hlsApp.IndexOf("vlc") >= 0 Then
-                        If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
-                            hlsOpt = hlsOpt.Replace("-I dummy", "-I dummy --dummy-quiet")
+                        '1秒毎のプロセスチェックさせない
+                        Me._list(num2i(num))._stopping = 3
+                    Else
+                        '★HLSソフトを実行
+                        'ProcessStartInfoオブジェクトを作成する
+                        Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
+                        '起動するファイルのパスを指定する
+                        hlsPsi.FileName = hlsApp
+                        'コマンドライン引数を指定する
+                        hlsPsi.Arguments = hlsOpt
+                        If ShowConsole = False Then
+                            ' コンソール・ウィンドウを開かない
+                            hlsPsi.CreateNoWindow = True
+                            ' シェル機能を使用しない
+                            hlsPsi.UseShellExecute = False
                         End If
-                        If hlsOpt.IndexOf("--rc-quiet") < 0 And hlsOpt.IndexOf("--rc-host=") >= 0 Then
-                            hlsOpt = hlsOpt.Replace("--rc-host=", "--rc-quiet --rc-host=")
-                        End If
-                    End If
-                    'コマンドライン引数を指定する
-                    hlsPsi.Arguments = hlsOpt
-                    If ShowConsole = False Then
-                        ' コンソール・ウィンドウを開かない
-                        hlsPsi.CreateNoWindow = True
-                        ' シェル機能を使用しない
-                        hlsPsi.UseShellExecute = False
-                    End If
-                    'ログ表示
-                    log1write("No.=" & num & "HLS アプリ=" & hlsApp)
-                    log1write("No.=" & num & "HLS option=" & hlsOpt)
-                    'アプリケーションを起動する
-                    Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
-                    Dim HLS_PRIORITY_STR As String = HLS_PRIORITY
-                    Select Case HLS_PRIORITY
-                        Case "Idle"
-                            hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
-                        Case "Normal"
-                            hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
-                        Case "High"
-                            hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-                        Case "RealTime"
-                            hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
-                        Case Else
-                            HLS_PRIORITY_STR = "無指定"
-                            'hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-                    End Select
+                        'ログ表示
+                        log1write("No.=" & num & "HLS アプリ=" & hlsApp)
+                        log1write("No.=" & num & "HLS option=" & hlsOpt)
+                        'アプリケーションを起動する
+                        Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
 
-                    log1write("No.=" & num & "のHLSアプリを起動しました。優先度：" & HLS_PRIORITY_STR & "　handle=" & hlsProc.Handle.ToString)
+                        log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
 
-                    If hls_only = 1 Then
-                        '既存のリストを削除してから改めて追加
-                        Me._list.RemoveAt(i)
+                        'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
+                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
+                        Me._list.Add(pb)
                     End If
-
-                    'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                    Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)
-                    Me._list.Add(pb)
-                Else
-                    Try
-                        'UDPアプリ終了　pipeindexがわからないので強制終了
-                        udpProc.Kill()
-                        udpProc.Dispose()
-                        udpProc.Close()
-                    Catch ex As Exception
-                    End Try
-                    log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリを終了しました")
                 End If
-
-            ElseIf stream_mode = 1 Or stream_mode = 3 Then
-                'ファイル再生
-                '★HLSソフトを実行
-                'ProcessStartInfoオブジェクトを作成する
-                Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
-                '起動するファイルのパスを指定する
-                hlsPsi.FileName = hlsApp
-                'コマンドライン引数を指定する
-                hlsPsi.Arguments = hlsOpt
-                If ShowConsole = False Then
-                    ' コンソール・ウィンドウを開かない
-                    hlsPsi.CreateNoWindow = True
-                    ' シェル機能を使用しない
-                    hlsPsi.UseShellExecute = False
-                End If
-                'ログ表示
-                log1write("No.=" & num & "HLS アプリ=" & hlsApp)
-                log1write("No.=" & num & "HLS option=" & hlsOpt)
-                'アプリケーションを起動する
-                Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
-
-                log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
-
-                'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
-                Me._list.Add(pb)
+                'End If
             End If
-            'End If
+        ElseIf stopping = 1 Then
+            log1write("No." & num.ToString & "は配信停止処理中です")
+        ElseIf stopping = 2 Then
+            log1write("No." & num.ToString & "はUDPサービスID変更処理宙です")
+        ElseIf stopping = 9 Then
+            log1write("No." & num.ToString & "はffmpegHTTPストリーム配信待機中です")
         End If
 
         '現在稼働中のlist(i)._numをログに表示
@@ -402,7 +458,21 @@ Public Class ProcessManager
     Public Sub checkAllProc()
         Try
             For i As Integer = Me._list.Count - 1 To 0 Step -1
-                If Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 0 Or Me._list(i)._stream_mode = 2) Then
+                If Me._list(i)._stopping > 100 Then
+                    Me._list(i)._stopping -= 1
+                    If Me._list(i)._stopping = 100 Then
+                        'ffmpeg HTTPストリーム クライアントが終了したのでストリームを終了させる
+                        log1write("No." & Me._list(i)._num & " ffmpegHTTPストリームの終了予約を検知しました")
+                        stopProc(Me._list(i)._num)
+                    End If
+                ElseIf Me._list(i)._stopping = 1 Then
+                    '終了途中
+                ElseIf Me._list(i)._stopping = 2 Then
+                    'チャンネル変更中
+                ElseIf Me._list(i)._stopping = 3 Then
+                    'ffmpeg HTTPストリーム UDPアプリだけが起動してHLSアプリの起動を待っている
+                ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 0 Or Me._list(i)._stream_mode = 2) Then
+                    '再起動させる
                     Dim chk As Integer = 0
                     Dim procudp As System.Diagnostics.Process = Nothing
                     Dim prochls As System.Diagnostics.Process = Nothing
@@ -525,6 +595,12 @@ Public Class ProcessManager
                             'F_sendkeycode(&HD) 'エンターキー
                             'proc.CloseMainWindow()
                             'proc.WaitForExit()
+
+                            If Me._list(i)._stream_mode = 2 Or Me._list(i)._stream_mode = 3 Then
+                                ffmpeg_http_stream_Stop(num)
+                                log1write("No.=" & num & "のffmpeg HTTPストリームを終了しました")
+                            End If
+
                             proc.Kill()
                             If wait_stop_proc(proc) = 1 Then
                                 log1write("No.=" & num & "のffmpegを強制終了しました")

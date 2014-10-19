@@ -15,6 +15,9 @@
     'HTMLにID:PASS@を変換してもよいかどうか
     Public ALLOW_IDPASS2HTML As Integer = 0
 
+    'ffmpegHTTPストリーム　クライアントから切断された場合、何秒後に配信自体を停止するか
+    Public FFMPEG_HTTP_CUT_SECONDS As Integer = 3
+
     '余計な改行等を削除
     Public Function trim8(ByVal s As String) As String
         s = Trim(s)
