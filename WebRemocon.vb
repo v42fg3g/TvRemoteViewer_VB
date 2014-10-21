@@ -1924,6 +1924,14 @@ Class WebRemocon
                                 html19 &= "HTTPストリーミングで配信中です<br>"
                                 html19 &= "ブラウザでの再生はできません<br>"
                                 'ここで.tsへのリンクを貼るべきか・・
+                                ''numが<form>から渡されていなければURLから取得するViewTV2.htmlなら2
+                                'If num = 0 Then
+                                'Dim num_url As String = Val(req_Url.ToLower.Substring(req_Url.ToLower.IndexOf("ViewTV".ToLower) + "ViewTV".Length))
+                                'If num_url > 0 Then
+                                'num = num_url
+                                'End If
+                                'End If
+                                'html19 &= "<a href=""WatchTV" & num & ".ts"">WatchTV" & num & ".ts</a>" & vbCrLf
                                 sw.WriteLine(ERROR_PAGE("HTTPストリーミング", html19))
                             ElseIf request_page = 12 Then
                                 'VLCはファイル再生未対応

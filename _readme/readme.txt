@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.72
+TvRemoteViewer_VB v0.73
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -87,6 +87,16 @@ TvRemoteViewer_VB v0.72
 			HttpPort=5510
 		を書き加えてEpgTimerを再起動してください
 		参考　http://blog.livedoor.jp/kotositu/archives/1923002.html
+
+
+	【安定性実験】
+	・UDP,HLS各exeを配信ナンバー毎に違うexeを使用できるようにした。
+　		exeが存在するフォルダ名に配信ナンバーを追記したフォルダ内のexeを使用します。
+　		例：HLSアプリにffmpegを使用している場合
+　　		通常～\bin\ffmpeg.exeを使用しているときに
+　　		～\bin1\ffmpeg.exeを用意しておけば配信1のときに使用するようになります。
+　　		～\bin2\ffmpeg.exeを用意しておけば配信2のときに使用するようになります。
+　　		UDPアプリにつきましても同様です。
 
 
 
@@ -368,6 +378,7 @@ TvRemoteViewer_VB v0.72
 	0.72	ffmpegのHTTPストリーミング配信に対応（要クライアント）
 		HLS_option_ffmpeg_http.txtの修正
 		iniにストリーム切断時に配信終了までの秒数を設定する項目を追加
+	0.73	一部地域において地デジ番組表が表示されないバグを修正
 
 
 

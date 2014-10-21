@@ -362,7 +362,7 @@ Module モジュール_番組表
         ElseIf regionID > 0 Then
             'ネットから地域の番組表を取得
             Try
-                Dim sTargetUrl As String = "http://miruzow-cloud.nifty.com/tv-program/now/" & regionID.ToString & ".jsonp"
+                Dim sTargetUrl As String = "http://miruzow-cloud.nifty.com/tv-program/now/" & regionID.ToString.PadLeft(2, "0"c) & ".jsonp"
                 Dim objWeb As WebClient = New WebClient()
                 Dim objSrializer As JavaScriptSerializer = New JavaScriptSerializer()
                 Dim objEncode As Encoding = Encoding.UTF8
