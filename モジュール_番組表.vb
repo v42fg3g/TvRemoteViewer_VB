@@ -362,37 +362,47 @@ Module モジュール_番組表
         ElseIf regionID > 0 Then
             'ネットから地域の番組表を取得
             Try
-                Dim sTargetUrl As String = "http://miruzow-cloud.nifty.com/tv-program/now/" & regionID.ToString.PadLeft(2, "0"c) & ".jsonp"
-                Dim objWeb As WebClient = New WebClient()
-                Dim objSrializer As JavaScriptSerializer = New JavaScriptSerializer()
-                Dim objEncode As Encoding = Encoding.UTF8
-                Dim bResult As Byte() = objWeb.DownloadData(sTargetUrl)
-                Dim sJson As String = objEncode.GetString(bResult)
-                Dim objHash As Hashtable = objSrializer.Deserialize(Of Hashtable)(sJson)
+                Dim url As String = "http://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=10&stationAreaId=" & regionID.ToString
 
-                Dim response As Dictionary(Of String, Object) = objHash("response")
-                Dim result As Dictionary(Of String, Object) = response("result")
-                Dim StationLocation() As Object = result("dtt")
+                'ネットから地域の番組表を取得
+                Dim wc As WebClient = New WebClient()
+                Dim st As Stream = wc.OpenRead(url)
+                Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
+                Dim sr As StreamReader = New StreamReader(st, enc)
+                Dim html As String = sr.ReadToEnd()
 
-                For Each station As Dictionary(Of String, Object) In StationLocation
-                    Dim program As Dictionary(Of String, Object) = station("now")
+                Dim hosokyoku As String = ""
+                Dim programtitle As String = ""
+                Dim jikoku1 As String = ""
+                Dim jikoku2 As String = ""
+                Dim sp As Integer = html.IndexOf("</channel>", 0)
+                sp = html.IndexOf("<title>", sp + 1)
+                While sp >= 0
+                    programtitle = Instr_pickup(html, "<title>", "</title>", sp)
+                    Dim dn As Integer = html.IndexOf("<description>", sp)
+                    hosokyoku = Instr_pickup(html, "[", "(", dn)
+                    jikoku1 = "1970/01/01 " & Instr_pickup(html, " ", "～", dn)
+                    jikoku2 = "1970/01/01 " & Instr_pickup(html, "～", " [", dn)
 
-                    Dim j As Integer = 0
-                    If r Is Nothing Then
-                        j = 0
-                    Else
-                        j = r.Length
+                    If hosokyoku.Length > 0 Then
+                        Dim j As Integer = 0
+                        If r Is Nothing Then
+                            j = 0
+                        Else
+                            j = r.Length
+                        End If
+                        ReDim Preserve r(j)
+                        r(j).stationDispName = hosokyoku
+                        r(j).startDateTime = jikoku1
+                        r(j).endDateTime = jikoku2
+                        r(j).programTitle = programtitle
+                        'r(j).programSubTitle = CType(program("programSubTitle"), String) '空白
+                        r(j).programContent = "" '空白
+                        'r(j).programxplanation = CType(program("programExplanation"), String) '空白
                     End If
-                    ReDim Preserve r(j)
-                    r(j).stationDispName = CType(station("station"), String)
-                    r(j).startDateTime = get_time_from_at(CType(program("at_start"), String))
-                    r(j).endDateTime = get_time_from_at(CType(program("at_end"), String))
-                    r(j).programTitle = CType(program("title"), String)
-                    r(j).programContent = CType(program("detail"), String)
 
-                    'Dim program_next As Dictionary(Of String, Object) = station("now")
-                Next
-
+                    sp = html.IndexOf("<title>", sp + 1)
+                End While
             Catch ex As Exception
                 log1write("インターネットからの番組表取得に失敗しました。" & ex.Message)
             End Try
