@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.74
+TvRemoteViewer_VB v0.75
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -134,6 +134,7 @@ TvRemoteViewer_VB v0.74
 	%WIDTH%				ビデオの幅
 	%HEIGHT%			ビデオの高さ
 	%FILEROOT%			.m3u8が存在する相対フォルダ
+	%SUBSTR%			Nico2HLSによってニコニコ実況コメント取得中ならば"_s"に変換される
 
 
 	・なお、%PROCBONLIST%、%SELECTCH%、%VIEWBUTTONS%、%SELECTBONSIDCH%、%SELECTNHKMODE%、%SELECTRESOLUTION%　に対しては、要素の前中後に表示するhtmlタグを指定できます。
@@ -380,6 +381,8 @@ TvRemoteViewer_VB v0.74
 		iniにストリーム切断時に配信終了までの秒数を設定する項目を追加
 	0.73	一部地域において地デジ番組表が表示されないバグを修正
 	0.74	インターネット番組表を変更(地域番号が変更されていますのでiniを見て適切に設定してください)
+	0.75	HLS用ニコニコ実況コメント取得ソフトNico2HLSに対応
+		ViewTV～.htmlの変更
 
 
 

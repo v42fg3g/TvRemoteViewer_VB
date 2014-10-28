@@ -2136,6 +2136,18 @@ Class WebRemocon
                                         End If
                                     End While
 
+                                    Dim vttfilename As String = Me._fileroot & "\mystream_s" & num.ToString & ".m3u8"
+                                    If Me._procMan.get_stream_mode(num) = 0 Then
+                                        'ストリームモードが0ならば
+                                        If file_exist(vttfilename) = 1 Then
+                                            s = s.Replace("%SUBSTR%", "_s")
+                                        Else
+                                            s = s.Replace("%SUBSTR%", "")
+                                        End If
+                                    Else
+                                        s = s.Replace("%SUBSTR%", "")
+                                    End If
+
                                 End If
 
                                 '配信中簡易リスト

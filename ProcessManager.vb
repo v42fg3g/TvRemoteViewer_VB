@@ -833,6 +833,12 @@ Public Class ProcessManager
         Return r
     End Function
 
+    '配信番号numののlist(i)._stream_modeを取得
+    Public Function get_stream_mode(ByVal num As Integer) As Integer
+        Dim r As Integer = Me._list(num2i(num))._stream_mode
+        Return r
+    End Function
+
     '現在稼働中のlistナンバーをnumでソートして返す
     Public Function get_live_index_sort() As Object
         Dim r() As Integer = Nothing
