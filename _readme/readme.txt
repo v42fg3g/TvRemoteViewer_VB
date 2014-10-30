@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.75
+TvRemoteViewer_VB v0.76
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -383,6 +383,8 @@ TvRemoteViewer_VB v0.75
 	0.74	インターネット番組表を変更(地域番号が変更されていますのでiniを見て適切に設定してください)
 	0.75	HLS用ニコニコ実況コメント取得ソフトNico2HLSに対応
 		ViewTV～.htmlの変更
+	0.76	TvRock＆EDCB番組表の放送局NGワードを地デジのものから分離しiniに追加
+		EDCB番組表において番組情報を取得しない設定をiniに追加
 
 
 

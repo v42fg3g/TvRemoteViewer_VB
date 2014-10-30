@@ -7,6 +7,9 @@ Imports System.IO
 Module モジュール_番組表
     Public TvProgram_ch() As Integer '東京13等が複数配列で入る
     Public TvProgram_NGword() As String
+    Public TvProgramEDCB_NGword() As String
+    Public TvProgramTvRock_NGword() As String
+    Public TvProgramEDCB_ignore() As String
     Public TvProgramD_channels() As String
     Public TvProgramEDCB_channels() As String
     Public TvProgramTvRock_channels() As String
@@ -70,13 +73,30 @@ Module モジュール_番組表
                             'End If
                             If s4.Length > 0 Then
                                 If chkstr.IndexOf(":" & s4 & ":") < 0 Then '重複していないかチェック
+                                    'NG処理
                                     Dim chk As Integer = 0
-                                    If TvProgram_NGword IsNot Nothing Then
-                                        For j As Integer = 0 To TvProgram_NGword.Length - 1
-                                            If StrConv(p.stationDispName, VbStrConv.Wide) = StrConv(TvProgram_NGword(j), VbStrConv.Wide) Then
-                                                chk = 1
-                                            End If
-                                        Next
+                                    If a = 0 Then
+                                        'ネット番組表
+                                        If TvProgram_NGword IsNot Nothing Then
+                                            For j As Integer = 0 To TvProgram_NGword.Length - 1
+                                                If StrConv(p.stationDispName, VbStrConv.Wide) = StrConv(TvProgram_NGword(j), VbStrConv.Wide) Then
+                                                    chk = 1
+                                                    Exit For
+                                                End If
+                                            Next
+                                        End If
+                                    ElseIf a = 998 Then
+                                        'EDCBは番組表取得時にNG済
+                                    ElseIf a = 999 Then
+                                        'TvRock
+                                        If TvProgramTvRock_NGword IsNot Nothing Then
+                                            For j As Integer = 0 To TvProgramTvRock_NGword.Length - 1
+                                                If StrConv(p.stationDispName, VbStrConv.Wide) = StrConv(TvProgramTvRock_NGword(j), VbStrConv.Wide) Then
+                                                    chk = 1
+                                                    Exit For
+                                                End If
+                                            Next
+                                        End If
                                     End If
 
                                     If chk = 0 Then
@@ -233,66 +253,104 @@ Module モジュール_番組表
                 If TvProgram_EDCB_url.Length > 0 Then
                     If ch_list IsNot Nothing Then
                         For i As Integer = 0 To ch_list.Length - 1
-                            Dim wc As WebClient = New WebClient()
-                            Dim st_add As String = ""
-                            If TvProgram_EDCB_url.IndexOf("?") < 0 Then
-                                st_add = "?"
-                            Else
-                                st_add = "&"
-                            End If
-                            Dim st_str As String = TvProgram_EDCB_url & st_add & "SID=" & ch_list(i).sid.ToString
-                            st_str = st_str & "&TSID=" & ch_list(i).tsid.ToString
-                            Dim st As Stream = wc.OpenRead(st_str)
-                            Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
-                            Dim sr As StreamReader = New StreamReader(st, enc)
-                            Dim html As String = sr.ReadToEnd()
-
-                            Dim sp As Integer = html.IndexOf("<eventinfo>")
-                            Dim ep As Integer = html.IndexOf("</eventinfo>", sp + 1)
-                            Dim chk As Integer = 0
-                            While sp >= 0 And ep > sp
-                                Try
-                                    'まず現在時刻にあてはまるかチェック
-                                    Dim t As DateTime = Now()
-                                    Dim t1date As String = Instr_pickup(html, "<startDate>", "</startDate>", sp, ep)
-                                    Dim t1time As String = Instr_pickup(html, "<startTime>", "</startTime>", sp, ep)
-                                    Dim t1long As Integer = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
-                                    Dim t1 As DateTime = CDate(t1date & " " & t1time)
-                                    Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
-                                    Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
-                                    Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
-
-                                    If t >= t1 And t < t2 Then
-                                        Dim j As Integer = 0
-                                        If r Is Nothing Then
-                                            j = 0
-                                        Else
-                                            j = r.Length
-                                        End If
-                                        ReDim Preserve r(j)
-                                        Dim sid As Integer = Val(Instr_pickup(html, "<SID>", "</SID>", sp, ep))
-                                        Dim tsid As Integer = Val(Instr_pickup(html, "<TSID>", "</TSID>", sp, ep))
-                                        r(j).stationDispName = sid2jigyousha(sid, tsid)
-                                        r(j).startDateTime = t1s
-                                        r(j).endDateTime = t2s
-                                        r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
-                                        r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
-                                        '1個みつかればおｋ
-                                        chk = 1
-                                        Exit While
+                            'NGワードに指定されているものは無視
+                            Dim chk_j As Integer = 0
+                            If TvProgramEDCB_NGword IsNot Nothing Then
+                                For j As Integer = 0 To TvProgramEDCB_NGword.Length - 1
+                                    If StrConv(ch_list(i).jigyousha, VbStrConv.Wide) = StrConv(TvProgramEDCB_NGword(j), VbStrConv.Wide) Then
+                                        chk_j = 1
+                                        Exit For
                                     End If
-                                Catch ex As Exception
-                                End Try
+                                Next
+                            End If
+                            '番組情報を取得しないものは無視
+                            If chk_j = 0 Then
+                                If TvProgramEDCB_ignore IsNot Nothing Then
+                                    For j As Integer = 0 To TvProgramEDCB_ignore.Length - 1
+                                        If StrConv(ch_list(i).jigyousha, VbStrConv.Wide) = StrConv(TvProgramEDCB_ignore(j), VbStrConv.Wide) Then
+                                            chk_j = 2
+                                            Exit For
+                                        End If
+                                    Next
+                                End If
+                            End If
 
-                                sp = html.IndexOf("<eventinfo>", sp + 1)
-                                ep = html.IndexOf("</eventinfo>", sp + 1)
-                            End While
+                            If chk_j = 0 Then
+                                Dim wc As WebClient = New WebClient()
+                                Dim st_add As String = ""
+                                If TvProgram_EDCB_url.IndexOf("?") < 0 Then
+                                    st_add = "?"
+                                Else
+                                    st_add = "&"
+                                End If
+                                Dim st_str As String = TvProgram_EDCB_url & st_add & "SID=" & ch_list(i).sid.ToString
+                                st_str = st_str & "&TSID=" & ch_list(i).tsid.ToString
+                                Dim st As Stream = wc.OpenRead(st_str)
+                                Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
+                                Dim sr As StreamReader = New StreamReader(st, enc)
+                                Dim html As String = sr.ReadToEnd()
 
-                            sr.Close()
-                            st.Close()
+                                Dim sp As Integer = html.IndexOf("<eventinfo>")
+                                Dim ep As Integer = html.IndexOf("</eventinfo>", sp + 1)
+                                Dim chk As Integer = 0
+                                While sp >= 0 And ep > sp
+                                    Try
+                                        'まず現在時刻にあてはまるかチェック
+                                        Dim t As DateTime = Now()
+                                        Dim t1date As String = Instr_pickup(html, "<startDate>", "</startDate>", sp, ep)
+                                        Dim t1time As String = Instr_pickup(html, "<startTime>", "</startTime>", sp, ep)
+                                        Dim t1long As Integer = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
+                                        Dim t1 As DateTime = CDate(t1date & " " & t1time)
+                                        Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
+                                        Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
+                                        Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
 
-                            If chk = 0 Then
-                                '該当時間帯の番組が無かった場合
+                                        If t >= t1 And t < t2 Then
+                                            Dim j As Integer = 0
+                                            If r Is Nothing Then
+                                                j = 0
+                                            Else
+                                                j = r.Length
+                                            End If
+                                            ReDim Preserve r(j)
+                                            Dim sid As Integer = Val(Instr_pickup(html, "<SID>", "</SID>", sp, ep))
+                                            Dim tsid As Integer = Val(Instr_pickup(html, "<TSID>", "</TSID>", sp, ep))
+                                            r(j).stationDispName = sid2jigyousha(sid, tsid)
+                                            r(j).startDateTime = t1s
+                                            r(j).endDateTime = t2s
+                                            r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
+                                            r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
+                                            '1個みつかればおｋ
+                                            chk = 1
+                                            Exit While
+                                        End If
+                                    Catch ex As Exception
+                                    End Try
+
+                                    sp = html.IndexOf("<eventinfo>", sp + 1)
+                                    ep = html.IndexOf("</eventinfo>", sp + 1)
+                                End While
+
+                                sr.Close()
+                                st.Close()
+
+                                If chk = 0 Then
+                                    '該当時間帯の番組が無かった場合
+                                    Dim j As Integer = 0
+                                    If r Is Nothing Then
+                                        j = 0
+                                    Else
+                                        j = r.Length
+                                    End If
+                                    ReDim Preserve r(j)
+                                    r(j).stationDispName = ch_list(i).jigyousha
+                                    r(j).startDateTime = ""
+                                    r(j).endDateTime = ""
+                                    r(j).programTitle = ""
+                                    r(j).programContent = ""
+                                End If
+                            ElseIf chk_j = 2 Then
+                                'ダミー
                                 Dim j As Integer = 0
                                 If r Is Nothing Then
                                     j = 0

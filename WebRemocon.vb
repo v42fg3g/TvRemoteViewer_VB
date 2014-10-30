@@ -921,6 +921,36 @@ Class WebRemocon
                                         TvProgram_NGword(j) = trim8(clset(j))
                                     Next
                                 End If
+                            Case "TvProgramEDCB_NGword"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgramEDCB_NGword(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        TvProgramEDCB_NGword(j) = trim8(clset(j))
+                                    Next
+                                End If
+                            Case "TvProgramTvRock_NGword"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgramTvRock_NGword(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        TvProgramTvRock_NGword(j) = trim8(clset(j))
+                                    Next
+                                End If
+                            Case "TvProgramEDCB_ignore"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgramEDCB_ignore(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        TvProgramEDCB_ignore(j) = trim8(clset(j))
+                                    Next
+                                End If
                             Case "TvProgramD_BonDriver1st"
                                 TvProgramD_BonDriver1st = trim8(youso(1).ToString)
                             Case "TvProgramS_BonDriver1st"
