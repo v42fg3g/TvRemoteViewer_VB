@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.76"
+    Private version As String = "TvRemoteViewer_VB version 0.77"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -42,25 +42,25 @@ Public Class Form1
             Dim NHK_dual_mono_mode_select As Integer = 0 'フォームからは指定しない常に０
             Dim HLSorHTTP As Integer = ComboBoxHLSorHTTP.SelectedIndex * 2 '0or2
             If num > 0 Then
-                If fileroot.IndexOf(wwwroot) = 0 Or fileroot.Length = 0 Then
-                    If bondriver.IndexOf(".dll") > 0 Then
-                        If hlsOpt2.Length > 0 Then
-                            If s.Length = 3 Then
-                                sid = Val(s(1))
-                                Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
-                                Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP)
-                            Else
-                                MsgBox("サービスIDを指定してください")
-                            End If
+                'If fileroot.IndexOf(wwwroot) = 0 Or fileroot.Length = 0 Then
+                If bondriver.IndexOf(".dll") > 0 Then
+                    If hlsOpt2.Length > 0 Then
+                        If s.Length = 3 Then
+                            sid = Val(s(1))
+                            Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
+                            Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP)
                         Else
-                            MsgBox("HLSオプションを記入してください")
+                            MsgBox("サービスIDを指定してください")
                         End If
                     Else
-                        MsgBox("BonDriverを指定してください")
+                        MsgBox("HLSオプションを記入してください")
                     End If
                 Else
-                    MsgBox("%FILEROOT%は%WWWROOT%と同じか子フォルダ以下にしてください")
+                    MsgBox("BonDriverを指定してください")
                 End If
+                'Else
+                'MsgBox("%FILEROOT%は%WWWROOT%と同じか子フォルダ以下にしてください")
+                'End If
             Else
                 MsgBox("ストリーム Numberは1以上に設定してください")
             End If
@@ -305,8 +305,39 @@ Public Class Form1
         '解像度コンボボックスをセット httpサーバースタート後にhls_option()がセットされている
         search_ComboBoxResolution()
 
+        'フォーム上の項目が正常かどうかチェック
+        check_form_youso()
+
         'プロセスクラッシュ監視等開始
         Timer1.Enabled = True
+    End Sub
+
+    'フォーム上の項目が正常かどうかチェック
+    Private Sub check_form_youso()
+        'RAMドライブに作成されることを考慮して存在しない場合は作成
+        Dim fileroot As String = TextBoxFILEROOT.Text.ToString
+        If fileroot.Length > 0 Then
+            Dim sp As Integer = fileroot.LastIndexOf("\")
+            If sp > 0 Then
+                Dim s As String = fileroot.Substring(0, sp)
+                'フォルダが存在するか確認し、無ければ作成
+                Try
+                    If System.IO.Directory.Exists(fileroot) Then
+                    Else
+                        log1write("【フォルダ作成】%FILEROOT%が存在しません。" & fileroot & " を作成しました")
+                        System.IO.Directory.CreateDirectory(fileroot)
+                    End If
+                Catch ex As Exception
+                End Try
+            ElseIf fileroot.IndexOf(":") >= 0 Then
+                log1write("【警告】%FILEROOT%にドライブそのものを指定することはできません。ドライブ内フォルダを指定してください")
+            ElseIf fileroot = "\\" Then
+                log1write("【警告】%FILEROOT%にネットワークドライブそのものを指定することはできません。ネットワークドライブ内フォルダを指定してください")
+            Else
+                log1write("【警告】%FILEROOT%が不正です")
+            End If
+        End If
+
     End Sub
 
     'サブフォルダを取得

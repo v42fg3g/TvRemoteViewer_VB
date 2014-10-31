@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.76
+TvRemoteViewer_VB v0.77
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -385,6 +385,8 @@ TvRemoteViewer_VB v0.76
 		ViewTV～.htmlの変更
 	0.76	TvRock＆EDCB番組表の放送局NGワードを地デジのものから分離しiniに追加
 		EDCB番組表において番組情報を取得しない設定をiniに追加
+	0.77	%FILEROOT%を自由に設定できるようにした（RAMドライブ指定を考慮。ドライブそのものを指定することはできません）
+		例：%FILEROOT%をZ:\streamに設定した場合、http://～:40003/stream/～へのアクセスはZ:\streamに割り振られます
 
 
 

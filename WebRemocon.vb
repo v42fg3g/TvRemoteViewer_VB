@@ -414,18 +414,37 @@ Class WebRemocon
         If Me._fileroot.Length = 0 Then
             fileroot = Me._wwwroot
         End If
-        '相対アドレスに変換
-        fileroot = fileroot.Replace(Me._wwwroot, "")
-        If fileroot.Length > 0 Then
-            '先頭が\なら削除
-            If fileroot.Substring(0, 1) = "\" Then
-                Try
-                    fileroot = fileroot.Substring(1)
-                Catch ex As Exception
-                End Try
+        If fileroot.IndexOf(Me._wwwroot) >= 0 Then
+            'パスがwwwrootの子ディレクトリ
+            '相対アドレスに変換
+            fileroot = fileroot.Replace(Me._wwwroot, "")
+            If fileroot.Length > 0 Then
+                '先頭が\なら削除
+                If fileroot.Substring(0, 1) = "\" Then
+                    Try
+                        fileroot = fileroot.Substring(1)
+                    Catch ex As Exception
+                    End Try
+                End If
+                fileroot = fileroot.Replace("\", "/")
+                fileroot &= "/"
             End If
-            fileroot = fileroot.Replace("\", "/")
-            fileroot &= "/"
+        Else
+            '全く違うディレクトリ
+            'G:\streamだとしたら
+            Dim sp As Integer = fileroot.LastIndexOf("\")
+            If sp >= 0 Then
+                Try
+                    fileroot = fileroot.Substring(sp + 1) & "/"
+                Catch ex As Exception
+                    fileroot = ""
+                    log1write("【エラー】%FILEROOT%の末尾が\になっています")
+                End Try
+            Else
+                'ドライブそのものを指定など D:
+                fileroot = ""
+                log1write("【エラー】%FILEROOT%にドライブを直接指定はできません。ドライブ内フォルダを指定してください")
+            End If
         End If
 
         Return fileroot
@@ -1671,6 +1690,16 @@ Class WebRemocon
                     If auth_ok > 0 Then
                         ' リクエストされたURLからファイルのパスを求める
                         Dim path As String = Me._wwwroot & req.Url.LocalPath.Replace("/", "\")
+
+                        '%FILEROOT%へのアクセスならパスを変換
+                        If path.IndexOf(Me._fileroot) < 0 Then
+                            Dim sp As Integer = Me._fileroot.LastIndexOf("\")
+                            Dim folder As String = Me._fileroot.Substring(sp) & "\"
+                            sp = path.IndexOf(folder)
+                            If sp >= 0 Then
+                                path = Me._fileroot & "\" & path.Substring(sp + folder.Length)
+                            End If
+                        End If
 
                         'ルートにアクセスされた場合、index.htmlを表示する
                         Dim se1 As Integer = path.LastIndexOf("\")
