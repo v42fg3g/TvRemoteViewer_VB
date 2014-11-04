@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.77
+TvRemoteViewer_VB v0.78
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -135,6 +135,8 @@ TvRemoteViewer_VB v0.77
 	%HEIGHT%			ビデオの高さ
 	%FILEROOT%			.m3u8が存在する相対フォルダ
 	%SUBSTR%			Nico2HLSによってニコニコ実況コメント取得中ならば"_s"に変換される
+	%JKNUM%				ニコニコ実況のチャンネル文字列（例：jk8)
+	%JKVALUE%			ニコニコ実況用接続用文字列
 
 
 	・なお、%PROCBONLIST%、%SELECTCH%、%VIEWBUTTONS%、%SELECTBONSIDCH%、%SELECTNHKMODE%、%SELECTRESOLUTION%　に対しては、要素の前中後に表示するhtmlタグを指定できます。
@@ -387,7 +389,10 @@ TvRemoteViewer_VB v0.77
 		EDCB番組表において番組情報を取得しない設定をiniに追加
 	0.77	%FILEROOT%を自由に設定できるようにした（RAMドライブ指定を考慮。ドライブそのものを指定することはできません）
 		例：%FILEROOT%をZ:\streamに設定した場合、http://～:40003/stream/～へのアクセスはZ:\streamに割り振られます
+	0.78	ニコニコ実況用変換文字列として%JKNUM%と%JKVALUE%を追加
+		ch_sid.txtの追加
 
 
 
 ※ConnectedSelect.jsはhttp://d.hatena.ne.jp/Mars/20071109のスクリプトを使用させていただきました。
+※ch_sid.txtはNicoJKPlayModのjkch.sh.txtを参照し修正を加えたものです。作者様ありがとうございます。

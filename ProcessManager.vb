@@ -1501,6 +1501,31 @@ Public Class ProcessManager
         End If
         Return r
     End Function
+
+    'ニコニコ実況用　numからサービスIDとchspaceを取得して返す
+    Public Function get_jk_para(ByVal num As Integer) As Object
+        Dim d(1) As Integer
+        d(0) = 0
+        d(1) = 0
+
+        Dim udpopt As String = ""
+        Dim i As Integer = 0
+        If Me._list.Count > 0 Then
+            For i = 0 To Me._list.Count - 1
+                If Me._list(i)._num = num Then
+                    udpopt = Me._list(i)._udpOpt
+                    Exit For
+                End If
+            Next
+        End If
+
+        If udpopt.Length > 0 Then
+            d(0) = Val(instr_pickup_para(udpopt, "/sid ", " ", 0))
+            d(1) = Val(instr_pickup_para(udpopt, "/chspace ", " ", 0))
+        End If
+
+        Return d
+    End Function
 End Class
 
 

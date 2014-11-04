@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.77"
+    Private version As String = "TvRemoteViewer_VB version 0.78"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -244,6 +244,9 @@ Public Class Form1
     End Sub
 
     Private Sub Form1_Shown(sender As System.Object, e As System.EventArgs) Handles MyBase.Shown
+        'ニコニコ実況用サービスIDとjkチャンネルとの対応表を読み込む
+        ch_sid_load()
+
         'フォームの項目を復元
         F_window_set()
         'コンボボックスの項目をセット

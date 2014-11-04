@@ -1717,7 +1717,7 @@ Class WebRemocon
                         'リクエストされたURL
                         Dim req_Url As String = req.Url.LocalPath
 
-                        If path.IndexOf(".htm") > 0 Then
+                        If path.IndexOf(".htm") > 0 Then ' Or path.IndexOf(".js") > 0 Then
                             'HTMLなら
 
                             '反応が速くなるかなとこの1行を前に出してみたが何も変わらなかった・・
@@ -1998,7 +1998,7 @@ Class WebRemocon
                                 sw.WriteLine(ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません"))
                                 'sw.Flush()
                                 log1write(num.ToString & ":配信されていません")
-                            ElseIf path.IndexOf(".htm") > 0 And File.Exists(path) Then
+                            ElseIf File.Exists(path) Then
                                 'ElseIf request_page >= 2 Then
                                 'パラメーターを置換する必要があるページ
                                 Dim s As String = ReadAllTexts(path)
@@ -2080,6 +2080,40 @@ Class WebRemocon
                                         s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
+                                    End If
+                                End If
+
+                                'ニコニコ実況用jkチャンネル変換
+                                If s.IndexOf("%JKNUM%") >= 0 Then
+                                    'numからsidとchspaceを取得する
+                                    Dim jkd() As Integer = Me._procMan.get_jk_para(num)
+                                    If jkd(0) > 0 Then
+                                        Dim jkstr As String = sid2jk(jkd(0), jkd(1))
+                                        If jkstr.Length > 0 Then
+                                            s = s.Replace("%JKNUM%", jkstr)
+                                        Else
+                                            s = s.Replace("%JKNUM%", "")
+                                        End If
+                                    Else
+                                        s = s.Replace("%JKNUM%", "")
+                                    End If
+                                End If
+
+                                'ニコニコ実況用　接続用stringをニコニコ実況から取得
+                                If s.IndexOf("%JKVALUE%") >= 0 Then
+                                    'numからsidとchspaceを取得する
+                                    Dim jkd() As Integer = Me._procMan.get_jk_para(num)
+                                    If jkd(0) > 0 Then
+                                        Dim jknum As String = sid2jk(jkd(0), jkd(1))
+                                        If jknum.Length > 0 Then
+                                            'jk～からニコニコ実況接続用stringを取得
+                                            Dim jkvalue As String = get_nico_jkvalue(jknum)
+                                            s = s.Replace("%JKVALUE%", jkvalue)
+                                        Else
+                                            s = s.Replace("%JKVALUE%", "")
+                                        End If
+                                    Else
+                                        s = s.Replace("%JKVALUE%", "")
                                     End If
                                 End If
 
@@ -2206,7 +2240,6 @@ Class WebRemocon
                                     Else
                                         s = s.Replace("%SUBSTR%", "")
                                     End If
-
                                 End If
 
                                 '配信中簡易リスト
