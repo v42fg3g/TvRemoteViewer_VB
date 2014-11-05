@@ -9,7 +9,7 @@ Module モジュール_ファイル
             Using fs As New FileStream(path, FileMode.Open, _
                 FileAccess.Read, FileShare.ReadWrite)
                 Using sr As TextReader = New StreamReader(fs, _
-                    Encoding.GetEncoding("shift-jis"))
+                    Encoding.GetEncoding(HTML_IN_CHARACTER_CODE))
                     Dim line As String
                     ' Read and display lines from the file until the end of
                     ' the file is reached.

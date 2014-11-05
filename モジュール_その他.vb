@@ -1,4 +1,9 @@
 ﻿Module モジュール_その他
+    'HTML入力文字コード（HTMLファイルの文字コード）
+    Public HTML_IN_CHARACTER_CODE As String = "UTF-8" 'Shift_JIS
+    'HTML出力文字コード（ブラウザに出力する文字コード）
+    Public HTML_OUT_CHARACTER_CODE As String = "UTF-8" 'Shift_JIS
+
     '最大配信ナンバー
     Public MAX_STREAM_NUMBER As Integer = 8
 

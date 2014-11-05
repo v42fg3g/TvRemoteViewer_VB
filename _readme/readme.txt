@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.78
+TvRemoteViewer_VB v0.79
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -391,6 +391,8 @@ TvRemoteViewer_VB v0.78
 		例：%FILEROOT%をZ:\streamに設定した場合、http://～:40003/stream/～へのアクセスはZ:\streamに割り振られます
 	0.78	ニコニコ実況用変換文字列として%JKNUM%と%JKVALUE%を追加
 		ch_sid.txtの追加
+	0.79	HTML文字コードの標準をUTF-8にした(iniに文字コード指定オプションを追加）
+		HTMLファイルの文字コードをUTF-8にした
 
 
 

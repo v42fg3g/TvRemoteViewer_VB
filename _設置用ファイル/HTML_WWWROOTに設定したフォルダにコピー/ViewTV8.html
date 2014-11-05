@@ -1,7 +1,7 @@
-<!doctype html>
+ï»¿<!doctype html>
 <html>
     <head>
-        <meta charset="shift_jis" />
+        <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width">
         <title>HTTP Live Streaming %NUM%</title>
     </head>
@@ -12,12 +12,12 @@
         <br>
 		<br>
 		%SELECTCH:::<br>%
-        <input type="button" value="ƒgƒbƒvƒƒjƒ…[" onClick="location.href='index.html'">
-        <input type="button" Value="Ä“Ç‚Ýž‚Ý" onClick="location.reload();">
-        <input type="button" value="’nƒfƒW”Ô‘g•\" onClick="location.href='TvProgram.html'">
+        <input type="button" value="ãƒˆãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼" onClick="location.href='index.html'">
+        <input type="button" Value="å†èª­ã¿è¾¼ã¿" onClick="location.reload();">
+        <input type="button" value="åœ°ãƒ‡ã‚¸ç•ªçµ„è¡¨" onClick="location.href='TvProgram.html'">
 		%TVPROGRAM-TVROCK-BUTTON%
 		%TVPROGRAM-EDCB-BUTTON%
-		<input type="button" value="–ß‚é" onClick="history.go(-1);">
+		<input type="button" value="æˆ»ã‚‹" onClick="history.go(-1);">
 
 		<script type="text/javascript">
 			function changeSelect(){
@@ -25,7 +25,7 @@
     				var select = document.getElementById('SEL2');
 	    			var options = document.getElementById('SEL2').options;
     				var value = options.item(select.selectedIndex).text;
-					if (value.indexOf('‚m‚g‚j') < 0) {
+					if (value.indexOf('ï¼®ï¼¨ï¼«') < 0) {
 						document.getElementById('NHKVIEW').style.display = "none";
 					} else {
 						document.getElementById('NHKVIEW').style.display = "";
@@ -33,7 +33,7 @@
 				} catch (e) {
 				}
 			}
-			//ƒIƒ“ƒ[ƒh‚³‚¹AƒŠƒ[ƒhŽž‚É‘I‘ð‚ð•ÛŽ
+			//ã‚ªãƒ³ãƒ­ãƒ¼ãƒ‰ã•ã›ã€ãƒªãƒ­ãƒ¼ãƒ‰æ™‚ã«é¸æŠžã‚’ä¿æŒ
 			window.onload = changeSelect;
 		</script>
     </body>

@@ -366,7 +366,7 @@ Class WebRemocon
             r &= "<html>" & vbCrLf
             r &= "<head>" & vbCrLf
             r &= "<title>" & title & "</title>" & vbCrLf
-            r &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />" & vbCrLf
+            r &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=" & HTML_OUT_CHARACTER_CODE & """ />" & vbCrLf
             'r &= "<meta name=""viewport"" content=""width=device-width"">"
             r &= "</head>" & vbCrLf
             r &= "<body>" & vbCrLf
@@ -1102,6 +1102,10 @@ Class WebRemocon
                                 ALLOW_IDPASS2HTML = Val(youso(1).ToString)
                             Case "FFMPEG_HTTP_CUT_SECONDS"
                                 FFMPEG_HTTP_CUT_SECONDS = Val(youso(1).ToString)
+                            Case "HTML_IN_CHARACTER_CODE"
+                                HTML_IN_CHARACTER_CODE = trim8(youso(1).ToString)
+                            Case "HTML_OUT_CHARACTER_CODE"
+                                HTML_OUT_CHARACTER_CODE = trim8(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -1720,8 +1724,11 @@ Class WebRemocon
                         If path.IndexOf(".htm") > 0 Then ' Or path.IndexOf(".js") > 0 Then
                             'HTMLなら
 
+                            'ページが表示されないことがあるので
+                            res.ContentType = "text/html"
+
                             '反応が速くなるかなとこの1行を前に出してみたが何も変わらなかった・・
-                            Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                            Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
 
                             'ToLower小文字で比較
                             Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
@@ -1925,7 +1932,7 @@ Class WebRemocon
                             '===========================================
                             If StartTv_param = -1 Then
                                 '/StartTvにリクエストがあったがパラメーターが不正な場合
-                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
                                 sw.WriteLine(ERROR_PAGE("パラメーターが不正です", "パラメーターが不正です"))
                                 'sw.Flush()
                                 log1write("パラメーターが不正です")
@@ -1948,12 +1955,12 @@ Class WebRemocon
                                     s = s.Replace("%NUM%", num.ToString)
                                 Else
                                     '従来通り
-                                    'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis" & vbcrlf)
+                                    'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE & vbcrlf)
                                     s &= "<!doctype html>" & vbCrLf
                                     s &= "<html>" & vbCrLf
                                     s &= "<head>" & vbCrLf
                                     s &= "<title>Waiting " & num.ToString & "</title>" & vbCrLf
-                                    s &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=shift_jis"" />" & vbCrLf
+                                    s &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=" & HTML_OUT_CHARACTER_CODE & """ />" & vbCrLf
                                     's &= "<meta name=""viewport"" content=""width=device-width"">" & vbcrlf
                                     s &= "<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">" & vbCrLf
                                     s &= "</head>" & vbCrLf
@@ -1994,7 +2001,7 @@ Class WebRemocon
                                 sw.WriteLine(ERROR_PAGE("HTTPストリーミング", html19))
                             ElseIf request_page = 12 Then
                                 'VLCはファイル再生未対応
-                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
                                 sw.WriteLine(ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません"))
                                 'sw.Flush()
                                 log1write(num.ToString & ":配信されていません")
@@ -2003,7 +2010,7 @@ Class WebRemocon
                                 'パラメーターを置換する必要があるページ
                                 Dim s As String = ReadAllTexts(path)
 
-                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
 
                                 '★表示状態により変換内容変更が無いパラメーター
                                 'これらは一括変換できる
@@ -2294,7 +2301,7 @@ Class WebRemocon
 
                             Else
                                 'ローカルファイルが存在していない
-                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
                                 sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
                                 'sw.Flush()
                                 log1write(path & "が見つかりませんでした")
@@ -2311,7 +2318,7 @@ Class WebRemocon
                                 log1write(path & "へのアクセスを受け付けました")
                             Else
                                 'ローカルファイルが存在していない
-                                Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding("shift_jis"))
+                                Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
                                 sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
                                 sw.Flush()
                                 log1write(path & "が見つかりませんでした")

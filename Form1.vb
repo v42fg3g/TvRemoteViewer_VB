@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.78"
+    Private version As String = "TvRemoteViewer_VB version 0.79"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -266,8 +266,13 @@ Public Class Form1
         'チャンネル情報を取得　今までは表示要求があった時点で１つ１つ取得していた
         Me._worker.WI_GET_CHANNELS()
 
-        'ファイル再生用パス読み込み
+        'iniからパラ－メータを読み込む
         Me._worker.read_videopath()
+
+        'HTMLキャラクターコード
+        log1write("HTML入力キャラクターコード： " & HTML_IN_CHARACTER_CODE)
+        log1write("HTML出力キャラクターコード： " & HTML_OUT_CHARACTER_CODE)
+
         '無事起動
         TvRemoteViewer_VB_Start = 1
 

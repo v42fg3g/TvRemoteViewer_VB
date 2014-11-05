@@ -1,7 +1,7 @@
-<!doctype html>
+Ôªø<!doctype html>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>TvRemoteViewer_VB</title>
     </head>
     <body>
@@ -21,7 +21,7 @@
             <br><br>
             %SELECTNHKMODE:::<br><br>%
             <select name="resolution">
-               <option>ÉtÉHÅ[ÉÄè„ÇÃÉIÉvÉVÉáÉì</option>
+               <option>„Éï„Ç©„Éº„É†‰∏ä„ÅÆ„Ç™„Éó„Ç∑„Éß„É≥</option>
                <option>320x180</option>
                <option>480x270</option>
                <option>640x360</option>
@@ -30,7 +30,7 @@
                <option>1280x720</option>
             </select>
             <br><br>
-            <input type="submit" value="îzêMäJén" />
+            <input type="submit" value="ÈÖç‰ø°ÈñãÂßã" />
         </form>
         <br>
         <br>
@@ -38,7 +38,7 @@
 
 		%VIEWBUTTONS::<br><br>:<br><br><br><br>%
         
-        %PROCBONLIST:îzêMíÜÇÃÉXÉgÉäÅ[ÉÄ<br>::<br><br><br>%
+        %PROCBONLIST:ÈÖç‰ø°‰∏≠„ÅÆ„Çπ„Éà„É™„Éº„É†<br>::<br><br><br>%
         
         <form action="CloseTv.html">
             <select name="num">
@@ -51,17 +51,17 @@
                <option>7</option>
                <option>8</option>
             </select>
-            <input type="submit" value="îzêMí‚é~" />
+            <input type="submit" value="ÈÖç‰ø°ÂÅúÊ≠¢" />
         </form>
         <br />
         <form action="StopAll.html">
-            <input type="submit" value="ëSîzêMí‚é~" />
+            <input type="submit" value="ÂÖ®ÈÖç‰ø°ÂÅúÊ≠¢" />
         </form>
         <br />
         <br />
         <br />
         <form action="TvProgram.html">
-            <input type="submit" value="ínÉfÉWî‘ëgï\" />
+            <input type="submit" value="Âú∞„Éá„Ç∏Áï™ÁµÑË°®" />
         </form>
 		%TVPROGRAM-TVROCK-BUTTON:<br>::%
 		%TVPROGRAM-EDCB-BUTTON:<br>::%
@@ -70,12 +70,12 @@
         <br />
         <br />
         <form action="SelectVideo.html">
-            <input type="submit" value="ÉtÉ@ÉCÉãçƒê∂" />
+            <input type="submit" value="„Éï„Ç°„Ç§„É´ÂÜçÁîü" />
         </form>
         <br />
         <br />
         <br />
-		    <input type="button" Value="çƒì«Ç›çûÇ›" onClick="location.reload();">
+		    <input type="button" Value="ÂÜçË™≠„ÅøËæº„Åø" onClick="location.reload();">
 		<br><br>
 		
 		<script type="text/javascript">
@@ -84,7 +84,7 @@
     				var select = document.getElementById('SEL2');
 	    			var options = document.getElementById('SEL2').options;
     				var value = options.item(select.selectedIndex).text;
-					if (value.indexOf('ÇmÇgÇj') < 0) {
+					if (value.indexOf('ÔºÆÔº®Ôº´') < 0) {
 						document.getElementById('NHKVIEW').style.display = "none";
 					} else {
 						document.getElementById('NHKVIEW').style.display = "";
@@ -92,7 +92,7 @@
 				} catch (e) {
 				}
 			}
-			//ÉIÉìÉçÅ[ÉhÇ≥ÇπÅAÉäÉçÅ[ÉhéûÇ…ëIëÇï€éù
+			//„Ç™„É≥„É≠„Éº„Éâ„Åï„Åõ„ÄÅ„É™„É≠„Éº„ÉâÊôÇ„Å´ÈÅ∏Êäû„Çí‰øùÊåÅ
 			window.onload = changeSelect;
 		</script>
 
