@@ -49,7 +49,8 @@ Class ProcessBean
 
         'ffmpeg HTTPストリーム
         Me._IsStart = False
-        Me._ffmpegBuf = New Byte(88 * 20480 - 1) {}       '2048 Packet
+        'Me._ffmpegBuf = New Byte(88 * 20480 - 1) {}       '2048 Packet
+        Me._ffmpegBuf = New Byte(1024 * 1024 * HTTPSTREAM_FFMPEG_BUFFER - 1) {}       '1MB*30
     End Sub
 
     '========================================================================
@@ -80,7 +81,7 @@ Class ProcessBean
             'Dim ffmpeg As System.Diagnostics.Process = System.Diagnostics.Process.Start(ffmpegStart)
             Me._hlsProc = System.Diagnostics.Process.Start(ffmpegStart)
 
-            Thread.Sleep(900)
+            Thread.Sleep(100) '900
             Me._hlsProc.StandardOutput.BaseStream.BeginRead(Me._ffmpegBuf, 0, Me._ffmpegBuf.Length, AddressOf StreamReceive, output)
             r = 1 '成功
             Me._stopping = 0 '3に設定したあったものを0に戻す

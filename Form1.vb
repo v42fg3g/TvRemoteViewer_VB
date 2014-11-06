@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.79"
+    Private version As String = "TvRemoteViewer_VB version 0.80"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -272,6 +272,9 @@ Public Class Form1
         'HTMLキャラクターコード
         log1write("HTML入力キャラクターコード： " & HTML_IN_CHARACTER_CODE)
         log1write("HTML出力キャラクターコード： " & HTML_OUT_CHARACTER_CODE)
+
+        'ffmpegバッファ
+        log1write("ffmepg HTTPストリームバッファ：　" & HTTPSTREAM_FFMPEG_BUFFER & "MB")
 
         '無事起動
         TvRemoteViewer_VB_Start = 1

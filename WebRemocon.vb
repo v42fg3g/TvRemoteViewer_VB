@@ -1088,6 +1088,8 @@ Class WebRemocon
                                 HTTPSTREAM_App = Val(youso(1).ToString)
                             Case "HTTPSTREAM_VLC_port"
                                 HTTPSTREAM_VLC_port = Val(youso(1).ToString)
+                            Case "HTTPSTREAM_FFMPEG_BUFFER"
+                                HTTPSTREAM_FFMPEG_BUFFER = Val(youso(1).ToString)
                             Case "MAX_STREAM_NUMBER"
                                 If Val(youso(1).ToString) > 0 Then
                                     MAX_STREAM_NUMBER = Val(youso(1).ToString)
@@ -1624,7 +1626,8 @@ Class WebRemocon
                     If ffmpeg_num > 0 Then
                         'ffmpeg HTTP ストリーム配信開始
                         log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
-                        context.Response.Headers("Content-Type") = "video/mpeg"
+                        'context.Response.Headers("Content-Type") = "video/mpeg"
+                        context.Response.Headers("Content-Type") = "video/MP2T"
                         Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
 
                         '現在稼働中のlist(i)._numをログに表示
@@ -1763,7 +1766,7 @@ Class WebRemocon
                             Dim redirect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("redirect") & ""
                             'm3u8,tsの準備状況
                             Dim check_m3u8_ts As Integer = 0
-                            'ストリームモード 0=UDP 1=ファイル再生
+                            'ストリームモード 0=UDP 1=ファイル再生 2=http配信 3=http配信ファイル再生
                             Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
                             'ファイル名
                             Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
@@ -1858,6 +1861,10 @@ Class WebRemocon
                                     Case "WI_GET_ERROR_STREAM"
                                         '再起動中のストリームを返す
                                         WI_cmd_reply = Me.WI_GET_ERROR_STREAM()
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_SET_HTTPSTREAM_App"
+                                        'http配信アプリを切り替える　手抜き・・numを一時代用
+                                        WI_cmd_reply = Me.WI_SET_HTTPSTREAM_App(num)
                                         WI_cmd_reply_force = 1
                                 End Select
                             End If
@@ -2516,6 +2523,19 @@ Class WebRemocon
         Return make_file_select_html("")
     End Function
 
+    'HTTPSTREAM_App遠隔切り替え
+    Public Function WI_SET_HTTPSTREAM_App(ByVal a As Integer) As String
+        Dim r As String = ""
+        If a = 1 Then
+            HTTPSTREAM_App = a
+            r = "HTTP配信アプリとしてVLCを指定しました"
+        ElseIf a = 2 Then
+            HTTPSTREAM_App = a
+            r = "HTTP配信アプリとしてffmpegを指定しました"
+        End If
+        Return r
+    End Function
+
     '　本体はProcessManager.vbに
     Public Function WI_GET_LIVE_STREAM() As String
         Return Me._procMan.WI_GET_LIVE_STREAM()
@@ -2530,6 +2550,7 @@ Class WebRemocon
     Public Function WI_GET_ERROR_STREAM() As String
         Return Me._procMan.WI_GET_ERROR_STREAM()
     End Function
+
 End Class
 
 

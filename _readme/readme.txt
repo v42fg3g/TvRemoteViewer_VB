@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.79
+TvRemoteViewer_VB v0.80
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -393,6 +393,8 @@ TvRemoteViewer_VB v0.79
 		ch_sid.txtの追加
 	0.79	HTML文字コードの標準をUTF-8にした(iniに文字コード指定オプションを追加）
 		HTMLファイルの文字コードをUTF-8にした
+	0.80	HTTP配信(ffmpeg)の修正
+		iniにffmpegのバッファを指定するHTTPSTREAM_FFMPEG_BUFFERを追加
 
 
 

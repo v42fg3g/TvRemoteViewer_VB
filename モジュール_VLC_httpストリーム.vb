@@ -14,4 +14,6 @@
     'VLCポートの指定が無い場合、UDPポートナンバーにいくつプラスするか
     Public HTTPSTREAM_VLC_port_plus As Integer = 40
 
+    'ffmpegバッファ × MB
+    Public HTTPSTREAM_FFMPEG_BUFFER As Integer = 32
 End Module
