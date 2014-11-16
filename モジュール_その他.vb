@@ -1,4 +1,8 @@
 ﻿Module モジュール_その他
+    'アイドルが指定分続くときは切断する
+    Public STOP_IDLEMINUTES As Integer = 300
+    Public STOP_IDLEMINUTES_LAST As DateTime '最後に.htmlにアクセスがあった日時
+
     'HTML入力文字コード（HTMLファイルの文字コード）
     Public HTML_IN_CHARACTER_CODE As String = "UTF-8" 'Shift_JIS
     'HTML出力文字コード（ブラウザに出力する文字コード）

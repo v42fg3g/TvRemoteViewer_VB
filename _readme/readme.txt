@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.80
+TvRemoteViewer_VB v0.81
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -395,6 +395,10 @@ TvRemoteViewer_VB v0.80
 		HTMLファイルの文字コードをUTF-8にした
 	0.80	HTTP配信(ffmpeg)の修正
 		iniにffmpegのバッファを指定するHTTPSTREAM_FFMPEG_BUFFERを追加
+	0.81	配信停止時にも関連ファイルを削除することにした（初回接続時のスピードアップ狙い）
+		Nico2HLSへの対応を終了
+		PCクライアントの不具合により初回配信準備に失敗した場合に配信停止するようにした
+		アイドル時間が指定した分数に達すると全切断するようiniにSTOP_IDLEMINUTESを追加
 
 
 

@@ -288,7 +288,9 @@ Public Class ProcessManager
                             Me._list.Add(pb)
 
                             '1秒毎のプロセスチェックさせない
-                            Me._list(num2i(num))._stopping = 3
+                            'Me._list(num2i(num))._stopping = 3
+                            log1write("配信が開始されない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")
+                            Me._list(num2i(num))._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
                         Else
                             '通常
                             '★HLSソフトを実行
@@ -366,7 +368,9 @@ Public Class ProcessManager
                         Me._list.Add(pb)
 
                         '1秒毎のプロセスチェックさせない
-                        Me._list(num2i(num))._stopping = 3
+                        'Me._list(num2i(num))._stopping = 3
+                        log1write("配信が開始されない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")
+                        Me._list(num2i(num))._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
                     Else
                         '★HLSソフトを実行
                         'ProcessStartInfoオブジェクトを作成する
@@ -469,7 +473,7 @@ Public Class ProcessManager
                     '終了途中
                 ElseIf Me._list(i)._stopping = 2 Then
                     'チャンネル変更中
-                ElseIf Me._list(i)._stopping = 3 Then
+                ElseIf Me._list(i)._stopping >= 100 Then '=3
                     'ffmpeg HTTPストリーム UDPアプリだけが起動してHLSアプリの起動を待っている
                 ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 0 Or Me._list(i)._stream_mode = 2) Then
                     '再起動させる
@@ -738,6 +742,9 @@ Public Class ProcessManager
                     'パイプでのチャンネル変更によって、停止するように指定されていない
                     udp_stop = 1
                 End If
+
+                '関連するファイルを削除
+                delete_mystreamnum(Me._list(i)._num)
 
                 Try
                     '★ リストから取り除く

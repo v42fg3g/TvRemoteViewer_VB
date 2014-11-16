@@ -1108,6 +1108,8 @@ Class WebRemocon
                                 HTML_IN_CHARACTER_CODE = trim8(youso(1).ToString)
                             Case "HTML_OUT_CHARACTER_CODE"
                                 HTML_OUT_CHARACTER_CODE = trim8(youso(1).ToString)
+                            Case "STOP_IDLEMINUTES"
+                                STOP_IDLEMINUTES = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -1727,6 +1729,9 @@ Class WebRemocon
                         If path.IndexOf(".htm") > 0 Then ' Or path.IndexOf(".js") > 0 Then
                             'HTMLなら
 
+                            '最後に.htmlにアクセスがあった日時を記録
+                            STOP_IDLEMINUTES_LAST = Now()
+
                             'ページが表示されないことがあるので
                             res.ContentType = "text/html"
 
@@ -2243,15 +2248,19 @@ Class WebRemocon
                                         End If
                                     End While
 
-                                    Dim vttfilename As String = Me._fileroot & "\mystream_s" & num.ToString & ".m3u8"
-                                    If Me._procMan.get_stream_mode(num) = 0 Then
-                                        'ストリームモードが0ならば
-                                        If file_exist(vttfilename) = 1 Then
-                                            s = s.Replace("%SUBSTR%", "_s")
-                                        Else
-                                            s = s.Replace("%SUBSTR%", "")
-                                        End If
-                                    Else
+                                    'Nico2HLSが必要無くなったのでコメントアウト
+                                    'Dim vttfilename As String = Me._fileroot & "\mystream_s" & num.ToString & ".m3u8"
+                                    'If Me._procMan.get_stream_mode(num) = 0 Then
+                                    ''ストリームモードが0ならば
+                                    'If file_exist(vttfilename) = 1 Then
+                                    's = s.Replace("%SUBSTR%", "_s")
+                                    'Else
+                                    's = s.Replace("%SUBSTR%", "")
+                                    'End If
+                                    'Else
+                                    's = s.Replace("%SUBSTR%", "")
+                                    'End If
+                                    If s.IndexOf("%SUBSTR%") >= 0 Then
                                         s = s.Replace("%SUBSTR%", "")
                                     End If
                                 End If

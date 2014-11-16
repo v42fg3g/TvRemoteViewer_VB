@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.80"
+    Private version As String = "TvRemoteViewer_VB version 0.81"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -113,6 +113,15 @@ Public Class Form1
             Catch ex As Exception
                 NotifyIcon1.Text = "TvRemoteViewer_VB"
             End Try
+
+            'アイドル時間が指定分に達した場合は全て切断する
+            If STOP_IDLEMINUTES > 0 Then
+                If (Now() - STOP_IDLEMINUTES_LAST).Minutes >= STOP_IDLEMINUTES Then
+                    STOP_IDLEMINUTES_LAST = Now()
+                    log1write("アイドル時間が" & STOP_IDLEMINUTES.ToString & "分に達しましたので全切断します")
+                    Me._worker.stop_movie(-2)
+                End If
+            End If
 
             chk_timer1 = 0
         End If
@@ -275,6 +284,12 @@ Public Class Form1
 
         'ffmpegバッファ
         log1write("ffmepg HTTPストリームバッファ：　" & HTTPSTREAM_FFMPEG_BUFFER & "MB")
+
+        'アイドル切断分数
+        If STOP_IDLEMINUTES > 0 Then
+            log1write("アイドル時間が" & STOP_IDLEMINUTES & "分に達すると全切断するようセットしました")
+        End If
+        STOP_IDLEMINUTES_LAST = Now()
 
         '無事起動
         TvRemoteViewer_VB_Start = 1
