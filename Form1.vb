@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.81"
+    Private version As String = "TvRemoteViewer_VB version 0.82"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -117,7 +117,7 @@ Public Class Form1
             'アイドル時間が指定分に達した場合は全て切断する
             If STOP_IDLEMINUTES > 0 Then
                 If (Now() - STOP_IDLEMINUTES_LAST).Minutes >= STOP_IDLEMINUTES Then
-                    STOP_IDLEMINUTES_LAST = Now()
+                    STOP_IDLEMINUTES_LAST = CDate("2199/12/31 23:59:59")
                     log1write("アイドル時間が" & STOP_IDLEMINUTES.ToString & "分に達しましたので全切断します")
                     Me._worker.stop_movie(-2)
                 End If

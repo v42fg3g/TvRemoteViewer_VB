@@ -284,11 +284,11 @@ Public Class ProcessManager
                                 Me._list.RemoveAt(i)
                             End If
                             '                                  ↓Processはまだ決まっていない
-                            Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)
+                            Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "")
                             Me._list.Add(pb)
 
                             '1秒毎のプロセスチェックさせない
-                            'Me._list(num2i(num))._stopping = 3
+                            'Me._list(num2i(num))._stopping >= 100
                             log1write("配信が開始されない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")
                             Me._list(num2i(num))._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
                         Else
@@ -343,7 +343,7 @@ Public Class ProcessManager
                             End If
 
                             'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                            Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution)
+                            Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "")
                             Me._list.Add(pb)
                         End If
                     Else
@@ -356,19 +356,20 @@ Public Class ProcessManager
                         End Try
                         log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリを終了しました")
                     End If
-
                 ElseIf stream_mode = 1 Or stream_mode = 3 Then
                     'ファイル再生
-                    If HTTPSTREAM_App = 3 And hlsApp.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
+                    'フルパスファイル名を取得
+                    Dim fullpathfilename As String = trim8(Instr_pickup(hlsOpt, "-i """, """", 0)) 'ffmpeg限定
+                    If HTTPSTREAM_App = 2 And hlsApp.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
                         'ffmpeg HTTPストリーム ファイル再生
                         'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
                         'ProcessBeans作成
                         '                                  ↓Processはまだ決まっていない
-                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
+                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename)
                         Me._list.Add(pb)
 
                         '1秒毎のプロセスチェックさせない
-                        'Me._list(num2i(num))._stopping = 3
+                        'Me._list(num2i(num))._stopping >= 100
                         log1write("配信が開始されない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")
                         Me._list(num2i(num))._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
                     Else
@@ -394,7 +395,7 @@ Public Class ProcessManager
                         log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
 
                         'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution)
+                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename)
                         Me._list.Add(pb)
                     End If
                 End If
@@ -404,7 +405,7 @@ Public Class ProcessManager
             log1write("No." & num.ToString & "は配信停止処理中です")
         ElseIf stopping = 2 Then
             log1write("No." & num.ToString & "はUDPサービスID変更処理宙です")
-        ElseIf stopping = 9 Then
+        ElseIf stopping >= 100 Then
             log1write("No." & num.ToString & "はffmpegHTTPストリーム配信待機中です")
         End If
 
@@ -1464,6 +1465,11 @@ Public Class ProcessManager
                 Dim channel_name As String = F_sid2channelname(Val(ServiceID))
                 Dim hlsApp As String = Me._list(d(i))._hlsApp
                 Dim hlsApp_name As String = ""
+                Dim fullpathfilename As String = Me._list(d(i))._fullpathfilename
+                If channel_name.Length = 0 And (stream_mode = 1 Or stream_mode = 3) Then
+                    'ファイル再生ならばファイル名をBonDriverとして表示するようにする
+                    BonDriver = fullpathfilename
+                End If
                 Dim sp As Integer = hlsApp.LastIndexOf("\")
                 If sp >= 0 Then
                     'ファイル名だけを抜き出す()

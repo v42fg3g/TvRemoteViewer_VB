@@ -24,11 +24,12 @@ Class ProcessBean
     Public _stream_mode As Integer = 0 '0=udp 1=file
     'Public _m3u8_update_time As Date 'm3u8の更新日時
     Public _NHK_dual_mono_mode_select As Integer
+    Public _fullpathfilename As String = "" 'ファイル再生のファイルネーム
     'ffmpeg HTTPストリーム
     Public _IsStart As Boolean ' = False
     Public _ffmpegBuf As Byte() '= Nothing        'Public opt As String 'VLCオプション文字列
 
-    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId As Integer, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String)
+    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId As Integer, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String)
         Me._udpProc = udpProc
         Me._hlsProc = hlsProc
         Me._procBrowserIndex = procBrowserIndex
@@ -46,6 +47,7 @@ Class ProcessBean
         Me._stream_mode = Stream_mode
         'Me._m3u8_update_time = Now()
         Me._NHK_dual_mono_mode_select = NHK_dual_mono_mode_select
+        Me._fullpathfilename = fullpathfilename
 
         'ffmpeg HTTPストリーム
         Me._IsStart = False
@@ -135,7 +137,7 @@ Class ProcessBean
         Catch ex As Exception
             'クライアントから切断されるとここでエラー
             Me._IsStart = False
-            'ffmpeg_http_stream_Stop() 'Me._stopping = 9とすることでタイマーでアプリごと終了させる
+            'ffmpeg_http_stream_Stop() 'Me._stopping >= 100とすることでタイマーでアプリごと終了させる
             log1write("ffmpeg HTTPストリーム受信に失敗しました。" & ex.Message)
             'ストップした旨を知らせる
             log1write("チャンネル変更が行われない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")

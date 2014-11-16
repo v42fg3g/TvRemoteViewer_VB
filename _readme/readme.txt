@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.81
+TvRemoteViewer_VB v0.82
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -399,6 +399,8 @@ TvRemoteViewer_VB v0.81
 		Nico2HLSへの対応を終了
 		PCクライアントの不具合により初回配信準備に失敗した場合に配信停止するようにした
 		アイドル時間が指定した分数に達すると全切断するようiniにSTOP_IDLEMINUTESを追加
+	0.82	ファイル再生時のWI_GET_LIVE_STREAM.htmlのBonDriver欄にフルパスファイル名を記入するようにした
+		HTTP配信のファイル再生においてffmpegが2重に起動してしまうバグを修正
 
 
 
