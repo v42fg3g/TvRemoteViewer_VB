@@ -1311,6 +1311,71 @@ Public Class ProcessManager
     '===========================================================
     'WEB インターフェース
     '===========================================================
+
+    '配信中の番組を返す
+    Public Function WI_GET_PROGRAM_NUM(ByVal num As Integer) As String
+        Dim r As String = ""
+
+        Dim i As Integer = 0
+        If Me._list.Count > 0 Then
+            For i = 0 To Me._list.Count - 1
+
+                Dim fullpathfilename As String = ""
+                Dim program_sid As String = ""
+
+                If Me._list(i)._num = num Or num = 0 Then
+                    Dim stream_mode As Integer = Me._list(i)._stream_mode
+                    If stream_mode = 0 Or stream_mode = 2 Then
+                        Dim chk As Integer = 0
+                        'テレビ配信
+                        program_sid = Val(Instr_pickup(Me._list(i)._udpOpt, "/sid ", " ", 0))
+                        Dim str As String = ""
+                        'まずはBS・CSで番組を探す
+                        If TvProgram_tvrock_url.Length > 0 Then
+                            str = program_translate4WI(999)
+                        ElseIf TvProgram_EDCB_url.Length > 0 Then
+                            str = program_translate4WI(998)
+                        End If
+                        If str.Length > 0 Then
+                            Dim d() As String = Split(str, vbCrLf)
+                            For j As Integer = 0 To d.Length - 1
+                                Dim e() As String = d(j).Split(",")
+                                If e.Length >= 8 Then
+                                    If Val(e(2)) = program_sid Then
+                                        r = d(j)
+                                        chk = 1
+                                        Exit For
+                                    End If
+                                End If
+                            Next
+                        End If
+                        If chk = 0 Then
+                            'ネット番組表
+                            str = program_translate4WI(0)
+                            If str.Length > 0 Then
+                                Dim d() As String = Split(str, vbCrLf)
+                                For j As Integer = 0 To d.Length - 1
+                                    Dim e() As String = d(j).Split(",")
+                                    If e.Length >= 8 Then
+                                        If Val(e(2)) = program_sid Then
+                                            r &= Me._list(i)._num.ToString & "," & d(j) & vbCrLf
+                                            Exit For
+                                        End If
+                                    End If
+                                Next
+                            End If
+                        End If
+                    ElseIf stream_mode = 1 Or stream_mode = 3 Then
+                        'ファイル再生
+                        fullpathfilename = Me._list(i)._fullpathfilename
+                        r &= Me._list(i)._num.ToString & "," & "ファイル再生,ファイル再生,0,0,00:00,00:00," & fullpathfilename & "," & vbCrLf
+                    End If
+                End If
+            Next
+        End If
+        Return r
+    End Function
+
     '配信可能なチャンネル情報
     Public Function WI_GET_CHANNELS(ByVal BonDriverPath As String, ByVal udpApp As String, ByVal BonDriver_NGword() As String) As String
         'BonDriver

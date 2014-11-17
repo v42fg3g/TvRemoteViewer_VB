@@ -1841,6 +1841,10 @@ Class WebRemocon
                                         'TVROCK番組表取得
                                         WI_cmd_reply = Me.WI_GET_PROGRAM_TVROCK()
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_PROGRAM_NUM"
+                                        '放送中の番組
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_NUM(num)
+                                        WI_cmd_reply_force = 1
                                     Case "WI_GET_LIVE_STREAM"
                                         '現在配信中のストリーム
                                         '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
@@ -2558,6 +2562,11 @@ Class WebRemocon
     '　本体はProcessManager.vbに
     Public Function WI_GET_ERROR_STREAM() As String
         Return Me._procMan.WI_GET_ERROR_STREAM()
+    End Function
+
+    '　本体はProcessManager.vbに
+    Public Function WI_GET_PROGRAM_NUM(ByVal num As Integer) As String
+        Return Me._procMan.WI_GET_PROGRAM_NUM(num)
     End Function
 
 End Class

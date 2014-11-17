@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.82
+TvRemoteViewer_VB v0.83
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -401,6 +401,7 @@ TvRemoteViewer_VB v0.82
 		アイドル時間が指定した分数に達すると全切断するようiniにSTOP_IDLEMINUTESを追加
 	0.82	ファイル再生時のWI_GET_LIVE_STREAM.htmlのBonDriver欄にフルパスファイル名を記入するようにした
 		HTTP配信のファイル再生においてffmpegが2重に起動してしまうバグを修正
+	0.83	WEBインターフェース（WI_GET_PROGRAM_NUM）を追加
 
 
 
