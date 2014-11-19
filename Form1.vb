@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.83"
+    Private version As String = "TvRemoteViewer_VB version 0.84"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -284,6 +284,16 @@ Public Class Form1
 
         'ffmpegバッファ
         log1write("ffmepg HTTPストリームバッファ：　" & HTTPSTREAM_FFMPEG_BUFFER & "MB")
+
+        'ASS字幕用font_confがあるかどうか確認
+        If Me._worker._hlsApp.IndexOf("ffmpeg") >= 0 Then
+            If file_exist(Me._worker._hlsApp.Replace("ffmpeg.exe", "\fonts\fonts.conf")) = 1 Then
+                fonts_conf_ok = 1
+                log1write("ffmepgファイル再生時：ASS字幕を表示させるのに必要なfonts.confを確認しました")
+            Else
+                log1write("ffmepgファイル再生時：ASS字幕を表示させるのに必要なfonts.confが見つかりませんでした")
+            End If
+        End If
 
         'アイドル切断分数
         If STOP_IDLEMINUTES > 0 Then

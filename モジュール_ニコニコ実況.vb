@@ -6,6 +6,9 @@ Imports System.IO
 
 Module モジュール_ニコニコ実況
 
+    'fonts.confの存在を確認
+    Public fonts_conf_ok As Integer = 0
+
     Public jk_list() As sidstructure '放送局
     Public Structure sidstructure
         Public jkid As Integer

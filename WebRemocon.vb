@@ -1122,11 +1122,44 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをファイル再生用に書き換える
-    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String) As String
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String) As String
+        'ffmpeg時のみ字幕ファイルがあれば挿入
+        Dim new_file As String = ""
+        If fonts_conf_ok = 1 And hlsOpt.IndexOf(" -vf ") < 0 Then
+            Dim dt As Integer = filename.LastIndexOf(".")
+            If dt > 0 Then
+                Dim ass_file As String = filename.Substring(0, dt) & ".ass"
+                If file_exist(ass_file) = 1 Then
+                    Try
+                        log1write("字幕ASSファイルとして" & ass_file & "を読み込みました")
+                        '存在していればstreamフォルダに名前を変えてコピー
+                        new_file = "sub" & num.ToString & ".ass"
+                        '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                        Dim rename_file As String = fileroot & "\" & new_file
+                        'リネーム
+                        My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                        'ファイルが出来るまで待機
+                        Dim i As Integer = 0
+                        While i < 100 And file_exist(rename_file) < 1
+                            System.Threading.Thread.Sleep(50)
+                            i += 1
+                        End While
+                        log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
+                        'オプションに挿入する文字列を作成
+                        new_file = " -vf ass=""" & new_file & """"
+                    Catch ex As Exception
+                        log1write("字幕ASSファイル処理でエラーが発生しました。" & ex.Message)
+                        new_file = ""
+                    End Try
+                End If
+            End If
+        End If
+
         Dim sp As Integer = hlsOpt.IndexOf("-i ")
         Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
         If sp >= 0 And se > sp Then
-            hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & hlsOpt.Substring(se)
+            'hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & hlsOpt.Substring(se)
+            hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & new_file & hlsOpt.Substring(se)
             sp = hlsOpt.IndexOf("-segment_list_size ")
             se = hlsOpt.IndexOf(" ", sp + "-segment_list_size ".Length)
             If sp >= 0 And se > sp Then
@@ -1365,7 +1398,7 @@ Class WebRemocon
                 'ファイル再生
                 If filename.Length > 0 And Stream_mode = 3 Then
                     'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot)
                 End If
             ElseIf hlsApp.IndexOf("vlc") >= 0 Then
                 'hlsOptを置き換える
@@ -1392,7 +1425,7 @@ Class WebRemocon
                 'hlsオプションを書き換える
                 If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
                     'ffmpegのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot)
                 Else
                     'その他vlc
                     '今のところ未対応
