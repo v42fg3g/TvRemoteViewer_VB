@@ -1125,7 +1125,7 @@ Class WebRemocon
     Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
         Dim new_file As String = ""
-        If fonts_conf_ok = 1 And hlsOpt.IndexOf(" -vf ") < 0 Then
+        If fonts_conf_ok = 1 Then
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
                 Dim ass_file As String = filename.Substring(0, dt) & ".ass"
@@ -1158,14 +1158,26 @@ Class WebRemocon
         Dim sp As Integer = hlsOpt.IndexOf("-i ")
         Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
         If sp >= 0 And se > sp Then
-            'hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & hlsOpt.Substring(se)
-            hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & new_file & hlsOpt.Substring(se)
+            If hlsOpt.IndexOf(" -vf ") < 0 Then
+                'HLSオプション内に-vfが存在しない場合は
+                ''hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & hlsOpt.Substring(se)
+                hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & new_file & hlsOpt.Substring(se)
+            Else
+                'HLSオプション内に-vfが存在する場合は -vf部分を入れ替える
+                hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & hlsOpt.Substring(se)
+                If new_file.Length > 0 Then
+                    new_file &= "," '" -vf ass=""" & new_file & """" & " "
+                    hlsOpt = hlsOpt.Replace(" -vf ", new_file)
+                End If
+            End If
+            'セグメント分割部分を削除
             sp = hlsOpt.IndexOf("-segment_list_size ")
             se = hlsOpt.IndexOf(" ", sp + "-segment_list_size ".Length)
             If sp >= 0 And se > sp Then
                 hlsOpt = hlsOpt.Substring(0, sp) & hlsOpt.Substring(se)
             End If
         End If
+
         Return hlsOpt
     End Function
 

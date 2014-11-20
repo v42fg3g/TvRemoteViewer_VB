@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.83
+TvRemoteViewer_VB v0.85
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -402,6 +402,11 @@ TvRemoteViewer_VB v0.83
 	0.82	ファイル再生時のWI_GET_LIVE_STREAM.htmlのBonDriver欄にフルパスファイル名を記入するようにした
 		HTTP配信のファイル再生においてffmpegが2重に起動してしまうバグを修正
 	0.83	WEBインターフェース（WI_GET_PROGRAM_NUM）を追加
+	0.84	ファイル再生において同名のASSファイルがあるときは字幕をハードサブするようにした
+		（ffmpegのフォルダ名がffmpeg-20140628-git-4d1fa38-win64-static等長い場合は機能しません）
+		ffmpeg.exeが存在するフォルダにfonts\fonts.confを設置する必要があります
+		参考　http://peace.2ch.net/test/read.cgi/avi/1413523104/779
+	0.85	HLSオプション内に-vfが存在する場合でもハードサブに対応した
 
 
 
