@@ -1828,17 +1828,16 @@ Class WebRemocon
                             'URLエンコードしておいたフルパスを文字列に変換
                             videoname = System.Web.HttpUtility.UrlDecode(videoname)
                             'ビデオファイル名抽出
-                            '                                ↓だとUTF-8で返ってきて修正不可能な文字化け
-                            Dim videoexword As String = "" '= System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
-                            If req.QueryString.Count > 0 Then
-                                'クエリから1つずつチェック
-                                For ii As Integer = 0 To req.QueryString.Count - 1
-                                    If req.QueryString.Keys(ii) = "VideoExWord" Then
-                                        videoexword = req.QueryString.Item(ii)
-                                        Exit For
-                                    End If
-                                Next
-                            End If
+                            Dim videoexword As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
+                            'If req.QueryString.Count > 0 Then
+                            ''クエリから1つずつチェック
+                            'For ii As Integer = 0 To req.QueryString.Count - 1
+                            'If req.QueryString.Keys(ii) = "VideoExWord" Then
+                            'videoexword = req.QueryString.Item(ii)
+                            'Exit For
+                            'End If
+                            'Next
+                            'End If
 
                             'NHKの音声モード
                             Dim NHK_dual_mono_mode_select As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & "")
@@ -2394,32 +2393,32 @@ Class WebRemocon
                         context.Response.StatusCode = 401
                     End If
 
+            res.Close()
+
+            Try
+                context.Response.Close()
+            Catch ex As Exception
+                ' client closed connection before the content was sent
+            End Try
+
+        Catch httpEx As HttpListenerException
+            log1write(httpEx.Message)
+            log1write(httpEx.StackTrace)
+        Finally
+            Try
+                If writer IsNot Nothing Then
+                    writer.Close()
+                End If
+                If reader IsNot Nothing Then
+                    reader.Close()
+                End If
+                If res IsNot Nothing Then
                     res.Close()
-
-                    Try
-                        context.Response.Close()
-                    Catch ex As Exception
-                        ' client closed connection before the content was sent
-                    End Try
-
-                Catch httpEx As HttpListenerException
-                    log1write(httpEx.Message)
-                    log1write(httpEx.StackTrace)
-                Finally
-                    Try
-                        If writer IsNot Nothing Then
-                            writer.Close()
-                        End If
-                        If reader IsNot Nothing Then
-                            reader.Close()
-                        End If
-                        If res IsNot Nothing Then
-                            res.Close()
-                        End If
-                    Catch ex As Exception
-                        log1write(ex.ToString())
-                    End Try
-                End Try
+                End If
+            Catch ex As Exception
+                log1write(ex.ToString())
+            End Try
+        End Try
             End If
 
         Catch ex As Exception
