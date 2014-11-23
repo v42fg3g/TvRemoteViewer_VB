@@ -417,6 +417,7 @@ TvRemoteViewer_VB v0.89
 		ファイル再生時のシーク欄に時:分:秒（1:30や1:20:00）の指定ができるようにした
 	0.89	WEBインターフェースの問い合わせにファイル再生時にシークした秒数を返すようにした
 		（WI_GET_LIVE_STREAMとWI_GET_PROGRAM_NUMの末尾に「,」区切りで追加されています）
+		WI_GET_PROGRAM_NUMのバグを修正
 
 
 
