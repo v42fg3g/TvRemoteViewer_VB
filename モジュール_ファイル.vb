@@ -91,6 +91,73 @@ Module モジュール_ファイル
         Return line
     End Function
 
+    Public Function line2file(ByVal writefilename As String, ByVal line() As Object, Optional ByVal encode As String = "shift_jis") As Integer
+        Dim r As Integer = 0
+
+        Dim i As Integer = 0
+
+        If line Is Nothing Then
+            '空ならば空ファイルを作る
+            Dim s As String = ""
+            ' 戻り値を格納する変数を宣言する
+            Dim hStream As System.IO.FileStream = Nothing
+
+            ' hStream が破棄されることを保証するために Try ～ Finally を使用する
+            Try
+                ' hStream が閉じられることを保証するために Try ～ Finally を使用する
+                Try
+                    ' 指定したパスのファイルを作成する
+                    hStream = System.IO.File.Create(writefilename)
+                Finally
+                    ' 作成時に返される FileStream を利用して閉じる
+                    Try
+                        hStream.Close()
+                    Catch ex As Exception
+                    End Try
+                End Try
+            Finally
+                ' hStream を破棄する
+                Try
+                    If Not hStream Is Nothing Then
+                        Dim cDisposable As System.IDisposable = hStream
+                        cDisposable.Dispose()
+                    End If
+                Catch ex As Exception
+                End Try
+            End Try
+        Else
+            Try
+                Dim Writer As New IO.StreamWriter(writefilename, False, System.Text.Encoding.GetEncoding(encode))
+                Try
+                    Try
+                        'ファイルに書き込み
+                        For i = 0 To line.Length - 1
+                            Writer.WriteLine(line(i))
+                        Next
+                        Writer.Close()
+                        r = 1 '成功
+                    Finally
+                        ' 作成時に返される FileStream を利用して閉じる
+                        If Not Writer Is Nothing Then
+                            Writer.Close()
+                        End If
+                    End Try
+                Finally
+                    ' Writerを破棄する
+                    If Not Writer Is Nothing Then
+                        Dim cDisposable As System.IDisposable = Writer
+                        cDisposable.Dispose()
+                    End If
+                End Try
+            Catch ex As Exception
+                '書き込み失敗エラー
+                log1write(writefilename & "の書き込みに失敗しました。" & ex.Message)
+            End Try
+        End If
+
+        Return r
+    End Function
+
     Public Function file_exist(ByVal fn As String) As Integer
         'ファイルの有無を確認する
         Dim r As Integer = -1
@@ -102,6 +169,22 @@ Module モジュール_ファイル
                 r = 1
             Else
                 'MessageBox.Show("ファイル[" & fn & "]は存在しません。")
+                r = 0
+            End If
+        Catch ex As Exception
+            log1write(fn & " " & ex.Message)
+        End Try
+
+        Return r
+    End Function
+
+    Public Function folder_exist(ByVal fn As String) As Integer
+        'フォルダの有無を確認する
+        Dim r As Integer = -1
+        Try
+            If System.IO.Directory.Exists(fn) Then
+                r = 1
+            Else
                 r = 0
             End If
         Catch ex As Exception

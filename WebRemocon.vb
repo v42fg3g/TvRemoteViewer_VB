@@ -1126,20 +1126,39 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをファイル再生用に書き換える
-    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As String) As String
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds_str As String) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
+
+        'VideoSeekSeconds_strを秒数に変換
+        Dim VideoSeekSeconds As Integer = 0
+        If VideoSeekSeconds_str.IndexOf(":") > 0 Then
+            Dim vd() As String = VideoSeekSeconds_str.Split(":")
+            If vd.Length = 3 Then
+                VideoSeekSeconds = (vd(0) * 60 * 60) + (vd(1) * 60) + vd(2)
+            ElseIf vd.Length = 2 Then
+                VideoSeekSeconds = (vd(0) * 60) + vd(1)
+            Else
+                VideoSeekSeconds = Val(VideoSeekSeconds_str)
+                log1write(VideoSeekSeconds_str & "の秒数への変換に失敗しました" & VideoSeekSeconds & "秒にセットしました")
+            End If
+        Else
+            VideoSeekSeconds = Val(VideoSeekSeconds_str)
+        End If
+
         Dim new_file As String = ""
         If fonts_conf_ok = 1 Then
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
                 Dim ass_file As String = filename.Substring(0, dt) & ".ass"
                 If file_exist(ass_file) = 1 Then
-                    Try
-                        log1write("字幕ASSファイルとして" & ass_file & "を読み込みました")
-                        '存在していればstreamフォルダに名前を変えてコピー
-                        new_file = "sub" & num.ToString & ".ass"
-                        '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
-                        Dim rename_file As String = fileroot & "\" & new_file
+                    'Try
+                    log1write("字幕ASSファイルとして" & ass_file & "を読み込みます")
+                    '存在していればstreamフォルダに名前を変えてコピー
+                    new_file = "sub" & num.ToString & ".ass"
+                    '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                    Dim rename_file As String = fileroot & "\" & new_file
+                    If Val(VideoSeekSeconds) <= 0 Then
+                        'シークが指定されていなければそのままコピー
                         'リネーム
                         My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
                         'ファイルが出来るまで待機
@@ -1151,20 +1170,30 @@ Class WebRemocon
                         log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
                         'オプションに挿入する文字列を作成
                         new_file = " -vf ass=""" & new_file & """"
-                    Catch ex As Exception
-                        log1write("字幕ASSファイル処理でエラーが発生しました。" & ex.Message)
-                        new_file = ""
-                    End Try
+                    Else
+                        'シークが指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
+                        log1write("字幕ASSファイルを修正しています")
+                        If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds) = 1 Then
+                            '修正完了
+                            log1write("字幕ASSファイルの修正が完了しました")
+                            log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
+                            'オプションに挿入する文字列を作成
+                            new_file = " -vf ass=""" & new_file & """"
+                        Else
+                            'エラー
+                            log1write("字幕ASSファイルの修正に失敗しました")
+                            'オプションに-vfは挿入しない
+                        End If
+                    End If
+                    'Catch ex As Exception
+                    'log1write("字幕ASSファイル処理でエラーが発生しました。" & ex.Message)
+                    'new_file = ""
+                    'End Try
                 End If
             End If
         End If
 
-        'シーク秒数が指定されていれば「-ss 秒」を挿入
-        If VideoSeekSeconds.Length > 0 Then
-            filename = """" & filename & """ -ss " & VideoSeekSeconds
-        Else
-            filename = """" & filename & """"
-        End If
+        filename = """" & filename & """"
 
         Dim sp As Integer = hlsOpt.IndexOf("-i ")
         Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
@@ -1187,6 +1216,12 @@ Class WebRemocon
             If sp >= 0 And se > sp Then
                 hlsOpt = hlsOpt.Substring(0, sp) & hlsOpt.Substring(se)
             End If
+        End If
+
+        'シーク秒数が指定されていれば「-ss 秒」を挿入
+        If VideoSeekSeconds > 0 Then
+            sp = hlsOpt.IndexOf("-i ")
+            hlsOpt = hlsOpt.Substring(0, sp) & "-ss " & VideoSeekSeconds & " " & hlsOpt.Substring(sp)
         End If
 
         Return hlsOpt
@@ -1843,6 +1878,7 @@ Class WebRemocon
                             End If
                             'ファイル再生シーク秒数
                             Dim VideoSeekSeconds As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSeekSeconds") & ""
+                            VideoSeekSeconds = StrConv(VideoSeekSeconds, VbStrConv.Narrow) '半角に
                             If VideoSeekSeconds = "0" Then
                                 VideoSeekSeconds = ""
                             End If

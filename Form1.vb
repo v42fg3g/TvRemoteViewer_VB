@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.87"
+    Private version As String = "TvRemoteViewer_VB version 0.88"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -350,6 +350,70 @@ Public Class Form1
 
     'フォーム上の項目が正常かどうかチェック
     Private Sub check_form_youso()
+        'UDPアプリチェック
+        Dim f_udp_exe As String = Me.textBoxUdpApp.Text.ToString
+        If file_exist(f_udp_exe) = 1 Then
+            log1write("UDPアプリ：" & f_udp_exe & " を確認しました")
+        Else
+            log1write("【エラー】UDPアプリ " & f_udp_exe & " が見つかりません")
+        End If
+        'HLSアプリチェック
+        Dim f_hls_exe As String = Me.textBoxHlsApp.Text.ToString
+        If file_exist(f_hls_exe) = 1 Then
+            log1write("HLSアプリ：" & f_udp_exe & " を確認しました")
+        Else
+            log1write("【エラー】HLSアプリ " & f_hls_exe & " が見つかりません")
+        End If
+        'ffmpegプリセットチェック
+        If f_hls_exe.IndexOf("ffmpeg.exe") >= 0 Then
+            Dim f_hlsopt As String = Me.textBoxHlsOpt2.Text.ToString
+            If f_hlsopt.Length > 0 Then
+                Dim f_fpre_str As String = Instr_pickup(f_hlsopt, "-fpre """, """", 0)
+                If f_fpre_str.Length > 0 Then
+                    Dim f_hls_path As String = filepath2path(f_hls_exe) './
+                    Dim f_hls_path2 As String = filepath2path(f_hls_path) ' ../
+                    f_fpre_str = f_fpre_str.Replace("%HLSROOT%", f_hls_path)
+                    f_fpre_str = f_fpre_str.Replace("%HLSROOT/../%", f_hls_path2)
+                    If file_exist(f_fpre_str) = 1 Then
+                        log1write("ffmpegプリセット：" & f_fpre_str & " を確認しました")
+                    Else
+                        log1write("【エラー】ffmpegプリセット " & f_fpre_str & " が見つかりません")
+                    End If
+                End If
+            Else
+                log1write("【エラー】HLSオプションが設定されていません")
+            End If
+        End If
+        'wwwroot
+        Dim f_wwwroot As String = Me.TextBoxWWWroot.Text.ToString
+        If f_wwwroot.Length > 0 Then
+            If folder_exist(f_wwwroot) = 1 Then
+                log1write("WWWROOT：" & f_wwwroot & " を確認しました")
+            Else
+                log1write("【エラー】WWWROOTが見つかりません")
+            End If
+        Else
+            log1write("【エラー】WWWROOTが設定されていません")
+        End If
+        'fileroot
+        Dim f_fileroot As String = Me.TextBoxFILEROOT.Text.ToString
+        If f_fileroot.Length > 0 Then
+            If folder_exist(f_fileroot) = 1 Then
+                log1write("FILEROOT：" & f_fileroot & " を確認しました")
+            Else
+                log1write("【エラー】FILEROOTが見つかりません")
+            End If
+        End If
+        'bondriver
+        Dim f_bondriver As String = Me.TextBoxBonDriverPath.Text.ToString
+        If f_bondriver.Length > 0 Then
+            If folder_exist(f_bondriver) = 1 Then
+                log1write("BonDriverパス：" & f_bondriver & " を確認しました")
+            Else
+                log1write("【エラー】BonDriverパスが見つかりません")
+            End If
+        End If
+
         'RAMドライブに作成されることを考慮して存在しない場合は作成
         Dim fileroot As String = TextBoxFILEROOT.Text.ToString
         If fileroot.Length > 0 Then
@@ -373,7 +437,6 @@ Public Class Form1
                 log1write("【警告】%FILEROOT%が不正です")
             End If
         End If
-
     End Sub
 
     'サブフォルダを取得

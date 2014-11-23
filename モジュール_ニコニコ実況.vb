@@ -133,4 +133,80 @@ Module モジュール_ニコニコ実況
 
         Return r
     End Function
+
+    '字幕assファイルをシーク秒数に合わせて修正する
+    Public Function ass_adjust_seektime(ByVal ass_file As String, ByVal rename_file As String, ByVal SeekSeconds As Integer) As Integer
+        Dim r As Integer = 0
+
+        Dim txtass As String = file2str(ass_file, "UTF-8")
+        Dim sp As Integer = 0
+        Dim err As Integer = 0
+
+        Try
+            Dim part1 As String = ""
+            Dim part2 As String = ""
+            Dim resu() As String = Nothing
+            Dim cnt As Integer = 0
+            sp = txtass.IndexOf("Dialogue:")
+            If sp > 0 Then
+                'ヘッダーをresu(0)として入れておく
+                part1 = txtass.Substring(0, sp)
+
+                '字幕部分
+                part2 = txtass.Substring(sp)
+
+                Dim asss() As String = Split(part2, vbCrLf)
+
+                Dim d2() As String = asss(0).Split(",")
+                Dim dy1 As DateTime = CDate("2000/01/01 " & d2(1))
+                Dim dy2 As DateTime = CDate("2000/01/01 " & d2(2))
+                Dim howlong As Integer = DateDiff(DateInterval.Second, dy1, dy2)
+
+                log1write("コメントをシークに合わせてシフトしています")
+                For i = 0 To asss.Length - 1
+                    Dim d() As String = asss(i).Split(",")
+                    If d.Length >= 10 Then
+                        'd(1)を指定秒シフトしてマイナスなら切り捨てる
+                        Dim ms As String = d(1).Substring(d(1).IndexOf(".")) '.01　マイクロセカンド
+                        dy1 = CDate("2000/01/01 " & d(1))
+                        dy1 = DateAdd(DateInterval.Second, -SeekSeconds, dy1)
+                        If Year(dy1) >= 2000 Then
+                            '表示しなくていいコメントは1999年になる
+                            dy2 = DateAdd(DateInterval.Second, howlong, dy1) '表示終了時間　指定秒後
+                            Dim dy1_str As String = dy1.ToLongTimeString & ms 'マイクロセカンドも足す
+                            Dim dy2_str As String = dy2.ToLongTimeString & ms 'マイクロセカンドも足す
+                            Dim replace_str As String = dy1_str & "," & dy2_str
+                            Dim asss2 As String = asss(i).Replace(d(1) & "," & d(2), replace_str)
+                            ReDim Preserve resu(cnt)
+                            resu(cnt) = asss2 '行全体
+                            cnt += 1
+                        End If
+                    End If
+                Next
+                log1write("コメントシフトが完了しました")
+
+                '最初のコメントにヘッダーを追加
+                If resu Is Nothing Then
+                    ReDim Preserve resu(0)
+                    resu(0) = part1
+                Else
+                    resu(0) = part1 & resu(0)
+                End If
+
+                'ファイルに保存
+                line2file(rename_file, resu, "UTF-8")
+
+                r = 1
+            Else
+                'コメントが無い
+                err = 1
+                log1write("コメントがありません")
+            End If
+        Catch ex As Exception
+            err = 2
+            log1write("エラーが発生しました。" & ex.Message)
+        End Try
+
+        Return r
+    End Function
 End Module
