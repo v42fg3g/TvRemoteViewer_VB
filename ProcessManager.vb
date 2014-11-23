@@ -69,7 +69,7 @@ Public Class ProcessManager
         End If
     End Sub
 
-    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String)
+    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, ByVal VideoSeekSeconds As Integer)
         Dim stopping As Integer = get_stopping_status(num)
         If stopping = 0 Then
             'numが放映中でかつBonDriverが同一ならばパイプを使用してチャンネル変更だけを行う
@@ -284,7 +284,7 @@ Public Class ProcessManager
                                 Me._list.RemoveAt(i)
                             End If
                             '                                  ↓Processはまだ決まっていない
-                            Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "")
+                            Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
                             Me._list.Add(pb)
 
                             '1秒毎のプロセスチェックさせない
@@ -343,7 +343,7 @@ Public Class ProcessManager
                             End If
 
                             'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                            Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "")
+                            Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
                             Me._list.Add(pb)
                         End If
                     Else
@@ -365,7 +365,7 @@ Public Class ProcessManager
                         'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
                         'ProcessBeans作成
                         '                                  ↓Processはまだ決まっていない
-                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename)
+                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds)
                         Me._list.Add(pb)
 
                         '1秒毎のプロセスチェックさせない
@@ -395,7 +395,7 @@ Public Class ProcessManager
                         log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
 
                         'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename)
+                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds)
                         Me._list.Add(pb)
                     End If
                 End If
@@ -532,10 +532,11 @@ Public Class ProcessManager
                         Dim p8 As Integer = Me._list(i)._stream_mode
                         Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
                         Dim p10 As String = Me._list(i)._resolution
+                        Dim p11 As Integer = Me._list(i)._VideoSeekSeconds
                         'プロセスを停止
                         stopProc(p5) 'startprocでも冒頭で停止処理をするので割愛と思ったが再起動時には停止しておいたほうが正常に動いた
                         'プロセスを開始
-                        startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)
+                        startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
                         log1write("No.=" & p5 & "のプロセスを再起動しました")
                     End If
                 End If
@@ -1342,7 +1343,7 @@ Public Class ProcessManager
                                 Dim e() As String = d(j).Split(",")
                                 If e.Length >= 8 Then
                                     If Val(e(2)) = program_sid Then
-                                        r = d(j)
+                                        r &= Me._list(i)._num.ToString & "," & d(j) & ",0" & vbCrLf
                                         chk = 1
                                         Exit For
                                     End If
@@ -1358,7 +1359,7 @@ Public Class ProcessManager
                                     Dim e() As String = d(j).Split(",")
                                     If e.Length >= 8 Then
                                         If Val(e(2)) = program_sid Then
-                                            r &= Me._list(i)._num.ToString & "," & d(j) & vbCrLf
+                                            r &= Me._list(i)._num.ToString & "," & d(j) & ",0" & vbCrLf
                                             Exit For
                                         End If
                                     End If
@@ -1367,12 +1368,29 @@ Public Class ProcessManager
                         End If
                     ElseIf stream_mode = 1 Or stream_mode = 3 Then
                         'ファイル再生
+                        '_VideoSeekSeconds
+                        Dim VideoSeekSeconds As Integer = Me._list(i)._VideoSeekSeconds
+                        Dim videoSeekSeconds_str As String = seconds2jifun(VideoSeekSeconds)
+                        Dim hms As String = ""
                         fullpathfilename = Me._list(i)._fullpathfilename
-                        r &= Me._list(i)._num.ToString & "," & "ファイル再生,ファイル再生,0,0,00:00,00:00," & fullpathfilename & "," & vbCrLf
+                        r &= Me._list(i)._num.ToString & "," & "ファイル再生,ファイル再生,0,0," & videoSeekSeconds_str & ",00:00," & fullpathfilename & ",," & VideoSeekSeconds.ToString & vbCrLf
                     End If
                 End If
             Next
         End If
+        Return r
+    End Function
+
+    '秒を0:00:00形式に変換
+    Public Function seconds2jifun(ByVal ss As Integer) As String
+        Dim r As String = ""
+        Dim h As Integer = Int(ss / (60 * 60))
+        Dim m As Integer = Int((ss - (h * (60 * 60))) / 60)
+        Dim s As Integer = ss Mod 60
+        If h > 0 Then
+            r &= h.ToString & ":"
+        End If
+        r &= m.ToString("D2") & ":" & s.ToString("D2")
         Return r
     End Function
 
@@ -1531,6 +1549,7 @@ Public Class ProcessManager
                 Dim hlsApp As String = Me._list(d(i))._hlsApp
                 Dim hlsApp_name As String = ""
                 Dim fullpathfilename As String = Me._list(d(i))._fullpathfilename
+                Dim VideoSeekSeconds As Integer = Me._list(d(i))._VideoSeekSeconds
                 If channel_name.Length = 0 And (stream_mode = 1 Or stream_mode = 3) Then
                     'ファイル再生ならばファイル名をBonDriverとして表示するようにする
                     BonDriver = fullpathfilename
@@ -1558,6 +1577,7 @@ Public Class ProcessManager
                     & sep & stopping _
                     & sep & channel_name _
                     & sep & hlsApp_name _
+                    & sep & VideoSeekSeconds _
                     & vbCrLf
             Next
         End If

@@ -25,11 +25,12 @@ Class ProcessBean
     'Public _m3u8_update_time As Date 'm3u8の更新日時
     Public _NHK_dual_mono_mode_select As Integer
     Public _fullpathfilename As String = "" 'ファイル再生のファイルネーム
+    Public _VideoSeekSeconds As Integer = 0 'ファイル再生シーク秒数
     'ffmpeg HTTPストリーム
     Public _IsStart As Boolean ' = False
     Public _ffmpegBuf As Byte() '= Nothing        'Public opt As String 'VLCオプション文字列
 
-    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId As Integer, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String)
+    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId As Integer, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String, VideoSeekSeconds As Integer)
         Me._udpProc = udpProc
         Me._hlsProc = hlsProc
         Me._procBrowserIndex = procBrowserIndex
@@ -48,6 +49,7 @@ Class ProcessBean
         'Me._m3u8_update_time = Now()
         Me._NHK_dual_mono_mode_select = NHK_dual_mono_mode_select
         Me._fullpathfilename = fullpathfilename
+        Me._VideoSeekSeconds = VideoSeekSeconds
 
         'ffmpeg HTTPストリーム
         Me._IsStart = False
