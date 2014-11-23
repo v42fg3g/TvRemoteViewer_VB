@@ -3,6 +3,9 @@
     Public STOP_IDLEMINUTES As Integer = 300
     Public STOP_IDLEMINUTES_LAST As DateTime '最後に.htmlにアクセスがあった日時
 
+    'ファイル再生時に指定が無い場合にシークする秒数
+    Public VideoSeekDefault As Integer = 0
+
     'HTML入力文字コード（HTMLファイルの文字コード）
     Public HTML_IN_CHARACTER_CODE As String = "UTF-8" 'Shift_JIS
     'HTML出力文字コード（ブラウザに出力する文字コード）

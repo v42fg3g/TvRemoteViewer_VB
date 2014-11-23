@@ -291,7 +291,9 @@ Class WebRemocon
                                         filename = fullpath
                                     End If
                                     'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
-                                    Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
+                                    'UTF-8化で解決
+                                    'Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
+                                    Dim encstr As String = fullpath
 
                                     '抽出
                                     If videoexword.Length > 0 Then
@@ -1110,6 +1112,8 @@ Class WebRemocon
                                 HTML_OUT_CHARACTER_CODE = trim8(youso(1).ToString)
                             Case "STOP_IDLEMINUTES"
                                 STOP_IDLEMINUTES = Val(youso(1).ToString)
+                            Case "VideoSeekDefault"
+                                VideoSeekDefault = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -1122,7 +1126,7 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをファイル再生用に書き換える
-    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String) As String
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As String) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
         Dim new_file As String = ""
         If fonts_conf_ok = 1 Then
@@ -1155,16 +1159,23 @@ Class WebRemocon
             End If
         End If
 
+        'シーク秒数が指定されていれば「-ss 秒」を挿入
+        If VideoSeekSeconds.Length > 0 Then
+            filename = """" & filename & """ -ss " & VideoSeekSeconds
+        Else
+            filename = """" & filename & """"
+        End If
+
         Dim sp As Integer = hlsOpt.IndexOf("-i ")
         Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
         If sp >= 0 And se > sp Then
             If hlsOpt.IndexOf(" -vf ") < 0 Then
                 'HLSオプション内に-vfが存在しない場合は
-                ''hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & hlsOpt.Substring(se)
-                hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & new_file & hlsOpt.Substring(se)
+                ''hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
+                hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & new_file & hlsOpt.Substring(se)
             Else
                 'HLSオプション内に-vfが存在する場合は -vf部分を入れ替える
-                hlsOpt = hlsOpt.Substring(0, sp) & "-i """ & filename & """" & hlsOpt.Substring(se)
+                hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
                 If new_file.Length > 0 Then
                     new_file &= "," '" -vf ass=""" & new_file & """" & " "
                     hlsOpt = hlsOpt.Replace(" -vf ", new_file)
@@ -1273,7 +1284,7 @@ Class WebRemocon
     End Function
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, Optional ByVal resolution As String = "")
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As String)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         'テスト　多重テストを違うexeファイルで行う
@@ -1410,7 +1421,7 @@ Class WebRemocon
                 'ファイル再生
                 If filename.Length > 0 And Stream_mode = 3 Then
                     'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds)
                 End If
             ElseIf hlsApp.IndexOf("vlc") >= 0 Then
                 'hlsOptを置き換える
@@ -1437,7 +1448,7 @@ Class WebRemocon
                 'hlsオプションを書き換える
                 If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
                     'ffmpegのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds)
                 Else
                     'その他vlc
                     '今のところ未対応
@@ -1571,7 +1582,7 @@ Class WebRemocon
     End Function
 
     '手動　ストリーム開始　■未使用
-    Public Sub Sub_stream_Start(ByVal num As Integer, ByVal bondriver As String, ByVal sid As String, ByVal chspace As String, ByVal bon_sid_ch_str As String, ByVal resolution As String, ByVal stream_mode As Integer, ByVal videoname As String)
+    Public Sub Sub_stream_Start(ByVal num As Integer, ByVal bondriver As String, ByVal sid As String, ByVal chspace As String, ByVal bon_sid_ch_str As String, ByVal resolution As String, ByVal stream_mode As Integer, ByVal videoname As String, ByVal VideoSeekSeconds As String)
         'num        'bondriver        'sid        'chspace'        'bon_sid_ch_str        'resolution
         'stream_mode 'ストリームモード 0=UDP 1=ファイル再生 2=VLChttp 3=VLChttpファイル再生
         'videoname
@@ -1590,10 +1601,10 @@ Class WebRemocon
         'パラメーターが正しいかチェック
         If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
             '正しければ配信スタート
-            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution)
+            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0)
         ElseIf num > 0 And videoname.Length > 0 Then
             'ファイル再生
-            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution)
+            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds)
         End If
 
     End Sub
@@ -1824,9 +1835,20 @@ Class WebRemocon
                             If vname.Length = 2 Then
                                 'vname(0)には日付が入っているyyyyMMdd 20140101
                                 videoname = vname(1)
+                            ElseIf vname.Length = 1 Then
+                                If vname(0).Length > 0 Then
+                                    '日付が入ってない場合も受け入れる
+                                    videoname = vname(0)
+                                End If
+                            End If
+                            'ファイル再生シーク秒数
+                            Dim VideoSeekSeconds As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSeekSeconds") & ""
+                            If VideoSeekSeconds = "0" Then
+                                VideoSeekSeconds = ""
                             End If
                             'URLエンコードしておいたフルパスを文字列に変換
-                            videoname = System.Web.HttpUtility.UrlDecode(videoname)
+                            'UTF-8化で解決
+                            'videoname = System.Web.HttpUtility.UrlDecode(videoname)
                             'ビデオファイル名抽出
                             Dim videoexword As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
                             'If req.QueryString.Count > 0 Then
@@ -1962,14 +1984,14 @@ Class WebRemocon
                                 'パラメーターが正しいかチェック
                                 If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
                                     '正しければ配信スタート
-                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution)
+                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
                                     If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
                                         'ffmpegなら
-                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution)
+                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds)
                                     Else
                                         '今のところVLCには未対応
                                         request_page = 12
@@ -2182,6 +2204,11 @@ Class WebRemocon
                                     Else
                                         s = s.Replace("%JKVALUE%", "")
                                     End If
+                                End If
+
+                                'ファイル再生開始シーク秒
+                                If s.IndexOf("%VIDEOSEEKSECONDS%") >= 0 Then
+                                    s = s.Replace("%VIDEOSEEKSECONDS%", VideoSeekDefault)
                                 End If
 
                                 '★表示状態により変換内容変更されるパラメーター
@@ -2439,6 +2466,7 @@ Class WebRemocon
         r &= "_tsfile_wait=" & Me._tsfile_wait & vbCrLf
         r &= "Stop_RecTask_at_StartEnd=" & Stop_RecTask_at_StartEnd & vbCrLf
         r &= "MAX_STREAM_NUMBER=" & MAX_STREAM_NUMBER & vbCrLf
+        r &= "STOP_IDLEMINUTES=" & STOP_IDLEMINUTES & vbCrLf
         r &= vbCrLf
         r &= "【UDPアプリ】" & vbCrLf
         r &= "_udpApp=" & Me._udpApp & vbCrLf
@@ -2483,6 +2511,7 @@ Class WebRemocon
             Next
         End If
         r &= "_AddSubFolder=" & Me._AddSubFolder & vbCrLf
+        r &= "VideoSeekDefault=" & VideoSeekDefault & vbCrLf
         r &= vbCrLf
         r &= "【HTTPストリーム再生】" & vbCrLf
         'HTTPストリーム再生にどのhlsアプリを使用するか 0=フォーム 1=vlc 2=ffmpeg
@@ -2491,6 +2520,7 @@ Class WebRemocon
         r &= "HTTPSTREAM_VLC_port=" & HTTPSTREAM_VLC_port & vbCrLf
         'VLCポート＝UDPポートナンバーにいくつプラスするか
         'r &= "HTTPSTREAM_VLC_port_plus=" & HTTPSTREAM_VLC_port_plus & vbCrLf
+        r &= "HTTPSTREAM_FFMPEG_BUFFER=" & HTTPSTREAM_FFMPEG_BUFFER & vbCrLf
 
         Return r
     End Function

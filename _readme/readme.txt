@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.85
+TvRemoteViewer_VB v0.87
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -127,6 +127,7 @@ TvRemoteViewer_VB v0.85
 	%IDPASS%			「ユーザー名:パスワード@」に変換（iniでALLOW_IDPASS2HTML=1のとき）
 					使用例　http://%IDPASS%" + location.host + "/%FILEROOT%mystream%NUM%.m3u8";
 					IEなどではセキュリティ設定でURL内パスワードを許可しないと見れなくなります
+	%VIDEOSEEKSECONDS%		ファイル再生時にシークする秒数
 
 
 	・ViewTV[n].htmlのみで使用できる変数
@@ -407,6 +408,10 @@ TvRemoteViewer_VB v0.85
 		ffmpeg.exeが存在するフォルダにfonts\fonts.confを設置する必要があります
 		参考　http://peace.2ch.net/test/read.cgi/avi/1413523104/779
 	0.85	HLSオプション内に-vfが存在する場合でもハードサブに対応した
+	0.86	ファイル抽出時に文字化けしていたバグを修正
+	0.87	ファイル再生時に開始シーク秒を指定できるようにした
+		iniに標準シーク秒を指定するVideoSeekDefaultを追加
+		SelectVideo.htmlを修正
 
 
 
