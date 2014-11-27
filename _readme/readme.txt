@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.90
+TvRemoteViewer_VB v0.91
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -128,7 +128,9 @@ TvRemoteViewer_VB v0.90
 					使用例　http://%IDPASS%" + location.host + "/%FILEROOT%mystream%NUM%.m3u8";
 					IEなどではセキュリティ設定でURL内パスワードを許可しないと見れなくなります
 	%VIDEOSEEKSECONDS%		ファイル再生時にシークする秒数
-
+	%SELECTVIDEO%			ビデオファイル一覧HTML部品
+	%VIDEOFROMDATE%			ビデオファイル一覧を表示した際の一番古いファイルの更新日時「yyyy/MM/dd」
+	
 
 	・ViewTV[n].htmlのみで使用できる変数
 	%SELECTCH%			ViewTV.html内で番組を選択する<SELECT>を作成する
@@ -188,6 +190,18 @@ TvRemoteViewer_VB v0.90
 	%HLSROOT/../%	HLSアプリが存在するフォルダの１つ上の親フォルダ（ffmpeg解凍時のフォルダ構造に対応）
 	%rc-host%	"127.0.0.1:%UDPPORT%"に変換されます。
 	%NUM%		ストリームナンバー
+
+
+
+■WEBインターフェース（一部　その他はclientのreadme.txt参照のこと）
+	
+	WI_GET_VIDEOFILES.html	ビデオファイル一覧HTML部品を返す
+	WI_GET_VIDEOFILES2.html	ビデオファイル一覧をテキストで返す
+		上記２つのインターフェース用パラメーター：
+		vl_refresh	1=強制ビデオファイル更新
+		vl_startdate	指定日より前のビデオファイルを抽出する
+		vl_volume	何件表示するか（最終日付のファイルを追加するので不正確）
+		上記パラメーターは%SELECTVIDEO%を変換するSelectVideo.htmlにも有効
 
 
 
@@ -420,6 +434,8 @@ TvRemoteViewer_VB v0.90
 		WI_GET_PROGRAM_NUMのバグを修正
 	0.90	HTTP配信時のチャンネル切り替え安定性向上
 		起動時にiniのStop_RecTask_at_StartEndが反映されていなかったバグを修正
+	0.91	WEBインターフェースWI_GET_VIDEOFILES2を追加
+		ビデオフォルダ自動更新チェック機能の追加
 
 
 

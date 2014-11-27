@@ -133,6 +133,7 @@
     <Compile Include="モジュール_キーボード操作.vb" />
     <Compile Include="モジュール_チャンネル名.vb" />
     <Compile Include="モジュール_ニコニコ実況.vb" />
+    <Compile Include="モジュール_ビデオファイル一覧.vb" />
     <Compile Include="モジュール_ファイル.vb" />
     <Compile Include="モジュール_ログ.vb" />
     <Compile Include="モジュール_番組表.vb" />

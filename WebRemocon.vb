@@ -228,25 +228,127 @@ Class WebRemocon
         Return vhtml
     End Function
 
-    Public Structure videostructure
-        Implements IComparable
-        Public fullpathfilename As String
-        Public filename As String
-        Public encstr As String 'エンコード済フルパス
-        Public datestr As String 'yyyyMMdd
-        Public Function CompareTo(ByVal obj As Object) As Integer Implements IComparable.CompareTo
-            '並べ替え用
-            Return -Me.datestr.CompareTo(DirectCast(obj, videostructure).datestr)
-        End Function
-    End Structure
-
     'ファイル再生ページ用　ビデオ選択htmlを作成する
-    Private Function make_file_select_html(ByVal videoexword As String) As String
+    Public Function make_file_select_html(ByVal videoexword As String, ByVal RefreshList As Integer, ByVal start_date As DateTime, ByVal vl_volume As Integer) As String
         Dim shtml As String = ""
 
-        Dim video() As videostructure = Nothing
-        Dim cnt As Integer = 0
+        Dim datestr As String = start_date.ToString("yyyyMMddHH")
+        If vl_volume = 0 Then
+            vl_volume = C_INTMAX
+        End If
 
+        If RefreshList = 1 Then
+            'リフレッシュするように指定されていればファイルリストを更新
+            video = RefreshVideoList(videoexword)
+        End If
+
+        Dim i As Integer = 0
+        Dim cnt As Integer = 0
+        Dim last_date As DateTime
+        If video IsNot Nothing Then
+            For i = 0 To video.Length - 1
+                Dim f As videostructure = video(i)
+                Dim fdatestr As String = ""
+                Try
+                    fdatestr = f.datestr.Substring(0, 8) 'yyyyMMddHHからyyyyMMddにする
+                    If f.datestr < datestr And (cnt < vl_volume Or (cnt >= vl_volume And fdatestr = last_date.ToString("yyyyMMdd"))) Then
+                        shtml &= "<option value=""" & f.datestr & "," & f.encstr & """>" & f.filename & "</option>" & vbCrLf
+                        last_date = video(i).modifytime
+                        VIDEOFROMDATE = last_date
+                        cnt += 1
+                    ElseIf cnt > 0 Then
+                        Exit For
+                    End If
+                Catch ex As Exception
+                    '不正なデータ
+                    log1write("ビデオファイル一覧に不正なデータがありました" & f.fullpathfilename & " " & ex.Message)
+                End Try
+            Next
+        End If
+
+        'If shtml.Length > 0 Then
+        shtml = "<option value="""">---</option>" & vbCrLf & shtml
+        shtml = "<select class=""c_sel_videoname"" id=""VideoName"" name=""VideoName"" size=""15"">" & vbCrLf & shtml
+
+        shtml &= "</select>" & vbCrLf
+        'End If
+
+        '抽出テキストに抽出ワードを戻すスクリプトを追加
+        If videoexword.Length > 0 Then
+            shtml &= "<SCRIPT>" & vbCrLf
+            shtml &= "objSelect = document.getElementById('VideoExWord');" & vbCrLf
+            shtml &= "objSelect.value = '" & videoexword & "';" & vbCrLf
+            shtml &= "</SCRIPT>" & vbCrLf
+        End If
+
+        Return shtml
+    End Function
+
+    'ビデオファイルネーム取得
+    Public Function WI_GET_VIDEOFILES(ByVal videoexword As String, ByVal RefreshList As Integer, ByVal start_date As DateTime, ByVal vl_volume As Integer) As String
+        Return make_file_select_html(videoexword, RefreshList, start_date, vl_volume)
+    End Function
+
+    'ファイル一覧リスト　WEBインターフェース
+    Public Function WI_GET_VIDEOFILES2(ByVal videoexword As String, ByVal RefreshList As Integer, ByVal start_date As DateTime, ByVal vl_volume As Integer) As String
+        Dim r As String = ""
+
+        Dim datestr As String = start_date.ToString("yyyyMMddHH")
+        If vl_volume = 0 Then
+            vl_volume = C_INTMAX
+        End If
+
+        If RefreshList = 1 Then
+            '更新
+            video = RefreshVideoList(videoexword)
+        End If
+
+        Dim i As Integer = 0
+        Dim cnt As Integer = 0
+        Dim last_date As DateTime
+        If video IsNot Nothing Then
+            For i = 0 To video.Length - 1
+                Dim f As videostructure = video(i)
+                Dim fdatestr As String = ""
+                Try
+                    fdatestr = f.datestr.Substring(0, 8) 'yyyyMMddHHからyyyyMMddにする
+                    If f.datestr < datestr And (cnt < vl_volume Or (cnt >= vl_volume And fdatestr = last_date.ToString("yyyyMMdd"))) Then
+                        'r &= video(i).modifytime & "," & video(i).fullpathfilename
+                        r &= video(i).datestr & "," & video(i).encstr & vbCrLf 'value値と同じもの
+                        last_date = video(i).modifytime
+                        VIDEOFROMDATE = last_date
+                        cnt += 1
+                    ElseIf cnt > 0 Then
+                        Exit For
+                    End If
+                Catch ex As Exception
+                    '不正なデータ
+                    log1write("ビデオファイル一覧に不正なデータがありました" & f.fullpathfilename & " " & ex.Message)
+                End Try
+            Next
+        End If
+
+        'ヘッダを追加
+        Dim rcode As Integer = 0
+        If cnt = 0 Then
+            rcode = 2 'リクエストを満たすデータがありません
+            last_date = CDate("1970/01/01 00:00:00")
+        ElseIf i >= video.Length Then
+            rcode = 1 'これが最終です　yyyは 0と同じ xxxx/xx/xxは空白
+        End If
+        'Dim header As String = rcode & "," & cnt & "," & start_date.ToString("yyyy/MM/dd") & vbCrLf
+        'Dim header As String = rcode & "," & cnt & "," & last_date.ToString("yyyy/MM/dd HH:mm:ss") & vbCrLf
+        Dim header As String = rcode & "," & cnt & "," & last_date.ToString("yyyy/MM/dd") & vbCrLf
+
+        r = header & r
+
+        Return r
+    End Function
+
+    'video()にビデオファイルリストを作成
+    Public Function RefreshVideoList(ByVal videoexword As String) As Object
+        Dim video2() As videostructure = Nothing
+        Dim cnt As Integer = 0
         Dim i, k As Integer
         If Me._videopath IsNot Nothing Then
             If Me._videopath.Length > 0 Then
@@ -276,7 +378,7 @@ Class WebRemocon
                                     Next
                                 End If
                                 If chk = 1 Or (chk = 0 And fullpath.IndexOf(".db") < 0 And fullpath.IndexOf(".chapter") < 0 And fullpath.IndexOf(".srt") < 0) Then
-                                    '更新日時
+                                    '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
                                     Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
                                     Dim datestr As String = modifytime.ToString("yyyyMMddHH")
                                     Dim filename As String = ""
@@ -308,11 +410,12 @@ Class WebRemocon
                                     End If
 
                                     If filename.Length > 0 Then
-                                        ReDim Preserve video(cnt)
-                                        video(cnt).fullpathfilename = fullpath
-                                        video(cnt).filename = filename
-                                        video(cnt).encstr = encstr
-                                        video(cnt).datestr = datestr
+                                        ReDim Preserve video2(cnt)
+                                        video2(cnt).fullpathfilename = fullpath
+                                        video2(cnt).filename = filename
+                                        video2(cnt).encstr = encstr
+                                        video2(cnt).modifytime = modifytime
+                                        video2(cnt).datestr = datestr
                                         cnt += 1
                                     End If
                                 End If
@@ -323,32 +426,14 @@ Class WebRemocon
                     End If
                 Next
 
-                '並べ替え
-                If video IsNot Nothing Then
-                    Array.Sort(video)
-                    For i = 0 To video.Length - 1
-                        shtml &= "<option value=""" & video(i).datestr & "," & video(i).encstr & """>" & video(i).filename & "</option>" & vbCrLf
-                    Next
+                '並べ替え（日付の新しい順）
+                If video2 IsNot Nothing Then
+                    Array.Sort(video2)
                 End If
             End If
         End If
-
-        'If shtml.Length > 0 Then
-        shtml = "<option value="""">---</option>" & vbCrLf & shtml
-        shtml = "<select class=""c_sel_videoname"" id=""VideoName"" name=""VideoName"" size=""15"">" & vbCrLf & shtml
-
-        shtml &= "</select>" & vbCrLf
-        'End If
-
-        '抽出テキストに抽出ワードを戻すスクリプトを追加
-        If videoexword.Length > 0 Then
-            shtml &= "<SCRIPT>" & vbCrLf
-            shtml &= "objSelect = document.getElementById('VideoExWord');" & vbCrLf
-            shtml &= "objSelect.value = '" & videoexword & "';" & vbCrLf
-            shtml &= "</SCRIPT>" & vbCrLf
-        End If
-
-        Return shtml
+        log1write("ビデオファイル一覧を取得しました")
+        Return video2
     End Function
 
     'エラーページ用ひな形
@@ -489,7 +574,7 @@ Class WebRemocon
                     Catch ex As Exception
                     End Try
 
-                    If (e(i) = 2 Or e(i) = 3) And f(i) = 2 And HTTPSTREAM_WEB_view_ts = 1 Then
+                    If (e(i) = 2 Or e(i) = 3) And f(i) = 2 And HTTPSTREAM_WEB_VIEW_TS = 1 Then
                         'HTTPストリーム ffmpeg
                         Dim fileroot As String = get_soutaiaddress_from_fileroot()
                         If ChannelName.Length > 0 Then
@@ -1892,6 +1977,28 @@ Class WebRemocon
                             'End If
                             'Next
                             'End If
+                            'ビデオリスト　更新する=1
+                            Dim vl_refresh As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_refresh") & "")
+                            'ビデオリスト　何件返すか
+                            Dim vl_volume As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_volume") & "")
+                            If vl_volume = 0 Then
+                                vl_volume = C_INTMAX '制限無し
+                            End If
+                            'ビデオリスト　指定日以前のファイルをリストアップする
+                            Dim vl_startdate As DateTime
+                            Dim vl_startdate_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_startdate") & ""
+                            If vl_startdate_str.Length = 0 Then
+                                '未指定
+                                vl_startdate = C_DAY2038 '制限無し
+                            Else
+                                Try
+                                    vl_startdate = CDate(vl_startdate_str)
+                                Catch ex As Exception
+                                    '不正な値
+                                    vl_volume = -99
+                                    vl_startdate = CDate("1980/01/01")
+                                End Try
+                            End If
 
                             'NHKの音声モード
                             Dim NHK_dual_mono_mode_select As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & "")
@@ -1963,7 +2070,16 @@ Class WebRemocon
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_VIDEOFILES"
                                         'ビデオファイル
-                                        WI_cmd_reply = Me.WI_GET_VIDEOFILES()
+                                        WI_cmd_reply = Me.WI_GET_VIDEOFILES(videoexword, vl_refresh, vl_startdate, vl_volume)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_VIDEOFILES2"
+                                        'ビデオファイル
+                                        If vl_volume = -99 Then
+                                            '不正な日付だったときにはvl_volume=-99になっている
+                                            WI_cmd_reply = "99,," & vbCrLf
+                                        Else
+                                            WI_cmd_reply = Me.WI_GET_VIDEOFILES2(videoexword, vl_refresh, vl_startdate, vl_volume)
+                                        End If
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_ERROR_STREAM"
                                         '再起動中のストリームを返す
@@ -2173,8 +2289,12 @@ Class WebRemocon
 
                                 'ファイル選択ページ用
                                 If s.IndexOf("%SELECTVIDEO%") >= 0 Then
-                                    Dim shtml As String = make_file_select_html(videoexword)
+                                    Dim shtml As String = make_file_select_html(videoexword, vl_refresh, vl_startdate, vl_volume)
                                     s = s.Replace("%SELECTVIDEO%", shtml)
+                                End If
+                                '%VIDEOFROMDATE%
+                                If s.IndexOf("%VIDEOFROMDATE%") >= 0 Then
+                                    s = s.Replace("%VIDEOFROMDATE%", VIDEOFROMDATE.ToString("yyyy/MM/dd"))
                                 End If
 
                                 '地デジ番組表（通常のネットから取得）
@@ -2460,24 +2580,24 @@ Class WebRemocon
                         ' client closed connection before the content was sent
                     End Try
 
-        Catch httpEx As HttpListenerException
-            log1write(httpEx.Message)
-            log1write(httpEx.StackTrace)
-        Finally
-            Try
-                If writer IsNot Nothing Then
-                    writer.Close()
-                End If
-                If reader IsNot Nothing Then
-                    reader.Close()
-                End If
-                If res IsNot Nothing Then
-                    res.Close()
-                End If
-            Catch ex As Exception
-                log1write(ex.ToString())
-            End Try
-        End Try
+                Catch httpEx As HttpListenerException
+                    log1write(httpEx.Message)
+                    log1write(httpEx.StackTrace)
+                Finally
+                    Try
+                        If writer IsNot Nothing Then
+                            writer.Close()
+                        End If
+                        If reader IsNot Nothing Then
+                            reader.Close()
+                        End If
+                        If res IsNot Nothing Then
+                            res.Close()
+                        End If
+                    Catch ex As Exception
+                        log1write(ex.ToString())
+                    End Try
+                End Try
             End If
 
         Catch ex As Exception
@@ -2635,11 +2755,6 @@ Class WebRemocon
         End If
 
         Return r
-    End Function
-
-    'ビデオファイルネーム取得
-    Public Function WI_GET_VIDEOFILES() As String
-        Return make_file_select_html("")
     End Function
 
     'HTTPSTREAM_App遠隔切り替え

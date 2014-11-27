@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.90"
+    Private version As String = "TvRemoteViewer_VB version 0.91"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -274,6 +274,11 @@ Public Class Form1
         'iniからパラ－メータを読み込む
         Me._worker.read_videopath()
 
+        '起動時にビデオファイル一覧を作成
+        'Me._worker.make_file_select_html("", 1, C_DAY2038, 0)
+        Me._worker.WI_GET_VIDEOFILES2("", 1, C_DAY2038, 0)
+        log1write("ビデオファイル一覧を作成しました")
+
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止
         Me._worker.stopProc(-2)
@@ -346,6 +351,9 @@ Public Class Form1
 
         'プロセスクラッシュ監視等開始
         Timer1.Enabled = True
+
+        'ビデオフォルダ　更新監視スタート
+        start_watch_folders()
     End Sub
 
     'フォーム上の項目が正常かどうかチェック
@@ -520,6 +528,9 @@ Public Class Form1
 
     Private Sub Form1_FormClosing(sender As System.Object, e As System.Windows.Forms.FormClosingEventArgs) Handles MyBase.FormClosing
         Timer1.Enabled = False
+
+        'ビデオフォルダ　監視終了
+        stop_watch_videofolders()
 
         '全プロセスを停止
         Try
@@ -950,6 +961,92 @@ Public Class Form1
     Private Sub Form1_Resize(sender As System.Object, e As System.EventArgs) Handles MyBase.Resize
         If Me.WindowState = FormWindowState.Minimized Then
             Me.Visible = False
+        End If
+    End Sub
+
+    'ビデオフォルダ　監視開始
+    Public Sub start_watch_folders()
+        If Me._worker._videopath Is Nothing Then
+            Exit Sub
+        End If
+
+        'watcher = New System.IO.FileSystemWatcher
+        watcher = New System.IO.FileSystemWatcher(UBound(Me._worker._videopath)) {}
+        Dim j As Integer
+        For j = 0 To UBound(Me._worker._videopath)
+            watcher(j) = New System.IO.FileSystemWatcher
+        Next
+
+        For i = 0 To Me._worker._videopath.Length - 1
+            '監視するディレクトリを指定
+            watcher(i).Path = Me._worker._videopath(i)
+            '最終アクセス日時、最終更新日時、ファイル、フォルダ名の変更を監視する
+            watcher(i).NotifyFilter = System.IO.NotifyFilters.LastAccess Or _
+            System.IO.NotifyFilters.LastWrite Or _
+            System.IO.NotifyFilters.FileName Or _
+            System.IO.NotifyFilters.DirectoryName
+            'すべてのファイルを監視
+            watcher(i).Filter = ""
+            'UIのスレッドにマーシャリングする
+            'コンソールアプリケーションでの使用では必要ない
+            'watcher.SynchronizingObject = Me
+
+            'イベントハンドラの追加
+            AddHandler watcher(i).Changed, AddressOf watcher_Changed
+            AddHandler watcher(i).Created, AddressOf watcher_Changed
+            AddHandler watcher(i).Deleted, AddressOf watcher_Changed
+            AddHandler watcher(i).Renamed, AddressOf watcher_Changed
+
+            '監視を開始する
+            watcher(i).EnableRaisingEvents = True
+            log1write("ビデオフォルダの監視を開始しました。")
+        Next
+    End Sub
+
+    'ビデオフォルダ　監視終了
+    Public Sub stop_watch_videofolders()
+        '監視を終了
+        If watcher IsNot Nothing Then
+            For i = 0 To Me._worker._videopath.Length - 1
+                watcher(i).EnableRaisingEvents = False
+                watcher(i).Dispose()
+                watcher(i) = Nothing
+            Next
+            watcher = Nothing
+            log1write("ビデオフォルダの監視を終了しました。")
+        End If
+    End Sub
+
+    'ビデオフォルダ　イベントハンドラ
+    Private Sub watcher_Changed(ByVal source As System.Object, ByVal e As System.IO.FileSystemEventArgs)
+        Dim i As Integer = 0
+        If watcher_now = 0 Then
+            watcher_now = 1
+
+            '他のファイルが同時作成される可能性があるので10秒待つ
+            For i = 0 To 1000
+                System.Threading.Thread.Sleep(10)
+            Next
+
+            Select Case e.ChangeType
+                Case System.IO.WatcherChangeTypes.Changed
+                    log1write(("ファイル 「" + e.FullPath + _
+                        "」が変更されました。"))
+                Case System.IO.WatcherChangeTypes.Created
+                    log1write(("ファイル 「" + e.FullPath + _
+                        "」が作成されました。"))
+                Case System.IO.WatcherChangeTypes.Deleted
+                    log1write(("ファイル 「" + e.FullPath + _
+                        "」が削除されました。"))
+                Case System.IO.WatcherChangeTypes.Renamed
+                    log1write(("ファイル 「" + e.FullPath + _
+                        "」が名前変更されました。"))
+            End Select
+
+            Me._worker.make_file_select_html("", 1, C_DAY2038, 0)
+            log1write("ビデオファイル一覧を取得しました")
+
+            watcher_now = 0
         End If
     End Sub
 

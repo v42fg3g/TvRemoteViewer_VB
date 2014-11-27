@@ -60,5 +60,8 @@
         Return r
     End Function
 
+    'プログラム用
+    Public C_DAY2038 As DateTime = CDate("2038/01/01 23:59")
+    Public C_INTMAX As Integer = 2147483647
 End Module
 
