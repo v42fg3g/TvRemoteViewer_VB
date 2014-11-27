@@ -275,9 +275,7 @@ Public Class Form1
         Me._worker.read_videopath()
 
         '起動時にビデオファイル一覧を作成
-        'Me._worker.make_file_select_html("", 1, C_DAY2038, 0)
         Me._worker.WI_GET_VIDEOFILES2("", 1, C_DAY2038, 0)
-        log1write("ビデオファイル一覧を作成しました")
 
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止
@@ -987,6 +985,8 @@ Public Class Form1
             System.IO.NotifyFilters.DirectoryName
             'すべてのファイルを監視
             watcher(i).Filter = ""
+            'サブディレクトリは監視しない
+            watcher(i).IncludeSubdirectories = False
             'UIのスレッドにマーシャリングする
             'コンソールアプリケーションでの使用では必要ない
             'watcher.SynchronizingObject = Me
@@ -999,8 +999,8 @@ Public Class Form1
 
             '監視を開始する
             watcher(i).EnableRaisingEvents = True
-            log1write("ビデオフォルダの監視を開始しました。")
         Next
+        log1write("ビデオフォルダの監視を開始しました。")
     End Sub
 
     'ビデオフォルダ　監視終了
@@ -1020,7 +1020,7 @@ Public Class Form1
     'ビデオフォルダ　イベントハンドラ
     Private Sub watcher_Changed(ByVal source As System.Object, ByVal e As System.IO.FileSystemEventArgs)
         Dim i As Integer = 0
-        If watcher_now = 0 Then
+        If watcher_now = 0 And e.FullPath.ToString.IndexOf("Thumbs.db") < 0 Then
             watcher_now = 1
 
             '他のファイルが同時作成される可能性があるので10秒待つ
@@ -1044,7 +1044,6 @@ Public Class Form1
             End Select
 
             Me._worker.make_file_select_html("", 1, C_DAY2038, 0)
-            log1write("ビデオファイル一覧を取得しました")
 
             watcher_now = 0
         End If
