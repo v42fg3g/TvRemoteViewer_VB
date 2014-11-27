@@ -1801,7 +1801,8 @@ Class WebRemocon
                         'リクエストされたURL
                         Dim req_Url As String = req.Url.LocalPath
 
-                        If path.IndexOf(".htm") > 0 Then ' Or path.IndexOf(".js") > 0 Then
+                        'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
+                        If path.IndexOf(".htm") > 0 Then
                             'HTMLなら
 
                             '最後に.htmlにアクセスがあった日時を記録
@@ -2451,13 +2452,13 @@ Class WebRemocon
                         context.Response.StatusCode = 401
                     End If
 
-            res.Close()
+                    res.Close()
 
-            Try
-                context.Response.Close()
-            Catch ex As Exception
-                ' client closed connection before the content was sent
-            End Try
+                    Try
+                        context.Response.Close()
+                    Catch ex As Exception
+                        ' client closed connection before the content was sent
+                    End Try
 
         Catch httpEx As HttpListenerException
             log1write(httpEx.Message)

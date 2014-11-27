@@ -29,6 +29,7 @@ Class ProcessBean
     'ffmpeg HTTPストリーム
     Public _IsStart As Boolean ' = False
     Public _ffmpegBuf As Byte() '= Nothing        'Public opt As String 'VLCオプション文字列
+    Public _http_udp_changing As Integer
 
     Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId As Integer, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String, VideoSeekSeconds As Integer)
         Me._udpProc = udpProc
@@ -55,6 +56,7 @@ Class ProcessBean
         Me._IsStart = False
         'Me._ffmpegBuf = New Byte(88 * 20480 - 1) {}       '2048 Packet
         Me._ffmpegBuf = New Byte(1024 * 1024 * HTTPSTREAM_FFMPEG_BUFFER - 1) {}       '1MB*30
+        Me._http_udp_changing = 0
     End Sub
 
     '========================================================================
@@ -144,6 +146,7 @@ Class ProcessBean
             'ストップした旨を知らせる
             log1write("チャンネル変更が行われない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")
             Me._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
+            Me._http_udp_changing = 1 '切断はチャンネル切り替え中かもしれない
         End Try
     End Sub
 

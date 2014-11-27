@@ -38,12 +38,10 @@ Public Class ProcessManager
 
     '停止段階で失敗しているかどうか
     Public Function get_stopping_status(ByVal num As Integer) As Integer
-        Dim r As Integer = 0
+        Dim r As Integer = -1
         For i As Integer = Me._list.Count - 1 To 0 Step -1
             If Me._list(i)._num = num Then
-                If Me._list(i)._stopping > 0 Then
-                    r = Me._list(i)._stopping
-                End If
+                r = Me._list(i)._stopping
             End If
         Next
         Return r
@@ -71,18 +69,38 @@ Public Class ProcessManager
 
     Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, ByVal VideoSeekSeconds As Integer)
         Dim stopping As Integer = get_stopping_status(num)
-        If stopping = 0 Then
+        Dim i As Integer = num2i(num)
+        Dim http_udp_changing As Integer = 0
+        If i >= 0 Then
+            http_udp_changing = Me._list(i)._http_udp_changing
+        End If
+
+        If stopping > 0 And http_udp_changing = 0 Then
+            'HTTPストリームチャンネル変更中に再配信要求が来た場合は初めから
+            log1write("停止中のプロセスを終了します")
+            'プロセス停止
+            stopProc(num)
+
+            stopping = get_stopping_status(num)
+            i = num2i(num)
+            If i >= 0 Then
+                http_udp_changing = Me._list(i)._http_udp_changing
+            End If
+        End If
+
+        If stopping <= 0 Or http_udp_changing = 1 Then
+            '配信されていない-1又は正常配信中0
             'numが放映中でかつBonDriverが同一ならばパイプを使用してチャンネル変更だけを行う
             'ffmpegだけを停止しチャンネル変更が完了するまで.stopping=2にして完了したら.stopping=0にする
             Dim hls_only As Integer = 0
-            Dim i As Integer = num2i(num)
             Dim hls_only_sid As String = ""
             Dim hls_only_chspace As String = ""
-            If i >= 0 And get_stopping_status(num) = 0 Then
+            If i >= 0 Then
                 'すでに同num=iで配信中である
                 Dim BonDriver_prev As String = Trim(instr_pickup_para(Me._list(i)._udpOpt, "/d ", " ", 0))
                 Dim BonDriver_next As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0))
                 If BonDriver_prev.Length > 0 And BonDriver_next.Length > 0 And BonDriver_prev = BonDriver_next Then
+                    log1write("BonDriverが同一のためUDPアプリを再起動せずにチャンネル変更を試みます")
                     '同一BonDriverだった場合はRectaskを再起動せずパイプでのチャンネル変更をする
                     '/udp /port 42425 /chspace 0 /sid 51208 /d BonDriver_Spinel_PT3_t0.dll /sendservice 1
                     '切り替えるServiceIDとChSpaceを取得
@@ -96,11 +114,10 @@ Public Class ProcessManager
 
             '★起動している場合は既存のプロセスを止める
             stopProc(num, hls_only) 'hls_only=1ならばHLSアプリのみを停止する
+            'stopProcでチャンネル変更ならstopping=-2になる
 
             stopping = get_stopping_status(num)
-            If stopping = 0 Or stopping = 2 Then
-                'get_stopping_status(num) = 2(HLSアプリのみストップ）は素通りしてくる
-
+            If stopping <= 0 Or stopping = 2 Then
                 '関連するファイルを削除
                 delete_mystreamnum(num)
 
@@ -363,6 +380,10 @@ Public Class ProcessManager
                     If HTTPSTREAM_App = 2 And hlsApp.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
                         'ffmpeg HTTPストリーム ファイル再生
                         'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
+                        'すでにリストにある場合はリストから取り除いた後に改めて作成
+                        If i >= 0 Then
+                            Me._list.RemoveAt(i)
+                        End If
                         'ProcessBeans作成
                         '                                  ↓Processはまだ決まっていない
                         Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds)
