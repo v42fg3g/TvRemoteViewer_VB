@@ -268,15 +268,15 @@ Public Class Form1
         StartHttpServer()
         log1write("httpサーバーを起動しました")
 
-        '関連アプリのプロセスが残っていれば停止する
-        '全プロセスを名前指定で停止
-        Me._worker.stopProc(-2)
-
         'チャンネル情報を取得　今までは表示要求があった時点で１つ１つ取得していた
         Me._worker.WI_GET_CHANNELS()
 
         'iniからパラ－メータを読み込む
         Me._worker.read_videopath()
+
+        '関連アプリのプロセスが残っていれば停止する
+        '全プロセスを名前指定で停止
+        Me._worker.stopProc(-2)
 
         'HTMLキャラクターコード
         log1write("HTML入力キャラクターコード： " & HTML_IN_CHARACTER_CODE)

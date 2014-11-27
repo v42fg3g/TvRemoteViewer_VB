@@ -419,6 +419,7 @@ TvRemoteViewer_VB v0.90
 		（WI_GET_LIVE_STREAMとWI_GET_PROGRAM_NUMの末尾に「,」区切りで追加されています）
 		WI_GET_PROGRAM_NUMのバグを修正
 	0.90	HTTP配信時のチャンネル切り替え安定性向上
+		起動時にiniのStop_RecTask_at_StartEndが反映されていなかったバグを修正
 
 
 
