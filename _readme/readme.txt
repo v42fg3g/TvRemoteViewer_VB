@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.89
+TvRemoteViewer_VB v0.90
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -418,6 +418,7 @@ TvRemoteViewer_VB v0.89
 	0.89	WEBインターフェースの問い合わせにファイル再生時にシークした秒数を返すようにした
 		（WI_GET_LIVE_STREAMとWI_GET_PROGRAM_NUMの末尾に「,」区切りで追加されています）
 		WI_GET_PROGRAM_NUMのバグを修正
+	0.90	HTTP配信時のチャンネル切り替え安定性向上
 
 
 
