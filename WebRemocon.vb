@@ -354,31 +354,33 @@ Class WebRemocon
             If Me._videopath.Length > 0 Then
                 For i = 0 To Me._videopath.Length - 1
                     If Me._videopath(i).Length > 0 Then
+                        Dim files As String() = System.IO.Directory.GetFiles(Me._videopath(i), "*")
                         Try
-                            For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
+                            'For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
+                            For Each stFilePath As String In files
                                 Try
                                     Dim fullpath As String = stFilePath & System.Environment.NewLine
                                     fullpath = trim8(fullpath)
                                     '拡張子を取得
-                                    Dim ext As String = ""
-                                    Dim sp As Integer = fullpath.LastIndexOf(".")
-                                    If sp >= 0 Then
-                                        ext = fullpath.Substring(sp) 'ext=.ts
-                                    End If
-                                    '当てはまっているかチェック
+                                    Dim ext As String = System.IO.Path.GetExtension(fullpath)
+                                    '表示拡張子が指定されていれば該当するかチェックする
                                     Dim chk As Integer = 0
                                     If VideoExtensions IsNot Nothing Then
-                                        chk = -1
                                         For ii As Integer = 0 To VideoExtensions.Length - 1
+                                            'もしかすると""が送られてくるかもしれないので一応lengthをチェック
                                             If VideoExtensions(ii).Length > 0 Then
-                                                If fullpath.LastIndexOf(VideoExtensions(ii)) = fullpath.Length - VideoExtensions(ii).Length Then
-                                                    chk = 1
+                                                chk = -1 '1つでも有効な拡張子指定があればchk=-1にする
+                                                If ext = VideoExtensions(ii) Then
+                                                    chk = 1 'マッチすればforから抜け出すのでchk=1になる
                                                     Exit For
                                                 End If
                                             End If
                                         Next
                                     End If
-                                    If chk = 1 Or (chk = 0 And fullpath.IndexOf(".db") < 0 And fullpath.IndexOf(".chapter") < 0 And fullpath.IndexOf(".srt") < 0) Then
+                                    'chk=0 拡張子指定は無い
+                                    'chk=1 拡張子指定が有り、一致した
+                                    'chk=-1 拡張子指定が有り、一致しなかった
+                                    If chk = 1 Or (chk = 0 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass") Then
                                         '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
                                         Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
                                         Dim datestr As String = modifytime.ToString("yyyyMMddHH")
