@@ -354,8 +354,8 @@ Class WebRemocon
             If Me._videopath.Length > 0 Then
                 For i = 0 To Me._videopath.Length - 1
                     If Me._videopath(i).Length > 0 Then
-                        Dim files As String() = System.IO.Directory.GetFiles(Me._videopath(i), "*")
                         Try
+                            Dim files As String() = System.IO.Directory.GetFiles(Me._videopath(i), "*")
                             'For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
                             For Each stFilePath As String In files
                                 Try
