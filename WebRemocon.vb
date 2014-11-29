@@ -2076,6 +2076,11 @@ Class WebRemocon
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_VIDEOFILES"
                                         'ビデオファイル
+                                        If videolist_firstview = 0 Then
+                                            '閲覧最初の1回目は強制リフレッシュ
+                                            videolist_firstview = 1
+                                            vl_refresh = 1
+                                        End If
                                         WI_cmd_reply = Me.WI_GET_VIDEOFILES(videoexword, vl_refresh, vl_startdate, vl_volume)
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_VIDEOFILES2"
@@ -2084,6 +2089,11 @@ Class WebRemocon
                                             '不正な日付だったときにはvl_volume=-99になっている
                                             WI_cmd_reply = "99,," & vbCrLf
                                         Else
+                                            If videolist_firstview = 0 Then
+                                                '閲覧最初の1回目は強制リフレッシュ
+                                                videolist_firstview = 1
+                                                vl_refresh = 1
+                                            End If
                                             WI_cmd_reply = Me.WI_GET_VIDEOFILES2(videoexword, vl_refresh, vl_startdate, vl_volume)
                                         End If
                                         WI_cmd_reply_force = 1
@@ -2295,6 +2305,11 @@ Class WebRemocon
 
                                 'ファイル選択ページ用
                                 If s.IndexOf("%SELECTVIDEO%") >= 0 Then
+                                    If videolist_firstview = 0 Then
+                                        '閲覧最初の1回目は強制リフレッシュ
+                                        videolist_firstview = 1
+                                        vl_refresh = 1
+                                    End If
                                     Dim shtml As String = make_file_select_html(videoexword, vl_refresh, vl_startdate, vl_volume)
                                     s = s.Replace("%SELECTVIDEO%", shtml)
                                 End If

@@ -21,4 +21,6 @@
     'ただいまファイル取得中 =1
     Public watcher_now As Integer = 0
 
+    'ファイルリスト閲覧、最初の1回目かどうか
+    Public videolist_firstview As Integer = 0
 End Module
