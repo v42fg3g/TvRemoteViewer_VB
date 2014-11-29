@@ -18,9 +18,10 @@
 
     'フォルダ監視用
     Public watcher() As System.IO.FileSystemWatcher = Nothing
-    'ただいまファイル取得中 =1
-    Public watcher_now As Integer = 0
 
     'ファイルリスト閲覧、最初の1回目かどうか
     Public videolist_firstview As Integer = 0
+
+    '最後にファイル一覧に変化があったことを検知した日時
+    Public watcher_lasttime As DateTime = C_DAY2038
 End Module

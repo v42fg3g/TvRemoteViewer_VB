@@ -137,6 +137,13 @@ Public Class Form1
             TextBoxLog.Refresh()
         End If
 
+        'ファイル一覧　最後の更新から10秒経ったらファイル一覧更新
+        Dim duration1 As TimeSpan = Now.Subtract(watcher_lasttime)
+        If duration1.TotalSeconds >= 10 Then
+            watcher_lasttime = C_DAY2038
+            Me._worker.make_file_select_html("", 1, C_DAY2038, 0)
+        End If
+
     End Sub
 
     '古いTSファイルを削除する　ffmpeg用
@@ -1028,38 +1035,25 @@ Public Class Form1
     'ビデオフォルダ　イベントハンドラ
     Private Sub watcher_Changed(ByVal source As System.Object, ByVal e As System.IO.FileSystemEventArgs)
         'もしかして並列ではなく直列に実行されているみたい・・
-        Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(e.FullPath.ToString)
-        '更新されてから10秒以上経っている場合は実行しない（すでに実行されている可能性が高い）
-        Dim duration1 As TimeSpan = Now.Subtract(modifytime)
-        If duration1.TotalSeconds < 10 Then
-            Dim i As Integer = 0
-            If watcher_now = 0 And e.FullPath.ToString.IndexOf("Thumbs.db") < 0 Then
-                watcher_now = 1
+        If e.FullPath.ToString.IndexOf("Thumbs.db") < 0 Then
 
-                Select Case e.ChangeType
-                    Case System.IO.WatcherChangeTypes.Changed
-                        log1write(("ファイル 「" + e.FullPath + _
-                            "」が変更されました。"))
-                    Case System.IO.WatcherChangeTypes.Created
-                        log1write(("ファイル 「" + e.FullPath + _
-                            "」が作成されました。"))
-                    Case System.IO.WatcherChangeTypes.Deleted
-                        log1write(("ファイル 「" + e.FullPath + _
-                            "」が削除されました。"))
-                    Case System.IO.WatcherChangeTypes.Renamed
-                        log1write(("ファイル 「" + e.FullPath + _
-                            "」が名前変更されました。"))
-                End Select
+            Select Case e.ChangeType
+                Case System.IO.WatcherChangeTypes.Changed
+                    log1write(("ファイル 「" + e.FullPath + _
+                        "」が変更されました。"))
+                Case System.IO.WatcherChangeTypes.Created
+                    log1write(("ファイル 「" + e.FullPath + _
+                        "」が作成されました。"))
+                Case System.IO.WatcherChangeTypes.Deleted
+                    log1write(("ファイル 「" + e.FullPath + _
+                        "」が削除されました。"))
+                Case System.IO.WatcherChangeTypes.Renamed
+                    log1write(("ファイル 「" + e.FullPath + _
+                        "」が名前変更されました。"))
+            End Select
 
-                '他のファイルが同時作成される可能性があるので10秒待つ
-                For i = 0 To 1000
-                    System.Threading.Thread.Sleep(10)
-                Next
-
-                Me._worker.make_file_select_html("", 1, C_DAY2038, 0)
-
-                watcher_now = 0
-            End If
+            watcher_lasttime = Now()
+            '最後の変更からタイマーで10秒経ったら更新
         End If
     End Sub
 
