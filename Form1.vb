@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.91"
+    Private version As String = "TvRemoteViewer_VB version 0.92"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -366,7 +366,7 @@ Public Class Form1
         'HLSアプリチェック
         Dim f_hls_exe As String = Me.textBoxHlsApp.Text.ToString
         If file_exist(f_hls_exe) = 1 Then
-            log1write("HLSアプリ：" & f_udp_exe & " を確認しました")
+            log1write("HLSアプリ：" & f_hls_exe & " を確認しました")
         Else
             log1write("【エラー】HLSアプリ " & f_hls_exe & " が見つかりません")
         End If
@@ -976,29 +976,33 @@ Public Class Form1
         Next
 
         For i = 0 To Me._worker._videopath.Length - 1
-            '監視するディレクトリを指定
-            watcher(i).Path = Me._worker._videopath(i)
-            '最終アクセス日時、最終更新日時、ファイル、フォルダ名の変更を監視する
-            watcher(i).NotifyFilter = System.IO.NotifyFilters.LastAccess Or _
-            System.IO.NotifyFilters.LastWrite Or _
-            System.IO.NotifyFilters.FileName Or _
-            System.IO.NotifyFilters.DirectoryName
-            'すべてのファイルを監視
-            watcher(i).Filter = ""
-            'サブディレクトリは監視しない
-            watcher(i).IncludeSubdirectories = False
-            'UIのスレッドにマーシャリングする
-            'コンソールアプリケーションでの使用では必要ない
-            'watcher.SynchronizingObject = Me
+            Try
+                '監視するディレクトリを指定
+                watcher(i).Path = Me._worker._videopath(i)
+                '最終アクセス日時、最終更新日時、ファイル、フォルダ名の変更を監視する
+                watcher(i).NotifyFilter = System.IO.NotifyFilters.LastAccess Or _
+                System.IO.NotifyFilters.LastWrite Or _
+                System.IO.NotifyFilters.FileName Or _
+                System.IO.NotifyFilters.DirectoryName
+                'すべてのファイルを監視
+                watcher(i).Filter = ""
+                'サブディレクトリは監視しない
+                watcher(i).IncludeSubdirectories = False
+                'UIのスレッドにマーシャリングする
+                'コンソールアプリケーションでの使用では必要ない
+                'watcher.SynchronizingObject = Me
 
-            'イベントハンドラの追加
-            AddHandler watcher(i).Changed, AddressOf watcher_Changed
-            AddHandler watcher(i).Created, AddressOf watcher_Changed
-            AddHandler watcher(i).Deleted, AddressOf watcher_Changed
-            AddHandler watcher(i).Renamed, AddressOf watcher_Changed
+                'イベントハンドラの追加
+                AddHandler watcher(i).Changed, AddressOf watcher_Changed
+                AddHandler watcher(i).Created, AddressOf watcher_Changed
+                AddHandler watcher(i).Deleted, AddressOf watcher_Changed
+                AddHandler watcher(i).Renamed, AddressOf watcher_Changed
 
-            '監視を開始する
-            watcher(i).EnableRaisingEvents = True
+                '監視を開始する
+                watcher(i).EnableRaisingEvents = True
+            Catch ex As Exception
+                log1write("ビデオフォルダ監視開始においてエラーが発生しました。" & ex.Message)
+            End Try
         Next
         log1write("ビデオフォルダの監視を開始しました。")
     End Sub
@@ -1008,9 +1012,13 @@ Public Class Form1
         '監視を終了
         If watcher IsNot Nothing Then
             For i = 0 To Me._worker._videopath.Length - 1
-                watcher(i).EnableRaisingEvents = False
-                watcher(i).Dispose()
-                watcher(i) = Nothing
+                Try
+                    watcher(i).EnableRaisingEvents = False
+                    watcher(i).Dispose()
+                    watcher(i) = Nothing
+                Catch ex As Exception
+                    log1write("ビデオフォルダ監視終了においてエラーが発生しました。" & ex.Message)
+                End Try
             Next
             watcher = Nothing
             log1write("ビデオフォルダの監視を終了しました。")

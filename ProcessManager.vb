@@ -95,6 +95,7 @@ Public Class ProcessManager
             Dim hls_only As Integer = 0
             Dim hls_only_sid As String = ""
             Dim hls_only_chspace As String = ""
+            Dim hls_only_channel As String = ""
             If i >= 0 Then
                 'すでに同num=iで配信中である
                 Dim BonDriver_prev As String = Trim(instr_pickup_para(Me._list(i)._udpOpt, "/d ", " ", 0))
@@ -106,6 +107,7 @@ Public Class ProcessManager
                     '切り替えるServiceIDとChSpaceを取得
                     hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
                     hls_only_chspace = Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
+                    hls_only_channel = F_sid2channel(Val(hls_only_sid), Val(hls_only_chspace))
                     If hls_only_sid.Length > 0 And hls_only_chspace.Length > 0 Then
                         hls_only = 1 'パイプでチャンネル変更を行う
                     End If
@@ -134,13 +136,14 @@ Public Class ProcessManager
                         '既存のpipeindex
                         pipeIndex = Me._list(i).GetProcUdpPipeIndex
                         'ここでパイプを使ってチャンネル変更
-                        Dim ks As String = Pipe_change_channel(pipeIndex, hls_only_sid, hls_only_chspace)
+                        Dim ks As String = Pipe_change_channel(pipeIndex, hls_only_sid, hls_only_chspace, hls_only_channel)
                         If ks.IndexOf("""OK""") > 0 Then
                             '成功
                             '既存プロセス
                             udpProc = Me._list(i).GetUdpProc
                             udpProc.WaitForInputIdle()
                             log1write("No.=" & num & "名前付きパイプを使用してチャンネルを変更しました")
+                            log1write("pipeindex=" & pipeIndex & " sid=" & hls_only_sid & " chspace=" & hls_only_chspace & " channel=" & hls_only_channel)
                         Else
                             log1write(ks)
                             '失敗したら引き続き通常起動を試みる
@@ -454,9 +457,10 @@ Public Class ProcessManager
         If sp > 0 And ep > sp Then
             sid = Val(udpOpt.Substring(sp + "/sid ".Length, ep - sp - "/sid ".Length))
         End If
+        Dim chspace As Integer = Val(Instr_pickup(udpOpt, "/chspace ", " ", 0))
         Dim hosokyoku_name As String = ""
         If sid > 0 Then
-            hosokyoku_name = StrConv(Trim(F_sid2channelname(sid)), VbStrConv.Wide)
+            hosokyoku_name = StrConv(Trim(F_sid2channelname(sid, chspace)), VbStrConv.Wide)
         End If
         If hosokyoku_name.IndexOf("ＮＨＫ") >= 0 Then
             r = 1
@@ -1510,8 +1514,8 @@ Public Class ProcessManager
                                 If ch_list IsNot Nothing Then
                                     Dim chk As Integer = 0
                                     For i2 As Integer = 0 To ch_list.Length - 1
-                                        If ch_list(i2).sid = Val(s(5)) And ch_list(i2).tsid = s(7) Then
-                                            'サービスIDとTSIDが一致した
+                                        If ch_list(i2).sid = Val(s(5)) And ch_list(i2).chspace = s(1) Then
+                                            'サービスIDとchspaceが一致した
                                             'すでに登録済み
                                             chk = 1
                                             Exit For
@@ -1524,6 +1528,7 @@ Public Class ProcessManager
                                         ch_list(si).jigyousha = s(0)
                                         ch_list(si).bondriver = bondriver
                                         ch_list(si).chspace = Val(s(1))
+                                        ch_list(si).channel = Val(s(2))
                                         ch_list(si).tsid = Val(s(7))
                                         si += 1
                                     End If
@@ -1534,6 +1539,7 @@ Public Class ProcessManager
                                     ch_list(0).jigyousha = s(0)
                                     ch_list(0).bondriver = bondriver
                                     ch_list(0).chspace = Val(s(1))
+                                    ch_list(0).channel = Val(s(2))
                                     ch_list(0).tsid = Val(s(7))
                                     si += 1
                                 End If
@@ -1566,7 +1572,7 @@ Public Class ProcessManager
                 Dim stream_mode As Integer = Me._list(d(i))._stream_mode
                 Dim NHKMODE As Integer = Me._list(d(i))._NHK_dual_mono_mode_select
                 Dim stopping As Integer = Me._list(d(i))._stopping
-                Dim channel_name As String = F_sid2channelname(Val(ServiceID))
+                Dim channel_name As String = F_sid2channelname(Val(ServiceID), Val(ch_space))
                 Dim hlsApp As String = Me._list(d(i))._hlsApp
                 Dim hlsApp_name As String = ""
                 Dim fullpathfilename As String = Me._list(d(i))._fullpathfilename

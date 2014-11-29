@@ -356,72 +356,76 @@ Class WebRemocon
                     If Me._videopath(i).Length > 0 Then
                         Try
                             For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
-                                Dim fullpath As String = stFilePath & System.Environment.NewLine
-                                fullpath = trim8(fullpath)
-                                '拡張子を取得
-                                Dim ext As String = ""
-                                Dim sp As Integer = fullpath.LastIndexOf(".")
-                                If sp >= 0 Then
-                                    ext = fullpath.Substring(sp) 'ext=.ts
-                                End If
-                                '当てはまっているかチェック
-                                Dim chk As Integer = 0
-                                If VideoExtensions IsNot Nothing Then
-                                    chk = -1
-                                    For ii As Integer = 0 To VideoExtensions.Length - 1
-                                        If VideoExtensions(ii).Length > 0 Then
-                                            If fullpath.LastIndexOf(VideoExtensions(ii)) = fullpath.Length - VideoExtensions(ii).Length Then
-                                                chk = 1
-                                                Exit For
-                                            End If
-                                        End If
-                                    Next
-                                End If
-                                If chk = 1 Or (chk = 0 And fullpath.IndexOf(".db") < 0 And fullpath.IndexOf(".chapter") < 0 And fullpath.IndexOf(".srt") < 0) Then
-                                    '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
-                                    Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
-                                    Dim datestr As String = modifytime.ToString("yyyyMMddHH")
-                                    Dim filename As String = ""
-                                    If fullpath.IndexOf("\") >= 0 Then
-                                        'ファイル名だけを取り出す
-                                        k = fullpath.LastIndexOf("\")
-                                        Try
-                                            filename = fullpath.Substring(k + 1)
-                                        Catch ex As Exception
-                                        End Try
-                                    Else
-                                        filename = fullpath
+                                Try
+                                    Dim fullpath As String = stFilePath & System.Environment.NewLine
+                                    fullpath = trim8(fullpath)
+                                    '拡張子を取得
+                                    Dim ext As String = ""
+                                    Dim sp As Integer = fullpath.LastIndexOf(".")
+                                    If sp >= 0 Then
+                                        ext = fullpath.Substring(sp) 'ext=.ts
                                     End If
-                                    'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
-                                    'UTF-8化で解決
-                                    'Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
-                                    Dim encstr As String = fullpath
-
-                                    '抽出
-                                    If videoexword.Length > 0 Then
-                                        videoexword = videoexword.Replace("　", " ")
-                                        Dim v() As String = videoexword.Split(" ")
-                                        '全てのワードに当てはまるかチェック
-                                        For j As Integer = 0 To v.Length - 1
-                                            If filename.IndexOf(v(j)) < 0 Then
-                                                filename = ""
+                                    '当てはまっているかチェック
+                                    Dim chk As Integer = 0
+                                    If VideoExtensions IsNot Nothing Then
+                                        chk = -1
+                                        For ii As Integer = 0 To VideoExtensions.Length - 1
+                                            If VideoExtensions(ii).Length > 0 Then
+                                                If fullpath.LastIndexOf(VideoExtensions(ii)) = fullpath.Length - VideoExtensions(ii).Length Then
+                                                    chk = 1
+                                                    Exit For
+                                                End If
                                             End If
                                         Next
                                     End If
+                                    If chk = 1 Or (chk = 0 And fullpath.IndexOf(".db") < 0 And fullpath.IndexOf(".chapter") < 0 And fullpath.IndexOf(".srt") < 0) Then
+                                        '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
+                                        Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
+                                        Dim datestr As String = modifytime.ToString("yyyyMMddHH")
+                                        Dim filename As String = ""
+                                        If fullpath.IndexOf("\") >= 0 Then
+                                            'ファイル名だけを取り出す
+                                            k = fullpath.LastIndexOf("\")
+                                            Try
+                                                filename = fullpath.Substring(k + 1)
+                                            Catch ex As Exception
+                                            End Try
+                                        Else
+                                            filename = fullpath
+                                        End If
+                                        'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
+                                        'UTF-8化で解決
+                                        'Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
+                                        Dim encstr As String = fullpath
 
-                                    If filename.Length > 0 Then
-                                        ReDim Preserve video2(cnt)
-                                        video2(cnt).fullpathfilename = fullpath
-                                        video2(cnt).filename = filename
-                                        video2(cnt).encstr = encstr
-                                        video2(cnt).modifytime = modifytime
-                                        video2(cnt).datestr = datestr
-                                        cnt += 1
+                                        '抽出
+                                        If videoexword.Length > 0 Then
+                                            videoexword = videoexword.Replace("　", " ")
+                                            Dim v() As String = videoexword.Split(" ")
+                                            '全てのワードに当てはまるかチェック
+                                            For j As Integer = 0 To v.Length - 1
+                                                If filename.IndexOf(v(j)) < 0 Then
+                                                    filename = ""
+                                                End If
+                                            Next
+                                        End If
+
+                                        If filename.Length > 0 Then
+                                            ReDim Preserve video2(cnt)
+                                            video2(cnt).fullpathfilename = fullpath
+                                            video2(cnt).filename = filename
+                                            video2(cnt).encstr = encstr
+                                            video2(cnt).modifytime = modifytime
+                                            video2(cnt).datestr = datestr
+                                            cnt += 1
+                                        End If
                                     End If
-                                End If
+                                Catch ex As Exception
+                                    log1write("ビデオフォルダ一覧作成中に" & stFilePath & "の処理に失敗しました。" & ex.Message)
+                                End Try
                             Next stFilePath
                         Catch ex As Exception
-                            log1write("ビデオフォルダの読み込みに失敗しました" & ex.Message)
+                            log1write("ビデオフォルダ " & Me._videopath(i) & " の読み込みに失敗しました。" & ex.Message)
                         End Try
                     End If
                 Next

@@ -168,11 +168,12 @@ Module モジュール_名前付きパイプ取得
     End Function
 
     'RecTaskチャンネル変更エントリー
-    Public Function Pipe_change_channel(ByVal pipeindex As Integer, ByVal sidstr As String, ByVal chspacestr As String) As String
+    Public Function Pipe_change_channel(ByVal pipeindex As Integer, ByVal sidstr As String, ByVal chspacestr As String, ByVal channel As Integer) As String
         Dim r As String = ""
         Dim cmd As String = "SetChannel" & vbCrLf _
                             & "ServiceID:" & sidstr & vbCrLf _
-                            & "TuningSpace:" & chspacestr
+                            & "TuningSpace:" & chspacestr & vbCrLf _
+                            & "Channel:" & channel.ToString
         r = Pipe_Send_Command(pipeindex, cmd)
         Return r
     End Function
