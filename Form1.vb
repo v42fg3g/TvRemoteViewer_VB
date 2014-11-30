@@ -281,9 +281,6 @@ Public Class Form1
         'iniからパラ－メータを読み込む
         Me._worker.read_videopath()
 
-        '起動時にビデオファイル一覧を作成
-        Me._worker.WI_GET_VIDEOFILES2("", 1, C_DAY2038, 0)
-
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止
         Me._worker.stopProc(-2)
@@ -347,6 +344,9 @@ Public Class Form1
                 log1write("ファイルフォルダ " & Me._worker._videopath(j))
             Next
         End If
+
+        '起動時にビデオファイル一覧を作成
+        Me._worker.WI_GET_VIDEOFILES2("", 1, C_DAY2038, 0)
 
         '解像度コンボボックスをセット httpサーバースタート後にhls_option()がセットされている
         search_ComboBoxResolution()
