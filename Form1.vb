@@ -292,52 +292,41 @@ Public Class Form1
         'ffmpegバッファ
         log1write("ffmepg HTTPストリームバッファ：　" & HTTPSTREAM_FFMPEG_BUFFER & "MB")
 
-        'ASS字幕用font_confがあるかどうか確認
-        If Me._worker._hlsApp.IndexOf("ffmpeg") >= 0 Then
-            If file_exist(Me._worker._hlsApp.Replace("ffmpeg.exe", "\fonts\fonts.conf")) = 1 Then
-                fonts_conf_ok = 1
-                log1write("ffmepgファイル再生時：ASS字幕を表示させるのに必要なfonts.confを確認しました")
-            Else
-                log1write("ffmepgファイル再生時：ASS字幕を表示させるのに必要なfonts.confが見つかりませんでした")
-            End If
-        End If
-
         'アイドル切断分数
         If STOP_IDLEMINUTES > 0 Then
             log1write("アイドル時間が" & STOP_IDLEMINUTES & "分に達すると全切断するようセットしました")
         End If
         STOP_IDLEMINUTES_LAST = Now()
 
-        '無事起動
-        TvRemoteViewer_VB_Start = 1
-
         If Me._worker._AddSubFolder = 1 Then
-            'サブフォルダを含める
-            Dim sf As New ArrayList
-            Dim errf As New ArrayList
-            For j = 0 To Me._worker._videopath.Length - 1
-                GetSubfolders(Me._worker._videopath(j), sf, errf)
-                errf.Add("RECYCLER") '"RECYCLER"を除外する
-                errf.Add("chapters") 'chaptersを除外する
-            Next
-            'ここまでで、sf.arrayにフォルダ、errf.arrayにエラーフォルダ
-            Dim folder As String
-            For Each folder In sf
-                Dim chk As Integer = 0
-                Dim errfolder As String
-                For Each errfolder In errf
-                    If folder.IndexOf(errfolder) >= 0 Then
-                        chk = 1
-                        Exit For
-                    End If
+            If Me._worker._videopath IsNot Nothing Then
+                'サブフォルダを含める
+                Dim sf As New ArrayList
+                Dim errf As New ArrayList
+                For j = 0 To Me._worker._videopath.Length - 1
+                    GetSubfolders(Me._worker._videopath(j), sf, errf)
+                    errf.Add("RECYCLER") '"RECYCLER"を除外する
+                    errf.Add("chapters") 'chaptersを除外する
                 Next
-                If chk = 0 Then
-                    'video_path()に追加
-                    Dim b As Integer = Me._worker._videopath.Length
-                    ReDim Preserve Me._worker._videopath(b)
-                    Me._worker._videopath(b) = folder
-                End If
-            Next folder
+                'ここまでで、sf.arrayにフォルダ、errf.arrayにエラーフォルダ
+                Dim folder As String
+                For Each folder In sf
+                    Dim chk As Integer = 0
+                    Dim errfolder As String
+                    For Each errfolder In errf
+                        If folder.IndexOf(errfolder) >= 0 Then
+                            chk = 1
+                            Exit For
+                        End If
+                    Next
+                    If chk = 0 Then
+                        'video_path()に追加
+                        Dim b As Integer = Me._worker._videopath.Length
+                        ReDim Preserve Me._worker._videopath(b)
+                        Me._worker._videopath(b) = folder
+                    End If
+                Next folder
+            End If
         End If
         If Me._worker._videopath IsNot Nothing Then
             For j = 0 To Me._worker._videopath.Length - 1
@@ -359,6 +348,9 @@ Public Class Form1
 
         'ビデオフォルダ　更新監視スタート
         start_watch_folders()
+
+        '無事起動
+        TvRemoteViewer_VB_Start = 1
     End Sub
 
     'フォーム上の項目が正常かどうかチェック
@@ -366,14 +358,14 @@ Public Class Form1
         'UDPアプリチェック
         Dim f_udp_exe As String = Me.textBoxUdpApp.Text.ToString
         If file_exist(f_udp_exe) = 1 Then
-            log1write("UDPアプリ：" & f_udp_exe & " を確認しました")
+            log1write("起動チェック　UDPアプリ：OK")
         Else
             log1write("【エラー】UDPアプリ " & f_udp_exe & " が見つかりません")
         End If
         'HLSアプリチェック
         Dim f_hls_exe As String = Me.textBoxHlsApp.Text.ToString
         If file_exist(f_hls_exe) = 1 Then
-            log1write("HLSアプリ：" & f_hls_exe & " を確認しました")
+            log1write("起動チェック　HLSアプリ：OK")
         Else
             log1write("【エラー】HLSアプリ " & f_hls_exe & " が見つかりません")
         End If
@@ -388,7 +380,7 @@ Public Class Form1
                     f_fpre_str = f_fpre_str.Replace("%HLSROOT%", f_hls_path)
                     f_fpre_str = f_fpre_str.Replace("%HLSROOT/../%", f_hls_path2)
                     If file_exist(f_fpre_str) = 1 Then
-                        log1write("ffmpegプリセット：" & f_fpre_str & " を確認しました")
+                        log1write("起動チェック　ffmpeg presetsファイル：OK")
                     Else
                         log1write("【エラー】ffmpegプリセット " & f_fpre_str & " が見つかりません")
                     End If
@@ -401,9 +393,9 @@ Public Class Form1
         Dim f_wwwroot As String = Me.TextBoxWWWroot.Text.ToString
         If f_wwwroot.Length > 0 Then
             If folder_exist(f_wwwroot) = 1 Then
-                log1write("WWWROOT：" & f_wwwroot & " を確認しました")
+                log1write("起動チェック　WWWROOT：OK")
             Else
-                log1write("【エラー】WWWROOTが見つかりません")
+                log1write("【エラー】WWWROOT " & f_wwwroot & " が見つかりません")
             End If
         Else
             log1write("【エラー】WWWROOTが設定されていません")
@@ -412,18 +404,27 @@ Public Class Form1
         Dim f_fileroot As String = Me.TextBoxFILEROOT.Text.ToString
         If f_fileroot.Length > 0 Then
             If folder_exist(f_fileroot) = 1 Then
-                log1write("FILEROOT：" & f_fileroot & " を確認しました")
+                log1write("起動チェック　FILEROOT：OK")
             Else
-                log1write("【エラー】FILEROOTが見つかりません")
+                log1write("【エラー】FILEROOT " & f_fileroot & " が見つかりません")
             End If
         End If
         'bondriver
         Dim f_bondriver As String = Me.TextBoxBonDriverPath.Text.ToString
         If f_bondriver.Length > 0 Then
             If folder_exist(f_bondriver) = 1 Then
-                log1write("BonDriverパス：" & f_bondriver & " を確認しました")
+                log1write("起動チェック　BonDriverパス：OK")
             Else
-                log1write("【エラー】BonDriverパスが見つかりません")
+                log1write("【エラー】BonDriverパス " & f_bondriver & " が見つかりません")
+            End If
+        End If
+        'ASS字幕用font_confがあるかどうか確認
+        If Me._worker._hlsApp.IndexOf("ffmpeg") >= 0 Then
+            If file_exist(Me._worker._hlsApp.Replace("ffmpeg.exe", "\fonts\fonts.conf")) = 1 Then
+                fonts_conf_ok = 1
+                log1write("起動チェック　ASS字幕に必要なfonts.conf：OK")
+            Else
+                log1write("ffmepgファイル再生時：ASS字幕を表示させるのに必要なfonts.confは見つかりませんでした")
             End If
         End If
 
@@ -443,13 +444,14 @@ Public Class Form1
                 Catch ex As Exception
                 End Try
             ElseIf fileroot.IndexOf(":") >= 0 Then
-                log1write("【警告】%FILEROOT%にドライブそのものを指定することはできません。ドライブ内フォルダを指定してください")
+                log1write("【エラー】%FILEROOT%にドライブそのものを指定することはできません。ドライブ内フォルダを指定してください")
             ElseIf fileroot = "\\" Then
-                log1write("【警告】%FILEROOT%にネットワークドライブそのものを指定することはできません。ネットワークドライブ内フォルダを指定してください")
+                log1write("【エラー】%FILEROOT%にネットワークドライブそのものを指定することはできません。ネットワークドライブ内フォルダを指定してください")
             Else
-                log1write("【警告】%FILEROOT%が不正です")
+                log1write("【エラー】%FILEROOT%が不正です")
             End If
         End If
+
     End Sub
 
     'サブフォルダを取得
