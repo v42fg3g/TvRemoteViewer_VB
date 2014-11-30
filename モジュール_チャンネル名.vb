@@ -8,6 +8,7 @@
         Public chspace As Integer
         Public channel As Integer
         Public tsid As Integer
+        Public nid As Integer
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
             Dim pF As String = CType(obj, String) '検索内容を取得
@@ -40,12 +41,17 @@
     End Function
 
     'sidからchannelに変換 RecTaskのPipeで命令する際のchannelを取得
-    Public Function F_sid2channel(ByVal sid As Integer, ByVal chspace As Integer) As Integer
-        Dim r As String = -1
+    Public Function F_sid2para(ByVal sid As Integer, ByVal chspace As Integer) As Object
+        Dim r(2) As Integer
+        r(0) = 0 'channel
+        r(1) = 0 'TSID
+        r(2) = 0 'NID
         If ch_list IsNot Nothing Then
             For i As Integer = 0 To ch_list.Length - 1
                 If ch_list(i).sid = sid And ch_list(i).chspace = chspace Then
-                    r = ch_list(i).channel
+                    r(0) = ch_list(i).channel
+                    r(1) = ch_list(i).tsid
+                    r(2) = ch_list(i).nid
                     Exit For
                 End If
             Next

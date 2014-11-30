@@ -642,7 +642,7 @@ Class WebRemocon
                     '表示しないBonDriverかをチェック
                     If Me._BonDriver_NGword IsNot Nothing Then
                         For j As Integer = 0 To Me._BonDriver_NGword.Length - 1
-                            If sl.IndexOf(Me._BonDriver_NGword(j)) >= 0 Then
+                            If sl.IndexOf(Me._BonDriver_NGword(j).ToLower) >= 0 Then
                                 sl = ""
                             End If
                         Next
@@ -1001,13 +1001,15 @@ Class WebRemocon
                         Select Case youso(0)
                             Case "VideoPath"
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve Me._videopath(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        Me._videopath(j) = trim8(clset(j))
-                                    Next
+                                If trim8(youso(1)).Length > 0 Then
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve Me._videopath(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            Me._videopath(j) = trim8(clset(j))
+                                        Next
+                                    End If
                                 End If
                             Case "AddSubFolder"
                                 Me._AddSubFolder = Val(youso(1).ToString)

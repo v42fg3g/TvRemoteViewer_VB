@@ -93,9 +93,11 @@ Public Class ProcessManager
             'numが放映中でかつBonDriverが同一ならばパイプを使用してチャンネル変更だけを行う
             'ffmpegだけを停止しチャンネル変更が完了するまで.stopping=2にして完了したら.stopping=0にする
             Dim hls_only As Integer = 0
-            Dim hls_only_sid As String = ""
-            Dim hls_only_chspace As String = ""
-            Dim hls_only_channel As String = ""
+            Dim hls_only_sid As Integer = 0
+            Dim hls_only_chspace As Integer = 0
+            Dim hls_only_channel As Integer = 0
+            Dim hls_only_TSID As Integer = 0
+            Dim hls_only_NID As Integer = 0
             If i >= 0 Then
                 'すでに同num=iで配信中である
                 Dim BonDriver_prev As String = Trim(instr_pickup_para(Me._list(i)._udpOpt, "/d ", " ", 0))
@@ -105,10 +107,13 @@ Public Class ProcessManager
                     '同一BonDriverだった場合はRectaskを再起動せずパイプでのチャンネル変更をする
                     '/udp /port 42425 /chspace 0 /sid 51208 /d BonDriver_Spinel_PT3_t0.dll /sendservice 1
                     '切り替えるServiceIDとChSpaceを取得
-                    hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
-                    hls_only_chspace = Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
-                    hls_only_channel = F_sid2channel(Val(hls_only_sid), Val(hls_only_chspace))
-                    If hls_only_sid.Length > 0 And hls_only_chspace.Length > 0 Then
+                    hls_only_sid = Val(Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0)))
+                    hls_only_chspace = Val(Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0)))
+                    Dim d() As Integer = F_sid2para(Val(hls_only_sid), Val(hls_only_chspace))
+                    hls_only_channel = d(0)
+                    hls_only_TSID = d(1)
+                    hls_only_NID = d(2)
+                    If hls_only_sid > 0 And hls_only_chspace > 0 And hls_only_TSID > 0 And hls_only_NID > 0 Then
                         hls_only = 1 'パイプでチャンネル変更を行う
                     End If
                 End If
@@ -136,7 +141,7 @@ Public Class ProcessManager
                         '既存のpipeindex
                         pipeIndex = Me._list(i).GetProcUdpPipeIndex
                         'ここでパイプを使ってチャンネル変更
-                        Dim ks As String = Pipe_change_channel(pipeIndex, hls_only_sid, hls_only_chspace, hls_only_channel)
+                        Dim ks As String = Pipe_change_channel(pipeIndex, hls_only_sid, hls_only_chspace, hls_only_channel, hls_only_TSID, hls_only_NID)
                         If ks.IndexOf("""OK""") > 0 Then
                             '成功
                             '既存プロセス
@@ -1530,6 +1535,7 @@ Public Class ProcessManager
                                         ch_list(si).chspace = Val(s(1))
                                         ch_list(si).channel = Val(s(2))
                                         ch_list(si).tsid = Val(s(7))
+                                        ch_list(si).nid = Val(s(6))
                                         si += 1
                                     End If
                                 Else
@@ -1541,6 +1547,7 @@ Public Class ProcessManager
                                     ch_list(0).chspace = Val(s(1))
                                     ch_list(0).channel = Val(s(2))
                                     ch_list(0).tsid = Val(s(7))
+                                    ch_list(0).nid = Val(s(6))
                                     si += 1
                                 End If
                             End If
