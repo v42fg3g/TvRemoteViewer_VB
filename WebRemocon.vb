@@ -1066,9 +1066,9 @@ Class WebRemocon
                                     Next
                                 End If
                             Case "TvProgramD_BonDriver1st"
-                                TvProgramD_BonDriver1st = trim8(youso(1).ToString)
+                                TvProgramD_BonDriver1st = para_split_str(youso(1).ToString)
                             Case "TvProgramS_BonDriver1st"
-                                TvProgramS_BonDriver1st = trim8(youso(1).ToString)
+                                TvProgramS_BonDriver1st = para_split_str(youso(1).ToString)
                             Case "TvProgram_tvrock_url"
                                 TvProgram_tvrock_url = trim8(youso(1).ToString)
                             Case "TvProgram_EDCB_url"
@@ -1207,6 +1207,8 @@ Class WebRemocon
                                 STOP_IDLEMINUTES = Val(youso(1).ToString)
                             Case "VideoSeekDefault"
                                 VideoSeekDefault = Val(youso(1).ToString)
+                            Case "TvProgram_SelectUptoNum"
+                                TvProgram_SelectUptoNum = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -1216,6 +1218,36 @@ Class WebRemocon
         End If
 
     End Sub
+
+    'パラメーターを,で区切って数値を配列で返す
+    Private Function para_split_int(ByVal s As String) As Object
+        Dim r() As String = para_split_str(s)
+        If r IsNot Nothing Then
+            For i As Integer = 0 To r.Length - 1
+                r(i) = Val(r(i))
+            Next
+        End If
+        Return r
+    End Function
+
+    'パラメーターを,で区切って文字列を配列で返す
+    Private Function para_split_str(ByVal s As String) As Object
+        Dim r() As String = Nothing
+        Dim cnt As Integer = 0
+        s = trim8(s)
+        If s.Length > 0 Then
+            Dim d() As String = s.Split(",")
+            For i As Integer = 0 To d.Length - 1
+                d(i) = trim8(d(i))
+                If d(i).Length > 0 Then
+                    ReDim Preserve r(cnt)
+                    r(cnt) = d(i)
+                    cnt += 1
+                End If
+            Next
+        End If
+        Return r
+    End Function
 
     'ファイル再生
     '現在のhlsOptをファイル再生用に書き換える
@@ -2650,6 +2682,24 @@ Class WebRemocon
         r &= vbCrLf
         r &= "【BonDriver】" & vbCrLf
         r &= "_BonDriverPath=" & Me._udpApp & vbCrLf
+        r &= "TvProgramD_BonDriver1st="
+        If TvProgramD_BonDriver1st IsNot Nothing Then
+            Dim s As String = ""
+            For i = 0 To TvProgramD_BonDriver1st.Length - 1
+                r &= s & TvProgramD_BonDriver1st(i)
+                s = ","
+            Next
+            r &= vbCrLf
+        End If
+        r &= "TvProgramS_BonDriver1st="
+        If TvProgramS_BonDriver1st IsNot Nothing Then
+            Dim s As String = ""
+            For i = 0 To TvProgramS_BonDriver1st.Length - 1
+                r &= s & TvProgramS_BonDriver1st(i)
+                s = ","
+            Next
+            r &= vbCrLf
+        End If
         r &= vbCrLf
         r &= "【HLSアプリ】" & vbCrLf
         r &= "_hlsApp=" & Me._hlsApp & vbCrLf
@@ -2678,6 +2728,7 @@ Class WebRemocon
         r &= "【番組表】" & vbCrLf
         r &= "TvProgram_tvrock_url=" & TvProgram_tvrock_url & vbCrLf
         r &= "TvProgram_EDCB_url=" & TvProgram_EDCB_url & vbCrLf
+        r &= "SelectNum1=" & TvProgram_SelectUptoNum & vbCrLf
         r &= vbCrLf
         r &= "【ファイル再生】" & vbCrLf
         If Me._videopath IsNot Nothing Then

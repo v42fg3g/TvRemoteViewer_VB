@@ -442,6 +442,8 @@ Public Class ProcessManager
         Dim js As String = get_live_numbers()
         log1write("現在稼働中のNumber：" & js)
 
+        '番組表用にライブストリームを記録
+        LIVE_STREAM_STR = WI_GET_LIVE_STREAM()
     End Sub
 
     'このプロセスがＮＨＫ関連かどうか調べる
@@ -823,11 +825,14 @@ Public Class ProcessManager
                 Me._list.Clear() 'リストクリア
                 log1write("関連アプリのプロセスを停止しました")
             End If
-
-            '現在稼働中のlist(i)._numをログに表示
-            Dim js As String = get_live_numbers()
-            log1write("現在稼働中のNumber：" & js)
         End If
+
+        '現在稼働中のlist(i)._numをログに表示
+        Dim js As String = get_live_numbers()
+        log1write("現在稼働中のNumber：" & js)
+
+        '番組表用にライブストリームを記録
+        LIVE_STREAM_STR = WI_GET_LIVE_STREAM()
     End Sub
 
     'ストリームnumの放送局名を取得する

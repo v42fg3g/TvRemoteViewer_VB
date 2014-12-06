@@ -14,10 +14,13 @@ Module モジュール_番組表
     Public TvProgramEDCB_channels() As String
     Public TvProgramTvRock_channels() As String
     Public TvProgramD_sort() As String
-    Public TvProgramD_BonDriver1st As String = ""
-    Public TvProgramS_BonDriver1st As String = ""
+    Public TvProgramD_BonDriver1st() As String
+    Public TvProgramS_BonDriver1st() As String
     Public TvProgram_tvrock_url As String = ""
     Public TvProgram_EDCB_url As String = ""
+
+    Public LIVE_STREAM_STR As String = ""
+    Public TvProgram_SelectUptoNum As Integer = 0 '番組表上の配信ナンバーを制限する
 
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
@@ -43,6 +46,8 @@ Module モジュール_番組表
         Dim html_all As String = ""
         Dim cnt As Integer = 0
         Dim TvProgram_html() As TVprogram_html_structure = Nothing
+
+        Dim use_num_bon() As String = get_use_BonDriver() 'd(0)=地デジnum d(1)=地デジBonDriver d(2)=BS・CS num d(3)=BS・CS BonDriver
 
         Dim TvProgram_ch2() As Integer = Nothing
         If a = 0 Then
@@ -147,24 +152,33 @@ Module モジュール_番組表
                                             bhtml = bhtml.Replace("<script type=""text/javascript"" src=""ConnectedSelect.js""></script>", "") '余計な1行を消す
                                             bhtml = bhtml.Replace(" id=""SEL1""", "") '余計な文字を消す
                                             '優先的に割り当てるBonDriverが指定されていればそれを選択
-                                            If Val(d(3)) = 1 And TvProgramS_BonDriver1st.Length > 0 Then
+                                            Dim selected_num As Integer = 1
+                                            If Val(d(3)) = 1 And use_num_bon(3).Length > 0 Then
                                                 'CSでBonDriver指定があれば
-                                                bhtml = bhtml.Replace(TvProgramS_BonDriver1st.ToLower & """>", TvProgramS_BonDriver1st & """ selected>")
-                                            ElseIf Val(d(2)) >= 1024 And TvProgramD_BonDriver1st.Length > 0 Then
+                                                bhtml = bhtml.Replace(use_num_bon(3).ToLower & """>", use_num_bon(3) & """ selected>")
+                                                selected_num = Val(use_num_bon(2))
+                                            ElseIf Val(d(2)) >= 1024 And use_num_bon(1).Length > 0 Then
                                                 '地デジ
-                                                bhtml = bhtml.Replace(TvProgramD_BonDriver1st.ToLower & """>", TvProgramD_BonDriver1st & """ selected>")
-                                            ElseIf Val(d(2)) < 1024 And TvProgramS_BonDriver1st.Length > 0 Then
+                                                bhtml = bhtml.Replace(use_num_bon(1).ToLower & """>", use_num_bon(1) & """ selected>")
+                                                selected_num = Val(use_num_bon(0))
+                                            ElseIf Val(d(2)) < 1024 And use_num_bon(3).Length > 0 Then
                                                 'BS
-                                                bhtml = bhtml.Replace(TvProgramS_BonDriver1st.ToLower & """>", TvProgramS_BonDriver1st & """ selected>")
+                                                bhtml = bhtml.Replace(use_num_bon(3).ToLower & """>", use_num_bon(3) & """ selected>")
+                                                selected_num = Val(use_num_bon(2))
                                             Else
                                                 '指定無し
                                                 bhtml = bhtml.Replace(d(1) & """>", d(1) & """ selected>")
+                                                selected_num = 1
                                             End If
 
                                             html &= "<form action=""StartTV.html"">" & vbCrLf
                                             html &= "<select name=""num"">" & vbCrLf
                                             For ix = 1 To MAX_STREAM_NUMBER
-                                                html &= "<option>" & ix.ToString & "</option>" & vbCrLf
+                                                If ix = selected_num Then
+                                                    html &= "<option selected>" & ix.ToString & "</option>" & vbCrLf
+                                                Else
+                                                    html &= "<option>" & ix.ToString & "</option>" & vbCrLf
+                                                End If
                                             Next
                                             html &= "</select>" & vbCrLf
                                             html &= bhtml & vbCrLf
@@ -227,6 +241,92 @@ Module モジュール_番組表
         End If
 
         Return html_all
+    End Function
+
+    '使用されていない優先BonDriver名を返す（地デジ）
+    Public Function get_use_BonDriver() As Object
+        Dim r(3) As String
+        r(0) = "" '地デジnum
+        r(1) = "" '地デジBonDriver
+        r(2) = "" 'BS・CSnum
+        r(3) = "" 'BS・CSBonDriver
+
+        '地デジ
+        If TvProgramD_BonDriver1st IsNot Nothing Then
+            For i As Integer = 0 To TvProgramD_BonDriver1st.Length - 1
+                If LIVE_STREAM_STR.IndexOf(TvProgramD_BonDriver1st(i)) < 0 Then
+                    r(1) = TvProgramD_BonDriver1st(i)
+                    Exit For
+                End If
+            Next
+            If r(1) = "" Then
+                r(1) = TvProgramD_BonDriver1st(0)
+            End If
+        End If
+
+        'BS・CS
+        If TvProgramS_BonDriver1st IsNot Nothing Then
+            For i As Integer = 0 To TvProgramS_BonDriver1st.Length - 1
+                If LIVE_STREAM_STR.IndexOf(TvProgramS_BonDriver1st(i)) < 0 Then
+                    r(3) = TvProgramS_BonDriver1st(i)
+                    Exit For
+                End If
+            Next
+            If r(3) = "" Then
+                r(3) = TvProgramS_BonDriver1st(0)
+            End If
+        End If
+
+        'numを決める 'すでに使用中ならそのナンバー
+        Dim line() As String = Split(LIVE_STREAM_STR, vbCrLf)
+        Dim nums As String = ":"
+        If line IsNot Nothing Then
+            For i As Integer = 0 To line.Length - 1
+                If line(i).IndexOf(r(1)) >= 0 Then
+                    r(0) = i.ToString
+                End If
+                If line(i).IndexOf(r(3)) >= 0 Then
+                    r(2) = i.ToString
+                End If
+                '配信中のナンバーを記録
+                Dim d() As String = line(i).Split(",")
+                If d.Length >= 12 Then
+                    nums &= Trim(d(1)) & ":"
+                End If
+            Next
+        End If
+
+        '空いているナンバーを返す
+        For i As Integer = 1 To MAX_STREAM_NUMBER
+            If nums.IndexOf(":" & i.ToString & ":") < 0 Then
+                If r(0) = "" Then
+                    r(0) = i.ToString
+                End If
+                If r(2) = "" Then
+                    r(2) = i.ToString
+                End If
+            End If
+        Next
+
+        '空いているナンバーが無ければ1
+        If r(0) = "" Then
+            r(0) = "1"
+        End If
+        If r(2) = "" Then
+            r(2) = "1"
+        End If
+
+        '番組表での配信ナンバー選択制限が指定されていれば
+        If TvProgram_SelectUptoNum > 0 Then
+            If Val(r(0)) > TvProgram_SelectUptoNum Then
+                r(0) = TvProgram_SelectUptoNum.ToString
+            End If
+            If Val(r(2)) > TvProgram_SelectUptoNum Then
+                r(2) = TvProgram_SelectUptoNum.ToString
+            End If
+        End If
+
+        Return r
     End Function
 
     'ＮＨＫ音声選択用セレクト作成
