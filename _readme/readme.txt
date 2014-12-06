@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.93
+TvRemoteViewer_VB v0.95
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -190,6 +190,7 @@ TvRemoteViewer_VB v0.93
 	%HLSROOT/../%	HLSアプリが存在するフォルダの１つ上の親フォルダ（ffmpeg解凍時のフォルダ構造に対応）
 	%rc-host%	"127.0.0.1:%UDPPORT%"に変換されます。
 	%NUM%		ストリームナンバー
+	%VIDEOFILE%	ビデオファイルに変換（実際は「-i %VIDEOFILE%」の決め打ちで-iの後ろの文字列がファイル名に変換）
 
 
 
@@ -441,6 +442,12 @@ TvRemoteViewer_VB v0.93
 		不必要なビデオフォルダ自動更新チェックが行われる現象を解消
 	0.93	iniのBonDriver_NGwordが機能していなかったバグを修正
 		パイプを使用したチャンネル切り替えを修正
+	0.94	iniの優先BonDriver(TvProgramD_BonDriver1st,TvProgramS_BonDriver1st)を複数記入可能にした
+		WEBインターフェース（WI_GET_TVRV_STATUS）に優先BonDriver表示を追加
+		iniに番組表上の配信ナンバーを制限するTvProgram_SelectUptoNumを追加
+	0.95	HLS_option_ffmpeg_file.txtが存在していればファイル再生時にHLSオプションとして使用するようにした
+		SelectVideo.htmlにおいてキーワード抽出ができなくなっていた不具合を解消
+		SelectVideo.htmlのキーワード抽出でフォルダ名も検索に含めるようにした
 
 
 

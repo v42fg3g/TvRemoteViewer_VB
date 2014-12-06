@@ -62,6 +62,7 @@ Class WebRemocon
     Public vlc_option() As HLSoptionstructure
     Public vlc_http_option() As HLSoptionstructure
     Public ffmpeg_option() As HLSoptionstructure
+    Public ffmpeg_file_option() As HLSoptionstructure
     Public ffmpeg_http_option() As HLSoptionstructure
     Public Structure HLSoptionstructure
         Public resolution As String '解像度　"640x360"
@@ -239,21 +240,28 @@ Class WebRemocon
 
         If RefreshList = 1 Then
             'リフレッシュするように指定されていればファイルリストを更新
-            video = RefreshVideoList(videoexword)
+            video = RefreshVideoList("")
+        End If
+        Dim video2() As videostructure = Nothing
+        If videoexword.Length > 0 Then
+            'フィルタ
+            video2 = RefreshVideoListExword(videoexword)
+        Else
+            video2 = video
         End If
 
         Dim i As Integer = 0
         Dim cnt As Integer = 0
         Dim last_date As DateTime
-        If video IsNot Nothing Then
-            For i = 0 To video.Length - 1
-                Dim f As videostructure = video(i)
+        If video2 IsNot Nothing Then
+            For i = 0 To video2.Length - 1
+                Dim f As videostructure = video2(i)
                 Dim fdatestr As String = ""
                 Try
                     fdatestr = f.datestr.Substring(0, 8) 'yyyyMMddHHからyyyyMMddにする
                     If f.datestr < datestr And (cnt < vl_volume Or (cnt >= vl_volume And fdatestr = last_date.ToString("yyyyMMdd"))) Then
                         shtml &= "<option value=""" & f.datestr & "," & f.encstr & """>" & f.filename & "</option>" & vbCrLf
-                        last_date = video(i).modifytime
+                        last_date = video2(i).modifytime
                         VIDEOFROMDATE = last_date
                         cnt += 1
                     ElseIf cnt > 0 Then
@@ -299,23 +307,30 @@ Class WebRemocon
         End If
 
         If RefreshList = 1 Then
-            '更新
-            video = RefreshVideoList(videoexword)
+            'リフレッシュするように指定されていればファイルリストを更新
+            video = RefreshVideoList("")
+        End If
+        Dim video2() As videostructure = Nothing
+        If videoexword.Length > 0 Then
+            'フィルタ
+            video2 = RefreshVideoListExword(videoexword)
+        Else
+            video2 = video
         End If
 
         Dim i As Integer = 0
         Dim cnt As Integer = 0
         Dim last_date As DateTime
-        If video IsNot Nothing Then
-            For i = 0 To video.Length - 1
-                Dim f As videostructure = video(i)
+        If video2 IsNot Nothing Then
+            For i = 0 To video2.Length - 1
+                Dim f As videostructure = video2(i)
                 Dim fdatestr As String = ""
                 Try
                     fdatestr = f.datestr.Substring(0, 8) 'yyyyMMddHHからyyyyMMddにする
                     If f.datestr < datestr And (cnt < vl_volume Or (cnt >= vl_volume And fdatestr = last_date.ToString("yyyyMMdd"))) Then
-                        'r &= video(i).modifytime & "," & video(i).fullpathfilename
-                        r &= video(i).datestr & "," & video(i).encstr & vbCrLf 'value値と同じもの
-                        last_date = video(i).modifytime
+                        'r &= video2(i).modifytime & "," & video2(i).fullpathfilename
+                        r &= video2(i).datestr & "," & video2(i).encstr & vbCrLf 'value値と同じもの
+                        last_date = video2(i).modifytime
                         VIDEOFROMDATE = last_date
                         cnt += 1
                     ElseIf cnt > 0 Then
@@ -333,7 +348,7 @@ Class WebRemocon
         If cnt = 0 Then
             rcode = 2 'リクエストを満たすデータがありません
             last_date = CDate("1970/01/01 00:00:00")
-        ElseIf i >= video.Length Then
+        ElseIf i >= video2.Length Then
             rcode = 1 'これが最終です　yyyは 0と同じ xxxx/xx/xxは空白
         End If
         'Dim header As String = rcode & "," & cnt & "," & start_date.ToString("yyyy/MM/dd") & vbCrLf
@@ -343,6 +358,44 @@ Class WebRemocon
         r = header & r
 
         Return r
+    End Function
+
+    'video()に抽出ワードでフィルタをかけた結果を返す（リフレッシュ無し）
+    Public Function RefreshVideoListExword(ByVal videoexword As String) As Object
+        Dim video2() As videostructure = Nothing
+        If videoexword.Length > 0 Then
+            videoexword = videoexword.Replace("　", " ")
+            Dim v() As String = videoexword.Split(" ")
+            If video IsNot Nothing Then
+                If video.Length > 0 Then
+                    Dim cnt As Integer = 0
+                    For i As Integer = 0 To video.Length - 1
+                        'Dim filename As String = video(i).filename
+                        Dim filename As String = video(i).fullpathfilename
+                        '抽出
+                        '全てのワードに当てはまるかチェック
+                        For j As Integer = 0 To v.Length - 1
+                            If filename.IndexOf(v(j)) < 0 Then
+                                filename = ""
+                            End If
+                        Next
+
+                        If filename.Length > 0 Then
+                            ReDim Preserve video2(cnt)
+                            video2(cnt).fullpathfilename = video(i).fullpathfilename
+                            video2(cnt).filename = video(i).filename
+                            video2(cnt).encstr = video(i).encstr
+                            video2(cnt).modifytime = video(i).modifytime
+                            video2(cnt).datestr = video(i).datestr
+                            cnt += 1
+                        End If
+                    Next
+                End If
+            End If
+        Else
+            video2 = video
+        End If
+        Return video2
     End Function
 
     'video()にビデオファイルリストを作成
@@ -406,7 +459,8 @@ Class WebRemocon
                                             Dim v() As String = videoexword.Split(" ")
                                             '全てのワードに当てはまるかチェック
                                             For j As Integer = 0 To v.Length - 1
-                                                If filename.IndexOf(v(j)) < 0 Then
+                                                'If filename.IndexOf(v(j)) < 0 Then
+                                                If encstr.IndexOf(v(j)) < 0 Then 'フォルダもフィルタに含めるようにした
                                                     filename = ""
                                                 End If
                                             Next
@@ -881,6 +935,7 @@ Class WebRemocon
         vlc_option = set_hls_option("HLS_option_VLC.txt")
         vlc_http_option = set_hls_option("HLS_option_VLC_http.txt")
         ffmpeg_option = set_hls_option("HLS_option_ffmpeg.txt")
+        ffmpeg_file_option = set_hls_option("HLS_option_ffmpeg_file.txt")
         ffmpeg_http_option = set_hls_option("HLS_option_ffmpeg_http.txt")
     End Sub
 
@@ -1592,12 +1647,38 @@ Class WebRemocon
                 'hlsオプションを書き換える
                 If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
                     'ffmpegのとき
+                    If ffmpeg_file_option IsNot Nothing Then
+                        'HLS_option_ffmpeg_file.txtでオプションが指定されていれば
+                        'resolution=空白、640x380等
+                        If resolution.Length = 0 Then
+                            'フォーム上のhlsoptから解像度を取得
+                            resolution = instr_pickup_para(hlsOpt, " -s ", " ", 0)
+                            log1write("フォーム上のHLSオプションから解像度を取得しました。resolution=" & resolution)
+                        End If
+                        If resolution.Length > 0 Then
+                            Dim chk As Integer = 0
+                            For i = 0 To ffmpeg_file_option.Length - 1
+                                If ffmpeg_file_option(i).resolution = resolution Then
+                                    'hlsOpt入れ替え
+                                    hlsOpt = ffmpeg_file_option(i).opt
+                                    '%VIDEOFILE%変換
+                                    'hlsOpt = hlsOpt.Replace("%VIDEOFILE%", "DUMMYFILE")
+                                    chk = 1
+                                    log1write("HLS_option_ffmpeg_file.txtに記述されているHLSオプションを使用します")
+                                    Exit For
+                                End If
+                            Next
+                            If chk = 0 Then
+                                log1write("HLS_option_ffmpeg_file.txtに該当する解像度のオプションがありませんでした。resolution=" & resolution)
+                            End If
+                        End If
+                    End If
                     hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds)
-                Else
-                    'その他vlc
-                    '今のところ未対応
-                    Exit Sub
-                End If
+            Else
+                'その他vlc
+                '今のところ未対応
+                Exit Sub
+            End If
             End If
         End If
 
