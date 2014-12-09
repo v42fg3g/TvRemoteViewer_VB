@@ -2961,7 +2961,7 @@ Class WebRemocon
         Else
             If fl_file.IndexOf("\") >= 0 Then
                 filepath = filepath2path(fl_file)
-                filename = fl_file.Replace(filepath, "\")
+                filename = Path.GetFileName(fl_file)
             Else
                 filepath = ""
                 filename = fl_file
@@ -2969,6 +2969,19 @@ Class WebRemocon
         End If
         Dim fullpath As String = Me._wwwroot & "\" & filepath '末尾は\
         Dim fullpathfilename As String = Me._wwwroot & "\" & filepath & "\" & filename
+
+        'フォルダが存在しなければ作成
+        If fl_cmd.IndexOf("write") >= 0 Then
+            If folder_exist(fullpath) < 1 Then
+                Try
+                    System.IO.Directory.CreateDirectory(fullpath)
+                Catch ex As Exception
+                    r = "2,フォルダ作成に失敗しました。" & ex.Message & vbCrLf
+                    Return r
+                    Exit Function
+                End Try
+            End If
+        End If
 
         If fl_file.IndexOf("\..\") >= 0 Then
             r = "2,フォルダ指定が不正です" & vbCrLf '失敗
