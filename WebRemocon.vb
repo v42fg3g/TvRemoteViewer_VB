@@ -2121,6 +2121,11 @@ Class WebRemocon
                                 End Try
                             End If
 
+                            'ファイル書き込みコマンド
+                            Dim fl_cmd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_cmd") & ""
+                            Dim fl_file As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_file") & ""
+                            Dim fl_text As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_text") & ""
+
                             'NHKの音声モード
                             Dim NHK_dual_mono_mode_select As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & "")
                             If Me._NHK_dual_mono_mode <> 3 Then
@@ -2219,6 +2224,10 @@ Class WebRemocon
                                     Case "WI_SET_HTTPSTREAM_App"
                                         'http配信アプリを切り替える　手抜き・・numを一時代用
                                         WI_cmd_reply = Me.WI_SET_HTTPSTREAM_App(num)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_FILE_OPE"
+                                        'ファイル書き込み
+                                        WI_cmd_reply = Me.WI_FILE_OPE(fl_cmd, fl_file, fl_text)
                                         WI_cmd_reply_force = 1
                                 End Select
                             End If
@@ -2922,6 +2931,121 @@ Class WebRemocon
             HTTPSTREAM_App = a
             r = "HTTP配信アプリとしてffmpegを指定しました"
         End If
+        Return r
+    End Function
+
+    'ファイル書き込み
+    Public Function WI_FILE_OPE(ByVal fl_cmd As String, ByVal fl_file As String, ByVal fl_text As String) As String
+        Dim r As String = ""
+        Dim i As Integer = 0
+
+        Dim filepath As String = ""
+        Dim filename As String = ""
+        fl_file = fl_file.Replace("/", "\") '/で指定されてくるかもしれない
+        While fl_file.IndexOf("\\") >= 0
+            fl_file = fl_file.Replace("\\", "\")
+        End While
+        If fl_file.Length > 0 Then
+            '末尾が\なら削る
+            Try
+                While fl_file.Substring(fl_file.Length - 1, 1) = "\"
+                    fl_file = fl_file.Substring(0, fl_file.Length - 1)
+                End While
+            Catch ex As Exception
+                fl_file = ""
+            End Try
+        End If
+        If fl_cmd = "dir" Then
+            filepath = fl_file
+            filename = ""
+        Else
+            If fl_file.IndexOf("\") >= 0 Then
+                filepath = filepath2path(fl_file)
+                filename = fl_file.Replace(filepath, "\")
+            Else
+                filepath = ""
+                filename = fl_file
+            End If
+        End If
+        Dim fullpath As String = Me._wwwroot & "\" & filepath '末尾は\
+        Dim fullpathfilename As String = Me._wwwroot & "\" & filepath & "\" & filename
+
+        If fl_file.IndexOf("\..\") >= 0 Then
+            r = "2,フォルダ指定が不正です" & vbCrLf '失敗
+        ElseIf folder_exist(fullpath) < 1 Then
+            r = "2,指定されたフォルダが見つかりません" & vbCrLf
+        Else
+            Select Case fl_cmd
+                Case "dir"
+                    'ファイル一覧
+                    Try
+                        Dim files As String() = System.IO.Directory.GetFiles(fullpath, "*")
+                        r &= "0,SUCCESS" & vbCrLf
+                        If files IsNot Nothing Then
+                            For Each fn As String In files
+                                r &= fn & vbCrLf
+                            Next
+                        End If
+                    Catch ex As Exception
+                        'エラー
+                        r = "2,ファイル一覧取得中にエラーが発生しました。" & ex.Message & vbCrLf
+                    End Try
+                Case "read"
+                    If file_exist(fullpathfilename) = 1 Then
+                        r = file2str(fullpathfilename, "UTF-8")
+                        r = "0,SUCCESS" & vbCrLf & r
+                    Else
+                        r = "2,ファイルが見つかりませんでした" & vbCrLf
+                    End If
+                Case "write" '新規・上書き
+                    If filename.Length > 0 Then
+                        If str2file(fullpathfilename, fl_text, "UTF-8") = 1 Then
+                            '新規・上書き成功
+                            r = "0,SUCCESS" & vbCrLf
+                        Else
+                            '失敗
+                            r = "2,ファイル書き込みに失敗しました" & vbCrLf
+                        End If
+                    Else
+                        'ファイル名が指定されていない
+                        r = "2,ファイル名が不正です" & vbCrLf
+                    End If
+                Case "write_add" '追記
+                    If filename.Length > 0 Then
+                        Try
+                            Dim sw As New System.IO.StreamWriter(fullpathfilename, True, System.Text.Encoding.GetEncoding("UTF-8"))
+                            '内容を追加モードで書き込む
+                            sw.Write(fl_text)
+                            '閉じる
+                            sw.Close()
+                            r = "0,SUCCESS" & vbCrLf
+                        Catch ex As Exception
+                            'ファイルオープンエラー
+                            r = "2,追記書き込みに失敗しました。" & ex.Message & vbCrLf
+                        End Try
+                    Else
+                        'ファイル名が指定されていない
+                        r = "2,ファイル名が不正です" & vbCrLf
+                    End If
+                Case "delete" '削除
+                    If filename.Length > 0 Then
+                        If deletefile(fullpathfilename) = 1 Then
+                            '削除成功
+                            r = "0,SUCCESS" & vbCrLf
+                        Else
+                            '失敗
+                            r = "2,ファイル削除に失敗しました" & vbCrLf
+                        End If
+                    Else
+                        'ファイル名が指定されていない
+                        r = "2,ファイル名が不正です" & vbCrLf
+                    End If
+                Case Else
+                    'コマンドエラー
+                    r = "2,コマンドが不正です" & vbCrLf
+            End Select
+        End If
+
         Return r
     End Function
 

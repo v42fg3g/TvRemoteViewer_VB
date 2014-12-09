@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.95
+TvRemoteViewer_VB v0.96
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -203,6 +203,13 @@ TvRemoteViewer_VB v0.95
 		vl_startdate	指定日より前のビデオファイルを抽出する
 		vl_volume	何件表示するか（最終日付のファイルを追加するので不正確）
 		上記パラメーターは%SELECTVIDEO%を変換するSelectVideo.htmlにも有効
+	WI_FILE_OPE.html	ファイル読み書き(UTF-8)
+		パラメーター：
+		fl_cmd		dir, read, write, write_add, delete
+		fl_file		フォルダ名又はファイル名（%WWWROOT%からの相対位置）
+		fl_text		書き込む内容
+		結果：
+		0,SUCCESS(+改行[結果])　又は　2,[エラー内容]
 
 
 
@@ -448,6 +455,7 @@ TvRemoteViewer_VB v0.95
 	0.95	HLS_option_ffmpeg_file.txtが存在していればファイル再生時にHLSオプションとして使用するようにした
 		SelectVideo.htmlにおいてキーワード抽出ができなくなっていた不具合を解消
 		SelectVideo.htmlのキーワード抽出でフォルダ名も検索に含めるようにした
+	0.96	WEBインターフェース（WI_FILE_OPE）を追加
 
 
 
