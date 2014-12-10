@@ -1022,7 +1022,7 @@ Public Class Form1
     Public Sub stop_watch_videofolders()
         '監視を終了
         If watcher IsNot Nothing Then
-            For i = 0 To Me._worker._videopath.Length - 1
+            For i = 0 To watcher.Length - 1
                 Try
                     watcher(i).EnableRaisingEvents = False
                     watcher(i).Dispose()
