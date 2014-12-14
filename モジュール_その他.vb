@@ -27,6 +27,9 @@
     'ffmpegHTTPストリーム　クライアントから切断された場合、何秒後に配信自体を停止するか
     Public FFMPEG_HTTP_CUT_SECONDS As Integer = 3
 
+    '配信中に古いtsファイルを削除するかどうか
+    Public OLDTS_NODELETE As Integer = 0
+
     '余計な改行等を削除
     Public Function trim8(ByVal s As String) As String
         s = Trim(s)

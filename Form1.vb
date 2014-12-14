@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 0.96"
+    Private version As String = "TvRemoteViewer_VB version 0.97"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -89,11 +89,13 @@ Public Class Form1
             Me._worker.checkAllProc()
 
             'ffmpeg.exeを使用している場合は、1分間に1回古いTSを削除する
-            If chk_timer1_deleteTS >= 60 And textBoxHlsApp.Text.IndexOf("ffmpeg.exe") >= 0 Then
-                delete_old_TS()
-                chk_timer1_deleteTS = 0
+            If OLDTS_NODELETE = 0 Then
+                If chk_timer1_deleteTS >= 60 And textBoxHlsApp.Text.IndexOf("ffmpeg.exe") >= 0 Then
+                    delete_old_TS()
+                    chk_timer1_deleteTS = 0
+                End If
+                chk_timer1_deleteTS += 1
             End If
-            chk_timer1_deleteTS += 1
 
             '現在稼働中のストリームをタスクトレイアイコンのマウスオーバー時に表示する
             Dim s As String = Me._worker.get_live_numbers()

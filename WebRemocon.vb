@@ -1264,6 +1264,8 @@ Class WebRemocon
                                 VideoSeekDefault = Val(youso(1).ToString)
                             Case "TvProgram_SelectUptoNum"
                                 TvProgram_SelectUptoNum = Val(youso(1).ToString)
+                            Case "OLDTS_NODELETE"
+                                OLDTS_NODELETE = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
