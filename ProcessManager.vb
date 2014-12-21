@@ -113,7 +113,7 @@ Public Class ProcessManager
                     hls_only_channel = d(0)
                     hls_only_TSID = d(1)
                     hls_only_NID = d(2)
-                    If hls_only_sid > 0 And hls_only_chspace > 0 And hls_only_TSID > 0 And hls_only_NID > 0 Then
+                    If hls_only_sid > 0 And hls_only_chspace >= 0 And hls_only_TSID > 0 And hls_only_NID > 0 Then
                         hls_only = 1 'パイプでチャンネル変更を行う
                     End If
                 End If

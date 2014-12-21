@@ -25,7 +25,7 @@
     Public ALLOW_IDPASS2HTML As Integer = 0
 
     'ffmpegHTTPストリーム　クライアントから切断された場合、何秒後に配信自体を停止するか
-    Public FFMPEG_HTTP_CUT_SECONDS As Integer = 3
+    Public FFMPEG_HTTP_CUT_SECONDS As Integer = 5 '元は3
 
     '配信中に古いtsファイルを削除するかどうか
     Public OLDTS_NODELETE As Integer = 0
