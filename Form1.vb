@@ -388,7 +388,7 @@ Public Class Form1
                     End If
                 End If
             Else
-                log1write("【エラー】HLSオプションが設定されていません")
+                log1write("【警告】HLSオプションが設定されていません")
             End If
         End If
         'wwwroot

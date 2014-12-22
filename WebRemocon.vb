@@ -753,15 +753,23 @@ Class WebRemocon
     End Function
 
     'HTML内置換用　解像度選択セレクトボックスを作成
-    Private Function WEB_make_select_resolution(Optional ByVal rez As String = "") As String
+    Private Function WEB_make_select_resolution(Optional ByVal rez As String = "", Optional ByVal hls_file As Integer = 0) As String
         Dim html As String = ""
         Dim i As Integer
 
-        If hls_option IsNot Nothing Then
+        Dim ho() As HLSoptionstructure = Nothing
+        If hls_file = 1 And ffmpeg_file_option IsNot Nothing Then
+            'HLS_option_ffmpeg_file.txtを使用するよう指定があれば
+            ho = ffmpeg_file_option
+        Else
+            ho = hls_option
+        End If
+
+        If ho IsNot Nothing Then
             html &= "<select class=""c_sel_resolution"" name=""resolution"">" & vbCrLf
             html &= "<option>---</option>" & vbCrLf
-            For i = 0 To hls_option.Length - 1
-                html &= "<option>" & hls_option(i).resolution & "</option>" & vbCrLf
+            For i = 0 To ho.Length - 1
+                html &= "<option>" & ho(i).resolution & "</option>" & vbCrLf
             Next
             html &= "</select>" & vbCrLf
 
@@ -948,24 +956,37 @@ Class WebRemocon
         'カレントディレクトリ変更
         F_set_ppath4program()
 
-        Try
-            Dim line() As String = file2line(filename)
-            If line Is Nothing Then
-            Else
-                For i = 0 To line.Length - 1
-                    Dim youso() As String = line(i).Split("]")
-                    If youso Is Nothing Then
-                    Else
-                        If youso.Length = 2 Then
-                            ReDim Preserve r(i)
-                            r(i).resolution = Trim(youso(0)).Replace("[", "")
-                            r(i).opt = youso(1)
+        If file_exist(filename) = 1 Then
+            Try
+                Dim line() As String = file2line(filename)
+                If line Is Nothing Then
+                    log1write("[HlsOpt] " & filename & "内にオプション記述がありませんでした[A]")
+                Else
+                    Dim chk As Integer = 0
+                    For i = 0 To line.Length - 1
+                        Dim youso() As String = line(i).Split("]")
+                        If youso Is Nothing Then
+                        Else
+                            If youso.Length = 2 Then
+                                ReDim Preserve r(i)
+                                r(i).resolution = Trim(youso(0)).Replace("[", "")
+                                r(i).opt = youso(1)
+                                chk = 1
+                            End If
                         End If
+                    Next
+                    If chk = 1 Then
+                        log1write("[HlsOpt] " & filename & "からHLSオプションを取得しました")
+                    Else
+                        log1write("[HlsOpt] " & filename & "内にオプション記述がありませんでした")
                     End If
-                Next
-            End If
-        Catch ex As Exception
-        End Try
+                End If
+            Catch ex As Exception
+                log1write("[HlsOpt] " & filename & "からHLSオプションを取得できませんでした。" & ex.Message)
+            End Try
+        Else
+            log1write("[HlsOpt] " & filename & "が存在しませんでした")
+        End If
 
         Return r
     End Function
@@ -1543,7 +1564,21 @@ Class WebRemocon
         If resolution.Length > 0 Then
             '解像度指定があれば
             Dim chk As Integer = 0
-            If hls_option IsNot Nothing Then
+            If filename.Length > 0 And ffmpeg_file_option IsNot Nothing And (Stream_mode = 0 Or Stream_mode = 1) Then
+                'HLS配信でHLS_option_ffmpeg_file.txt指定のファイル再生ならば
+                If hls_option IsNot Nothing Then
+                    For i As Integer = 0 To ffmpeg_file_option.Length - 1
+                        If ffmpeg_file_option(i).resolution = resolution Then
+                            hlsOpt = ffmpeg_file_option(i).opt
+                            chk = 1
+                            log1write("HLS_option_ffmpeg_file.txt内の解像度指定がありました。" & resolution)
+                        End If
+                    Next
+                End If
+            End If
+
+            If chk = 0 And hls_option IsNot Nothing Then
+                '標準
                 For i As Integer = 0 To hls_option.Length - 1
                     If hls_option(i).resolution = resolution Then
                         hlsOpt = hls_option(i).opt
@@ -1552,6 +1587,7 @@ Class WebRemocon
                     End If
                 Next
             End If
+
             If chk = 0 And (Stream_mode = 0 Or Stream_mode = 1) Then
                 '該当がなければフォーム上のVLCオプション文字列を使用する
                 hlsOpt = hlsOpt2
@@ -2550,7 +2586,16 @@ Class WebRemocon
 
                                 '解像度セレクトボックス '%SELECTBONSIDCHより後でないといけない
                                 If s.IndexOf("%SELECTRESOLUTION%") >= 0 Then
-                                    Dim selectresolution As String = WEB_make_select_resolution()
+                                    Dim selectresolution As String = Nothing
+                                    If req_Url.ToLower.IndexOf("/SelectVideo".ToLower) >= 0 Then
+                                        If ffmpeg_file_option Is Nothing Then
+                                            selectresolution = WEB_make_select_resolution()
+                                        Else
+                                            selectresolution = WEB_make_select_resolution("", 1)
+                                        End If
+                                    Else
+                                        selectresolution = WEB_make_select_resolution()
+                                    End If
                                     s = s.Replace("%SELECTRESOLUTION%", selectresolution)
                                 End If
 
