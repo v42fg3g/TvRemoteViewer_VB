@@ -684,28 +684,30 @@ Class WebRemocon
             End If
             Try
                 For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
-                    Dim s As String = stFilePath & System.Environment.NewLine
-                    'フルパスファイル名がsに入る
-                    Dim fpf As String = trim8(s)
-                    If s.IndexOf("\") >= 0 Then
-                        'ファイル名だけを取り出す
-                        Dim k As Integer = s.LastIndexOf("\")
-                        s = trim8(s.Substring(k + 1))
-                    End If
-                    Dim sl As String = s.ToLower() '小文字に変換
-                    '表示しないBonDriverかをチェック
-                    If Me._BonDriver_NGword IsNot Nothing Then
-                        For j As Integer = 0 To Me._BonDriver_NGword.Length - 1
-                            If sl.IndexOf(Me._BonDriver_NGword(j).ToLower) >= 0 Then
-                                sl = ""
-                            End If
-                        Next
-                    End If
-                    If sl.IndexOf("bondriver") = 0 Then
-                        'セレクトボックス用にBonDriverを記録しておく
-                        ReDim Preserve bons(bons_n)
-                        bons(bons_n) = sl
-                        bons_n += 1
+                    If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
+                        Dim s As String = stFilePath & System.Environment.NewLine
+                        'フルパスファイル名がsに入る
+                        Dim fpf As String = trim8(s)
+                        If s.IndexOf("\") >= 0 Then
+                            'ファイル名だけを取り出す
+                            Dim k As Integer = s.LastIndexOf("\")
+                            s = trim8(s.Substring(k + 1))
+                        End If
+                        Dim sl As String = s.ToLower() '小文字に変換
+                        '表示しないBonDriverかをチェック
+                        If Me._BonDriver_NGword IsNot Nothing Then
+                            For j As Integer = 0 To Me._BonDriver_NGword.Length - 1
+                                If sl.IndexOf(Me._BonDriver_NGword(j).ToLower) >= 0 Then
+                                    sl = ""
+                                End If
+                            Next
+                        End If
+                        If sl.IndexOf("bondriver") = 0 Then
+                            'セレクトボックス用にBonDriverを記録しておく
+                            ReDim Preserve bons(bons_n)
+                            bons(bons_n) = sl
+                            bons_n += 1
+                        End If
                     End If
                 Next
             Catch ex As Exception

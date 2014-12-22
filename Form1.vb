@@ -628,30 +628,32 @@ Public Class Form1
         End If
         Try
             For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
-                Dim s As String = stFilePath & System.Environment.NewLine
-                'フルパスファイル名がsに入る
-                Dim fpf As String = trim8(s)
-                If s.IndexOf("\") >= 0 Then
-                    'ファイル名だけを取り出す
-                    Dim k As Integer = s.LastIndexOf("\")
-                    s = trim8(s.Substring(k + 1))
-                End If
-                Dim sl As String = s.ToLower() '小文字に変換
-                '表示しないBonDriverかをチェック
-                If BonDriver_NGword IsNot Nothing Then
-                    For i As Integer = 0 To BonDriver_NGword.Length - 1
-                        If sl.IndexOf(BonDriver_NGword(i)) >= 0 Then
-                            sl = ""
-                        End If
-                    Next
-                End If
-                'コンボボックスに追加
-                If sl.IndexOf("bondriver") = 0 Then
-                    ComboBoxBonDriver.Items.Add(s)
+                If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
+                    Dim s As String = stFilePath & System.Environment.NewLine
+                    'フルパスファイル名がsに入る
+                    Dim fpf As String = trim8(s)
+                    If s.IndexOf("\") >= 0 Then
+                        'ファイル名だけを取り出す
+                        Dim k As Integer = s.LastIndexOf("\")
+                        s = trim8(s.Substring(k + 1))
+                    End If
+                    Dim sl As String = s.ToLower() '小文字に変換
+                    '表示しないBonDriverかをチェック
+                    If BonDriver_NGword IsNot Nothing Then
+                        For i As Integer = 0 To BonDriver_NGword.Length - 1
+                            If sl.IndexOf(BonDriver_NGword(i)) >= 0 Then
+                                sl = ""
+                            End If
+                        Next
+                    End If
+                    'コンボボックスに追加
+                    If sl.IndexOf("bondriver") = 0 Then
+                        ComboBoxBonDriver.Items.Add(s)
+                    End If
                 End If
             Next
         Catch ex As Exception
-
+            log1write("Bondriver一覧取得中にエラーが発生しました。" & ex.Message)
         End Try
     End Sub
 
@@ -668,29 +670,31 @@ Public Class Form1
             '指定が無い場合はUDPAPPと同じフォルダにあると見なす
             bondriver_path = filepath2path(textBoxUdpApp.Text.ToString)
         End If
-        Dim filename As String
-        If bondriver_path.Length > 0 Then
-            filename = bondriver_path & "\" & ComboBoxBonDriver.Text.ToString.Replace(".dll", ".ch2")
-        Else
-            filename = ComboBoxBonDriver.Text.ToString.Replace(".dll", ".ch2")
-        End If
-        Dim line() As String = file2line(filename)
-        If line IsNot Nothing Then
-            For i As Integer = 0 To line.Length - 1
-                If line(i).IndexOf(";") < 0 Then
-                    Dim s() As String = line(i).Split(",")
-                    If s.Length = 9 Then
-                        ComboBoxServiceID.Items.Add(s(0) & " ," & s(5) & "," & s(1))
+        Dim filename As String = ""
+        If ComboBoxBonDriver.Text.ToString.Length > 0 Then
+            If bondriver_path.Length > 0 Then
+                filename = bondriver_path & "\" & ComboBoxBonDriver.Text.ToString.Replace(".dll", ".ch2")
+            Else
+                filename = ComboBoxBonDriver.Text.ToString.Replace(".dll", ".ch2")
+            End If
+            Dim line() As String = file2line(filename)
+            If line IsNot Nothing Then
+                For i As Integer = 0 To line.Length - 1
+                    If line(i).IndexOf(";") < 0 Then
+                        Dim s() As String = line(i).Split(",")
+                        If s.Length = 9 Then
+                            ComboBoxServiceID.Items.Add(s(0) & " ," & s(5) & "," & s(1))
+                        End If
                     End If
-                End If
-            Next
-            Try
-                ComboBoxServiceID.SelectedIndex = 0
-            Catch ex As Exception
+                Next
+                Try
+                    ComboBoxServiceID.SelectedIndex = 0
+                Catch ex As Exception
+                    ComboBoxServiceID.Text = ""
+                End Try
+            Else
                 ComboBoxServiceID.Text = ""
-            End Try
-        Else
-            ComboBoxServiceID.Text = ""
+            End If
         End If
     End Sub
 
