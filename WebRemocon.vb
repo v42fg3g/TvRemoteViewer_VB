@@ -1364,32 +1364,36 @@ Class WebRemocon
         filename = """" & filename & """"
 
         Dim sp As Integer = hlsOpt.IndexOf("-i ")
-        Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
-        If sp >= 0 And se > sp Then
-            If hlsOpt.IndexOf(" -vf ") < 0 Then
-                'HLSオプション内に-vfが存在しない場合は
-                ''hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
-                hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & new_file & hlsOpt.Substring(se)
-            Else
-                'HLSオプション内に-vfが存在する場合は -vf部分を入れ替える
-                hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
-                If new_file.Length > 0 Then
-                    new_file &= "," '" -vf ass=""" & new_file & """" & " "
-                    hlsOpt = hlsOpt.Replace(" -vf ", new_file)
+        If sp >= 0 Then
+            Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
+            If sp >= 0 And se > sp Then
+                If hlsOpt.IndexOf(" -vf ") < 0 Then
+                    'HLSオプション内に-vfが存在しない場合は
+                    ''hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
+                    hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & new_file & hlsOpt.Substring(se)
+                Else
+                    'HLSオプション内に-vfが存在する場合は -vf部分を入れ替える
+                    hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
+                    If new_file.Length > 0 Then
+                        new_file &= "," '" -vf ass=""" & new_file & """" & " "
+                        hlsOpt = hlsOpt.Replace(" -vf ", new_file)
+                    End If
+                End If
+                'セグメント分割部分を削除
+                sp = hlsOpt.IndexOf("-segment_list_size ")
+                se = hlsOpt.IndexOf(" ", sp + "-segment_list_size ".Length)
+                If sp >= 0 And se > sp Then
+                    hlsOpt = hlsOpt.Substring(0, sp) & hlsOpt.Substring(se)
                 End If
             End If
-            'セグメント分割部分を削除
-            sp = hlsOpt.IndexOf("-segment_list_size ")
-            se = hlsOpt.IndexOf(" ", sp + "-segment_list_size ".Length)
-            If sp >= 0 And se > sp Then
-                hlsOpt = hlsOpt.Substring(0, sp) & hlsOpt.Substring(se)
-            End If
-        End If
 
-        'シーク秒数が指定されていれば「-ss 秒」を挿入
-        If VideoSeekSeconds > 0 Then
-            sp = hlsOpt.IndexOf("-i ")
-            hlsOpt = hlsOpt.Substring(0, sp) & "-ss " & VideoSeekSeconds & " " & hlsOpt.Substring(sp)
+            'シーク秒数が指定されていれば「-ss 秒」を挿入
+            If VideoSeekSeconds > 0 Then
+                sp = hlsOpt.IndexOf("-i ")
+                hlsOpt = hlsOpt.Substring(0, sp) & "-ss " & VideoSeekSeconds & " " & hlsOpt.Substring(sp)
+            End If
+        Else
+            log1write("【エラー】HlsOptが指定されていません")
         End If
 
         Return hlsOpt
@@ -1558,169 +1562,173 @@ Class WebRemocon
             hlsOpt = hlsOpt2
         End If
 
-        'NHK BS1、BSプレミアム対策
-        If hlsApp.IndexOf("ffmpeg") >= 0 Then
-            'まずこの放送がＮＨＫかどうか
-            Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
-            If isNHK = 1 Then
-                If NHK_dual_mono_mode_select = 1 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                    '主モノラル固定
-                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
-                ElseIf NHK_dual_mono_mode_select = 2 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                    '副モノラル固定
-                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
-                ElseIf NHK_dual_mono_mode_select = 9 Then
+        If hlsOpt.Length > 0 Then
+            'NHK BS1、BSプレミアム対策
+            If hlsApp.IndexOf("ffmpeg") >= 0 Then
+                'まずこの放送がＮＨＫかどうか
+                Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
+                If isNHK = 1 Then
+                    If NHK_dual_mono_mode_select = 1 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                        '主モノラル固定
+                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
+                    ElseIf NHK_dual_mono_mode_select = 2 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                        '副モノラル固定
+                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
+                    ElseIf NHK_dual_mono_mode_select = 9 Then
+                        If BS1_hlsApp.Length > 0 Then
+                            'hlsAppとhlsOptをVLCに置き換える
+                            Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode)
+                            If hlsOpt_temp.Length > 0 Then
+                                hlsOpt = hlsOpt_temp
+                                hlsApp = BS1_hlsApp
+                            End If
+                        Else
+                            NHK_dual_mono_mode_select = 0
+                            log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
+                        End If
+                    End If
+                Else
+                    'NHKではないがNHK_dual_mono_mode_select=11,12ならば-dual_mono_mode subを書き加える
+                    'CS等でのNHK再放送モノに有効　元からモノラルの端末ならこちらのほうがいいかも
+                    If NHK_dual_mono_mode_select = 11 Then
+                        '主モノラル固定
+                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
+                    ElseIf NHK_dual_mono_mode_select = 12 Then
+                        '副モノラル固定
+                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
+                    End If
+                End If
+            End If
+
+            'VLC http ストリーム用にhlsAppとhlsOptを入れ替える
+            If Stream_mode = 2 Or Stream_mode = 3 Then
+                'httpストリームアプリが指定されていれば
+                If HTTPSTREAM_App = 1 Then
+                    'vlc指定
                     If BS1_hlsApp.Length > 0 Then
-                        'hlsAppとhlsOptをVLCに置き換える
-                        Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode)
-                        If hlsOpt_temp.Length > 0 Then
-                            hlsOpt = hlsOpt_temp
+                        If hlsApp.IndexOf("ffmpeg") >= 0 Then
                             hlsApp = BS1_hlsApp
                         End If
                     Else
-                        NHK_dual_mono_mode_select = 0
-                        log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
+                        log1write("エラー：BS1_hlsAppが指定されていません")
+                        Exit Sub
+                    End If
+                ElseIf HTTPSTREAM_App = 2 Then
+                    'ffmpeg指定
+                    If hlsApp.IndexOf("vlc") >= 0 Then
+                        'vlcからffmpegへの変換は未対応
+                        log1write("VLCからffmpegへの変更は対応していません。VLCのまま続行します")
                     End If
                 End If
-            Else
-                'NHKではないがNHK_dual_mono_mode_select=11,12ならば-dual_mono_mode subを書き加える
-                'CS等でのNHK再放送モノに有効　元からモノラルの端末ならこちらのほうがいいかも
-                If NHK_dual_mono_mode_select = 11 Then
-                    '主モノラル固定
-                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
-                ElseIf NHK_dual_mono_mode_select = 12 Then
-                    '副モノラル固定
-                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
-                End If
-            End If
-        End If
 
-        'VLC http ストリーム用にhlsAppとhlsOptを入れ替える
-        If Stream_mode = 2 Or Stream_mode = 3 Then
-            'httpストリームアプリが指定されていれば
-            If HTTPSTREAM_App = 1 Then
-                'vlc指定
-                If BS1_hlsApp.Length > 0 Then
-                    If hlsApp.IndexOf("ffmpeg") >= 0 Then
-                        hlsApp = BS1_hlsApp
+                'hlsOptをHTTPストリーム用のものに入れ替える
+                If hlsApp.IndexOf("ffmpeg") >= 0 Then
+                    'hlsOptを置き換える
+                    hlsOpt = translate_hls2http(0, hlsOpt, resolution)
+
+                    'ファイル再生
+                    If filename.Length > 0 And Stream_mode = 3 Then
+                        'VLC httpストリームのとき
+                        hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds)
                     End If
-                Else
-                    log1write("エラー：BS1_hlsAppが指定されていません")
-                    Exit Sub
-                End If
-            ElseIf HTTPSTREAM_App = 2 Then
-                'ffmpeg指定
-                If hlsApp.IndexOf("vlc") >= 0 Then
-                    'vlcからffmpegへの変換は未対応
-                    log1write("VLCからffmpegへの変更は対応していません。VLCのまま続行します")
-                End If
-            End If
-
-            'hlsOptをHTTPストリーム用のものに入れ替える
-            If hlsApp.IndexOf("ffmpeg") >= 0 Then
-                'hlsOptを置き換える
-                hlsOpt = translate_hls2http(0, hlsOpt, resolution)
-
-                'ファイル再生
-                If filename.Length > 0 And Stream_mode = 3 Then
-                    'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds)
-                End If
-            ElseIf hlsApp.IndexOf("vlc") >= 0 Then
-                'hlsOptを置き換える
-                hlsOpt = translate_hls2http(1, hlsOpt, resolution)
-                'パスワードが設定されている場合
-                'サーバー　Option := Format('%s --sout-http-user=%s --sout-http-pwd=%s', [Option, Username, Password]);
-                'クライアント　Option := Format('http://%s:%s@%s --extraintf="rc" --rc-quiet --rc-host=127.0.0.1:%d', [Username, Password, Copy(AURL, 8, Length(AURL)-7), VLCPort]);
-                If Me._id.Length > 0 And Me._pass.Length > 0 Then
-                    Dim s1 As Integer = hlsOpt.IndexOf(" --")
-                    If s1 > 0 Then
-                        hlsOpt = hlsOpt.Substring(0, s1) & " --sout-http-user=" & Me._id & " --sout-http-pwd=" & Me._pass & " " & hlsOpt.Substring(s1)
-                    End If
-                End If
-                'ファイル再生
-                If filename.Length > 0 And Stream_mode = 3 Then
-                    'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_vlc(hlsOpt, filename)
-                End If
-            End If
-        ElseIf Stream_mode = 0 Or Stream_mode = 1 Then
-            'ファイル再生か？
-            If filename.Length > 0 Then
-                Stream_mode = 1
-                'hlsオプションを書き換える
-                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                    'ffmpegのとき
-                    If ffmpeg_file_option IsNot Nothing Then
-                        'HLS_option_ffmpeg_file.txtでオプションが指定されていれば
-                        'resolution=空白、640x380等
-                        If resolution.Length = 0 Then
-                            'フォーム上のhlsoptから解像度を取得
-                            resolution = instr_pickup_para(hlsOpt, " -s ", " ", 0)
-                            log1write("フォーム上のHLSオプションから解像度を取得しました。resolution=" & resolution)
+                ElseIf hlsApp.IndexOf("vlc") >= 0 Then
+                    'hlsOptを置き換える
+                    hlsOpt = translate_hls2http(1, hlsOpt, resolution)
+                    'パスワードが設定されている場合
+                    'サーバー　Option := Format('%s --sout-http-user=%s --sout-http-pwd=%s', [Option, Username, Password]);
+                    'クライアント　Option := Format('http://%s:%s@%s --extraintf="rc" --rc-quiet --rc-host=127.0.0.1:%d', [Username, Password, Copy(AURL, 8, Length(AURL)-7), VLCPort]);
+                    If Me._id.Length > 0 And Me._pass.Length > 0 Then
+                        Dim s1 As Integer = hlsOpt.IndexOf(" --")
+                        If s1 > 0 Then
+                            hlsOpt = hlsOpt.Substring(0, s1) & " --sout-http-user=" & Me._id & " --sout-http-pwd=" & Me._pass & " " & hlsOpt.Substring(s1)
                         End If
-                        If resolution.Length > 0 Then
-                            Dim chk As Integer = 0
-                            For i = 0 To ffmpeg_file_option.Length - 1
-                                If ffmpeg_file_option(i).resolution = resolution Then
-                                    'hlsOpt入れ替え
-                                    hlsOpt = ffmpeg_file_option(i).opt
-                                    '%VIDEOFILE%変換
-                                    'hlsOpt = hlsOpt.Replace("%VIDEOFILE%", "DUMMYFILE")
-                                    chk = 1
-                                    log1write("HLS_option_ffmpeg_file.txtに記述されているHLSオプションを使用します")
-                                    Exit For
+                    End If
+                    'ファイル再生
+                    If filename.Length > 0 And Stream_mode = 3 Then
+                        'VLC httpストリームのとき
+                        hlsOpt = hlsopt_udp2file_vlc(hlsOpt, filename)
+                    End If
+                End If
+            ElseIf Stream_mode = 0 Or Stream_mode = 1 Then
+                'ファイル再生か？
+                If filename.Length > 0 Then
+                    Stream_mode = 1
+                    'hlsオプションを書き換える
+                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                        'ffmpegのとき
+                        If ffmpeg_file_option IsNot Nothing Then
+                            'HLS_option_ffmpeg_file.txtでオプションが指定されていれば
+                            'resolution=空白、640x380等
+                            If resolution.Length = 0 Then
+                                'フォーム上のhlsoptから解像度を取得
+                                resolution = instr_pickup_para(hlsOpt, " -s ", " ", 0)
+                                log1write("フォーム上のHLSオプションから解像度を取得しました。resolution=" & resolution)
+                            End If
+                            If resolution.Length > 0 Then
+                                Dim chk As Integer = 0
+                                For i = 0 To ffmpeg_file_option.Length - 1
+                                    If ffmpeg_file_option(i).resolution = resolution Then
+                                        'hlsOpt入れ替え
+                                        hlsOpt = ffmpeg_file_option(i).opt
+                                        '%VIDEOFILE%変換
+                                        'hlsOpt = hlsOpt.Replace("%VIDEOFILE%", "DUMMYFILE")
+                                        chk = 1
+                                        log1write("HLS_option_ffmpeg_file.txtに記述されているHLSオプションを使用します")
+                                        Exit For
+                                    End If
+                                Next
+                                If chk = 0 Then
+                                    log1write("HLS_option_ffmpeg_file.txtに該当する解像度のオプションがありませんでした。resolution=" & resolution)
                                 End If
-                            Next
-                            If chk = 0 Then
-                                log1write("HLS_option_ffmpeg_file.txtに該当する解像度のオプションがありませんでした。resolution=" & resolution)
                             End If
                         End If
+                        hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds)
+                    Else
+                        'その他vlc
+                        '今のところ未対応
+                        Exit Sub
                     End If
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds)
+                End If
+            End If
+
+            '"%HLSROOT/../%"用
+            Dim hlsroot2 As String = hlsroot
+            Dim sp As Integer = hlsroot2.LastIndexOf("\")
+            If sp > 0 Then
+                hlsroot2 = hlsroot2.Substring(0, sp)
+            End If
+            '文字列内変数を実際の値に変換
+            hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPortNumber.ToString)
+            hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".") 'ffmpeg,m3u8 無くしたいが互換性のため
+            hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-") 'vlc 無くしたいが互換性のため
+            hlsOpt = hlsOpt.Replace("%NUM%", num.ToString)
+            hlsOpt = hlsOpt.Replace("%WWWROOT%", wwwroot)
+            hlsOpt = hlsOpt.Replace("%FILEROOT%", fileroot)
+            hlsOpt = hlsOpt.Replace("%HLSROOT%", hlsroot)
+            hlsOpt = hlsOpt.Replace("%HLSROOT/../%", hlsroot2)
+            hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPortNumber.ToString)
+            'VLC HTTPストリーム用　UDPポート
+            If HTTPSTREAM_VLC_port > 0 Then
+                '指定があれば
+                hlsOpt = hlsOpt.Replace("%VLCPORT%", (HTTPSTREAM_VLC_port + num - 1).ToString) '-1
             Else
-                'その他vlc
-                '今のところ未対応
+                'VLC port udpPortに定数を足して作成することにした
+                hlsOpt = hlsOpt.Replace("%VLCPORT%", (udpPortNumber + HTTPSTREAM_VLC_port_plus).ToString)
+            End If
+
+            'log1write("HLS option=" & hlsOpt)
+
+            Try
+                Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
+            Catch ex As Exception
+                '設定しないうちにスタートしようとすると例外が起こる
                 Exit Sub
-            End If
-            End If
-        End If
-
-        '"%HLSROOT/../%"用
-        Dim hlsroot2 As String = hlsroot
-        Dim sp As Integer = hlsroot2.LastIndexOf("\")
-        If sp > 0 Then
-            hlsroot2 = hlsroot2.Substring(0, sp)
-        End If
-        '文字列内変数を実際の値に変換
-        hlsOpt = hlsOpt.Replace("%UDPPORT%", udpPortNumber.ToString)
-        hlsOpt = hlsOpt.Replace("mystream.", "mystream" & num.ToString & ".") 'ffmpeg,m3u8 無くしたいが互換性のため
-        hlsOpt = hlsOpt.Replace("mystream-", "mystream" & num.ToString & "-") 'vlc 無くしたいが互換性のため
-        hlsOpt = hlsOpt.Replace("%NUM%", num.ToString)
-        hlsOpt = hlsOpt.Replace("%WWWROOT%", wwwroot)
-        hlsOpt = hlsOpt.Replace("%FILEROOT%", fileroot)
-        hlsOpt = hlsOpt.Replace("%HLSROOT%", hlsroot)
-        hlsOpt = hlsOpt.Replace("%HLSROOT/../%", hlsroot2)
-        hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPortNumber.ToString)
-        'VLC HTTPストリーム用　UDPポート
-        If HTTPSTREAM_VLC_port > 0 Then
-            '指定があれば
-            hlsOpt = hlsOpt.Replace("%VLCPORT%", (HTTPSTREAM_VLC_port + num - 1).ToString) '-1
+            End Try
+            '★プロセスを起動
+            Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, Stream_mode, NHK_dual_mono_mode_select, resolution, VideoSeekSeconds)
         Else
-            'VLC port udpPortに定数を足して作成することにした
-            hlsOpt = hlsOpt.Replace("%VLCPORT%", (udpPortNumber + HTTPSTREAM_VLC_port_plus).ToString)
+            log1write("【エラー】HLSオプションが指定されていません。解像度を指定するかフォーム上のHLSオプションを記入してください")
         End If
-
-        'log1write("HLS option=" & hlsOpt)
-
-        Try
-            Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
-        Catch ex As Exception
-            '設定しないうちにスタートしようとすると例外が起こる
-            Exit Sub
-        End Try
-        '★プロセスを起動
-        Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, Stream_mode, NHK_dual_mono_mode_select, resolution, VideoSeekSeconds)
     End Sub
 
     'hlsオプションをhttpストリームオプションに変換
