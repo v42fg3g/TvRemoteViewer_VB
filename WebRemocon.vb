@@ -2227,8 +2227,8 @@ Class WebRemocon
                                     Case "WI_GET_LIVE_STREAM"
                                         '現在配信中のストリーム
                                         '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
-                                        'stopping, チャンネル名, hlsApp
-                                        WI_cmd_reply = Me._procMan.WI_GET_LIVE_STREAM()
+                                        'stopping, チャンネル名, hlsApp, シーク秒, URL
+                                        WI_cmd_reply = Me.WI_GET_LIVE_STREAM()
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_TVRV_STATUS"
                                         'サーバー設定
@@ -3120,8 +3120,79 @@ Class WebRemocon
     End Function
 
     '　本体はProcessManager.vbに
+    'Public Function WI_GET_LIVE_STREAM() As String
+    'Return Me._procMan.WI_GET_LIVE_STREAM()
+    'End Function
+
+    'WI_GET_LIVE_STREAMの末尾にURLを追加
     Public Function WI_GET_LIVE_STREAM() As String
-        Return Me._procMan.WI_GET_LIVE_STREAM()
+        'WI_GET_LIVE_STREAM()で配信されているストリームを取得
+        '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
+        'stopping, チャンネル名, hlsApp, シーク秒
+        Dim r As String = Me._procMan.WI_GET_LIVE_STREAM()
+        'これにURLを付加することにする
+        '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
+        'stopping, チャンネル名, hlsApp, シーク秒,URL
+        If r.Length > 0 Then
+            Dim list() As String = Split(r, vbCrLf)
+            Dim i As Integer
+            For i = 0 To list.Length - 1
+                Dim url As String = "http://127.0.0.1"
+                Dim port As Integer = Me._wwwport
+                Dim path1 As String = "/"
+                Dim fname As String = ""
+
+                Dim d() As String = list(i).Split(",")
+                If d.Length >= 12 Then
+                    Dim smode As Integer = Val(d(6)) 'stream_mode
+                    Dim HApp As String = d(10) 'HLS exe
+                    Dim n As String = Val(Trim(d(1))) '配信ナンバー
+                    If smode <= 1 Then
+                        'HLS配信
+                        'パスを求める
+                        If Me._fileroot.IndexOf(Me._wwwroot) = 0 Then
+                            '相対パス
+                            path1 = Me._fileroot.Replace(Me._wwwroot, "").Replace("\", "/") '/stream
+                        Else
+                            '別フォルダ
+                            Dim sp As Integer = Me._fileroot.LastIndexOf("\")
+                            If sp > 0 Then
+                                Try
+                                    path1 = "/" & Me._fileroot.Substring(sp + 1)
+                                Catch ex As Exception
+                                End Try
+                            End If
+                        End If
+                        'ファイル名
+                        fname = "/" & "mystream" & n & ".m3u8"
+                    Else
+                        'HTTP配信
+                        If HApp.ToLower.IndexOf("vlc") >= 0 Then
+                            'VLC配信
+                            fname = "mystream" & n & ".ts"
+                            port = HTTPSTREAM_VLC_port + n - 1
+                        ElseIf HApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                            'ffmpeg配信
+                            fname = "WatchTV" & n & ".ts"
+                        Else
+                            'その他　いまのところありえない　とりあえずffmpegと同じにしておくか
+                            fname = "WatchTV" & n & ".ts"
+                        End If
+                    End If
+
+                    list(i) &= ", " & url & ":" & port.ToString & path1 & fname
+                End If
+            Next
+            '最後にひとつの文字列にする
+            r = ""
+            For i = 0 To list.Length - 1
+                If list(i).Length > 10 Then
+                    r &= list(i) & vbCrLf
+                End If
+            Next
+        End If
+
+        Return r
     End Function
 
     '　本体はProcessManager.vbに

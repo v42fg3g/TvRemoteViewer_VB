@@ -1570,7 +1570,7 @@ Public Class ProcessManager
     '現在配信中のストリーム
     Public Function WI_GET_LIVE_STREAM() As String
         '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
-        'stopping, チャンネル名, hlsApp
+        'stopping, チャンネル名, hlsApp, シーク秒
         Dim r As String = ""
 
         Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
