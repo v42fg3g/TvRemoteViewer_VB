@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v0.96
+TvRemoteViewer_VB v1.01
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -456,6 +456,11 @@ TvRemoteViewer_VB v0.96
 		SelectVideo.htmlにおいてキーワード抽出ができなくなっていた不具合を解消
 		SelectVideo.htmlのキーワード抽出でフォルダ名も検索に含めるようにした
 	0.96	WEBインターフェース（WI_FILE_OPE）を追加
+	0.97	配信中に古い断片ファイルtsを削除しないようにするオプション(OLDTS_NODELETE)をiniに追加
+	0.98	0.93でのパイプチャンネル切替えのバグを修正
+	0.99	SelectVideoページの解像度セレクトをHLS_option_ffmpeg_file.txt内のものにするようにした(存在すれば)
+	1.00	WI_GET_LIVE_STREAMの末尾に配信ファイルURLを追加
+	1.01	ffmpegのHTTP配信においてffmpeg起動に時間がかかった場合を考慮し自動切断に余裕を持たせるようにした
 
 
 

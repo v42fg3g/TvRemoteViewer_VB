@@ -68,6 +68,9 @@ Class ProcessBean
         Dim ffmpegApp As String = Me._hlsApp
         Dim ffmpegOpt As String = Me._hlsOpt
 
+        'ffmpegプロセス開始に時間がかかる可能性があるので自動切断まで余裕を持たせるようにした
+        Me._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'タイマーにより1秒毎に-1され100になったときに配信は停止される
+
         Try
             If Me._IsStart Then
                 log1write("すでに配信中です")
@@ -87,10 +90,13 @@ Class ProcessBean
             'Dim ffmpeg As System.Diagnostics.Process = System.Diagnostics.Process.Start(ffmpegStart)
             Me._hlsProc = System.Diagnostics.Process.Start(ffmpegStart)
 
+            'ffmpeg HTTP配信開始に時間がかかる可能性があるので自動切断まで余裕を持たせるようにした
+            Me._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'タイマーにより1秒毎に-1され100になったときに配信は停止される
+
             Thread.Sleep(100) '900
             Me._hlsProc.StandardOutput.BaseStream.BeginRead(Me._ffmpegBuf, 0, Me._ffmpegBuf.Length, AddressOf StreamReceive, output)
             r = 1 '成功
-            Me._stopping = 0 '3に設定したあったものを0に戻す
+            Me._stopping = 0 '100以上に設定したあったものを0に戻す
             'ログ表示
             log1write("No.=" & Me._num & "HLS アプリ=" & ffmpegApp)
             log1write("No.=" & Me._num & "HLS option=" & ffmpegOpt)
