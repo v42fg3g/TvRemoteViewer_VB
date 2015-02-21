@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.01
+TvRemoteViewer_VB v1.02
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -461,6 +461,8 @@ TvRemoteViewer_VB v1.01
 	0.99	SelectVideoページの解像度セレクトをHLS_option_ffmpeg_file.txt内のものにするようにした(存在すれば)
 	1.00	WI_GET_LIVE_STREAMの末尾に配信ファイルURLを追加
 	1.01	ffmpegのHTTP配信においてffmpeg起動に時間がかかった場合を考慮し自動切断に余裕を持たせるようにした
+	1.02	HTTP配信時にNHKモード選択が機能していなかったバグを修正
+		HTTP配信時、HLS_option_[HLSアプリ]_http.txt内の独自解像度選択に対応
 
 
 
