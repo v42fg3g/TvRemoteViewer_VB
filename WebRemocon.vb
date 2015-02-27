@@ -1612,6 +1612,11 @@ Class WebRemocon
                 End If
             End If
         ElseIf Stream_mode = 0 Or Stream_mode = 1 Then
+            If resolution.Length = 0 And hlsApp.IndexOf("ffmpeg") >= 0 And hlsOpt2.Length > 0 And filename.Length > 0 And ffmpeg_file_option IsNot Nothing And (Stream_mode = 0 Or Stream_mode = 1) Then
+                '解像度が無指定でHLS配信でHLS_option_ffmpeg_file.txt指定のファイル再生ならば
+                'フォーム上のオプションから解像度を算出して解像度をセット
+                resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
+            End If
             If resolution.Length > 0 Then
                 '解像度指定があれば
                 Dim chk As Integer = 0
