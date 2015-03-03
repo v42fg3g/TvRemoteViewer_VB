@@ -1707,6 +1707,12 @@ Class WebRemocon
                     ElseIf NHK_dual_mono_mode_select = 2 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
                         '副モノラル固定
                         hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
+                    ElseIf NHK_dual_mono_mode_select = 11 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                        '主モノラル固定
+                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
+                    ElseIf NHK_dual_mono_mode_select = 12 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                        '副モノラル固定
+                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
                     ElseIf NHK_dual_mono_mode_select = 9 Then
                         If BS1_hlsApp.Length > 0 Then
                             'hlsAppとhlsOptをVLCに置き換える
