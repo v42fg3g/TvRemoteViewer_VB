@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.04
+TvRemoteViewer_VB v1.05
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -467,6 +467,7 @@ TvRemoteViewer_VB v1.04
 		HLS_option_ffmpeg_file.txtを追加
 		HLS_option_ffmpeg_file.txtを使用時、解像度が未指定の場合はフォーム上のオプション内解像度を使用するようにした
 	1.04	NHK配信時にNHKモード11&12が機能していなかったバグを修正
+	1.05	HTTP配信時、UDPアプリが配信準備状態になっていないときに配信要求があった場合は中断するようにした
 
 
 

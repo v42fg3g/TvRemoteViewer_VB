@@ -84,6 +84,7 @@ Partial Class Form1
         Me.Label14 = New System.Windows.Forms.Label()
         Me.Label15 = New System.Windows.Forms.Label()
         Me.ComboBoxHLSorHTTP = New System.Windows.Forms.ComboBox()
+        Me.ButtonCopy2Clipboard = New System.Windows.Forms.Button()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -620,11 +621,22 @@ Partial Class Form1
         Me.ComboBoxHLSorHTTP.TabStop = False
         Me.ComboBoxHLSorHTTP.Text = "HLS"
         '
+        'ButtonCopy2Clipboard
+        '
+        Me.ButtonCopy2Clipboard.Font = New System.Drawing.Font("MS UI Gothic", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(128, Byte))
+        Me.ButtonCopy2Clipboard.Location = New System.Drawing.Point(407, 668)
+        Me.ButtonCopy2Clipboard.Name = "ButtonCopy2Clipboard"
+        Me.ButtonCopy2Clipboard.Size = New System.Drawing.Size(104, 17)
+        Me.ButtonCopy2Clipboard.TabIndex = 99
+        Me.ButtonCopy2Clipboard.Text = "クリップボードにコピー"
+        Me.ButtonCopy2Clipboard.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(530, 685)
+        Me.Controls.Add(Me.ButtonCopy2Clipboard)
         Me.Controls.Add(Me.Label15)
         Me.Controls.Add(Me.ComboBoxHLSorHTTP)
         Me.Controls.Add(Me.Label14)
@@ -750,5 +762,6 @@ Partial Class Form1
     Private WithEvents Label14 As System.Windows.Forms.Label
     Private WithEvents Label15 As System.Windows.Forms.Label
     Friend WithEvents ComboBoxHLSorHTTP As System.Windows.Forms.ComboBox
+    Friend WithEvents ButtonCopy2Clipboard As System.Windows.Forms.Button
 
 End Class

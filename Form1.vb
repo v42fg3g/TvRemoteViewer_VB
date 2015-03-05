@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.04"
+    Private version As String = "TvRemoteViewer_VB version 1.05"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -1067,4 +1067,12 @@ Public Class Form1
         End If
     End Sub
 
+    Private Sub ButtonCopy2Clipboard_Click(sender As System.Object, e As System.EventArgs) Handles ButtonCopy2Clipboard.Click
+        Try
+            'クリップボードに文字列をコピーする
+            Clipboard.SetText(TextBoxLog.Text.ToString)
+        Catch ex As Exception
+            log1write("ログのクリップボードへのコピーに失敗しました。" & ex.Message)
+        End Try
+    End Sub
 End Class

@@ -1966,25 +1966,46 @@ Class WebRemocon
                     '★ffmpeg HTTPストリームモード
                     'numが<form>から渡されていなければURLから取得するwatch2.tsなら2
                     Dim ffmpeg_num As Integer = Val(context.Request.RawUrl.Substring(context.Request.RawUrl.IndexOf("WatchTV") + "WatchTV".Length))
-                    If ffmpeg_num > 0 Then
-                        'ffmpeg HTTP ストリーム配信開始
-                        log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
-                        'context.Response.Headers("Content-Type") = "video/mpeg"
-                        context.Response.Headers("Content-Type") = "video/MP2T"
-                        Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
+                    'Me._list(ffmpeg_num)._stoppingが100より大きければ接続待機中なので配信スタート
+                    Dim ffmpeg_num_stopping As Integer = Me._procMan.get_stopping_status(ffmpeg_num)
+                    If ffmpeg_num_stopping > 100 Then
+                        '配信準備中
+                        If ffmpeg_num > 0 Then
+                            'ffmpeg HTTP ストリーム配信開始
+                            log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
+                            'context.Response.Headers("Content-Type") = "video/mpeg"
+                            context.Response.Headers("Content-Type") = "video/MP2T"
+                            Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
 
-                        '現在稼働中のlist(i)._numをログに表示
-                        Dim js As String = get_live_numbers()
-                        log1write("現在稼働中のNumber：" & js)
-                    Else
-                        '不正なURL
+                            '現在稼働中のlist(i)._numをログに表示
+                            Dim js As String = get_live_numbers()
+                            log1write("現在稼働中のNumber：" & js)
+                        Else
+                            '不正なURL
+                            context.Response.Headers("Content-Type") = "text/plain"
+                            Dim sw = New StreamWriter(context.Response.OutputStream)
+                            sw.Write("Bad Request")
+                            'Test String
+                            sw.Close()
+                            context.Response.Close()
+                            log1write(context.Request.RawUrl & "は不正なリクエストです")
+                        End If
+                    ElseIf ffmpeg_num_stopping > 0 Then
+                        '終了処理中
                         context.Response.Headers("Content-Type") = "text/plain"
                         Dim sw = New StreamWriter(context.Response.OutputStream)
-                        sw.Write("Bad Request")
-                        'Test String
+                        sw.Write("Stream" & ffmpeg_num & " is stopping.")
                         sw.Close()
                         context.Response.Close()
-                        log1write(context.Request.RawUrl & "は不正なリクエストです")
+                        log1write("ストリーム" & ffmpeg_num & "は終了処理中です。配信は中止されました")
+                    Else
+                        '配信準備がなされていない
+                        context.Response.Headers("Content-Type") = "text/plain"
+                        Dim sw = New StreamWriter(context.Response.OutputStream)
+                        sw.Write("Stream" & ffmpeg_num & " is not ready.")
+                        sw.Close()
+                        context.Response.Close()
+                        log1write("ストリーム" & ffmpeg_num & "は配信準備されていません。配信は中止されました")
                     End If
                 Else
                     '認証エラー
@@ -2765,6 +2786,8 @@ Class WebRemocon
                             End If
 
                             sw.Flush()
+
+                            sw.Close()
                         Else
                             'HTML以外なら
                             If File.Exists(path) Then
