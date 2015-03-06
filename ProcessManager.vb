@@ -1155,8 +1155,10 @@ Public Class ProcessManager
             objStm = objSck.GetStream()
 
             ' TCP/IP接続待ち
-            Do While objSck.Connected = False
-                System.Threading.Thread.Sleep(500)
+            Dim j As Integer = 300
+            Do While objSck.Connected = False And j > 0
+                System.Threading.Thread.Sleep(100)
+                j -= 1
             Loop
 
             ' データ送信(文字列をByte配列に変換して送信)

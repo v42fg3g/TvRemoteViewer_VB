@@ -158,8 +158,16 @@ Class ProcessBean
             Try
                 If Me._hlsProc IsNot Nothing And Me._hlsProc.HasExited = False Then
                     log1write("HLSアプリのプロセスが残っているので終了を試みます")
-                    'ffmpeg終了指令
-                    Me._hlsProc.Kill()
+                    'HLS終了指令
+                    If Me._hlsApp.IndexOf("vlc") >= 0 Then
+                        'VLC
+                        If Me.vlc_quit_VLC() = 0 Then
+                            Me._hlsProc.Kill()
+                        End If
+                    Else
+                        'ffmpeg等
+                        Me._hlsProc.Kill()
+                    End If
                     Dim i As Integer = (FFMPEG_HTTP_CUT_SECONDS - 1) * 20
                     Try
                         While Me._hlsProc IsNot Nothing And Me._hlsProc.HasExited = False And i > 0
@@ -181,6 +189,43 @@ Class ProcessBean
             End Try
         End Try
     End Sub
+
+    'TCPコマンドを送ってVLCを終了する
+    Private Function vlc_quit_VLC() As Integer
+        Dim r As Integer = 0
+        Try
+            Dim tcpPort As Integer = Me._udpPort
+
+            ' ソケット生成
+            Dim objSck As New System.Net.Sockets.TcpClient
+            Dim objStm As System.Net.Sockets.NetworkStream
+
+            ' TCP/IP接続
+            objSck.Connect("127.0.0.1", tcpPort)
+            objStm = objSck.GetStream()
+
+            ' TCP/IP接続待ち
+            Dim j As Integer = 300
+            Do While objSck.Connected = False And j > 0
+                System.Threading.Thread.Sleep(100)
+                j -= 1
+            Loop
+
+            ' データ送信(文字列をByte配列に変換して送信)
+            Dim sdat As Byte() = System.Text.Encoding.GetEncoding("SHIFT-JIS").GetBytes("quit")
+            objStm.Write(sdat, 0, sdat.GetLength(0))
+
+            ' TCP/IP切断
+            objStm.Close()
+            objSck.Close()
+
+            r = 1 '成功
+        Catch ex As Exception
+            r = 0
+        End Try
+
+        Return r
+    End Function
 
     '========================================================================
 
