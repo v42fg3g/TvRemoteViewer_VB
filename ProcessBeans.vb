@@ -153,6 +153,32 @@ Class ProcessBean
             log1write("チャンネル変更が行われない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")
             Me._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
             Me._http_udp_changing = 1 '切断はチャンネル切り替え中かもしれない
+
+            '普通はffmpegプロセスは残っていないはずだが残っている場合は無くなるまで待機
+            Try
+                If Me._hlsProc IsNot Nothing And Me._hlsProc.HasExited = False Then
+                    log1write("HLSアプリのプロセスが残っているので終了を試みます")
+                    'ffmpeg終了指令
+                    Me._hlsProc.Kill()
+                    Dim i As Integer = (FFMPEG_HTTP_CUT_SECONDS - 1) * 20
+                    Try
+                        While Me._hlsProc IsNot Nothing And Me._hlsProc.HasExited = False And i > 0
+                            'ffmpegが終了されるまで待つ
+                            Thread.Sleep(50)
+                            i -= 1
+                        End While
+                    Catch ex3 As Exception
+                    End Try
+                    If i > 0 Then
+                        log1write("HLSアプリを終了させました")
+                    Else
+                        log1write("HLSアプリの終了に失敗しました")
+                    End If
+                    'もう一回切断タイマーをリセット
+                    Me._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
+                End If
+            Catch ex2 As Exception
+            End Try
         End Try
     End Sub
 

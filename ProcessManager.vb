@@ -91,7 +91,7 @@ Public Class ProcessManager
         If stopping <= 0 Or http_udp_changing = 1 Then
             '配信されていない-1又は正常配信中0
             'numが放映中でかつBonDriverが同一ならばパイプを使用してチャンネル変更だけを行う
-            'ffmpegだけを停止しチャンネル変更が完了するまで.stopping=2にして完了したら.stopping=0にする
+            'ffmpegだけを停止しチャンネル変更が完了するまで.stopping>=100にして完了したら.stopping=0にする
             Dim hls_only As Integer = 0
             Dim hls_only_sid As Integer = 0
             Dim hls_only_chspace As Integer = 0

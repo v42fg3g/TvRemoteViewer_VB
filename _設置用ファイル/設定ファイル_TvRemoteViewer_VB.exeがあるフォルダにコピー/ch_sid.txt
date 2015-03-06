@@ -254,36 +254,36 @@
 6	15	0xF810	‰«“ê	‚q‚a‚bƒeƒŒƒr
 5	15	0xF820	‰«“ê	‚p‚`‚a—®‹…’©“ú•ú‘—
 8	15	0xF838	‰«“ê	‰«“êƒeƒŒƒri‚n‚s‚uj
-101	4	101	*	‚m‚g‚j‚a‚r‚P	1920
-101	4	102	*	‚m‚g‚j‚a‚r‚P	1920
-103	4	103	*	‚m‚g‚j‚a‚rƒvƒŒƒ~ƒAƒ€	1920
-103	4	104	*	‚m‚g‚j‚a‚rƒvƒŒƒ~ƒAƒ€	1920
-141	4	141	*	‚a‚r“úƒeƒŒ	1920
-141	4	142	*	‚a‚r“úƒeƒŒ	1920
-141	4	143	*	‚a‚r“úƒeƒŒ	1920
-151	4	151	*	‚a‚r’©“ú‚P	1920
-151	4	152	*	‚a‚r’©“ú‚Q	1920
-151	4	153	*	‚a‚r’©“ú‚R	1920
-161	4	161	*	‚a‚r|‚s‚a‚r	1920
-161	4	162	*	‚a‚r|‚s‚a‚r	1920
-161	4	163	*	‚a‚r|‚s‚a‚r	1920
-171	4	171	*	‚a‚rƒWƒƒƒpƒ“	1920
-171	4	172	*	‚a‚rƒWƒƒƒpƒ“‚Q	1920
-171	4	173	*	‚a‚rƒWƒƒƒpƒ“‚R	1920
-181	4	181	*	‚a‚rƒtƒWE‚P‚W‚P	1920
-181	4	182	*	‚a‚rƒtƒWE‚P‚W‚Q	1920
-181	4	183	*	‚a‚rƒtƒWE‚P‚W‚R	1920
-191	4	191	*	‚v‚n‚v‚n‚vƒvƒ‰ƒCƒ€	1920
-192	4	192	*	‚v‚n‚v‚n‚vƒ‰ƒCƒu	1920
-193	4	193	*	‚v‚n‚v‚n‚vƒVƒlƒ}	1920
+101	4	101	*	‚m‚g‚j‚a‚r‚P
+101	4	102	*	‚m‚g‚j‚a‚r‚P
+103	4	103	*	‚m‚g‚j‚a‚rƒvƒŒƒ~ƒAƒ€
+103	4	104	*	‚m‚g‚j‚a‚rƒvƒŒƒ~ƒAƒ€
+141	4	141	*	‚a‚r“úƒeƒŒ
+141	4	142	*	‚a‚r“úƒeƒŒ
+141	4	143	*	‚a‚r“úƒeƒŒ
+151	4	151	*	‚a‚r’©“ú‚P
+151	4	152	*	‚a‚r’©“ú‚Q
+151	4	153	*	‚a‚r’©“ú‚R
+161	4	161	*	‚a‚r|‚s‚a‚r
+161	4	162	*	‚a‚r|‚s‚a‚r
+161	4	163	*	‚a‚r|‚s‚a‚r
+171	4	171	*	‚a‚rƒWƒƒƒpƒ“
+171	4	172	*	‚a‚rƒWƒƒƒpƒ“‚Q
+171	4	173	*	‚a‚rƒWƒƒƒpƒ“‚R
+181	4	181	*	‚a‚rƒtƒWE‚P‚W‚P
+181	4	182	*	‚a‚rƒtƒWE‚P‚W‚Q
+181	4	183	*	‚a‚rƒtƒWE‚P‚W‚R
+191	4	191	*	‚v‚n‚v‚n‚vƒvƒ‰ƒCƒ€
+192	4	192	*	‚v‚n‚v‚n‚vƒ‰ƒCƒu
+193	4	193	*	‚v‚n‚v‚n‚vƒVƒlƒ}
 200	4	200	*	ƒXƒ^[Eƒ`ƒƒƒ“ƒlƒ‹‚P
 201	4	201	*	ƒXƒ^[Eƒ`ƒƒƒ“ƒlƒ‹‚Q
 202	4	202	*	ƒXƒ^[Eƒ`ƒƒƒ“ƒlƒ‹‚R
-211	4	211	*	‚a‚r‚P‚P	1920
-222	4	222	*	‚s‚—‚…‚Œ‚Œ‚u	1920
-231	4	231	*	•ú‘—‘åŠw‚a‚r‚P	720
-231	4	232	*	•ú‘—‘åŠw‚a‚r‚Q	720
-231	4	233	*	•ú‘—‘åŠw‚a‚r‚R	720
+211	4	211	*	‚a‚r‚P‚P
+222	4	222	*	‚s‚—‚…‚Œ‚Œ‚u
+231	4	231	*	•ú‘—‘åŠw‚a‚r‚P
+231	4	232	*	•ú‘—‘åŠw‚a‚r‚Q
+231	4	233	*	•ú‘—‘åŠw‚a‚r‚R
 234	4	234	*	ƒOƒŠ[ƒ“ƒ`ƒƒƒ“ƒlƒ‹
 236	4	236	*	‚a‚rƒAƒjƒ}ƒbƒNƒX
 238	4	238	*	‚e‚n‚w‚‚‚“‚Q‚R‚W
@@ -295,7 +295,7 @@
 251	4	251	*	‚a‚r’Þ‚èƒrƒWƒ‡ƒ“
 252	4	252	*	ƒCƒ}ƒWƒJ‚a‚r
 255	4	255	*	‚a‚r“ú–{‰f‰æê–å‚ƒ‚ˆ
-256	4	256	*	ƒfƒBƒYƒj[ƒ`ƒƒƒ“ƒlƒ‹	720
+256	4	256	*	ƒfƒBƒYƒj[ƒ`ƒƒƒ“ƒlƒ‹
 258	4	258	*	‚c‚Œ‚‰‚†‚…
 1	4	291	*	‚m‚g‚j‘‡‚PE“Œ‹ž
 2	4	292	*	‚m‚g‚j‚dƒeƒŒ“Œ‹ž
