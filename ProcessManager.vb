@@ -1141,40 +1141,7 @@ Public Class ProcessManager
 
     'TCPコマンドを送ってVLCを終了する
     Public Function quit_VLC(ByVal i As Integer) As Integer
-        Dim r As Integer = 0
-        Try
-
-            Dim tcpPort As Integer = Me._list(i)._udpPort
-
-            ' ソケット生成
-            Dim objSck As New System.Net.Sockets.TcpClient
-            Dim objStm As System.Net.Sockets.NetworkStream
-
-            ' TCP/IP接続
-            objSck.Connect("127.0.0.1", tcpPort)
-            objStm = objSck.GetStream()
-
-            ' TCP/IP接続待ち
-            Dim j As Integer = 300
-            Do While objSck.Connected = False And j > 0
-                System.Threading.Thread.Sleep(100)
-                j -= 1
-            Loop
-
-            ' データ送信(文字列をByte配列に変換して送信)
-            Dim sdat As Byte() = System.Text.Encoding.GetEncoding("SHIFT-JIS").GetBytes("quit")
-            objStm.Write(sdat, 0, sdat.GetLength(0))
-
-            ' TCP/IP切断
-            objStm.Close()
-            objSck.Close()
-
-            r = 1 '成功
-        Catch ex As Exception
-            r = 0
-        End Try
-
-        Return r
+        Return Me._list(i).vlc_quit_VLC()
     End Function
 
     'wwwrootにあるmystream[num]～というファイルを削除する

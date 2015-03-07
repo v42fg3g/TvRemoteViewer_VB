@@ -191,7 +191,7 @@ Class ProcessBean
     End Sub
 
     'TCPコマンドを送ってVLCを終了する
-    Private Function vlc_quit_VLC() As Integer
+    Public Function vlc_quit_VLC() As Integer
         Dim r As Integer = 0
         Try
             Dim tcpPort As Integer = Me._udpPort
