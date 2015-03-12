@@ -1335,7 +1335,8 @@ Class WebRemocon
         'ffmpeg時のみ字幕ファイルがあれば挿入
 
         Dim new_file As String = ""
-        If fonts_conf_ok = 1 Then
+        If fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 Then
+            'fonts.confが存在し、かつ無変換でなければ
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
                 Dim ass_file As String = filename.Substring(0, dt) & ".ass"
