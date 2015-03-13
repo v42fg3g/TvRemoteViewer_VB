@@ -1331,12 +1331,12 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをファイル再生用に書き換える
-    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer) As String
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
 
         Dim new_file As String = ""
-        If fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 Then
-            'fonts.confが存在し、かつ無変換でなければ
+        If fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0 Then
+            'fonts.confが存在し、無変換でなく、ハードサブ禁止でなければ
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
                 Dim ass_file As String = filename.Substring(0, dt) & ".ass"
@@ -1513,7 +1513,7 @@ Class WebRemocon
     End Function
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer)
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         'テスト　多重テストを違うexeファイルで行う
@@ -1592,7 +1592,7 @@ Class WebRemocon
                 'ファイル再生
                 If filename.Length > 0 And Stream_mode = 3 Then
                     'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub)
                 End If
             ElseIf hlsApp.IndexOf("vlc") >= 0 Then
                 'hlsOptを置き換える
@@ -1687,7 +1687,7 @@ Class WebRemocon
                             End If
                         End If
                     End If
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub)
                 Else
                     'その他vlc
                     '今のところ未対応
@@ -1868,7 +1868,7 @@ Class WebRemocon
     End Function
 
     '手動　ストリーム開始　■未使用
-    Public Sub Sub_stream_Start(ByVal num As Integer, ByVal bondriver As String, ByVal sid As String, ByVal chspace As String, ByVal bon_sid_ch_str As String, ByVal resolution As String, ByVal stream_mode As Integer, ByVal videoname As String, ByVal VideoSeekSeconds As Integer)
+    Public Sub Sub_stream_Start(ByVal num As Integer, ByVal bondriver As String, ByVal sid As String, ByVal chspace As String, ByVal bon_sid_ch_str As String, ByVal resolution As String, ByVal stream_mode As Integer, ByVal videoname As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer)
         'num        'bondriver        'sid        'chspace'        'bon_sid_ch_str        'resolution
         'stream_mode 'ストリームモード 0=UDP 1=ファイル再生 2=VLChttp 3=VLChttpファイル再生
         'videoname
@@ -1887,10 +1887,10 @@ Class WebRemocon
         'パラメーターが正しいかチェック
         If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
             '正しければ配信スタート
-            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0)
+            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0, 0)
         ElseIf num > 0 And videoname.Length > 0 Then
             'ファイル再生
-            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds)
+            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds, nohsub)
         End If
 
     End Sub
@@ -2203,6 +2203,9 @@ Class WebRemocon
                                 End Try
                             End If
 
+                            'ハードサブ不許可
+                            Dim nohsub As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nohsub") & "")
+
                             'ファイル書き込みコマンド
                             Dim fl_cmd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_cmd") & ""
                             Dim fl_file As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_file") & ""
@@ -2230,7 +2233,7 @@ Class WebRemocon
                                         WI_cmd_reply_force = 1
                                     Case "WI_START_STREAM"
                                         '配信スタート
-                                        'Sub_stream_Start(num, bondriver, sid, chspace, bon_sid_ch_str, resolution, stream_mode, videoname)
+                                        'Sub_stream_Start(num, bondriver, sid, chspace, bon_sid_ch_str, resolution, stream_mode, videoname, nohsub)
                                         req_Url = "/StartTv.html"
                                         path = path.Replace("WI_START_STREAM.html", "StartTv.html")
                                     Case "WI_STOP_STREAM"
@@ -2354,14 +2357,14 @@ Class WebRemocon
                                 'パラメーターが正しいかチェック
                                 If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
                                     '正しければ配信スタート
-                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0)
+                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
                                     If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
                                         'ffmpegなら
-                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds)
+                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub)
                                     Else
                                         '今のところVLCには未対応
                                         request_page = 12
