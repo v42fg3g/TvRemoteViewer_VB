@@ -6,7 +6,9 @@
         <title>HTTP Live Streaming %NUM%</title>
     </head>
     <body style="padding:0px; margin:0; border:0;">
-        <video src="%FILEROOT%mystream%SUBSTR%%NUM%.m3u8" controls autobuffer autoplay preload="auto" width="%WIDTH%" height="%HEIGHT%"></video>
+    <script type="text/javascript">
+        document.write("<video src=\"" + "http://%IDPASS%" + location.host + "/" + "%FILEROOT%mystream%SUBSTR%%NUM%.m3u8" + "\" controls autobuffer autoplay preload=\"auto\" width=\"%WIDTH%\" height=\"%HEIGHT%\"></video>");
+    </script>
         <br>
         %VIEWBUTTONS%
         <br>

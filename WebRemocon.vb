@@ -1898,40 +1898,46 @@ Class WebRemocon
     'HTTPサーバー開始
     Public Sub Web_Start()
         If Me._wwwport = 0 Then
-            MsgBox("httpサーバーの起動に失敗しました。" & vbCrLf & "httpポートを指定してこのアプリを再起動してください")
+            log1write("【エラー】httpサーバーの起動に失敗しました。" & vbCrLf & "httpポートを指定してこのアプリを再起動してください")
+            MsgBox("【エラー】httpサーバーの起動に失敗しました。" & vbCrLf & "httpポートを指定してこのアプリを再起動してください")
             Exit Sub
         End If
         If Me._udpPort = 0 Then
-            MsgBox("httpサーバーの起動に失敗しました。" & vbCrLf & "UDPポートを指定してこのアプリを再起動してください")
+            log1write("【エラー】httpサーバーの起動に失敗しました。" & vbCrLf & "UDPポートを指定してこのアプリを再起動してください")
+            MsgBox("【エラー】httpサーバーの起動に失敗しました。" & vbCrLf & "UDPポートを指定してこのアプリを再起動してください")
             Exit Sub
         End If
 
-        Me._isWebStart = True
+        Try
+            Me._isWebStart = True
 
-        'string root = @"D:\html\"; // ドキュメント・ルート
-        'Dim root As String = ".\html\"
-        Dim root As String = Me._wwwroot
-        ' ドキュメント・ルート
-        '★ localhost以外の場合、UACが有効だとHttpListenerExceptionが発生する
-        '★ 回避するには管理者権限で実行するか、コマンドプロンプトで
-        '★ 「netsh http add urlacl url=http://+:40003/ user=Everyone」(ENTER)と実行する。
+            'string root = @"D:\html\"; // ドキュメント・ルート
+            'Dim root As String = ".\html\"
+            Dim root As String = Me._wwwroot
+            ' ドキュメント・ルート
+            '★ localhost以外の場合、UACが有効だとHttpListenerExceptionが発生する
+            '★ 回避するには管理者権限で実行するか、コマンドプロンプトで
+            '★ 「netsh http add urlacl url=http://+:40003/ user=Everyone」(ENTER)と実行する。
 
-        'string prefix = "http://localhost:" + this._portNumber + "/"; // 受け付けるURL
-        Dim prefix As String = "http://+:" & Me._wwwport & "/"
-        ' 受け付けるURL
-        Me._listener = New HttpListener()
-        Me._listener.Prefixes.Add(prefix)
-        'BASIC認証
-        If Me._id.Length > 0 And Me._pass.Length > 0 Then
-            'IDとパスが設定されていれば
-            Me._listener.AuthenticationSchemes = AuthenticationSchemes.Basic
-            Me._listener.Realm = "SECRET AREA"
-        End If
-        ' プレフィックスの登録
-        Me._listener.Start()
-        '開始
-        Me._listener.BeginGetContext(AddressOf Me.OnRequested, Me._listener)
-
+            'string prefix = "http://localhost:" + this._portNumber + "/"; // 受け付けるURL
+            Dim prefix As String = "http://+:" & Me._wwwport & "/"
+            ' 受け付けるURL
+            Me._listener = New HttpListener()
+            Me._listener.Prefixes.Add(prefix)
+            'BASIC認証
+            If Me._id.Length > 0 And Me._pass.Length > 0 Then
+                'IDとパスが設定されていれば
+                Me._listener.AuthenticationSchemes = AuthenticationSchemes.Basic
+                Me._listener.Realm = "SECRET AREA"
+            End If
+            ' プレフィックスの登録
+            Me._listener.Start()
+            '開始
+            Me._listener.BeginGetContext(AddressOf Me.OnRequested, Me._listener)
+        Catch ex As Exception
+            log1write("【エラー】HTTPサーバの開始に失敗しました。再起動してください" & vbCrLf & ex.Message)
+            MsgBox("【エラー】HTTPサーバの開始に失敗しました。再起動してください" & vbCrLf & ex.Message)
+        End Try
     End Sub
 
     '応答

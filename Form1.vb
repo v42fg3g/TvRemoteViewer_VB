@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.07"
+    Private version As String = "TvRemoteViewer_VB version 1.08"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -243,10 +243,12 @@ Public Class Form1
     '================================================================
 
     Private Sub Form1_Load(sender As System.Object, e As System.EventArgs) Handles MyBase.Load
-        '二重起動をチェックする
-        If Diagnostics.Process.GetProcessesByName(Diagnostics.Process.GetCurrentProcess.ProcessName).Length > 1 Then
-            'すでに起動していると判断する
-            Close()
+        '二重起動をチェックする（コマンドラインで-dokが指定されていればチェックしない）
+        If F_check_cmd() = 0 Then
+            If Diagnostics.Process.GetProcessesByName(Diagnostics.Process.GetCurrentProcess.ProcessName).Length > 1 Then
+                'すでに起動していると判断する
+                Close()
+            End If
         End If
 
         'カレントディレクトリ変更
@@ -260,6 +262,55 @@ Public Class Form1
 
         log1write(version)
     End Sub
+
+    Private Function F_check_cmd() As Integer
+        'とりあえずコマンドラインに「-dok」(二重起動OK）があるかどうかだけチェック
+        Dim r As Integer = 0
+
+        Dim cmd_name() As String = Nothing
+        Dim cmd_value() As String = Nothing
+        Dim i, j As Integer
+
+        Dim chk As Integer = 0
+        For Each cmd As String In My.Application.CommandLineArgs
+            If (cmd.Substring(0, 1) = "-") Then
+                chk = 1
+                ReDim Preserve cmd_name(j)
+                ReDim Preserve cmd_value(j)
+                cmd_name(j) = trim8(cmd)
+                cmd_value(j) = ""
+                j += 1
+            Else
+                If chk = 0 Then
+                    'パラメーター指定無し
+                Else
+                    'value
+                    Try
+                        If j > 0 Then
+                            cmd_value(j - 1) &= " " & trim8(cmd)
+                        End If
+                    Catch ex As Exception
+                    End Try
+                End If
+                chk = 0
+            End If
+        Next
+
+        If j > 0 Then
+            For i = 0 To j - 1
+                cmd_name(i) = trim8(cmd_name(i)).ToLower '小文字
+                cmd_value(i) = trim8(cmd_value(i))
+
+                Select Case cmd_name(i)
+                    Case "-dok"
+                        '二重起動を許可
+                        r = 1
+                End Select
+            Next
+        End If
+
+        Return r
+    End Function
 
     Private Sub Form1_Shown(sender As System.Object, e As System.EventArgs) Handles MyBase.Shown
         'ニコニコ実況用サービスIDとjkチャンネルとの対応表を読み込む
