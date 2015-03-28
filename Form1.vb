@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.08"
+    Private version As String = "TvRemoteViewer_VB version 1.09"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -533,7 +533,7 @@ Public Class Form1
             Dim i As Integer
             For i = 0 To line.Length - 1
                 Dim lr() As String = line(i).Split("=")
-                If lr.Length = 2 Then
+                If lr.Length = 2 Or (lr.Length > 2 And Trim(lr(0)) = "PASS") Then
                     Select Case trim8(lr(0))
                         Case "TextBoxWWWroot"
                             TextBoxWWWroot.Text = lr(1)
@@ -569,7 +569,12 @@ Public Class Form1
                         Case "ID"
                             TextBoxID.Text = lr(1)
                         Case "PASS"
-                            TextBoxPASS.Text = lr(1)
+                            If lr.Length > 2 Then
+                                For j As Integer = 2 To lr.Length - 1
+                                    lr(1) &= "=" & lr(j)
+                                Next
+                            End If
+                            TextBoxPASS.Text = DecryptString(lr(1), TextBoxID.Text.ToString & "TRVVB")
                         Case "ComboBoxHLSorHTTP"
                             ComboBoxHLSorHTTP.Text = lr(1)
                     End Select
@@ -634,7 +639,7 @@ Public Class Form1
         s &= "ComboBoxResolution=" & ComboBoxResolution.Text & vbCrLf
         s &= "CheckBoxShowConsole=" & CheckBoxShowConsole.Checked & vbCrLf
         s &= "ID=" & TextBoxID.Text & vbCrLf
-        s &= "PASS=" & TextBoxPASS.Text & vbCrLf
+        s &= "PASS=" & EncryptString(TextBoxPASS.Text.ToString, TextBoxID.Text.ToString & "TRVVB") & vbCrLf
         s &= "textBoxHlsOpt=" & textBoxHlsOpt2.Text & vbCrLf
         s &= "ComboBoxHLSorHTTP=" & ComboBoxHLSorHTTP.Text
 
