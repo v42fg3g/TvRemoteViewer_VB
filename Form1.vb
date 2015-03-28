@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.09"
+    Private version As String = "TvRemoteViewer_VB version 1.10"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -464,9 +464,47 @@ Public Class Form1
         End If
         'bondriver
         Dim f_bondriver As String = Me.TextBoxBonDriverPath.Text.ToString
+        If f_bondriver.Length = 0 Then
+            f_bondriver = IO.Path.GetDirectoryName(Me.textBoxUdpApp.Text.ToString)
+        End If
         If f_bondriver.Length > 0 Then
             If folder_exist(f_bondriver) = 1 Then
                 log1write("起動チェック　BonDriverパス：OK")
+                'Bondriverが存在するかまたch2が存在するかチェック
+                Dim bchk As Integer = 0
+                Try
+                    For Each stFilePath As String In System.IO.Directory.GetFiles(f_bondriver, "*.dll")
+                        If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
+                            Dim s As String = trim8(stFilePath & System.Environment.NewLine)
+                            Dim bonfile As String = IO.Path.GetFileName(s).ToLower 'ファイル名
+                            '表示しないBonDriverかをチェック
+                            If BonDriver_NGword IsNot Nothing Then
+                                For i As Integer = 0 To BonDriver_NGword.Length - 1
+                                    If bonfile.IndexOf(BonDriver_NGword(i)) >= 0 Then
+                                        bonfile = ""
+                                    End If
+                                Next
+                            End If
+                            If bonfile.IndexOf("_file") >= 0 Or bonfile.IndexOf("_udp") >= 0 Or bonfile.IndexOf("_pipe") >= 0 Then
+                                bonfile = ""
+                            End If
+                            If bonfile.IndexOf("bondriver") = 0 Then
+                                bchk += 1
+                                Dim ch2file As String = f_bondriver & "\" & IO.Path.GetFileNameWithoutExtension(s) & ".ch2"
+                                If file_exist(ch2file) <= 0 Then
+                                    log1write("【警告】" & bonfile & " に対応するch2ファイルが見つかりませんでした")
+                                End If
+                            End If
+                        End If
+                    Next
+                Catch ex As Exception
+                    log1write("【エラー】Bondriver一覧取得中にエラーが発生しました。" & ex.Message)
+                End Try
+                If bchk > 0 Then
+                    log1write("起動チェック　BonDriver：OK")
+                Else
+                    log1write("【エラー】" & f_bondriver & " にBondriverが見つかりませんでした")
+                End If
             Else
                 log1write("【エラー】BonDriverパス " & f_bondriver & " が見つかりません")
             End If
