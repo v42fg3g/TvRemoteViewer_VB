@@ -465,7 +465,11 @@ Public Class Form1
         'bondriver
         Dim f_bondriver As String = Me.TextBoxBonDriverPath.Text.ToString
         If f_bondriver.Length = 0 Then
-            f_bondriver = IO.Path.GetDirectoryName(Me.textBoxUdpApp.Text.ToString)
+            Try
+                f_bondriver = IO.Path.GetDirectoryName(Me.textBoxUdpApp.Text.ToString)
+            Catch ex As Exception
+                f_bondriver = ""
+            End Try
         End If
         If f_bondriver.Length > 0 Then
             If folder_exist(f_bondriver) = 1 Then
@@ -508,6 +512,8 @@ Public Class Form1
             Else
                 log1write("【エラー】BonDriverパス " & f_bondriver & " が見つかりません")
             End If
+        Else
+            log1write("【警告】BonDriverパスが指定されていません")
         End If
         'ASS字幕用font_confがあるかどうか確認
         If Me._worker._hlsApp.IndexOf("ffmpeg") >= 0 Then
