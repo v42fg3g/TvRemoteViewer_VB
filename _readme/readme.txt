@@ -473,3 +473,17 @@ TvRemoteViewer_VB v1.11
 
 ※ConnectedSelect.jsはhttp://d.hatena.ne.jp/Mars/20071109のスクリプトを使用させていただきました。
 ※ch_sid.txtはNicoJKPlayModのjkch.sh.txtを参照し修正を加えたものです。作者様ありがとうございます。
+
+
+
+                            If TvProgramEDCB_premium = 0 Then
+                                'プレミアム指定されて無い場合はプレミアムのものは無視
+                                If ch_list(i).sid >= 33024 And ch_list(i).sid < 33792 Then
+                                    chk_j = 1
+                                End If
+                            Else
+                                'プレミアム指定されている場合、sidがプレミアム範囲に無いものは無視
+                                If ch_list(i).sid < 33024 Or ch_list(i).sid >= 33792 Then
+                                    chk_j = 1
+                                End If
+                            End If
