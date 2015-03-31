@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.10
+TvRemoteViewer_VB v1.11
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -466,6 +466,8 @@ TvRemoteViewer_VB v1.10
 	1.08	起動時にコマンドラインオプション「-dok」を付ければ二重起動を許可するようにした
 	1.09	パスワードを暗号化して保存することにした
 	1.10	起動時のBondriverチェックを厳密にした
+	1.11	iniにEDCB番組表がスカパープレミアム用であることを指定するTvProgramEDCB_premiumを追加
+		TvRock番組表からサービスIDを取得することにし、TvRock用マッチング指定の必要をなくした
 
 
 

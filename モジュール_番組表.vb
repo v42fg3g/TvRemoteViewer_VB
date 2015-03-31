@@ -22,6 +22,8 @@ Module モジュール_番組表
     Public LIVE_STREAM_STR As String = ""
     Public TvProgram_SelectUptoNum As Integer = 0 '番組表上の配信ナンバーを制限する
 
+    Public TvProgramEDCB_premium As Integer = 0 'EDCB番組表がプレミアム用ならば1
+
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
         Public stationDispName As String
@@ -30,6 +32,7 @@ Module モジュール_番組表
         Public endDateTime As String
         Public programTitle As String
         Public programContent As String
+        Public sid As Integer
     End Structure
 
     Public Structure TVprogram_html_structure
@@ -123,7 +126,7 @@ Module モジュール_番組表
                                         End Try
 
                                         'BonDriver, sid, 事業者を取得
-                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a)
+                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid)
                                         'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
 
                                         html &= "<span class=""p_name"">" & d(0) & "　<span class=""p_name2"">(" & p.stationDispName & ")</span></span><br>" & vbCrLf 'p.stationDispName
@@ -353,15 +356,29 @@ Module モジュール_番組表
                 If TvProgram_EDCB_url.Length > 0 Then
                     If ch_list IsNot Nothing Then
                         For i As Integer = 0 To ch_list.Length - 1
-                            'NGワードに指定されているものは無視
                             Dim chk_j As Integer = 0
-                            If TvProgramEDCB_NGword IsNot Nothing Then
-                                For j As Integer = 0 To TvProgramEDCB_NGword.Length - 1
-                                    If StrConv(ch_list(i).jigyousha, VbStrConv.Wide) = StrConv(TvProgramEDCB_NGword(j), VbStrConv.Wide) Then
-                                        chk_j = 1
-                                        Exit For
-                                    End If
-                                Next
+                            'プレミアム指定
+                            If TvProgramEDCB_premium = 0 Then
+                                'プレミアム指定されて無い場合はプレミアムのものは無視
+                                If ch_list(i).sid >= 33024 And ch_list(i).sid < 33792 Then
+                                    chk_j = 1
+                                End If
+                            Else
+                                'プレミアム指定されている場合、sidがプレミアム範囲に無いものは無視
+                                If ch_list(i).sid < 33024 Or ch_list(i).sid >= 33792 Then
+                                    chk_j = 1
+                                End If
+                            End If
+                            'NGワードに指定されているものは無視
+                            If chk_j = 0 Then
+                                If TvProgramEDCB_NGword IsNot Nothing Then
+                                    For j As Integer = 0 To TvProgramEDCB_NGword.Length - 1
+                                        If StrConv(ch_list(i).jigyousha, VbStrConv.Wide) = StrConv(TvProgramEDCB_NGword(j), VbStrConv.Wide) Then
+                                            chk_j = 1
+                                            Exit For
+                                        End If
+                                    Next
+                                End If
                             End If
                             '番組情報を取得しないものは無視
                             If chk_j = 0 Then
@@ -420,6 +437,8 @@ Module モジュール_番組表
                                             r(j).endDateTime = t2s
                                             r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
                                             r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
+                                            'sidを追加
+                                            r(j).sid = sid
                                             '1個みつかればおｋ
                                             chk = 1
                                             Exit While
@@ -505,6 +524,10 @@ Module モジュール_番組表
                         Dim sp3 As Integer = html.IndexOf("</b></small>", sp)
                         sp3 = html.IndexOf("<font color=", sp3)
                         r(j).programContent = Trim(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
+
+                        'サービスIDを取得
+                        sp3 = html.IndexOf("javascript:reserv(", sp3)
+                        r(j).sid = Val(Instr_pickup(html, ",", ",", sp3))
 
                         sp2 = html.IndexOf(" <small><i>", sp2 + 1)
                         sp = html.LastIndexOf("><small>", sp2 + 1)
@@ -594,51 +617,21 @@ Module モジュール_番組表
     End Function
 
     '番組表の放送局名からbondriver,sid等の取得を試みる
-    Public Function bangumihyou2bondriver(ByVal hosokyoku As String, ByVal a As Integer) As Object
+    Public Function bangumihyou2bondriver(ByVal hosokyoku As String, ByVal a As Integer, ByVal sid As Integer) As Object
         Dim r(3) As String
-        hosokyoku = StrConv(hosokyoku, VbStrConv.Wide) '全角に変換
-        Dim h2 As String = rename_hosokyoku2jigyousha(hosokyoku, a)
-        Dim chk As Integer = 0
-        If h2.Length > 0 Then
-            hosokyoku = h2
-            chk = 1
-        Else
-            Dim sp1 As Integer
-            sp1 = hosokyoku.IndexOf("テレビ")
-            If sp1 > 0 Then
-                If hosokyoku.Substring(sp1) = "テレビ" Then
-                    '末尾が"テレビ"なら
-                    hosokyoku = hosokyoku.Replace("テレビ", "")
-                End If
-            End If
-            sp1 = hosokyoku.IndexOf("放送")
-            If sp1 > 0 Then
-                If hosokyoku.Substring(sp1) = "放送" Then
-                    '末尾が"放送"なら
-                    hosokyoku = hosokyoku.Replace("放送", "")
-                End If
-            End If
-            Dim sp As Integer = hosokyoku.IndexOf("　")
-            If sp > 0 Then
-                Try
-                    hosokyoku = hosokyoku.Substring(sp + 1)
-                Catch ex As Exception
-                End Try
-            End If
-        End If
-
         r(0) = ""
         r(1) = ""
         r(2) = ""
         r(3) = ""
+        hosokyoku = StrConv(hosokyoku, VbStrConv.Wide) '全角に変換
+        Dim chk As Integer = 0
         Dim i As Integer = 0
+
         If ch_list IsNot Nothing Then
-            For i = 0 To ch_list.Length - 1
-                Dim h As String
-                h = StrConv(ch_list(i).jigyousha, VbStrConv.Wide) '全角に変換
-                If chk = 1 Then
-                    '変換した場合は完全一致でないとＮＧ
-                    If h = hosokyoku Then
+            If sid > 0 Then
+                'sidが指定されていれば（主にTvRock)
+                For i = 0 To ch_list.Length - 1
+                    If sid = ch_list(i).sid Then
                         '一致した
                         r(0) = ch_list(i).jigyousha
                         r(1) = ch_list(i).bondriver
@@ -646,17 +639,65 @@ Module モジュール_番組表
                         r(3) = ch_list(i).chspace.ToString
                         Exit For
                     End If
+                Next
+            Else
+                'sidからではなく従来通りチャンネル名で判断する場合
+                Dim h2 As String = rename_hosokyoku2jigyousha(hosokyoku, a) 'iniでチャンネル名変換が指定されていれば
+                If h2.Length > 0 Then
+                    'きっちり変換が指定されていた場合
+                    hosokyoku = h2
+                    chk = 1
                 Else
-                    '推測の場合は部分一致おｋ
-                    If h.IndexOf(hosokyoku) >= 0 Then
-                        r(0) = ch_list(i).jigyousha
-                        r(1) = ch_list(i).bondriver
-                        r(2) = ch_list(i).sid.ToString
-                        r(3) = ch_list(i).chspace.ToString
-                        Exit For
+                    '推測
+                    Dim sp1 As Integer
+                    sp1 = hosokyoku.IndexOf("テレビ")
+                    If sp1 > 0 Then
+                        If hosokyoku.Substring(sp1) = "テレビ" Then
+                            '末尾が"テレビ"なら
+                            hosokyoku = hosokyoku.Replace("テレビ", "")
+                        End If
+                    End If
+                    sp1 = hosokyoku.IndexOf("放送")
+                    If sp1 > 0 Then
+                        If hosokyoku.Substring(sp1) = "放送" Then
+                            '末尾が"放送"なら
+                            hosokyoku = hosokyoku.Replace("放送", "")
+                        End If
+                    End If
+                    Dim sp As Integer = hosokyoku.IndexOf("　")
+                    If sp > 0 Then
+                        Try
+                            hosokyoku = hosokyoku.Substring(sp + 1)
+                        Catch ex As Exception
+                        End Try
                     End If
                 End If
-            Next
+
+                For i = 0 To ch_list.Length - 1
+                    Dim h As String
+                    h = StrConv(ch_list(i).jigyousha, VbStrConv.Wide) '全角に変換
+                    If chk = 1 Then
+                        '変換した場合は完全一致でないとＮＧ
+                        If h = hosokyoku Then
+                            '一致した
+                            r(0) = ch_list(i).jigyousha
+                            r(1) = ch_list(i).bondriver
+                            r(2) = ch_list(i).sid.ToString
+                            r(3) = ch_list(i).chspace.ToString
+                            Exit For
+                        End If
+                    Else
+                        '推測の場合は部分一致おｋ
+                        If h.IndexOf(hosokyoku) >= 0 Then
+                            r(0) = ch_list(i).jigyousha
+                            r(1) = ch_list(i).bondriver
+                            r(2) = ch_list(i).sid.ToString
+                            r(3) = ch_list(i).chspace.ToString
+                            Exit For
+                        End If
+                    End If
+                Next
+            End If
         End If
 
         Return r
@@ -800,7 +841,7 @@ Module モジュール_番組表
                                         End Try
 
                                         'BonDriver, sid, 事業者を取得
-                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a)
+                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid)
                                         'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
 
                                         If d(0).Length > 0 Then

@@ -1173,6 +1173,9 @@ Class WebRemocon
                                         TvProgramEDCB_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
                                     Next
                                 End If
+                            Case "TvProgramEDCB_premium"
+                                'プレミアム指定
+                                TvProgramEDCB_premium = Val(youso(1).ToString)
                             Case "TvProgramTvRock_channels"
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                 Dim clset() As String = youso(1).Split(",")
