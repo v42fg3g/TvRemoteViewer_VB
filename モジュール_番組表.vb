@@ -660,7 +660,19 @@ Module モジュール_番組表
         Dim i As Integer = 0
 
         If ch_list IsNot Nothing Then
-            If sid > 0 Then
+            If sid = 161 Then
+                'sid=161は重なっている　BS-TBSかQVCか
+                For i = 0 To ch_list.Length - 1
+                    Dim h2 As String = StrConv(ch_list(i).jigyousha, VbStrConv.Wide)
+                    If ch_list(i).sid = 161 And hosokyoku = h2 Then
+                        r(0) = ch_list(i).jigyousha
+                        r(1) = ch_list(i).bondriver
+                        r(2) = ch_list(i).sid.ToString
+                        r(3) = ch_list(i).chspace.ToString
+                        Exit For
+                    End If
+                Next
+            ElseIf sid > 0 Then
                 'sidが指定されていれば（主にTvRock)
                 For i = 0 To ch_list.Length - 1
                     If sid = ch_list(i).sid Then

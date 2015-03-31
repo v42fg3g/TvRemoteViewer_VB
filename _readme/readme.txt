@@ -471,6 +471,7 @@ TvRemoteViewer_VB v1.11
 		iniにスカパープレミアム時に優先的に割り当てるBonDriverを指定できるようにした
 		（TvProgramP_BonDriver1st）
 		WI_GET_TVRV_STATUS.htmlにTvProgramEDCB_premiumとTvProgramP_BonDriver1stを追加
+		BS-TBSとQVCのサービスIDが同一であることに対処
 
 
 
