@@ -468,6 +468,7 @@ TvRemoteViewer_VB v1.11
 	1.10	起動時のBondriverチェックを厳密にした
 	1.11	iniにEDCB番組表がスカパープレミアム用であることを指定するTvProgramEDCB_premiumを追加
 		TvRock番組表からサービスIDを取得することにし、TvRock用マッチング指定の必要をなくした
+		EDCB用マッチング指定の必要をなくした
 
 
 
