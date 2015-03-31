@@ -16,6 +16,7 @@ Module モジュール_番組表
     Public TvProgramD_sort() As String
     Public TvProgramD_BonDriver1st() As String
     Public TvProgramS_BonDriver1st() As String
+    Public TvProgramP_BonDriver1st() As String
     Public TvProgram_tvrock_url As String = ""
     Public TvProgram_EDCB_url As String = ""
 
@@ -156,7 +157,11 @@ Module モジュール_番組表
                                             bhtml = bhtml.Replace(" id=""SEL1""", "") '余計な文字を消す
                                             '優先的に割り当てるBonDriverが指定されていればそれを選択
                                             Dim selected_num As Integer = 1
-                                            If Val(d(3)) = 1 And use_num_bon(3).Length > 0 Then
+                                            If Val(d(2)) >= 33024 And Val(d(2)) < 33792 And use_num_bon(5).Length > 0 Then
+                                                'プレミアム
+                                                bhtml = bhtml.Replace(use_num_bon(5).ToLower & """>", use_num_bon(5) & """ selected>")
+                                                selected_num = Val(use_num_bon(4))
+                                            ElseIf Val(d(3)) = 1 And use_num_bon(3).Length > 0 Then
                                                 'CSでBonDriver指定があれば
                                                 bhtml = bhtml.Replace(use_num_bon(3).ToLower & """>", use_num_bon(3) & """ selected>")
                                                 selected_num = Val(use_num_bon(2))
@@ -200,17 +205,17 @@ Module モジュール_番組表
                                             html &= "<input type=""submit"" value=""視聴"">" & vbCrLf
                                             html &= "</form>" & vbCrLf
                                         End If
-                                        html &= "<br><br>" & vbCrLf
+                                            html &= "<br><br>" & vbCrLf
+                                        End If
                                     End If
                                 End If
-                            End If
 
-                            ReDim Preserve TvProgram_html(cnt)
-                            TvProgram_html(cnt).stationDispName = StrConv(p.stationDispName, VbStrConv.Wide)
-                            TvProgram_html(cnt).hosokyoku = hosokyoku
-                            TvProgram_html(cnt).html = html
-                            TvProgram_html(cnt).done = 0
-                            cnt += 1
+                                ReDim Preserve TvProgram_html(cnt)
+                                TvProgram_html(cnt).stationDispName = StrConv(p.stationDispName, VbStrConv.Wide)
+                                TvProgram_html(cnt).hosokyoku = hosokyoku
+                                TvProgram_html(cnt).html = html
+                                TvProgram_html(cnt).done = 0
+                                cnt += 1
                         Next
                     End If
                 End If
@@ -248,11 +253,13 @@ Module モジュール_番組表
 
     '使用されていない優先BonDriver名を返す（地デジ）
     Public Function get_use_BonDriver() As Object
-        Dim r(3) As String
+        Dim r(5) As String
         r(0) = "" '地デジnum
         r(1) = "" '地デジBonDriver
         r(2) = "" 'BS・CSnum
         r(3) = "" 'BS・CSBonDriver
+        r(4) = "" 'プレミアムnum
+        r(5) = "" 'プレミアムBonDriver
 
         '地デジ
         If TvProgramD_BonDriver1st IsNot Nothing Then
@@ -280,6 +287,19 @@ Module モジュール_番組表
             End If
         End If
 
+        'プレミアム
+        If TvProgramP_BonDriver1st IsNot Nothing Then
+            For i As Integer = 0 To TvProgramP_BonDriver1st.Length - 1
+                If LIVE_STREAM_STR.IndexOf(TvProgramP_BonDriver1st(i)) < 0 Then
+                    r(5) = TvProgramP_BonDriver1st(i)
+                    Exit For
+                End If
+            Next
+            If r(5) = "" Then
+                r(5) = TvProgramP_BonDriver1st(0)
+            End If
+        End If
+
         'numを決める 'すでに使用中ならそのナンバー
         Dim line() As String = Split(LIVE_STREAM_STR, vbCrLf)
         Dim nums As String = ":"
@@ -290,6 +310,9 @@ Module モジュール_番組表
                 End If
                 If line(i).IndexOf(r(3)) >= 0 Then
                     r(2) = i.ToString
+                End If
+                If line(i).IndexOf(r(5)) >= 0 Then
+                    r(4) = i.ToString
                 End If
                 '配信中のナンバーを記録
                 Dim d() As String = line(i).Split(",")
@@ -308,6 +331,9 @@ Module モジュール_番組表
                 If r(2) = "" Then
                     r(2) = i.ToString
                 End If
+                If r(4) = "" Then
+                    r(4) = i.ToString
+                End If
             End If
         Next
 
@@ -318,6 +344,9 @@ Module モジュール_番組表
         If r(2) = "" Then
             r(2) = "1"
         End If
+        If r(4) = "" Then
+            r(4) = "1"
+        End If
 
         '番組表での配信ナンバー選択制限が指定されていれば
         If TvProgram_SelectUptoNum > 0 Then
@@ -326,6 +355,9 @@ Module モジュール_番組表
             End If
             If Val(r(2)) > TvProgram_SelectUptoNum Then
                 r(2) = TvProgram_SelectUptoNum.ToString
+            End If
+            If Val(r(4)) > TvProgram_SelectUptoNum Then
+                r(4) = TvProgram_SelectUptoNum.ToString
             End If
         End If
 

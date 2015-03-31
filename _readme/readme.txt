@@ -467,8 +467,10 @@ TvRemoteViewer_VB v1.11
 	1.09	パスワードを暗号化して保存することにした
 	1.10	起動時のBondriverチェックを厳密にした
 	1.11	iniにEDCB番組表がスカパープレミアム用であることを指定するTvProgramEDCB_premiumを追加
-		TvRock番組表からサービスIDを取得することにし、TvRock用マッチング指定の必要をなくした
-		EDCB用マッチング指定の必要をなくした
+		ini内でのTvRockとEDCB用チャンネル名マッチング指定の必要をなくした
+		iniにスカパープレミアム時に優先的に割り当てるBonDriverを指定できるようにした
+		（TvProgramP_BonDriver1st）
+		WI_GET_TVRV_STATUS.htmlにTvProgramEDCB_premiumとTvProgramP_BonDriver1stを追加
 
 
 

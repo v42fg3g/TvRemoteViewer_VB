@@ -1147,6 +1147,8 @@ Class WebRemocon
                                 TvProgramD_BonDriver1st = para_split_str(youso(1).ToString)
                             Case "TvProgramS_BonDriver1st"
                                 TvProgramS_BonDriver1st = para_split_str(youso(1).ToString)
+                            Case "TvProgramP_BonDriver1st"
+                                TvProgramP_BonDriver1st = para_split_str(youso(1).ToString)
                             Case "TvProgram_tvrock_url"
                                 TvProgram_tvrock_url = trim8(youso(1).ToString)
                             Case "TvProgram_EDCB_url"
@@ -2895,6 +2897,15 @@ Class WebRemocon
             Next
             r &= vbCrLf
         End If
+        r &= "TvProgramP_BonDriver1st="
+        If TvProgramP_BonDriver1st IsNot Nothing Then
+            Dim s As String = ""
+            For i = 0 To TvProgramP_BonDriver1st.Length - 1
+                r &= s & TvProgramP_BonDriver1st(i)
+                s = ","
+            Next
+            r &= vbCrLf
+        End If
         r &= vbCrLf
         r &= "【HLSアプリ】" & vbCrLf
         r &= "_hlsApp=" & Me._hlsApp & vbCrLf
@@ -2924,6 +2935,7 @@ Class WebRemocon
         r &= "TvProgram_tvrock_url=" & TvProgram_tvrock_url & vbCrLf
         r &= "TvProgram_EDCB_url=" & TvProgram_EDCB_url & vbCrLf
         r &= "SelectNum1=" & TvProgram_SelectUptoNum & vbCrLf
+        r &= "TvProgramEDCB_premium=" & TvProgramEDCB_premium & vbCrLf
         r &= vbCrLf
         r &= "【ファイル再生】" & vbCrLf
         If Me._videopath IsNot Nothing Then
