@@ -34,6 +34,7 @@ Module モジュール_番組表
         Public programTitle As String
         Public programContent As String
         Public sid As Integer
+        Public tsid As Integer
     End Structure
 
     Public Structure TVprogram_html_structure
@@ -127,7 +128,7 @@ Module モジュール_番組表
                                         End Try
 
                                         'BonDriver, sid, 事業者を取得
-                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid)
+                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid, p.tsid)
                                         'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
 
                                         html &= "<span class=""p_name"">" & d(0) & "　<span class=""p_name2"">(" & p.stationDispName & ")</span></span><br>" & vbCrLf 'p.stationDispName
@@ -471,6 +472,7 @@ Module モジュール_番組表
                                             r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
                                             'sidを追加
                                             r(j).sid = sid
+                                            r(j).tsid = tsid
                                             '1個みつかればおｋ
                                             chk = 1
                                             Exit While
@@ -499,6 +501,8 @@ Module モジュール_番組表
                                     r(j).endDateTime = ""
                                     r(j).programTitle = ""
                                     r(j).programContent = ""
+                                    r(j).sid = ch_list(i).sid
+                                    r(j).tsid = ch_list(i).tsid
                                 End If
                             ElseIf chk_j = 2 Then
                                 'ダミー
@@ -514,6 +518,8 @@ Module モジュール_番組表
                                 r(j).endDateTime = ""
                                 r(j).programTitle = ""
                                 r(j).programContent = ""
+                                r(j).sid = ch_list(i).sid
+                                r(j).tsid = ch_list(i).tsid
                             End If
                         Next
                     End If
@@ -649,7 +655,7 @@ Module モジュール_番組表
     End Function
 
     '番組表の放送局名からbondriver,sid等の取得を試みる
-    Public Function bangumihyou2bondriver(ByVal hosokyoku As String, ByVal a As Integer, ByVal sid As Integer) As Object
+    Public Function bangumihyou2bondriver(ByVal hosokyoku As String, ByVal a As Integer, ByVal sid As Integer, ByVal tsid As Integer) As Object
         Dim r(3) As String
         r(0) = ""
         r(1) = ""
@@ -658,17 +664,23 @@ Module モジュール_番組表
         hosokyoku = StrConv(hosokyoku, VbStrConv.Wide) '全角に変換
         Dim chk As Integer = 0
         Dim i As Integer = 0
+        Dim cindex As Integer = -1
 
         If ch_list IsNot Nothing Then
-            If sid = 161 Then
-                'sid=161は重なっている　BS-TBSかQVCか
+            If sid > 0 And tsid > 0 Then
+                'sidとtsidが指定されている場合（EDCB)
+                For i = 0 To ch_list.Length - 1
+                    If ch_list(i).sid = sid And ch_list(i).tsid = tsid Then
+                        cindex = i
+                        Exit For
+                    End If
+                Next
+            ElseIf sid = 161 Then
+                'sid=161は重なっている　BS-TBSかQVCか局名でもチェック
                 For i = 0 To ch_list.Length - 1
                     Dim h2 As String = StrConv(ch_list(i).jigyousha, VbStrConv.Wide)
                     If ch_list(i).sid = 161 And hosokyoku = h2 Then
-                        r(0) = ch_list(i).jigyousha
-                        r(1) = ch_list(i).bondriver
-                        r(2) = ch_list(i).sid.ToString
-                        r(3) = ch_list(i).chspace.ToString
+                        cindex = i
                         Exit For
                     End If
                 Next
@@ -677,10 +689,7 @@ Module モジュール_番組表
                 For i = 0 To ch_list.Length - 1
                     If sid = ch_list(i).sid Then
                         '一致した
-                        r(0) = ch_list(i).jigyousha
-                        r(1) = ch_list(i).bondriver
-                        r(2) = ch_list(i).sid.ToString
-                        r(3) = ch_list(i).chspace.ToString
+                        cindex = i
                         Exit For
                     End If
                 Next
@@ -724,23 +733,24 @@ Module モジュール_番組表
                         '変換した場合は完全一致でないとＮＧ
                         If h = hosokyoku Then
                             '一致した
-                            r(0) = ch_list(i).jigyousha
-                            r(1) = ch_list(i).bondriver
-                            r(2) = ch_list(i).sid.ToString
-                            r(3) = ch_list(i).chspace.ToString
+                            cindex = i
                             Exit For
                         End If
                     Else
                         '推測の場合は部分一致おｋ
                         If h.IndexOf(hosokyoku) >= 0 Then
-                            r(0) = ch_list(i).jigyousha
-                            r(1) = ch_list(i).bondriver
-                            r(2) = ch_list(i).sid.ToString
-                            r(3) = ch_list(i).chspace.ToString
+                            cindex = i
                             Exit For
                         End If
                     End If
                 Next
+            End If
+
+            If cindex >= 0 Then
+                r(0) = ch_list(i).jigyousha
+                r(1) = ch_list(i).bondriver
+                r(2) = ch_list(i).sid.ToString
+                r(3) = ch_list(i).chspace.ToString
             End If
         End If
 
@@ -885,7 +895,7 @@ Module モジュール_番組表
                                         End Try
 
                                         'BonDriver, sid, 事業者を取得
-                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid)
+                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid, p.tsid)
                                         'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
 
                                         If d(0).Length > 0 Then
