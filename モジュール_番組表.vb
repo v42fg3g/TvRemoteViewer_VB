@@ -52,7 +52,7 @@ Module モジュール_番組表
         Dim cnt As Integer = 0
         Dim TvProgram_html() As TVprogram_html_structure = Nothing
 
-        Dim use_num_bon() As String = get_use_BonDriver() 'd(0)=地デジnum d(1)=地デジBonDriver d(2)=BS・CS num d(3)=BS・CS BonDriver
+        Dim use_num_bon() As String = get_use_BonDriver() 'd(0)=地デジnum d(1)=地デジBonDriver d(2)=BS・CS num d(3)=BS・CS BonDriver d(4)=プレミアム num d(5)=プレミアム BonDriver
 
         Dim TvProgram_ch2() As Integer = Nothing
         If a = 0 Then
@@ -902,7 +902,8 @@ Module モジュール_番組表
                                             hosokyoku = StrConv(d(0), VbStrConv.Wide)
                                         End If
 
-                                        html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & p.programTitle & "," & p.programContent & vbCrLf
+                                        'html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & p.programTitle & "," & p.programContent & vbCrLf
+                                        html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & p.programTitle.Replace(",", "，") & "," & p.programContent.Replace(",", "，") & vbCrLf
 
                                         chkstr &= s4 & ":"
                                     End If
