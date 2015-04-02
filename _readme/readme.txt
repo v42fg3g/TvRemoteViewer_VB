@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.11
+TvRemoteViewer_VB v1.12
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -473,6 +473,7 @@ TvRemoteViewer_VB v1.11
 		WI_GET_TVRV_STATUS.htmlにTvProgramEDCB_premiumとTvProgramP_BonDriver1stを追加
 		BS-TBSとQVCのサービスIDが同一であることに対処
 		EDCB番組表上でのマッチングバグを修正、とともにTSIDでもチェックするようにした
+	1.12	WI番組情報内のカンマを全角に変換するようにした
 
 
 
