@@ -2341,6 +2341,10 @@ Class WebRemocon
                                         'ファイル書き込み
                                         WI_cmd_reply = Me.WI_FILE_OPE(fl_cmd, fl_file, fl_text)
                                         WI_cmd_reply_force = 1
+                                    Case "WI_SHOW_LOG"
+                                        'ログ出力
+                                        WI_cmd_reply = Me.WI_SHOW_LOG()
+                                        WI_cmd_reply_force = 1
                                 End Select
                             End If
 
@@ -2876,6 +2880,11 @@ Class WebRemocon
     '===================================
     'WEBインターフェース
     '===================================
+    'ログを送る
+    Public Function WI_SHOW_LOG() As String
+        Return log1
+    End Function
+
     'TvRemoteViewer_VB status
     Public Function WI_GET_TVRV_STATUS() As String
         'NHKSELECTMODE,フォーム上の解像度、等

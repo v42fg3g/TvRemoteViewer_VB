@@ -298,78 +298,86 @@ Public Class ProcessManager
                             log1write("No.=" & num & "UDPの配信チャンネル切り替えに失敗しました")
                         End If
 
-                        System.Threading.Thread.Sleep(UDP2HLS_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+                        If j >= 0 Then
+                            'チャンネル切り替えに成功したので引き続きHLSアプリ起動
 
-                        If HTTPSTREAM_App = 2 And hlsApp.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
-                            'ffmpeg HTTPストリーム
-                            'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
-                            'ProcessBeans作成
-                            If hls_only = 1 Then
-                                '既存のリストを削除してから改めて追加
-                                Me._list.RemoveAt(i)
+                            System.Threading.Thread.Sleep(UDP2HLS_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+
+                            If HTTPSTREAM_App = 2 And hlsApp.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
+                                'ffmpeg HTTPストリーム
+                                'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
+                                'ProcessBeans作成
+                                If hls_only = 1 Then
+                                    '既存のリストを削除してから改めて追加
+                                    Me._list.RemoveAt(i)
+                                End If
+                                '                                  ↓Processはまだ決まっていない
+                                Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
+                                Me._list.Add(pb)
+
+                                '1秒毎のプロセスチェックさせない
+                                'Me._list(num2i(num))._stopping >= 100
+                                log1write("配信が開始されない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")
+                                Me._list(num2i(num))._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
+                            Else
+                                '通常
+                                '★HLSソフトを実行
+                                'ProcessStartInfoオブジェクトを作成する
+                                Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
+                                '起動するファイルのパスを指定する
+                                hlsPsi.FileName = hlsApp
+                                'VLCは上の非表示コマンドが効かないのでオプションを書き換える
+                                If ShowConsole = False And hlsApp.IndexOf("vlc") >= 0 Then
+                                    If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
+                                        hlsOpt = hlsOpt.Replace("-I dummy", "-I dummy --dummy-quiet")
+                                    End If
+                                    If hlsOpt.IndexOf("--rc-quiet") < 0 And hlsOpt.IndexOf("--rc-host=") >= 0 Then
+                                        hlsOpt = hlsOpt.Replace("--rc-host=", "--rc-quiet --rc-host=")
+                                    End If
+                                End If
+                                'コマンドライン引数を指定する
+                                hlsPsi.Arguments = hlsOpt
+                                If ShowConsole = False Then
+                                    ' コンソール・ウィンドウを開かない
+                                    hlsPsi.CreateNoWindow = True
+                                    ' シェル機能を使用しない
+                                    hlsPsi.UseShellExecute = False
+                                End If
+                                'ログ表示
+                                log1write("No.=" & num & "HLS アプリ=" & hlsApp)
+                                log1write("No.=" & num & "HLS option=" & hlsOpt)
+                                'アプリケーションを起動する
+                                Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
+                                Dim HLS_PRIORITY_STR As String = HLS_PRIORITY
+                                Select Case HLS_PRIORITY
+                                    Case "Idle"
+                                        hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
+                                    Case "Normal"
+                                        hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
+                                    Case "High"
+                                        hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                                    Case "RealTime"
+                                        hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
+                                    Case Else
+                                        HLS_PRIORITY_STR = "無指定"
+                                        'hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+                                End Select
+
+                                log1write("No.=" & num & "のHLSアプリを起動しました。優先度：" & HLS_PRIORITY_STR & "　handle=" & hlsProc.Handle.ToString)
+
+                                If hls_only = 1 Then
+                                    '既存のリストを削除してから改めて追加
+                                    Me._list.RemoveAt(i)
+                                End If
+
+                                'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
+                                Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
+                                Me._list.Add(pb)
                             End If
-                            '                                  ↓Processはまだ決まっていない
-                            Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
-                            Me._list.Add(pb)
-
-                            '1秒毎のプロセスチェックさせない
-                            'Me._list(num2i(num))._stopping >= 100
-                            log1write("配信が開始されない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")
-                            Me._list(num2i(num))._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
                         Else
-                            '通常
-                            '★HLSソフトを実行
-                            'ProcessStartInfoオブジェクトを作成する
-                            Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
-                            '起動するファイルのパスを指定する
-                            hlsPsi.FileName = hlsApp
-                            'VLCは上の非表示コマンドが効かないのでオプションを書き換える
-                            If ShowConsole = False And hlsApp.IndexOf("vlc") >= 0 Then
-                                If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
-                                    hlsOpt = hlsOpt.Replace("-I dummy", "-I dummy --dummy-quiet")
-                                End If
-                                If hlsOpt.IndexOf("--rc-quiet") < 0 And hlsOpt.IndexOf("--rc-host=") >= 0 Then
-                                    hlsOpt = hlsOpt.Replace("--rc-host=", "--rc-quiet --rc-host=")
-                                End If
-                            End If
-                            'コマンドライン引数を指定する
-                            hlsPsi.Arguments = hlsOpt
-                            If ShowConsole = False Then
-                                ' コンソール・ウィンドウを開かない
-                                hlsPsi.CreateNoWindow = True
-                                ' シェル機能を使用しない
-                                hlsPsi.UseShellExecute = False
-                            End If
-                            'ログ表示
-                            log1write("No.=" & num & "HLS アプリ=" & hlsApp)
-                            log1write("No.=" & num & "HLS option=" & hlsOpt)
-                            'アプリケーションを起動する
-                            Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
-                            Dim HLS_PRIORITY_STR As String = HLS_PRIORITY
-                            Select Case HLS_PRIORITY
-                                Case "Idle"
-                                    hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
-                                Case "Normal"
-                                    hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
-                                Case "High"
-                                    hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-                                Case "RealTime"
-                                    hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
-                                Case Else
-                                    HLS_PRIORITY_STR = "無指定"
-                                    'hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
-                            End Select
-
-                            log1write("No.=" & num & "のHLSアプリを起動しました。優先度：" & HLS_PRIORITY_STR & "　handle=" & hlsProc.Handle.ToString)
-
-                            If hls_only = 1 Then
-                                '既存のリストを削除してから改めて追加
-                                Me._list.RemoveAt(i)
-                            End If
-
-                            'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex)'↓再起動用にパラメーターを渡しておく
-                            Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
-                            Me._list.Add(pb)
+                            'チャンネル切り替え失敗したのでUDPアプリを終了させる
+                            stopProc(num)
+                            log1write("No.=" & num & "　チャンネル変更に失敗したので配信を中止しました")
                         End If
                     Else
                         Try

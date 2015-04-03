@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.13
+TvRemoteViewer_VB v1.14
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -476,6 +476,8 @@ TvRemoteViewer_VB v1.13
 	1.12	WI番組情報内のカンマを全角に変換するようにした
 		iniにスカパープレミアムSPHD視聴時に使用するRecTaskを指定できるようにした(RecTask_SPHD)
 	1.13	WI番組情報取得（地デジ・TvRock）においてNG局が表示されてしまっていたバグを修正
+	1.14	RecTaskがチャンネル切り替えに失敗した時に配信を続けようとしていたバグを修正
+		WEBインターフェース、ログを表示(WI_SHOW_LOG.html）を追加
 
 
 
