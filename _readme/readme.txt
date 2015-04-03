@@ -474,6 +474,7 @@ TvRemoteViewer_VB v1.12
 		BS-TBSとQVCのサービスIDが同一であることに対処
 		EDCB番組表上でのマッチングバグを修正、とともにTSIDでもチェックするようにした
 	1.12	WI番組情報内のカンマを全角に変換するようにした
+		iniにスカパープレミアムSPHD視聴時に使用するRecTaskを指定できるようにした(RecTask_SPHD)
 
 
 

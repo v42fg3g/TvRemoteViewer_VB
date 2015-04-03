@@ -30,6 +30,12 @@
     '配信中に古いtsファイルを削除するかどうか
     Public OLDTS_NODELETE As Integer = 0
 
+    'プレミアムSPHD用RecTask
+    Public RecTask_SPHD As String = ""
+    'プレミアムSPHD用ServiceIDの範囲
+    Public SPHD_sid_start As Integer = 33024
+    Public SPHD_sid_end As Integer = 33791
+
     '余計な改行等を削除
     Public Function trim8(ByVal s As String) As String
         s = Trim(s)

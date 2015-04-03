@@ -158,7 +158,7 @@ Module モジュール_番組表
                                             bhtml = bhtml.Replace(" id=""SEL1""", "") '余計な文字を消す
                                             '優先的に割り当てるBonDriverが指定されていればそれを選択
                                             Dim selected_num As Integer = 1
-                                            If Val(d(2)) >= 33024 And Val(d(2)) < 33792 And use_num_bon(5).Length > 0 Then
+                                            If Val(d(2)) >= SPHD_sid_start And Val(d(2)) <= SPHD_sid_end And use_num_bon(5).Length > 0 Then
                                                 'プレミアム
                                                 bhtml = bhtml.Replace(use_num_bon(5).ToLower & """>", use_num_bon(5) & """ selected>")
                                                 selected_num = Val(use_num_bon(4))
@@ -393,12 +393,12 @@ Module モジュール_番組表
                             'プレミアム指定
                             If TvProgramEDCB_premium = 0 Then
                                 'プレミアム指定されて無い場合はプレミアムのものは無視
-                                If ch_list(i).sid >= 33024 And ch_list(i).sid < 33792 Then
+                                If ch_list(i).sid >= SPHD_sid_start And ch_list(i).sid <= SPHD_sid_end Then
                                     chk_j = 1
                                 End If
                             Else
                                 'プレミアム指定されている場合、sidがプレミアム範囲に無いものは無視
-                                If ch_list(i).sid < 33024 Or ch_list(i).sid >= 33792 Then
+                                If ch_list(i).sid < SPHD_sid_start Or ch_list(i).sid > SPHD_sid_end Then
                                     chk_j = 1
                                 End If
                             End If

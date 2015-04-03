@@ -1294,6 +1294,16 @@ Class WebRemocon
                                 TvProgram_SelectUptoNum = Val(youso(1).ToString)
                             Case "OLDTS_NODELETE"
                                 OLDTS_NODELETE = Val(youso(1).ToString)
+                            Case "RecTask_SPHD"
+                                RecTask_SPHD = trim8(youso(1).ToString)
+                                If RecTask_SPHD.Length > 0 Then
+                                    If file_exist(RecTask_SPHD) <= 0 Then
+                                        log1write("【エラー】" & RecTask_SPHD & " が見つかりません")
+                                        RecTask_SPHD = ""
+                                    Else
+                                        log1write("スカパープレミアムSPHD用RecTaskとして " & RecTask_SPHD & " が指定されました")
+                                    End If
+                                End If
                         End Select
                     End If
                 Catch ex As Exception
@@ -1529,6 +1539,12 @@ Class WebRemocon
         Dim hlsapp2 As String = change_exe_name(hlsApp, num)
         If file_exist(hlsapp2) = 1 Then
             hlsApp = hlsapp2
+        End If
+
+        'プレミアムSPHDならばRecTask入れ替え
+        If RecTask_SPHD.Length > 0 And sid >= SPHD_sid_start And sid <= SPHD_sid_end Then
+            udpApp = RecTask_SPHD
+            log1write("SPHD用UDPアプリとして " & RecTask_SPHD & " を使用します")
         End If
 
         If num > MAX_STREAM_NUMBER Or num < 0 Then
