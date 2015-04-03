@@ -169,7 +169,8 @@ Public Class ProcessManager
                     If hls_only = 0 Then
                         '通常起動
                         Dim pipeListBefore As New List(Of Integer)()
-                        If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                        'If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                        If Path.GetFileName(udpApp).Contains("RecTask") Then
                             '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
                             Dim listOfPipes As String() = Nothing
                             listOfPipes = GetPipes()
@@ -226,7 +227,8 @@ Public Class ProcessManager
                         Dim chk As Integer = 0
                         While chk < 200
                             'RecTaskのパイプが増加するまで繰り返す
-                            If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                            'If Path.GetFileName(udpApp).Equals("RecTask.exe") Then
+                            If Path.GetFileName(udpApp).Contains("RecTask") Then
                                 '★実行されている名前付きパイプのリストを取得する(プロセス実行後)
                                 Dim listOfPipes As String() = Nothing
                                 'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
