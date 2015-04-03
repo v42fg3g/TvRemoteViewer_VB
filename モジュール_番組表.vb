@@ -876,6 +876,33 @@ Module モジュール_番組表
                                         chk = 1
                                     End If
 
+                                    'NG処理
+                                    If chk = 0 Then
+                                        If a = 0 Then
+                                            'ネット番組表
+                                            If TvProgram_NGword IsNot Nothing Then
+                                                For j As Integer = 0 To TvProgram_NGword.Length - 1
+                                                    If StrConv(p.stationDispName, VbStrConv.Wide) = StrConv(TvProgram_NGword(j), VbStrConv.Wide) Then
+                                                        chk = 1
+                                                        Exit For
+                                                    End If
+                                                Next
+                                            End If
+                                        ElseIf a = 998 Then
+                                            'EDCBは番組表取得時にNG済
+                                        ElseIf a = 999 Then
+                                            'TvRock
+                                            If TvProgramTvRock_NGword IsNot Nothing Then
+                                                For j As Integer = 0 To TvProgramTvRock_NGword.Length - 1
+                                                    If StrConv(p.stationDispName, VbStrConv.Wide) = StrConv(TvProgramTvRock_NGword(j), VbStrConv.Wide) Then
+                                                        chk = 1
+                                                        Exit For
+                                                    End If
+                                                Next
+                                            End If
+                                        End If
+                                    End If
+
                                     If chk = 0 Then
                                         Dim startt As String = ""
                                         Dim endt As String = ""

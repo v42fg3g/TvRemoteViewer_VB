@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.12
+TvRemoteViewer_VB v1.13
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -475,6 +475,7 @@ TvRemoteViewer_VB v1.12
 		EDCB番組表上でのマッチングバグを修正、とともにTSIDでもチェックするようにした
 	1.12	WI番組情報内のカンマを全角に変換するようにした
 		iniにスカパープレミアムSPHD視聴時に使用するRecTaskを指定できるようにした(RecTask_SPHD)
+	1.13	WI番組情報取得（地デジ・TvRock）においてNG局が表示されてしまっていたバグを修正
 
 
 
