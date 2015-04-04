@@ -396,7 +396,7 @@ Module モジュール_番組表
                                 If ch_list(i).sid >= SPHD_sid_start And ch_list(i).sid <= SPHD_sid_end Then
                                     chk_j = 1
                                 End If
-                            Else
+                            ElseIf TvProgramEDCB_premium = 1 Then
                                 'プレミアム指定されている場合、sidがプレミアム範囲に無いものは無視
                                 If ch_list(i).sid < SPHD_sid_start Or ch_list(i).sid > SPHD_sid_end Then
                                     chk_j = 1
@@ -930,7 +930,7 @@ Module モジュール_番組表
                                         End If
 
                                         'html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & p.programTitle & "," & p.programContent & vbCrLf
-                                        html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & p.programTitle.Replace(",", "，") & "," & p.programContent.Replace(",", "，") & vbCrLf
+                                        html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & escape_program_str(p.programTitle) & "," & escape_program_str(p.programContent) & vbCrLf
 
                                         chkstr &= s4 & ":"
                                     End If
@@ -976,6 +976,18 @@ Module モジュール_番組表
         End If
 
         Return html_all
+    End Function
+
+    '番組表で使えない文字をエスケープ
+    Public Function escape_program_str(ByVal s As String) As String
+        Dim r As String = ""
+        s = s.Replace(",", "，")
+        s = s.Replace("<", "＜")
+        s = s.Replace(">", "＞")
+        '念のため
+        s = s.Replace("&lt;", "＜")
+        s = s.Replace("&gt;", "＞")
+        Return s
     End Function
 
 End Module
