@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.14
+TvRemoteViewer_VB v1.15
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -478,6 +478,8 @@ TvRemoteViewer_VB v1.14
 	1.13	WI番組情報取得（地デジ・TvRock）においてNG局が表示されてしまっていたバグを修正
 	1.14	RecTaskがチャンネル切り替えに失敗した時に配信を続けようとしていたバグを修正
 		WEBインターフェース、ログを表示(WI_SHOW_LOG.html）を追加
+	1.15	番組表内の<>をエスケープ
+		TvProgramEDCB_premiumの仕様変更（0=全て 1=SPHDのみ 2=SPHD以外)
 
 
 
