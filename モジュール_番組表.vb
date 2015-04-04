@@ -391,14 +391,14 @@ Module モジュール_番組表
                         For i As Integer = 0 To ch_list.Length - 1
                             Dim chk_j As Integer = 0
                             'プレミアム指定
-                            If TvProgramEDCB_premium = 0 Then
-                                'プレミアム指定されて無い場合はプレミアムのものは無視
-                                If ch_list(i).sid >= SPHD_sid_start And ch_list(i).sid <= SPHD_sid_end Then
+                            If TvProgramEDCB_premium = 1 Then
+                                'プレミアム指定されている場合、プレミアム以外は無視
+                                If ch_list(i).sid < SPHD_sid_start Or ch_list(i).sid > SPHD_sid_end Then
                                     chk_j = 1
                                 End If
-                            ElseIf TvProgramEDCB_premium = 1 Then
-                                'プレミアム指定されている場合、sidがプレミアム範囲に無いものは無視
-                                If ch_list(i).sid < SPHD_sid_start Or ch_list(i).sid > SPHD_sid_end Then
+                            ElseIf TvProgramEDCB_premium = 2 Then
+                                'プレミアムを表示しないよう指定されている場合はプレミアムは無視
+                                If ch_list(i).sid >= SPHD_sid_start And ch_list(i).sid <= SPHD_sid_end Then
                                     chk_j = 1
                                 End If
                             End If
