@@ -948,9 +948,11 @@ Module モジュール_番組表
         s = s.Replace(",", "，")
         s = s.Replace("<", "＜")
         s = s.Replace(">", "＞")
+        s = s.Replace("&", "＆")
         '念のため
         s = s.Replace("&lt;", "＜")
         s = s.Replace("&gt;", "＞")
+        s = s.Replace("&amp;", "＆")
         Return s
     End Function
 
