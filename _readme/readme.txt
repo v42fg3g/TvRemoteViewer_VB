@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.15
+TvRemoteViewer_VB v1.16
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -481,6 +481,7 @@ TvRemoteViewer_VB v1.15
 	1.15	番組表内の<>をエスケープ
 		TvProgramEDCB_premiumの仕様変更（0=全て 1=SPHDのみ 2=SPHD以外)
 		EDCBとTvRockの番組表の放送局NG指定にサービスIDを使用できるようにした(数値ならサービスID)
+	1.16	EDCBの番組表に表示すべき局をEDCBのWEBサービスから取得するようにした
 
 
 

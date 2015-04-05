@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.15"
+    Private version As String = "TvRemoteViewer_VB version 1.16"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -401,6 +401,9 @@ Public Class Form1
 
         'ビデオフォルダ　更新監視スタート
         start_watch_folders()
+
+        'EDCB番組表に表示する局（TSID）を取得
+        EDCB_GET_TSID()
 
         '無事起動
         TvRemoteViewer_VB_Start = 1
