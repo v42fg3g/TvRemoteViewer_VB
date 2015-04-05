@@ -37,8 +37,9 @@ Module モジュール_番組表
         Public tsid As Integer
     End Structure
 
-    'EDCB番組表で表示するTSID(放送局）
+    'EDCB番組表で表示する放送局
     Public EDCB_TSID() As Integer
+    Public EDCB_SID() As Integer
 
     Public Structure TVprogram_html_structure
         Public stationDispName As String
@@ -378,7 +379,7 @@ Module モジュール_番組表
                 If TvProgram_EDCB_url.Length > 0 Then
                     If EDCB_TSID IsNot Nothing Then
                         For k As Integer = 0 To EDCB_TSID.Length - 1
-                            Dim i As Integer = check_TSID_in_chlist(EDCB_TSID(k))
+                            Dim i As Integer = check_TSID_in_chlist(EDCB_TSID(k), EDCB_SID(k))
                             If i >= 0 Then
                                 Dim chk_j As Integer = 0
                                 'プレミアム指定（1.16からは指定しなくてもOK）
@@ -1009,19 +1010,54 @@ Module モジュール_番組表
                         While sp > 0
                             Dim dex1 As String = Instr_pickup(html, "option value=""", """", sp, ep)
                             Dim tsid_long As String = Hex(dex1) '16進数に変換
-                            Dim tsid_hex As String = tsid_long.Substring(0, 4) '初めの4文字
-                            Dim tsid As Integer = h16_10("0x" & tsid_hex)
-
-                            'ch_listに存在するTSIDならばリストに追加
-                            If i = 0 Then
-                                ReDim Preserve EDCB_TSID(i)
-                                EDCB_TSID(i) = tsid
-                                i += 1
+                            Dim tsid_hex As String = ""
+                            Dim tsid As Integer = 0
+                            Dim sid_hex As String = ""
+                            Dim sid As Integer = 0
+                            If tsid_long.Length = 12 Then
+                                '地デジ
+                                tsid_hex = tsid_long.Substring(0, 4) '初めの4文字
+                                tsid = h16_10("0x" & tsid_hex)
+                                sid_hex = tsid_long.Substring(8, 4) '最後の4文字
+                                sid = h16_10("0x" & sid_hex)
+                            ElseIf tsid_long.Length = 9 Then
+                                'BS/CS
+                                tsid_hex = tsid_long.Substring(1, 4) '初めの4文字
+                                tsid = h16_10("0x" & tsid_hex)
+                                sid_hex = tsid_long.Substring(5, 4) '最後の4文字
+                                sid = h16_10("0x" & sid_hex)
                             Else
-                                If Array.IndexOf(EDCB_TSID, tsid) < 0 Then
+                                '未知の形式
+                                log1write("【エラー】EDCB番組表 " & tsid_long & " は未知のTSID/SID形式です")
+                            End If
+
+                            If tsid > 0 And sid > 0 Then
+                                'ch_listに存在するTSIDならばリストに追加
+                                If i = 0 Then
                                     ReDim Preserve EDCB_TSID(i)
                                     EDCB_TSID(i) = tsid
+                                    ReDim Preserve EDCB_SID(i)
+                                    EDCB_SID(i) = sid
                                     i += 1
+                                Else
+                                    Dim si As Integer = Array.IndexOf(EDCB_SID, sid)
+                                    If si < 0 Then
+                                        ReDim Preserve EDCB_TSID(i)
+                                        EDCB_TSID(i) = tsid
+                                        ReDim Preserve EDCB_SID(i)
+                                        EDCB_SID(i) = sid
+                                        i += 1
+                                    Else
+                                        '重複有り
+                                        If EDCB_TSID(si) <> tsid Then
+                                            'TSIDが違えば登録
+                                            ReDim Preserve EDCB_TSID(i)
+                                            EDCB_TSID(i) = tsid
+                                            ReDim Preserve EDCB_SID(i)
+                                            EDCB_SID(i) = sid
+                                            i += 1
+                                        End If
+                                    End If
                                 End If
                             End If
 
@@ -1047,16 +1083,25 @@ Module モジュール_番組表
     End Sub
 
     '指定したTSIDがch_list()内に存在すればindexを返す 存在しなければ-1
-    Public Function check_TSID_in_chlist(ByVal tsid As Integer) As Integer
+    Public Function check_TSID_in_chlist(ByVal tsid As Integer, ByVal sid As Integer) As Integer
         Dim r = -1
-        If tsid > 0 Then
+        If sid > 0 Then
             If ch_list IsNot Nothing Then
                 For i As Integer = 0 To ch_list.Length - 1
-                    If tsid = ch_list(i).tsid Then
+                    If tsid = ch_list(i).tsid And sid = ch_list(i).sid Then
                         r = i
                         Exit For
                     End If
                 Next
+                If r < 0 Then
+                    '完全一致がなければSIDのみ一致を探す
+                    For i As Integer = 0 To ch_list.Length - 1
+                        If sid = ch_list(i).sid Then
+                            r = i
+                            Exit For
+                        End If
+                    Next
+                End If
             End If
         End If
         Return r
