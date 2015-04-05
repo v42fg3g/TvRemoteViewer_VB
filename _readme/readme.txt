@@ -480,6 +480,7 @@ TvRemoteViewer_VB v1.15
 		WEBインターフェース、ログを表示(WI_SHOW_LOG.html）を追加
 	1.15	番組表内の<>をエスケープ
 		TvProgramEDCB_premiumの仕様変更（0=全て 1=SPHDのみ 2=SPHD以外)
+		EDCBとTvRockの番組表の放送局NG指定にサービスIDを使用できるようにした(数値ならサービスID)
 
 
 

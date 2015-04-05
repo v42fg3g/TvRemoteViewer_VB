@@ -87,26 +87,12 @@ Module モジュール_番組表
                                     Dim chk As Integer = 0
                                     If a = 0 Then
                                         'ネット番組表
-                                        If TvProgram_NGword IsNot Nothing Then
-                                            For j As Integer = 0 To TvProgram_NGword.Length - 1
-                                                If StrConv(p.stationDispName, VbStrConv.Wide) = StrConv(TvProgram_NGword(j), VbStrConv.Wide) Then
-                                                    chk = 1
-                                                    Exit For
-                                                End If
-                                            Next
-                                        End If
+                                        chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
                                     ElseIf a = 998 Then
                                         'EDCBは番組表取得時にNG済
                                     ElseIf a = 999 Then
                                         'TvRock
-                                        If TvProgramTvRock_NGword IsNot Nothing Then
-                                            For j As Integer = 0 To TvProgramTvRock_NGword.Length - 1
-                                                If StrConv(p.stationDispName, VbStrConv.Wide) = StrConv(TvProgramTvRock_NGword(j), VbStrConv.Wide) Then
-                                                    chk = 1
-                                                    Exit For
-                                                End If
-                                            Next
-                                        End If
+                                        chk = isMATCHhosokyoku(TvProgramTvRock_NGword, p.stationDispName, p.sid)
                                     End If
 
                                     If chk = 0 Then
@@ -404,25 +390,11 @@ Module モジュール_番組表
                             End If
                             'NGワードに指定されているものは無視
                             If chk_j = 0 Then
-                                If TvProgramEDCB_NGword IsNot Nothing Then
-                                    For j As Integer = 0 To TvProgramEDCB_NGword.Length - 1
-                                        If StrConv(ch_list(i).jigyousha, VbStrConv.Wide) = StrConv(TvProgramEDCB_NGword(j), VbStrConv.Wide) Then
-                                            chk_j = 1
-                                            Exit For
-                                        End If
-                                    Next
-                                End If
+                                chk_j = isMATCHhosokyoku(TvProgramEDCB_NGword, ch_list(i).jigyousha, ch_list(i).sid)
                             End If
                             '番組情報を取得しないものは無視
                             If chk_j = 0 Then
-                                If TvProgramEDCB_ignore IsNot Nothing Then
-                                    For j As Integer = 0 To TvProgramEDCB_ignore.Length - 1
-                                        If StrConv(ch_list(i).jigyousha, VbStrConv.Wide) = StrConv(TvProgramEDCB_ignore(j), VbStrConv.Wide) Then
-                                            chk_j = 2
-                                            Exit For
-                                        End If
-                                    Next
-                                End If
+                                chk_j = isMATCHhosokyoku(TvProgramEDCB_ignore, ch_list(i).jigyousha, ch_list(i).sid)
                             End If
 
                             If chk_j = 0 Then
@@ -880,26 +852,12 @@ Module モジュール_番組表
                                     If chk = 0 Then
                                         If a = 0 Then
                                             'ネット番組表
-                                            If TvProgram_NGword IsNot Nothing Then
-                                                For j As Integer = 0 To TvProgram_NGword.Length - 1
-                                                    If StrConv(p.stationDispName, VbStrConv.Wide) = StrConv(TvProgram_NGword(j), VbStrConv.Wide) Then
-                                                        chk = 1
-                                                        Exit For
-                                                    End If
-                                                Next
-                                            End If
+                                            chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
                                         ElseIf a = 998 Then
                                             'EDCBは番組表取得時にNG済
                                         ElseIf a = 999 Then
                                             'TvRock
-                                            If TvProgramTvRock_NGword IsNot Nothing Then
-                                                For j As Integer = 0 To TvProgramTvRock_NGword.Length - 1
-                                                    If StrConv(p.stationDispName, VbStrConv.Wide) = StrConv(TvProgramTvRock_NGword(j), VbStrConv.Wide) Then
-                                                        chk = 1
-                                                        Exit For
-                                                    End If
-                                                Next
-                                            End If
+                                            chk = isMATCHhosokyoku(TvProgramTvRock_NGword, p.stationDispName, p.sid)
                                         End If
                                     End If
 
@@ -990,4 +948,29 @@ Module モジュール_番組表
         Return s
     End Function
 
+    'ngword()に局がマッチしているかチェック
+    Public Function isMATCHhosokyoku(ByVal ngwords As Object, ByVal name As String, Optional ByVal sid As Integer = 0) As Integer
+        'ngword()に指定されていれば1を返す
+        Dim r As Integer = 0
+        Dim i As Integer = 0
+        If ngwords IsNot Nothing Then
+            For j As Integer = 0 To ngwords.Length - 1
+                If IsNumeric(ngwords(j)) = True And sid > 0 Then
+                    'サービスIDで指定
+                    If sid = Val(ngwords(j)) Then
+                        r = 1
+                        Exit For
+                    End If
+                Else
+                    '局名で指定
+                    If StrConv(name, VbStrConv.Wide) = StrConv(ngwords(j), VbStrConv.Wide) Then
+                        r = 1
+                        Exit For
+                    End If
+                End If
+            Next
+        End If
+
+        Return r
+    End Function
 End Module
