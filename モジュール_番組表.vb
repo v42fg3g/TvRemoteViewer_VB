@@ -383,7 +383,6 @@ Module モジュール_番組表
 
                             'EDCB番組表に存在しているかチェック
                             Dim ct As Integer = check_TSID_in_EDCBprogram(ch_list(i).tsid, ch_list(i).sid)
-                            Debug.Print("[ct=" & ct & "]")
                             If ct < 0 Then
                                 '存在していない
                                 chk_j = 1

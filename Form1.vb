@@ -786,7 +786,7 @@ Public Class Form1
                     If line(i).IndexOf(";") < 0 Then
                         Dim s() As String = line(i).Split(",")
                         If s.Length = 9 Then
-                            If IsNumeric(s(1)) And IsNumeric(s(5)) And IsNumeric(s(6)) Then 'サービスID,TSIDが数値なら
+                            If IsNumeric(s(1)) And IsNumeric(s(5)) And IsNumeric(s(7)) Then 'サービスID,TSIDが数値なら
                                 ComboBoxServiceID.Items.Add(s(0) & " ," & s(5) & "," & s(1))
                             End If
                         End If

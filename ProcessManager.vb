@@ -1499,15 +1499,15 @@ Public Class ProcessManager
                         If line(i).IndexOf(";") < 0 Then
                             Dim s() As String = line(i).Split(",")
                             If s.Length = 9 Then
-                                If IsNumeric(s(1)) And IsNumeric(s(5)) And IsNumeric(s(6)) Then 'サービスID,TSIDが数値なら
+                                If IsNumeric(s(1)) And IsNumeric(s(5)) And IsNumeric(s(7)) Then 'サービスID,TSIDが数値なら
                                     ichiran &= bondriver & "," & s(5) & "," & s(1) & "," & s(0) & vbCrLf
 
                                     'serviceIDと放送局名を記録しておく
                                     If ch_list IsNot Nothing Then
                                         Dim chk As Integer = 0
                                         For i2 As Integer = 0 To ch_list.Length - 1
-                                            If ch_list(i2).sid = Val(s(5)) And ch_list(i2).chspace = s(1) Then
-                                                'サービスIDとchspaceが一致した
+                                            If ch_list(i2).sid = Val(s(5)) And ch_list(i2).tsid = Val(s(7)) Then
+                                                'サービスIDとTSIDが一致した
                                                 'すでに登録済み
                                                 chk = 1
                                                 Exit For
