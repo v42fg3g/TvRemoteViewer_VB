@@ -1499,42 +1499,44 @@ Public Class ProcessManager
                         If line(i).IndexOf(";") < 0 Then
                             Dim s() As String = line(i).Split(",")
                             If s.Length = 9 Then
-                                ichiran &= bondriver & "," & s(5) & "," & s(1) & "," & s(0) & vbCrLf
+                                If IsNumeric(s(1)) And IsNumeric(s(5)) And IsNumeric(s(6)) Then 'サービスID,TSIDが数値なら
+                                    ichiran &= bondriver & "," & s(5) & "," & s(1) & "," & s(0) & vbCrLf
 
-                                'serviceIDと放送局名を記録しておく
-                                If ch_list IsNot Nothing Then
-                                    Dim chk As Integer = 0
-                                    For i2 As Integer = 0 To ch_list.Length - 1
-                                        If ch_list(i2).sid = Val(s(5)) And ch_list(i2).chspace = s(1) Then
-                                            'サービスIDとchspaceが一致した
-                                            'すでに登録済み
-                                            chk = 1
-                                            Exit For
+                                    'serviceIDと放送局名を記録しておく
+                                    If ch_list IsNot Nothing Then
+                                        Dim chk As Integer = 0
+                                        For i2 As Integer = 0 To ch_list.Length - 1
+                                            If ch_list(i2).sid = Val(s(5)) And ch_list(i2).chspace = s(1) Then
+                                                'サービスIDとchspaceが一致した
+                                                'すでに登録済み
+                                                chk = 1
+                                                Exit For
+                                            End If
+                                        Next
+                                        If chk = 0 Then
+                                            'まだ登録されていなければ
+                                            ReDim Preserve ch_list(si)
+                                            ch_list(si).sid = Val(s(5))
+                                            ch_list(si).jigyousha = s(0)
+                                            ch_list(si).bondriver = bondriver
+                                            ch_list(si).chspace = Val(s(1))
+                                            ch_list(si).channel = Val(s(2))
+                                            ch_list(si).tsid = Val(s(7))
+                                            ch_list(si).nid = Val(s(6))
+                                            si += 1
                                         End If
-                                    Next
-                                    If chk = 0 Then
-                                        'まだ登録されていなければ
-                                        ReDim Preserve ch_list(si)
-                                        ch_list(si).sid = Val(s(5))
-                                        ch_list(si).jigyousha = s(0)
-                                        ch_list(si).bondriver = bondriver
-                                        ch_list(si).chspace = Val(s(1))
-                                        ch_list(si).channel = Val(s(2))
-                                        ch_list(si).tsid = Val(s(7))
-                                        ch_list(si).nid = Val(s(6))
+                                    Else
+                                        '最初の１つめ
+                                        ReDim Preserve ch_list(0)
+                                        ch_list(0).sid = Val(s(5))
+                                        ch_list(0).jigyousha = s(0)
+                                        ch_list(0).bondriver = bondriver
+                                        ch_list(0).chspace = Val(s(1))
+                                        ch_list(0).channel = Val(s(2))
+                                        ch_list(0).tsid = Val(s(7))
+                                        ch_list(0).nid = Val(s(6))
                                         si += 1
                                     End If
-                                Else
-                                    '最初の１つめ
-                                    ReDim Preserve ch_list(0)
-                                    ch_list(0).sid = Val(s(5))
-                                    ch_list(0).jigyousha = s(0)
-                                    ch_list(0).bondriver = bondriver
-                                    ch_list(0).chspace = Val(s(1))
-                                    ch_list(0).channel = Val(s(2))
-                                    ch_list(0).tsid = Val(s(7))
-                                    ch_list(0).nid = Val(s(6))
-                                    si += 1
                                 End If
                             End If
                         End If

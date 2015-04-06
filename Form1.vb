@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.16"
+    Private version As String = "TvRemoteViewer_VB version 1.17"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -786,7 +786,9 @@ Public Class Form1
                     If line(i).IndexOf(";") < 0 Then
                         Dim s() As String = line(i).Split(",")
                         If s.Length = 9 Then
-                            ComboBoxServiceID.Items.Add(s(0) & " ," & s(5) & "," & s(1))
+                            If IsNumeric(s(1)) And IsNumeric(s(5)) And IsNumeric(s(6)) Then 'サービスID,TSIDが数値なら
+                                ComboBoxServiceID.Items.Add(s(0) & " ," & s(5) & "," & s(1))
+                            End If
                         End If
                     End If
                 Next
