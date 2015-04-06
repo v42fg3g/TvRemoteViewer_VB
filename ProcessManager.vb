@@ -1426,9 +1426,8 @@ Public Class ProcessManager
         Try
             For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
                 If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
-                    Dim s As String = stFilePath & System.Environment.NewLine
+                    Dim s As String = stFilePath
                     'フルパスファイル名がsに入る
-                    Dim fpf As String = trim8(s)
                     If s.IndexOf("\") >= 0 Then
                         'ファイル名だけを取り出す
                         Dim k As Integer = s.LastIndexOf("\")

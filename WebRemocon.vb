@@ -405,6 +405,7 @@ Class WebRemocon
         Dim i, k As Integer
         If Me._videopath IsNot Nothing Then
             If Me._videopath.Length > 0 Then
+
                 For i = 0 To Me._videopath.Length - 1
                     If Me._videopath(i).Length > 0 Then
                         Try
@@ -412,8 +413,7 @@ Class WebRemocon
                             'For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
                             For Each stFilePath As String In files
                                 Try
-                                    Dim fullpath As String = stFilePath & System.Environment.NewLine
-                                    fullpath = trim8(fullpath)
+                                    Dim fullpath As String = stFilePath
                                     '拡張子を取得
                                     Dim ext As String = System.IO.Path.GetExtension(fullpath)
                                     '表示拡張子が指定されていれば該当するかチェックする
@@ -467,13 +467,18 @@ Class WebRemocon
                                         End If
 
                                         If filename.Length > 0 Then
-                                            ReDim Preserve video2(cnt)
-                                            video2(cnt).fullpathfilename = fullpath
-                                            video2(cnt).filename = filename
-                                            video2(cnt).encstr = encstr
-                                            video2(cnt).modifytime = modifytime
-                                            video2(cnt).datestr = datestr
-                                            cnt += 1
+                                            'ファイルのサイズを取得 fi.length
+                                            Dim fi As New System.IO.FileInfo(fullpath)
+                                            If fi.Length > 100 Then
+                                                '登録
+                                                ReDim Preserve video2(cnt)
+                                                video2(cnt).fullpathfilename = fullpath
+                                                video2(cnt).filename = filename
+                                                video2(cnt).encstr = encstr
+                                                video2(cnt).modifytime = modifytime
+                                                video2(cnt).datestr = datestr
+                                                cnt += 1
+                                            End If
                                         End If
                                     End If
                                 Catch ex As Exception
@@ -685,14 +690,10 @@ Class WebRemocon
             Try
                 For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
                     If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
-                        Dim s As String = stFilePath & System.Environment.NewLine
+                        Dim s As String = stFilePath
                         'フルパスファイル名がsに入る
-                        Dim fpf As String = trim8(s)
-                        If s.IndexOf("\") >= 0 Then
-                            'ファイル名だけを取り出す
-                            Dim k As Integer = s.LastIndexOf("\")
-                            s = trim8(s.Substring(k + 1))
-                        End If
+                        'ファイル名だけを取り出す
+                        s = Path.GetFileName(s)
                         Dim sl As String = s.ToLower() '小文字に変換
                         '表示しないBonDriverかをチェック
                         If Me._BonDriver_NGword IsNot Nothing Then
@@ -910,7 +911,7 @@ Class WebRemocon
             'tsチェック
             Dim ts_count As Integer = 0
             For Each stFilePath As String In System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "-*.ts")
-                s = stFilePath & System.Environment.NewLine
+                s = stFilePath
                 ts_count += 1
             Next
 
@@ -3002,7 +3003,7 @@ Class WebRemocon
         'tsチェック
         Dim ts_count As Integer = 0
         For Each stFilePath As String In System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "*.ts")
-            s = stFilePath & System.Environment.NewLine
+            s = stFilePath
             ts_count += 1
         Next
 

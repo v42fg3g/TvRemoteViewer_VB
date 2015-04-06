@@ -1,7 +1,9 @@
-﻿Imports System.Threading
+﻿Imports System
+Imports System.IO
+Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.17"
+    Private version As String = "TvRemoteViewer_VB version 1.18"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -77,6 +79,7 @@ Public Class Form1
 
     'タイマー　1秒ごとに実行
     Private Sub Timer1_Tick(sender As System.Object, e As System.EventArgs) Handles Timer1.Tick
+        Dim live_chk As Integer = -1
         If chk_timer1 = 0 Then '重複実行防止
             chk_timer1 = 1
 
@@ -99,6 +102,7 @@ Public Class Form1
 
             '現在稼働中のストリームをタスクトレイアイコンのマウスオーバー時に表示する
             Dim s As String = Me._worker.get_live_numbers()
+            live_chk = s.Length
             If s.Length > 1 Then
                 LabelStream.Text = "配信中：" & s 'ついでにフォーム上にも表示
                 s = "TvRemoteViewer_VB" & vbCrLf & "配信中：" & Trim(s)
@@ -139,11 +143,15 @@ Public Class Form1
             TextBoxLog.Refresh()
         End If
 
-        'ファイル一覧　最後の更新から10秒経ったらファイル一覧更新
-        Dim duration1 As TimeSpan = Now.Subtract(watcher_lasttime)
-        If duration1.TotalSeconds >= 10 Then
-            watcher_lasttime = C_DAY2038
-            Me._worker.make_file_select_html("", 1, C_DAY2038, 0)
+        If live_chk > 1 Or live_chk = -1 Then
+            'ストリーム再生中、またはノーチェックならファイル一覧は更新しない
+        Else
+            'ファイル一覧　最後の更新から10秒経ったらファイル一覧更新
+            Dim duration1 As TimeSpan = Now.Subtract(watcher_lasttime)
+            If duration1.TotalSeconds >= 10 Then
+                watcher_lasttime = C_DAY2038
+                Me._worker.make_file_select_html("", 1, C_DAY2038, 0)
+            End If
         End If
 
     End Sub
@@ -482,7 +490,7 @@ Public Class Form1
                 Try
                     For Each stFilePath As String In System.IO.Directory.GetFiles(f_bondriver, "*.dll")
                         If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
-                            Dim s As String = trim8(stFilePath & System.Environment.NewLine)
+                            Dim s As String = trim8(stFilePath)
                             Dim bonfile As String = IO.Path.GetFileName(s).ToLower 'ファイル名
                             '表示しないBonDriverかをチェック
                             If BonDriver_NGword IsNot Nothing Then
@@ -732,14 +740,10 @@ Public Class Form1
         Try
             For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
                 If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
-                    Dim s As String = stFilePath & System.Environment.NewLine
+                    Dim s As String = stFilePath
                     'フルパスファイル名がsに入る
-                    Dim fpf As String = trim8(s)
-                    If s.IndexOf("\") >= 0 Then
-                        'ファイル名だけを取り出す
-                        Dim k As Integer = s.LastIndexOf("\")
-                        s = trim8(s.Substring(k + 1))
-                    End If
+                    'ファイル名だけを取り出す
+                    s = Path.GetFileName(s)
                     Dim sl As String = s.ToLower() '小文字に変換
                     '表示しないBonDriverかをチェック
                     If BonDriver_NGword IsNot Nothing Then
