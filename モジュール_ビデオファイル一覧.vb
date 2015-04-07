@@ -16,6 +16,9 @@
     'ファイル再生時に指定が無い場合にシークする秒数
     Public VideoSeekDefault As Integer = 0
 
+    'ファイル一覧作成時にサイズが0かどうかチェックする
+    Public VideoSizeCheck As Integer = 0
+
     '%VIDEOFROMDATE%　変換用
     Public VIDEOFROMDATE As DateTime = CDate("1970/01/01")
 

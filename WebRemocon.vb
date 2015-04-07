@@ -468,8 +468,12 @@ Class WebRemocon
 
                                         If filename.Length > 0 Then
                                             'ファイルのサイズを取得 fi.length
-                                            Dim fi As New System.IO.FileInfo(fullpath)
-                                            If fi.Length > 100 Then
+                                            Dim flength As Integer = 100
+                                            If VideoSizeCheck = 1 Then
+                                                Dim fi As New System.IO.FileInfo(fullpath)
+                                                flength = fi.Length
+                                            End If
+                                            If flength >= 100 Then
                                                 '登録
                                                 ReDim Preserve video2(cnt)
                                                 video2(cnt).fullpathfilename = fullpath
@@ -1293,6 +1297,8 @@ Class WebRemocon
                                 STOP_IDLEMINUTES = Val(youso(1).ToString)
                             Case "VideoSeekDefault"
                                 VideoSeekDefault = Val(youso(1).ToString)
+                            Case "VideoSizeCheck"
+                                VideoSizeCheck = Val(youso(1).ToString)
                             Case "TvProgram_SelectUptoNum"
                                 TvProgram_SelectUptoNum = Val(youso(1).ToString)
                             Case "OLDTS_NODELETE"
@@ -2973,6 +2979,7 @@ Class WebRemocon
         End If
         r &= "_AddSubFolder=" & Me._AddSubFolder & vbCrLf
         r &= "VideoSeekDefault=" & VideoSeekDefault & vbCrLf
+        r &= "VideoSizeCheck=" & VideoSizeCheck & vbCrLf
         r &= vbCrLf
         r &= "【HTTPストリーム再生】" & vbCrLf
         'HTTPストリーム再生にどのhlsアプリを使用するか 0=フォーム 1=vlc 2=ffmpeg
