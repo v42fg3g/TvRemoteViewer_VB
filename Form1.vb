@@ -143,11 +143,12 @@ Public Class Form1
             TextBoxLog.Refresh()
         End If
 
-        If live_chk > 1 Or live_chk = -1 Then
+        'ファイル一覧　最後の更新から10秒経ったらファイル一覧更新
+        Dim duration1 As TimeSpan = Now.Subtract(watcher_lasttime)
+        If (live_chk > 1 Or live_chk = -1) And duration1.TotalSeconds < 3700 Then
             'ストリーム再生中、またはノーチェックならファイル一覧は更新しない
+            'が、少なくとも1時間に1回は更新する
         Else
-            'ファイル一覧　最後の更新から10秒経ったらファイル一覧更新
-            Dim duration1 As TimeSpan = Now.Subtract(watcher_lasttime)
             If duration1.TotalSeconds >= 10 Then
                 watcher_lasttime = C_DAY2038
                 Me._worker.make_file_select_html("", 1, C_DAY2038, 0)

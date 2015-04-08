@@ -1281,7 +1281,7 @@ Public Class ProcessManager
                     Catch ex As Exception
                         m = -1
                     End Try
-                    m -= 5 '再生中の可能性もあるのでm3u8に書かれている最初のtsの5つ前まで残す
+                    m -= 10 '再生中の可能性もあるのでm3u8に書かれている最初のtsの10個前まで残す
                     'm3u8に書かれている最後のファイル
                     Dim mend As Integer = 999999999
                     sp = s.LastIndexOf("mystream" & n.ToString & "-")
