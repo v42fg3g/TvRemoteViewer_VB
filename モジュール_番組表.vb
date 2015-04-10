@@ -128,8 +128,8 @@ Module モジュール_番組表
                                             html &= "<span class=""p_time"">　</span><br>"
                                         End If
                                         If p.programTitle.Length > 0 Or p.programContent.Length > 0 Then
-                                            html &= "<span class=""p_title"">" & p.programTitle & "</span><br>" & vbCrLf
-                                            html &= "<span class=""p_content"">" & p.programContent & "</span><br>" & vbCrLf
+                                            html &= "<span class=""p_title"">" & escape_program_str(p.programTitle) & "</span><br>" & vbCrLf
+                                            html &= "<span class=""p_content"">" & escape_program_str(p.programContent) & "</span><br>" & vbCrLf
                                         Else
                                             '放送されていない
                                             html &= "<span class=""p_title"">" & "　" & "</span><br>" & vbCrLf
@@ -959,6 +959,11 @@ Module モジュール_番組表
     '番組表で使えない文字をエスケープ
     Public Function escape_program_str(ByVal s As String) As String
         Dim r As String = ""
+        '念のため
+        s = s.Replace("&lt;", "＜")
+        s = s.Replace("&gt;", "＞")
+        s = s.Replace("&amp;", "＆")
+        'エスケープするべき文字
         s = s.Replace(",", "，")
         s = s.Replace("<", "＜")
         s = s.Replace(">", "＞")
@@ -966,10 +971,6 @@ Module モジュール_番組表
         '改行をエスケープ
         s = s.Replace(vbCrLf, " ")
         s = s.Replace(vbLf, " ")
-        '念のため
-        s = s.Replace("&lt;", "＜")
-        s = s.Replace("&gt;", "＞")
-        s = s.Replace("&amp;", "＆")
         Return s
     End Function
 
