@@ -35,6 +35,7 @@ Module モジュール_番組表
         Public programContent As String
         Public sid As Integer
         Public tsid As Integer
+        Public nextFlag As Integer '次の番組なら1
     End Structure
 
     'EDCB番組表で表示する放送局
@@ -87,126 +88,128 @@ Module モジュール_番組表
                             'End If
                             If s4.Length > 0 Then
                                 If chkstr.IndexOf(":" & s4 & ":") < 0 Then '重複していないかチェック
-                                    'NG処理
-                                    Dim chk As Integer = 0
-                                    If a = 0 Then
-                                        'ネット番組表
-                                        chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
-                                    ElseIf a = 998 Then
-                                        'EDCBは番組表取得時にNG済
-                                    ElseIf a = 999 Then
-                                        'TvRock
-                                        chk = isMATCHhosokyoku(TvProgramTvRock_NGword, p.stationDispName, p.sid)
-                                    End If
-
-                                    If chk = 0 Then
-                                        Dim startt As String = ""
-                                        Dim endt As String = ""
-                                        Try
-                                            '時：分だけ取り出す
-                                            If p.startDateTime = "2038/01/01 23:59" Then
-                                                startt = ""
-                                            Else
-                                                startt = p.startDateTime.Substring(p.startDateTime.IndexOf(" "))
-                                            End If
-                                            If p.endDateTime = "2038/01/01 23:59" Then
-                                                endt = ""
-                                            Else
-                                                endt = p.endDateTime.Substring(p.endDateTime.IndexOf(" "))
-                                            End If
-                                        Catch ex As Exception
-                                        End Try
-
-                                        'BonDriver, sid, 事業者を取得
-                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid, p.tsid)
-                                        'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
-
-                                        html &= "<span class=""p_name"">" & d(0) & "　<span class=""p_name2"">(" & p.stationDispName & ")</span></span><br>" & vbCrLf 'p.stationDispName
-                                        If startt.Length > 0 Then
-                                            html &= "<span class=""p_time"">" & startt & " ～" & endt & "</span><br>"
-                                        Else
-                                            html &= "<span class=""p_time"">　</span><br>"
+                                    If p.nextFlag = 0 Then
+                                        'NG処理
+                                        Dim chk As Integer = 0
+                                        If a = 0 Then
+                                            'ネット番組表
+                                            chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
+                                        ElseIf a = 998 Then
+                                            'EDCBは番組表取得時にNG済
+                                        ElseIf a = 999 Then
+                                            'TvRock
+                                            chk = isMATCHhosokyoku(TvProgramTvRock_NGword, p.stationDispName, p.sid)
                                         End If
-                                        If p.programTitle.Length > 0 Or p.programContent.Length > 0 Then
-                                            html &= "<span class=""p_title"">" & escape_program_str(p.programTitle) & "</span><br>" & vbCrLf
-                                            html &= "<span class=""p_content"">" & escape_program_str(p.programContent) & "</span><br>" & vbCrLf
-                                        Else
-                                            '放送されていない
-                                            html &= "<span class=""p_title"">" & "　" & "</span><br>" & vbCrLf
-                                        End If
-                                        'html &= "<br>" & vbCrLf
-                                        chkstr &= s4 & ":"
 
-                                        If d(0).Length > 0 Then
-                                            hosokyoku = StrConv(d(0), VbStrConv.Wide)
-                                            '該当があれば選択済みにする
-                                            Dim bhtml As String = ""
-                                            Dim atag(3) As String 'ダミー
-                                            'bhtml = WEB_make_select_Bondriver_html(atag)
-                                            bhtml = html_selectbonsidch_a 'BonDriver一覧セレクトhtml
-                                            bhtml = bhtml.Replace("<script type=""text/javascript"" src=""ConnectedSelect.js""></script>", "") '余計な1行を消す
-                                            bhtml = bhtml.Replace(" id=""SEL1""", "") '余計な文字を消す
-                                            '優先的に割り当てるBonDriverが指定されていればそれを選択
-                                            Dim selected_num As Integer = 1
-                                            If Val(d(2)) >= SPHD_sid_start And Val(d(2)) <= SPHD_sid_end And use_num_bon(5).Length > 0 Then
-                                                'プレミアム
-                                                bhtml = bhtml.Replace(use_num_bon(5).ToLower & """>", use_num_bon(5) & """ selected>")
-                                                selected_num = Val(use_num_bon(4))
-                                            ElseIf Val(d(3)) = 1 And use_num_bon(3).Length > 0 Then
-                                                'CSでBonDriver指定があれば
-                                                bhtml = bhtml.Replace(use_num_bon(3).ToLower & """>", use_num_bon(3) & """ selected>")
-                                                selected_num = Val(use_num_bon(2))
-                                            ElseIf Val(d(2)) >= 1024 And use_num_bon(1).Length > 0 Then
-                                                '地デジ
-                                                bhtml = bhtml.Replace(use_num_bon(1).ToLower & """>", use_num_bon(1) & """ selected>")
-                                                selected_num = Val(use_num_bon(0))
-                                            ElseIf Val(d(2)) < 1024 And use_num_bon(3).Length > 0 Then
-                                                'BS
-                                                bhtml = bhtml.Replace(use_num_bon(3).ToLower & """>", use_num_bon(3) & """ selected>")
-                                                selected_num = Val(use_num_bon(2))
-                                            Else
-                                                '指定無し
-                                                bhtml = bhtml.Replace(d(1) & """>", d(1) & """ selected>")
-                                                selected_num = 1
-                                            End If
-
-                                            html &= "<form action=""StartTV.html"">" & vbCrLf
-                                            html &= "<select name=""num"">" & vbCrLf
-                                            For ix = 1 To MAX_STREAM_NUMBER
-                                                If ix = selected_num Then
-                                                    html &= "<option selected>" & ix.ToString & "</option>" & vbCrLf
+                                        If chk = 0 Then
+                                            Dim startt As String = ""
+                                            Dim endt As String = ""
+                                            Try
+                                                '時：分だけ取り出す
+                                                If p.startDateTime = "2038/01/01 23:59" Then
+                                                    startt = ""
                                                 Else
-                                                    html &= "<option>" & ix.ToString & "</option>" & vbCrLf
+                                                    startt = p.startDateTime.Substring(p.startDateTime.IndexOf(" "))
                                                 End If
-                                            Next
-                                            html &= "</select>" & vbCrLf
-                                            html &= bhtml & vbCrLf
-                                            html &= "%SELECTRESOLUTION%" & vbCrLf '解像度選択
-                                            html &= "<input type=""hidden"" name=""ServiceID"" value=""" & d(2) & """>" & vbCrLf
-                                            html &= "<input type=""hidden"" name=""ChSpace"" value=""" & d(3) & """>" & vbCrLf
-                                            html &= "<span class=""p_hosokyoku""> " & d(0) & " </span>" & vbCrLf
-                                            'NHK音声選択
-                                            If hosokyoku.IndexOf("ＮＨＫ") >= 0 Then
-                                                If NHKMODE = 3 Then
-                                                    html &= WEB_make_NHKMODE_html_B()
-                                                ElseIf NHKMODE >= 0 Then
-                                                    html &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
+                                                If p.endDateTime = "2038/01/01 23:59" Then
+                                                    endt = ""
+                                                Else
+                                                    endt = p.endDateTime.Substring(p.endDateTime.IndexOf(" "))
                                                 End If
+                                            Catch ex As Exception
+                                            End Try
+
+                                            'BonDriver, sid, 事業者を取得
+                                            Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid, p.tsid)
+                                            'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
+
+                                            html &= "<span class=""p_name"">" & d(0) & "　<span class=""p_name2"">(" & p.stationDispName & ")</span></span><br>" & vbCrLf 'p.stationDispName
+                                            If startt.Length > 0 Then
+                                                html &= "<span class=""p_time"">" & startt & " ～" & endt & "</span><br>"
+                                            Else
+                                                html &= "<span class=""p_time"">　</span><br>"
                                             End If
-                                            html &= "<input type=""submit"" value=""視聴"">" & vbCrLf
-                                            html &= "</form>" & vbCrLf
+                                            If p.programTitle.Length > 0 Or p.programContent.Length > 0 Then
+                                                html &= "<span class=""p_title"">" & escape_program_str(p.programTitle) & "</span><br>" & vbCrLf
+                                                html &= "<span class=""p_content"">" & escape_program_str(p.programContent) & "</span><br>" & vbCrLf
+                                            Else
+                                                '放送されていない
+                                                html &= "<span class=""p_title"">" & "　" & "</span><br>" & vbCrLf
+                                            End If
+                                            'html &= "<br>" & vbCrLf
+                                            chkstr &= s4 & ":"
+
+                                            If d(0).Length > 0 Then
+                                                hosokyoku = StrConv(d(0), VbStrConv.Wide)
+                                                '該当があれば選択済みにする
+                                                Dim bhtml As String = ""
+                                                Dim atag(3) As String 'ダミー
+                                                'bhtml = WEB_make_select_Bondriver_html(atag)
+                                                bhtml = html_selectbonsidch_a 'BonDriver一覧セレクトhtml
+                                                bhtml = bhtml.Replace("<script type=""text/javascript"" src=""ConnectedSelect.js""></script>", "") '余計な1行を消す
+                                                bhtml = bhtml.Replace(" id=""SEL1""", "") '余計な文字を消す
+                                                '優先的に割り当てるBonDriverが指定されていればそれを選択
+                                                Dim selected_num As Integer = 1
+                                                If Val(d(2)) >= SPHD_sid_start And Val(d(2)) <= SPHD_sid_end And use_num_bon(5).Length > 0 Then
+                                                    'プレミアム
+                                                    bhtml = bhtml.Replace(use_num_bon(5).ToLower & """>", use_num_bon(5) & """ selected>")
+                                                    selected_num = Val(use_num_bon(4))
+                                                ElseIf Val(d(3)) = 1 And use_num_bon(3).Length > 0 Then
+                                                    'CSでBonDriver指定があれば
+                                                    bhtml = bhtml.Replace(use_num_bon(3).ToLower & """>", use_num_bon(3) & """ selected>")
+                                                    selected_num = Val(use_num_bon(2))
+                                                ElseIf Val(d(2)) >= 1024 And use_num_bon(1).Length > 0 Then
+                                                    '地デジ
+                                                    bhtml = bhtml.Replace(use_num_bon(1).ToLower & """>", use_num_bon(1) & """ selected>")
+                                                    selected_num = Val(use_num_bon(0))
+                                                ElseIf Val(d(2)) < 1024 And use_num_bon(3).Length > 0 Then
+                                                    'BS
+                                                    bhtml = bhtml.Replace(use_num_bon(3).ToLower & """>", use_num_bon(3) & """ selected>")
+                                                    selected_num = Val(use_num_bon(2))
+                                                Else
+                                                    '指定無し
+                                                    bhtml = bhtml.Replace(d(1) & """>", d(1) & """ selected>")
+                                                    selected_num = 1
+                                                End If
+
+                                                html &= "<form action=""StartTV.html"">" & vbCrLf
+                                                html &= "<select name=""num"">" & vbCrLf
+                                                For ix = 1 To MAX_STREAM_NUMBER
+                                                    If ix = selected_num Then
+                                                        html &= "<option selected>" & ix.ToString & "</option>" & vbCrLf
+                                                    Else
+                                                        html &= "<option>" & ix.ToString & "</option>" & vbCrLf
+                                                    End If
+                                                Next
+                                                html &= "</select>" & vbCrLf
+                                                html &= bhtml & vbCrLf
+                                                html &= "%SELECTRESOLUTION%" & vbCrLf '解像度選択
+                                                html &= "<input type=""hidden"" name=""ServiceID"" value=""" & d(2) & """>" & vbCrLf
+                                                html &= "<input type=""hidden"" name=""ChSpace"" value=""" & d(3) & """>" & vbCrLf
+                                                html &= "<span class=""p_hosokyoku""> " & d(0) & " </span>" & vbCrLf
+                                                'NHK音声選択
+                                                If hosokyoku.IndexOf("ＮＨＫ") >= 0 Then
+                                                    If NHKMODE = 3 Then
+                                                        html &= WEB_make_NHKMODE_html_B()
+                                                    ElseIf NHKMODE >= 0 Then
+                                                        html &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
+                                                    End If
+                                                End If
+                                                html &= "<input type=""submit"" value=""視聴"">" & vbCrLf
+                                                html &= "</form>" & vbCrLf
+                                            End If
+                                            html &= "<br><br>" & vbCrLf
                                         End If
-                                        html &= "<br><br>" & vbCrLf
                                     End If
                                 End If
                             End If
 
-                                ReDim Preserve TvProgram_html(cnt)
-                                TvProgram_html(cnt).stationDispName = StrConv(p.stationDispName, VbStrConv.Wide)
-                                TvProgram_html(cnt).hosokyoku = hosokyoku
-                                TvProgram_html(cnt).html = html
-                                TvProgram_html(cnt).done = 0
-                                cnt += 1
+                            ReDim Preserve TvProgram_html(cnt)
+                            TvProgram_html(cnt).stationDispName = StrConv(p.stationDispName, VbStrConv.Wide)
+                            TvProgram_html(cnt).hosokyoku = hosokyoku
+                            TvProgram_html(cnt).html = html
+                            TvProgram_html(cnt).done = 0
+                            cnt += 1
                         Next
                     End If
                 End If
@@ -371,7 +374,7 @@ Module モジュール_番組表
     End Function
 
     '地域番号から番組表を取得
-    Public Function get_TVprogram_now(ByVal regionID As Integer) As Object
+    Public Function get_TVprogram_now(ByVal regionID As Integer, Optional ByVal getnext As Integer = 0) As Object
         Dim r() As TVprogramstructure = Nothing
         If regionID = 998 Then
             'EDCB
@@ -445,6 +448,8 @@ Module モジュール_番組表
                                         Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
                                         Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
                                         Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
+                                        '次番組を探すための文字列
+                                        Dim t2str As String = "<startDate>" & Year(t2) & "/" & Month(t2) & "/" & t2.Day & "</startDate><startTime>" & Hour(t2) & ":" & Minute(t2) & ":" & Second(t2) & "</startTime>"
 
                                         If t >= t1 And t < t2 Then
                                             Dim j As Integer = 0
@@ -466,8 +471,33 @@ Module モジュール_番組表
                                             r(j).sid = ch_list(i).sid
                                             r(j).tsid = ch_list(i).tsid '一致しない可能性がある
 
-                                            '1個みつかればおｋ
                                             chk = 1
+                                            If getnext > 0 Then
+                                                '次の番組を探す
+                                                sp = html.IndexOf(t2str)
+                                                If sp > 0 Then
+                                                    ep = html.IndexOf("</eventinfo>", sp)
+                                                    j = r.Length
+                                                    ReDim Preserve r(j)
+                                                    r(j).stationDispName = r(j - 1).stationDispName
+                                                    r(j).startDateTime = t2s
+                                                    t1long = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
+                                                    t1 = t2
+                                                    t2 = DateAdd(DateInterval.Minute, t1long, t1)
+                                                    t1s = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
+                                                    t2s = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
+                                                    r(j).endDateTime = t2s
+                                                    r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
+                                                    r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
+                                                    'sidを追加 
+                                                    'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
+                                                    r(j).sid = ch_list(i).sid
+                                                    r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+
+                                                    '次の番組であることを記録
+                                                    r(j).nextFlag = 1
+                                                End If
+                                            End If
                                             Exit While
                                         End If
                                     Catch ex As Exception
@@ -558,6 +588,26 @@ Module モジュール_番組表
                         'サービスIDを取得
                         sp3 = html.IndexOf("javascript:reserv(", sp3)
                         r(j).sid = Val(Instr_pickup(html, ",", ",", sp3))
+
+                        '次の番組を取得
+                        If getnext > 0 Then
+                            sp = html.IndexOf("><small><i>", sp2 + 1)
+                            Dim se As Integer = html.IndexOf(" <small><i>", sp2 + 1)
+                            If sp > 0 And sp < se Then
+                                '次の番組があれば
+                                j = r.Length
+                                ReDim Preserve r(j)
+                                r(j).stationDispName = r(j - 1).stationDispName
+                                r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<small><i>", "～", sp)))
+                                r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
+                                r(j).programTitle = Trim(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
+                                r(j).programContent = ""
+                                r(j).sid = r(j - 1).sid
+
+                                '次の番組であることを記録
+                                r(j).nextFlag = 1
+                            End If
+                        End If
 
                         sp2 = html.IndexOf(" <small><i>", sp2 + 1)
                         sp = html.LastIndexOf("><small>", sp2 + 1)
@@ -823,7 +873,7 @@ Module モジュール_番組表
     End Function
 
     'WEBインターフェース用　データを整形して返す
-    Public Function program_translate4WI(ByVal a As Integer) As String
+    Public Function program_translate4WI(ByVal a As Integer, Optional ByVal getnext As Integer = 0) As String
         'a=0 通常のインターネットから取得　 a=998 EDCBから取得　 a=999 tvrockから取得
         Dim chkstr As String = ":" '重複防止用
         Dim html_all As String = ""
@@ -855,62 +905,71 @@ Module モジュール_番組表
         If TvProgram_ch2 IsNot Nothing Then
             For i As Integer = 0 To TvProgram_ch2.Length - 1
                 If TvProgram_ch2(i) > 0 Then
-                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i))
+                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i), getnext)
                     If program IsNot Nothing Then
                         For Each p As TVprogramstructure In program
                             Dim html As String = ""
                             Dim hosokyoku As String = ""
-                            Dim s4 As String = StrConv(p.stationDispName, VbStrConv.Wide) & p.sid 'p.stationDispName
+                            Dim s4 As String = StrConv(p.stationDispName, VbStrConv.Wide) & p.sid & "." & p.nextFlag 'p.stationDispName
                             If s4.Length > 0 Then
                                 If chkstr.IndexOf(":" & s4 & ":") < 0 Then '重複していないかチェック
-                                    Dim chk As Integer = 0
-                                    If ngword.IndexOf(":" & StrConv(p.stationDispName, VbStrConv.Wide) & ":") >= 0 Then
-                                        chk = 1
-                                    End If
-
-                                    'NG処理
-                                    If chk = 0 Then
-                                        If a = 0 Then
-                                            'ネット番組表
-                                            chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
-                                        ElseIf a = 998 Then
-                                            'EDCBは番組表取得時にNG済
-                                        ElseIf a = 999 Then
-                                            'TvRock
-                                            chk = isMATCHhosokyoku(TvProgramTvRock_NGword, p.stationDispName, p.sid)
-                                        End If
-                                    End If
-
-                                    If chk = 0 Then
-                                        Dim startt As String = ""
-                                        Dim endt As String = ""
-                                        Try
-                                            '時：分だけ取り出す
-                                            If p.startDateTime = "2038/01/01 23:59" Then
-                                                startt = ""
-                                            Else
-                                                startt = p.startDateTime.Substring(p.startDateTime.IndexOf(" "))
-                                            End If
-                                            If p.endDateTime = "2038/01/01 23:59" Then
-                                                endt = ""
-                                            Else
-                                                endt = p.endDateTime.Substring(p.endDateTime.IndexOf(" "))
-                                            End If
-                                        Catch ex As Exception
-                                        End Try
-
-                                        'BonDriver, sid, 事業者を取得
-                                        Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid, p.tsid)
-                                        'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
-
-                                        If d(0).Length > 0 Then
-                                            hosokyoku = StrConv(d(0), VbStrConv.Wide)
+                                    If p.nextFlag = 0 Or (p.nextFlag = 1 And getnext > 0) Then
+                                        Dim chk As Integer = 0
+                                        If ngword.IndexOf(":" & StrConv(p.stationDispName, VbStrConv.Wide) & ":") >= 0 Then
+                                            chk = 1
                                         End If
 
-                                        'html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & p.programTitle & "," & p.programContent & vbCrLf
-                                        html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & escape_program_str(p.programTitle) & "," & escape_program_str(p.programContent) & vbCrLf
+                                        'NG処理
+                                        If chk = 0 Then
+                                            If a = 0 Then
+                                                'ネット番組表
+                                                chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
+                                            ElseIf a = 998 Then
+                                                'EDCBは番組表取得時にNG済
+                                            ElseIf a = 999 Then
+                                                'TvRock
+                                                chk = isMATCHhosokyoku(TvProgramTvRock_NGword, p.stationDispName, p.sid)
+                                            End If
+                                        End If
 
-                                        chkstr &= s4 & ":"
+                                        If chk = 0 Then
+                                            Dim startt As String = ""
+                                            Dim endt As String = ""
+                                            Try
+                                                '時：分だけ取り出す
+                                                If p.startDateTime = "2038/01/01 23:59" Then
+                                                    startt = ""
+                                                Else
+                                                    startt = p.startDateTime.Substring(p.startDateTime.IndexOf(" "))
+                                                End If
+                                                If p.endDateTime = "2038/01/01 23:59" Then
+                                                    endt = ""
+                                                Else
+                                                    endt = p.endDateTime.Substring(p.endDateTime.IndexOf(" "))
+                                                End If
+                                            Catch ex As Exception
+                                            End Try
+
+                                            'BonDriver, sid, 事業者を取得
+                                            Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid, p.tsid)
+                                            'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
+
+                                            If d(0).Length > 0 Then
+                                                hosokyoku = StrConv(d(0), VbStrConv.Wide)
+                                            End If
+
+                                            'html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & p.programTitle & "," & p.programContent & vbCrLf
+                                            If getnext = 2 And p.nextFlag = 1 Then
+                                                p.programTitle = "[Next]" & p.programTitle
+                                            End If
+                                            html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & escape_program_str(p.programTitle) & "," & escape_program_str(p.programContent)
+                                            If getnext = 3 Then
+                                                html &= "," & p.nextFlag
+                                            End If
+                                            html &= vbCrLf
+
+                                            chkstr &= s4 & ":"
+                                        End If
                                     End If
                                 End If
                             End If
@@ -931,12 +990,18 @@ Module モジュール_番組表
         If TvProgramD_sort IsNot Nothing Then
             For i As Integer = 0 To TvProgramD_sort.Length - 1
                 If TvProgram_html IsNot Nothing Then
+                    Dim chk As Integer = 0
                     For j As Integer = 0 To TvProgram_html.Length - 1
                         If TvProgram_html(j).done = 0 Then
                             If TvProgram_html(j).stationDispName = TvProgramD_sort(i) Or TvProgram_html(j).hosokyoku = TvProgramD_sort(i) Then
                                 html_all &= TvProgram_html(j).html
                                 TvProgram_html(j).done = 1
-                                Exit For
+                                If getnext = 0 Or chk > 0 Then
+                                    '重複可能性が無ければExit For
+                                    '次の番組が取得されている場合は放送局が2回出てくる可能性がある
+                                    Exit For
+                                End If
+                                chk += 1
                             End If
                         End If
                     Next
@@ -1011,7 +1076,7 @@ Module モジュール_番組表
             If sp > 0 Then
                 '番組予約URL
                 url = TvProgram_EDCB_url.Substring(0, sp) & "/addprogres.html"
-                log1write(url & " からEDCB番組表に表示する局を取得します")
+                'log1write(url & " からEDCB番組表に表示する局を取得します")
 
                 Try
                     Dim wc As WebClient = New WebClient()

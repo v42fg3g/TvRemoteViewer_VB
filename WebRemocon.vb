@@ -2253,6 +2253,9 @@ Class WebRemocon
                                 NHK_dual_mono_mode_select = Me._NHK_dual_mono_mode
                             End If
 
+                            '汎用文字列
+                            Dim temp As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("temp") & ""
+
                             '===========================================
                             'WEBインターフェース
                             '===========================================
@@ -2287,11 +2290,11 @@ Class WebRemocon
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_PROGRAM_EDCB"
                                         'EDCB番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_EDCB()
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_EDCB(Val(temp))
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_PROGRAM_TVROCK"
                                         'TVROCK番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_TVROCK()
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_TVROCK(Val(temp))
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_PROGRAM_NUM"
                                         '放送中の番組
@@ -2344,7 +2347,12 @@ Class WebRemocon
                                         WI_cmd_reply_force = 1
                                     Case "WI_SET_HTTPSTREAM_App"
                                         'http配信アプリを切り替える　手抜き・・numを一時代用
-                                        WI_cmd_reply = Me.WI_SET_HTTPSTREAM_App(num)
+                                        'tempで指定されてもokにした
+                                        Dim n As Integer = num
+                                        If Val(temp) > 0 Then
+                                            n = Val(temp)
+                                        End If
+                                        WI_cmd_reply = Me.WI_SET_HTTPSTREAM_App(n)
                                         WI_cmd_reply_force = 1
                                     Case "WI_FILE_OPE"
                                         'ファイル書き込み
@@ -3027,16 +3035,16 @@ Class WebRemocon
     End Function
 
     'EDCB番組表取得
-    Public Function WI_GET_PROGRAM_EDCB(Optional ByVal t1 As Integer = 0, Optional ByVal t2 As Integer = 2147400000) As String
+    Public Function WI_GET_PROGRAM_EDCB(Optional ByVal getnext As Integer = 0) As String
         Dim r As String = ""
-        r = program_translate4WI(998)
+        r = program_translate4WI(998, getnext)
         Return r
     End Function
 
     'TVROCK番組表取得
-    Public Function WI_GET_PROGRAM_TVROCK() As String
+    Public Function WI_GET_PROGRAM_TVROCK(Optional ByVal getnext As Integer = 0) As String
         Dim r As String = ""
-        r = program_translate4WI(999)
+        r = program_translate4WI(999, getnext)
         Return r
     End Function
 
