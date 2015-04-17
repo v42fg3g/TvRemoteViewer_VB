@@ -76,7 +76,8 @@ Module モジュール_番組表
         If TvProgram_ch2 IsNot Nothing Then
             For i As Integer = 0 To TvProgram_ch2.Length - 1
                 If TvProgram_ch2(i) > 0 Then
-                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i))
+                    'Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i))
+                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i), 7)
                     If program IsNot Nothing Then
                         For Each p As TVprogramstructure In program
                             Dim html As String = ""
@@ -669,8 +670,52 @@ Module モジュール_番組表
             End Try
         End If
 
+        '終了までgetnext分以内なら詳細に次の番組情報を転写
+        If getnext >= 4 Then
+            Dim uptonext As Integer = getnext
+            Dim t As DateTime = Now() '現在時刻
+            Dim ts As Integer = Hour(t) * 100 + Minute(t) '現在時刻4桁の分秒
+            Dim tend As DateTime = DateAdd(DateInterval.Minute, uptonext, t) 'この時刻を越えていたら次の番組を詳細に転写
+            Dim te As Integer = Hour(tend) * 100 + Minute(tend) 'この時刻を越えていたら次の番組を詳細に転写　4桁分秒
+            If te < ts Then
+                '日付またぎしていれば
+                te += 2400
+            End If
+            For i = 0 To r.Length - 2
+                If r(i).nextFlag = 0 Then
+                    Dim tr As DateTime = CDate(r(i).endDateTime)
+                    Dim re As Integer = Hour(tr) * 100 + Minute(tr) '番組終了時間　4桁分秒
+                    If re < ts Then
+                        '日付またぎしていれば
+                        re += 2400
+                    End If
+                    If te >= re Then
+                        '次番組があれば
+                        If r(i + 1).nextFlag = 1 And r(i).sid = r(i + 1).sid Then
+                            r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & " ～ " & r(i + 1).programTitle
+                        End If
+                    End If
+                End If
+            Next
+            '余計な要素を削除
+            For i = r.Length - 1 To 0 Step -1
+                If r(i).nextFlag = 1 Then
+                    '要素を削除
+                    title_ArrayRemove(r, i)
+                End If
+            Next
+        End If
+
         Return r
     End Function
+
+    '配列から要素を削除
+    Public Sub title_ArrayRemove(ByRef TargetArray As TVprogramstructure(), ByVal deleteIndex As Integer)
+        '削除する要素＋１～の内容 → 削除する要素～にコピー
+        Array.Copy(TargetArray, deleteIndex + 1, TargetArray, deleteIndex, TargetArray.Length - deleteIndex - 1)
+        '最終行を削除する
+        ReDim Preserve TargetArray(TargetArray.Length - 2)
+    End Sub
 
     '時刻を取得する
     Public Function get_time_from_at(ByVal s As String) As String
