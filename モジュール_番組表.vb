@@ -698,18 +698,29 @@ Module モジュール_番組表
                 End If
             Next
             '余計な要素を削除
+            'For i = r.Length - 1 To 0 Step -1
+            'If r(i).nextFlag = 1 Then
+            ''要素を削除
+            'title_ArrayRemove(r, i)
+            'End If
+            'Next
+            '↓このほうが速そう
+            Dim k As Integer = 0
+            Dim r2() As TVprogramstructure = Nothing
             For i = r.Length - 1 To 0 Step -1
-                If r(i).nextFlag = 1 Then
-                    '要素を削除
-                    title_ArrayRemove(r, i)
+                If r(i).nextFlag = 0 Then
+                    ReDim Preserve r2(k)
+                    r2(k) = r(i)
+                    k += 1
                 End If
             Next
+            Return r2
         End If
 
         Return r
     End Function
 
-    '配列から要素を削除
+    '配列から要素を削除　■未使用
     Public Sub title_ArrayRemove(ByRef TargetArray As TVprogramstructure(), ByVal deleteIndex As Integer)
         '削除する要素＋１～の内容 → 削除する要素～にコピー
         Array.Copy(TargetArray, deleteIndex + 1, TargetArray, deleteIndex, TargetArray.Length - deleteIndex - 1)
