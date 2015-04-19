@@ -683,18 +683,22 @@ Module モジュール_番組表
             End If
             For i = 0 To r.Length - 2
                 If r(i).nextFlag = 0 Then
-                    Dim tr As DateTime = CDate(r(i).endDateTime)
-                    Dim re As Integer = Hour(tr) * 100 + Minute(tr) '番組終了時間　4桁分秒
-                    If re < ts Then
-                        '日付またぎしていれば
-                        re += 2400
-                    End If
-                    If te >= re Then
-                        '次番組があれば
-                        If r(i + 1).nextFlag = 1 And r(i).sid = r(i + 1).sid Then
-                            r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & " ～ " & r(i + 1).programTitle
+                    Try
+                        Dim tr As DateTime = CDate(r(i).endDateTime)
+                        Dim re As Integer = Hour(tr) * 100 + Minute(tr) '番組終了時間　4桁分秒
+                        If re < ts Then
+                            '日付またぎしていれば
+                            re += 2400
                         End If
-                    End If
+                        If te >= re Then
+                            '次番組があれば
+                            If r(i + 1).nextFlag = 1 And r(i).sid = r(i + 1).sid Then
+                                r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & " ～ " & r(i + 1).programTitle
+                            End If
+                        End If
+                    Catch ex As Exception
+                        'r(i).endDateTimeが空白だったり不正の可能性有り
+                    End Try
                 End If
             Next
             '余計な要素を削除
@@ -707,7 +711,7 @@ Module モジュール_番組表
             '↓このほうが速そう
             Dim k As Integer = 0
             Dim r2() As TVprogramstructure = Nothing
-            For i = r.Length - 1 To 0 Step -1
+            For i = 0 To r.Length - 1
                 If r(i).nextFlag = 0 Then
                     ReDim Preserve r2(k)
                     r2(k) = r(i)
