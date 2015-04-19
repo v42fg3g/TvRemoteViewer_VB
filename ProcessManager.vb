@@ -102,7 +102,8 @@ Public Class ProcessManager
                 'すでに同num=iで配信中である
                 Dim BonDriver_prev As String = Trim(instr_pickup_para(Me._list(i)._udpOpt, "/d ", " ", 0))
                 Dim BonDriver_next As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0))
-                If BonDriver_prev.Length > 0 And BonDriver_next.Length > 0 And BonDriver_prev = BonDriver_next Then
+                'If BonDriver_prev.Length > 0 And BonDriver_next.Length > 0 And BonDriver_prev = BonDriver_next Then
+                If RecTask_force_restart = 0 And (BonDriver_prev.Length > 0 And BonDriver_next.Length > 0 And BonDriver_prev = BonDriver_next) Then
                     log1write("BonDriverが同一のためUDPアプリを再起動せずにチャンネル変更を試みます")
                     '同一BonDriverだった場合はRectaskを再起動せずパイプでのチャンネル変更をする
                     '/udp /port 42425 /chspace 0 /sid 51208 /d BonDriver_Spinel_PT3_t0.dll /sendservice 1

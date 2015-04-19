@@ -1313,6 +1313,8 @@ Class WebRemocon
                                         log1write("スカパープレミアムSPHD用RecTaskとして " & RecTask_SPHD & " が指定されました")
                                     End If
                                 End If
+                            Case "RecTask_force_restart"
+                                RecTask_force_restart = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -2404,6 +2406,8 @@ Class WebRemocon
                                 '配信スタート
                                 'パラメーターが正しいかチェック
                                 If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
+                                    'BonDriverが使用中ならばそのnumに変更する
+                                    num = GET_num_check_BonDriver(num, bondriver)
                                     '正しければ配信スタート
                                     Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0)
                                     'すぐさま視聴ページへリダイレクトする
@@ -2893,6 +2897,41 @@ Class WebRemocon
             log1write(ex.ToString())
         End Try
     End Sub
+
+    'すでに配信中のストリームでBonDriverが使われていれば該当numを返す。使われていなければそのままのnumを返す
+    Public Function GET_num_check_BonDriver(ByVal num As Integer, ByVal bondriver As String) As Integer
+        Dim r As String = Me._procMan.get_live_numbers_bon()
+        Dim num_org As Integer = num
+        If r.Length > 0 Then
+            Dim list() As String = Split(r, vbCrLf)
+            Dim i As Integer
+            For i = 0 To list.Length - 1
+                Dim d() As String = list(i).Split(":")
+                If d.Length = 2 Then
+                    If Trim(d(1)).ToLower = bondriver.ToLower Then
+                        '既に使用中
+                        Dim temp As Integer = Val(d(0).Replace("x", ""))
+                        If temp > 0 Then
+                            '既存のストリームを停止してnumは指定されたものを新規として使用するなら↓
+                            'Me.stop_movie(temp)
+                            'log1write("指定された" & bondriver & "はストリーム" & temp & "で使用中です。ストリーム番号" & temp & "を停止しました")
+
+                            'そうでなければnumのほうを変更する。こちらのほうが切り替えが速い
+                            If num <> temp Then
+                                num = temp
+                                log1write("指定された" & bondriver & "はストリーム" & temp & "で使用中です。ストリーム番号を" & num_org & "から" & num & "に変更しました")
+                            End If
+                        Else
+                            log1write("【エラー】" & d(0) & "は無効な配信ナンバーです")
+                        End If
+                        Exit For
+                    End If
+                End If
+            Next
+        End If
+
+        Return num
+    End Function
 
     '===================================
     'WEBインターフェース

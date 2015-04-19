@@ -36,6 +36,9 @@
     Public SPHD_sid_start As Integer = 33024
     Public SPHD_sid_end As Integer = 33791
 
+    'チャンネル切り替え時にRecTaskを必ず再起動するかどうか
+    Public RecTask_force_restart As Integer = 0
+
     '余計な改行等を削除
     Public Function trim8(ByVal s As String) As String
         s = Trim(s)

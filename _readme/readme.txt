@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.19
+TvRemoteViewer_VB v1.20
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -496,6 +496,7 @@ TvRemoteViewer_VB v1.19
 		ch_sid.txtから難視聴を削除
 	1.19	WI_GET_PROGRAM_[TVROCK,EDCB]に次番組も取得するオプションを追加（上に説明を記述)
 		標準番組表において番組終了まで7分を切っている場合に詳細欄に次番組情報を表示
+	1.20	配信要求時、BonDriverが別ストリームで使用中であればストリーム番号を変更するようにした
 
 
 
