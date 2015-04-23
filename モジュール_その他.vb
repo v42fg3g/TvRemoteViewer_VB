@@ -39,6 +39,18 @@
     'チャンネル切り替え時にRecTaskを必ず再起動するかどうか
     Public RecTask_force_restart As Integer = 0
 
+    Public Function time2unix(ByVal t As DateTime) As Integer
+        Dim ut As Integer = DateDiff("s", #1/1/1970#, t)
+        ut = ut - (60 * 60 * 9) '日本時間
+        Return ut
+    End Function
+
+    Public Function unix2time(ByVal unixTimeStamp As Integer) As DateTime
+        unixTimeStamp = unixTimeStamp + (60 * 60 * 9) '日本時間
+        Dim unixDate As DateTime = (New DateTime(1970, 1, 1, 0, 0, 0, 0)).AddSeconds(unixTimeStamp) '.ToLocalTime()
+        Return CDate(unixDate.ToShortDateString & " " & unixDate.ToLongTimeString)
+    End Function
+
     '余計な改行等を削除
     Public Function trim8(ByVal s As String) As String
         s = Trim(s)

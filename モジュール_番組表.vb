@@ -19,11 +19,18 @@ Module モジュール_番組表
     Public TvProgramP_BonDriver1st() As String
     Public TvProgram_tvrock_url As String = ""
     Public TvProgram_EDCB_url As String = ""
+    'ptTimer
+    Public ptTimer_path As String = "" 'pttimerのパス　末尾\
+    Public pttimer_pt2count As Integer = 0
+    Public TvProgramptTimer_NGword() As String
 
     Public LIVE_STREAM_STR As String = ""
     Public TvProgram_SelectUptoNum As Integer = 0 '番組表上の配信ナンバーを制限する
 
     Public TvProgramEDCB_premium As Integer = 0 'EDCB番組表がプレミアム用ならば1
+
+    '次番組を表示する分数デフォルト(7分に設定）
+    Public nextmin_default As Integer = 7
 
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
@@ -36,6 +43,20 @@ Module モジュール_番組表
         Public sid As Integer
         Public tsid As Integer
         Public nextFlag As Integer '次の番組なら1
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            'indexof用
+            Dim pF As String = CType(obj, String) '検索内容を取得
+
+            If pF = "" Then '空白である場合
+                Return False '対象外
+            Else
+                If Me.stationDispName = pF Then '放送局名と一致するか
+                    Return True '一致した
+                Else
+                    Return False '一致しない
+                End If
+            End If
+        End Function
     End Structure
 
     'EDCB番組表で表示する放送局
@@ -51,7 +72,7 @@ Module モジュール_番組表
 
     '地デジ番組表作成
     Public Function make_TVprogram_html_now(ByVal a As Integer, ByVal NHKMODE As Integer) As String
-        'a=0 通常のインターネットから取得　 a=998 EDCBから取得　 a=999 tvrockから取得
+        'a=0 通常のインターネットから取得　 a=997 ptTimerから取得　 a=998 EDCBから取得　 a=999 tvrockから取得
         Dim chkstr As String = ":" '重複防止用
         Dim html_all As String = ""
         Dim cnt As Integer = 0
@@ -63,6 +84,10 @@ Module モジュール_番組表
         If a = 0 Then
             '通常のインターネットから取得
             TvProgram_ch2 = TvProgram_ch
+        ElseIf a = 997 Then
+            'ptTimerから取得
+            ReDim Preserve TvProgram_ch2(0)
+            TvProgram_ch2(0) = 997
         ElseIf a = 998 Then
             'EDCBから取得
             ReDim Preserve TvProgram_ch2(0)
@@ -77,7 +102,7 @@ Module モジュール_番組表
             For i As Integer = 0 To TvProgram_ch2.Length - 1
                 If TvProgram_ch2(i) > 0 Then
                     'Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i))
-                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i), 7)
+                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i), nextmin_default)
                     If program IsNot Nothing Then
                         For Each p As TVprogramstructure In program
                             Dim html As String = ""
@@ -95,6 +120,9 @@ Module モジュール_番組表
                                         If a = 0 Then
                                             'ネット番組表
                                             chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
+                                        ElseIf a = 997 Then
+                                            'ptTimer
+                                            chk = isMATCHhosokyoku(TvProgramptTimer_NGword, p.stationDispName, p.sid)
                                         ElseIf a = 998 Then
                                             'EDCBは番組表取得時にNG済
                                         ElseIf a = 999 Then
@@ -377,7 +405,11 @@ Module モジュール_番組表
     '地域番号から番組表を取得
     Public Function get_TVprogram_now(ByVal regionID As Integer, Optional ByVal getnext As Integer = 0) As Object
         Dim r() As TVprogramstructure = Nothing
-        If regionID = 998 Then
+        If regionID = 997 Then
+            'ptTimer
+            '次番組表には未対応
+            r = get_ptTimer_program(getnext)
+        ElseIf regionID = 998 Then
             'EDCB
             Try
                 If TvProgram_EDCB_url.Length > 0 Then
@@ -681,44 +713,46 @@ Module モジュール_番組表
                 '日付またぎしていれば
                 te += 2400
             End If
-            For i = 0 To r.Length - 2
-                If r(i).nextFlag = 0 Then
-                    Try
-                        Dim tr As DateTime = CDate(r(i).endDateTime)
-                        Dim re As Integer = Hour(tr) * 100 + Minute(tr) '番組終了時間　4桁分秒
-                        If re < ts Then
-                            '日付またぎしていれば
-                            re += 2400
-                        End If
-                        If te >= re Then
-                            '次番組があれば
-                            If r(i + 1).nextFlag = 1 And r(i).sid = r(i + 1).sid Then
-                                r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & " ～ " & r(i + 1).programTitle
+            If r IsNot Nothing Then
+                For i = 0 To r.Length - 2
+                    If r(i).nextFlag = 0 Then
+                        Try
+                            Dim tr As DateTime = CDate(r(i).endDateTime)
+                            Dim re As Integer = Hour(tr) * 100 + Minute(tr) '番組終了時間　4桁分秒
+                            If re < ts Then
+                                '日付またぎしていれば
+                                re += 2400
                             End If
-                        End If
-                    Catch ex As Exception
-                        'r(i).endDateTimeが空白だったり不正の可能性有り
-                    End Try
-                End If
-            Next
-            '余計な要素を削除
-            'For i = r.Length - 1 To 0 Step -1
-            'If r(i).nextFlag = 1 Then
-            ''要素を削除
-            'title_ArrayRemove(r, i)
-            'End If
-            'Next
-            '↓このほうが速そう
-            Dim k As Integer = 0
-            Dim r2() As TVprogramstructure = Nothing
-            For i = 0 To r.Length - 1
-                If r(i).nextFlag = 0 Then
-                    ReDim Preserve r2(k)
-                    r2(k) = r(i)
-                    k += 1
-                End If
-            Next
-            Return r2
+                            If te >= re Then
+                                '次番組があれば
+                                If r(i + 1).nextFlag = 1 And r(i).sid = r(i + 1).sid Then
+                                    r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & " ～ " & r(i + 1).programTitle
+                                End If
+                            End If
+                        Catch ex As Exception
+                            'r(i).endDateTimeが空白だったり不正の可能性有り
+                        End Try
+                    End If
+                Next
+                '余計な要素を削除
+                'For i = r.Length - 1 To 0 Step -1
+                'If r(i).nextFlag = 1 Then
+                ''要素を削除
+                'title_ArrayRemove(r, i)
+                'End If
+                'Next
+                '↓このほうが速そう
+                Dim k As Integer = 0
+                Dim r2() As TVprogramstructure = Nothing
+                For i = 0 To r.Length - 1
+                    If r(i).nextFlag = 0 Then
+                        ReDim Preserve r2(k)
+                        r2(k) = r(i)
+                        k += 1
+                    End If
+                Next
+                Return r2
+            End If
         End If
 
         Return r
@@ -952,6 +986,10 @@ Module モジュール_番組表
         If a = 0 Then
             '通常のインターネットから取得
             TvProgram_ch2 = TvProgram_ch
+        ElseIf a = 997 Then
+            'ptTimerから取得
+            ReDim Preserve TvProgram_ch2(0)
+            TvProgram_ch2(0) = 997
         ElseIf a = 998 Then
             'EDCBから取得
             ReDim Preserve TvProgram_ch2(0)
@@ -984,6 +1022,9 @@ Module モジュール_番組表
                                             If a = 0 Then
                                                 'ネット番組表
                                                 chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
+                                            ElseIf a = 997 Then
+                                                'ptTimer
+                                                chk = isMATCHhosokyoku(TvProgramptTimer_NGword, p.stationDispName, p.sid)
                                             ElseIf a = 998 Then
                                                 'EDCBは番組表取得時にNG済
                                             ElseIf a = 999 Then
@@ -1096,6 +1137,9 @@ Module モジュール_番組表
         '改行をエスケープ
         s = s.Replace(vbCrLf, " ")
         s = s.Replace(vbLf, " ")
+        s = s.Replace(vbCr, " ")
+        'trim
+        s = Trim(s)
         Return s
     End Function
 
@@ -1281,4 +1325,208 @@ Module モジュール_番組表
         End If
         Return r
     End Function
+
+    'ptTimer番組表
+    Public Function get_ptTimer_program(ByVal getnext As Integer) As Object
+        Dim r() As TVprogramstructure = Nothing
+
+        Dim nextsec As Integer = 0
+        If getnext >= 4 Then
+            nextsec = getnext * 60
+        ElseIf getnext > 0 Then
+            '1～3のときは3時間にしておく
+            nextsec = 180 * 60
+        End If
+
+        If pttimer_pt2count > 0 Then
+            'データベースから番組一覧を取得する
+            Dim results As String = ""
+            Dim psi As New System.Diagnostics.ProcessStartInfo()
+
+            psi.FileName = System.Environment.GetEnvironmentVariable("ComSpec") 'ComSpecのパスを取得する
+            psi.RedirectStandardInput = False '出力を読み取れるようにする
+            psi.RedirectStandardOutput = True
+            psi.UseShellExecute = False
+            psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
+            ''プログラムが存在するディレクトリ
+            'Dim ppath As String = System.Reflection.Assembly.GetExecutingAssembly().Location
+            ''カレントディレクトリ変更
+            'System.IO.Directory.SetCurrentDirectory(ppath)
+            ''作業ディレクトリ変更
+            'psi.WorkingDirectory = F_cut_lastyen(ppath)
+            '出力エンコード
+            psi.StandardOutputEncoding = Encoding.UTF8
+
+            Dim pt2number As Integer
+            For pt2number = 1 To pttimer_pt2count
+                Dim msql As String = ""
+                Dim db_name As String
+                If pt2number <= 1 Then
+                    db_name = ptTimer_path & "ptTimer.db"
+                Else
+                    db_name = ptTimer_path & "ptTimer-" & pt2number & ".db"
+                End If
+
+                Dim nowtime As DateTime = Now()
+                Dim ut As Integer = time2unix(nowtime) '現在のunixtime
+
+                If nextsec = 0 Then
+                    msql = """SELECT sid, eid, stime, length, title, texts FROM t_event WHERE stime <= " & ut & " AND (stime + length) > " & ut & " ORDER BY sid"""
+                Else
+                    msql = """SELECT sid, eid, stime, length, title, texts FROM t_event WHERE (stime <= " & ut & " AND (stime + length) > " & ut & ") OR (stime <= " & ut + nextsec & " AND stime > " & ut & ") ORDER BY sid,stime"""
+                End If
+                psi.Arguments = "/c sqlite3.exe """ & db_name & """ -separator " & "//_//" & " " & msql
+
+                Dim p As System.Diagnostics.Process
+                Try
+                    p = System.Diagnostics.Process.Start(psi)
+                    '出力を読み取る
+                    results = p.StandardOutput.ReadToEnd
+                    'WaitForExitはReadToEndの後である必要がある
+                    '(親プロセス、子プロセスでブロック防止のため)
+                    p.WaitForExit()
+                Catch ex As Exception
+                    log1write("sqlite3.exe実行エラー[" & pt2number & "]")
+                End Try
+
+                '行ごとの配列として、テキストファイルの中身をすべて読み込む
+                Dim line As String() = Split(results, vbCrLf) 'results.Split(vbCrLf)
+
+                If line IsNot Nothing Then
+                    If line.Length > 0 Then
+                        Dim i As Integer = 0
+                        Dim j As Integer
+                        Dim last_sid As Integer = 0
+                        Dim skip_sid As Integer = 0
+                        For j = 0 To line.Length - 1
+                            '番組表の数だけ繰り返す
+                            Try
+                                Dim youso() As String = Split(line(j), "//_//")
+                                If youso.Length >= 6 Then
+                                    '番組内容
+                                    Dim sid As Integer = Val(youso(0))
+                                    Dim chk161 As Integer = 0
+                                    If sid = 65536 + 161 Then
+                                        'QSV
+                                        chk161 = 1
+                                    End If
+                                    If sid = 800 Then
+                                        'なんだろうこのチャンネルは。800がスカチャン０と重なっている
+                                        chk161 = 2
+                                    End If
+                                    If sid > 65536 Then
+                                        'ptTimerはCSのサービスIDが+65536されている
+                                        sid = sid - 65536
+                                    End If
+                                    Dim eid As Integer = Val(youso(1))
+                                    Dim title As String = escape_program_str(youso(4)) 'タイトル
+                                    Dim texts As String = escape_program_str(youso(5)) '内容
+                                    '開始時間
+                                    Dim ystart As Integer = Val(youso(2))
+                                    Dim ystartDate As DateTime = unix2time(Val(youso(2)))
+                                    Dim ystart_time As String = ystartDate.ToString("HH:mm")
+                                    '終了時間
+                                    Dim yend As Integer = Val(youso(2)) + Val(youso(3))
+                                    Dim yendDate As DateTime = DateAdd(DateInterval.Second, Val(youso(3)), ystartDate)
+                                    Dim yend_time As String = yendDate.ToString("HH:mm")
+
+                                    '放送局名
+                                    Dim station As String
+                                    station = sid2jigyousha(sid) 'BS-TBSとQVCが区別できない
+                                    If chk161 = 1 Then
+                                        station = "ＱＶＣ"
+                                    End If
+                                    If chk161 = 2 Then
+                                        station = ""
+                                    End If
+
+                                    If station.Length > 0 And sid <> skip_sid Then
+                                        '放送局名が見つかっていれば
+                                        Dim chk As Integer = -1
+                                        If r IsNot Nothing Then
+                                            chk = Array.IndexOf(r, sid)
+                                            If chk >= 0 Then
+                                                If r(chk).startDateTime = "1970/01/01 " & ystart_time And r(chk).programTitle = title Then
+                                                    '重複（同じ時刻、同じタイトル）
+                                                    chk = 1
+                                                Else
+                                                    chk = -1
+                                                End If
+                                            End If
+                                        End If
+                                        If chk < 0 Then
+                                            '重複がなければ
+                                            If r Is Nothing Then
+                                                ReDim Preserve r(0)
+                                            Else
+                                                i = r.Length
+                                                ReDim Preserve r(i)
+                                            End If
+                                            r(i).sid = sid
+                                            r(i).tsid = 0
+                                            r(i).stationDispName = station
+                                            Dim t1s As String = "1970/01/01 " & ystart_time
+                                            Dim t2s As String = "1970/01/01 " & yend_time
+                                            r(i).startDateTime = t1s
+                                            r(i).endDateTime = t2s
+                                            r(i).programTitle = title
+                                            r(i).programContent = texts
+                                            '次番組かどうかチェック
+                                            If sid = last_sid Then
+                                                '2回目の場合は次番組であろう
+                                                r(i).nextFlag = 1
+                                                skip_sid = sid '3回目以降はスキップするように
+                                            End If
+                                            last_sid = sid
+                                        End If
+                                    End If
+                                End If
+                            Catch ex As Exception
+                                log1write("ptTimer番組表取得中にエラーが発生しました。" & ex.Message)
+                            End Try
+                        Next
+                    End If
+                End If
+            Next
+        End If
+
+        Return r
+    End Function
+
+    Public Function F_get_pt2count() As Integer
+        '何枚PT2が存在するかチェック
+        Dim r As Integer = 0
+
+        'よく考えたら番組表は複数枚チェックする必要は無さそう
+        '不具合があるときは↓6行を削除
+        If file_exist(ptTimer_path & "ptTimer.db") > 0 Then
+            r = 1
+            log1write("ptTimerのデータベースを認識しました")
+        Else
+            log1write("【エラー】ptTimerのデータベースを認識できませんでした")
+        End If
+        Return r
+        Exit Function
+
+        '以下、複数のデータベースを調べる場合　■未使用
+
+        If file_exist(ptTimer_path & "ptTimer.db") > 0 Then
+            r = 1
+            Dim i As Integer = 2
+            While file_exist(ptTimer_path & "ptTimer-" & i & ".db") > 0
+                r += 1
+                i += 1
+            End While
+        End If
+        If r = 1 Then
+            log1write("ptTimerのデータベースを認識しました")
+        ElseIf r > 1 Then
+            log1write("ptTimerのデータベースを" & r & "つ認識しました")
+        Else
+            log1write("【エラー】ptTimerのデータベースを認識できませんでした")
+        End If
+
+        Return r
+    End Function
+
 End Module

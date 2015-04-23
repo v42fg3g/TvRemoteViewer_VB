@@ -1120,6 +1120,16 @@ Class WebRemocon
                                         TvProgram_NGword(j) = trim8(clset(j))
                                     Next
                                 End If
+                            Case "TvProgramptTimer_NGword"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgramptTimer_NGword(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        TvProgramptTimer_NGword(j) = trim8(clset(j))
+                                    Next
+                                End If
                             Case "TvProgramEDCB_NGword"
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                 Dim clset() As String = youso(1).Split(",")
@@ -1315,6 +1325,14 @@ Class WebRemocon
                                 End If
                             Case "RecTask_force_restart"
                                 RecTask_force_restart = Val(youso(1).ToString)
+                            Case "ptTimer_path"
+                                ptTimer_path = youso(1).ToString
+                                If ptTimer_path.Length > 0 Then
+                                    If ptTimer_path.Substring(ptTimer_path.Length - 1, 1) <> "\" Then
+                                        '末尾に\を付ける
+                                        ptTimer_path += "\"
+                                    End If
+                                End If
                         End Select
                     End If
                 Catch ex As Exception
@@ -2290,6 +2308,10 @@ Class WebRemocon
                                         '地デジ番組表取得
                                         WI_cmd_reply = Me.WI_GET_PROGRAM_D()
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_PROGRAM_PTTIMER"
+                                        'EDCB番組表取得
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_PTTIMER(Val(temp))
+                                        WI_cmd_reply_force = 1
                                     Case "WI_GET_PROGRAM_EDCB"
                                         'EDCB番組表取得
                                         WI_cmd_reply = Me.WI_GET_PROGRAM_EDCB(Val(temp))
@@ -2606,6 +2628,15 @@ Class WebRemocon
                                     End If
                                 End If
 
+                                'ptTimer番組表
+                                If s.IndexOf("%TVPROGRAM-PTTIMER%") >= 0 Then
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                        s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, Me._NHK_dual_mono_mode))
+                                    Else
+                                        s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, -1))
+                                    End If
+                                End If
+
                                 'ニコニコ実況用jkチャンネル変換
                                 If s.IndexOf("%JKNUM%") >= 0 Then
                                     'numからsidとchspaceを取得する
@@ -2825,6 +2856,16 @@ Class WebRemocon
                                         s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" class=""c_btn_pedcb"" value=""EDCB番組表"" onClick=""location.href='TvProgram_EDCB.html'"">") & gt(3)
                                     Else
                                         s = s.Replace("%TVPROGRAM-EDCB-BUTTON" & gt(0) & "%", gt(4))
+                                    End If
+                                End While
+
+                                'ptTimer番組表ボタン
+                                While s.IndexOf("%TVPROGRAM-PTTIMER-BUTTON") >= 0
+                                    Dim gt() As String = get_atags("%TVPROGRAM-PTTIMER-BUTTON", s)
+                                    If ptTimer_path.Length > 0 Then
+                                        s = s.Replace("%TVPROGRAM-PTTIMER-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" class=""c_btn_pedcb"" value=""ptTimer番組表"" onClick=""location.href='TvProgram_ptTimer.html'"">") & gt(3)
+                                    Else
+                                        s = s.Replace("%TVPROGRAM-PTTIMER-BUTTON" & gt(0) & "%", gt(4))
                                     End If
                                 End While
 
@@ -3070,6 +3111,13 @@ Class WebRemocon
     Public Function WI_GET_PROGRAM_D() As String
         Dim r As String = ""
         r = program_translate4WI(0)
+        Return r
+    End Function
+
+    'ptTimer番組表取得
+    Public Function WI_GET_PROGRAM_PTTIMER(Optional ByVal getnext As Integer = 0) As String
+        Dim r As String = ""
+        r = program_translate4WI(997, getnext)
         Return r
     End Function
 

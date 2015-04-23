@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.20"
+    Private version As String = "TvRemoteViewer_VB version 1.21"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -414,6 +414,11 @@ Public Class Form1
         'EDCB番組表に表示する局（TSID）を取得
         EDCB_GET_TSID()
 
+        'ptTimerが管理するPT2の数を取得
+        If ptTimer_path.Length > 0 Then
+            pttimer_pt2count = F_get_pt2count()
+        End If
+
         '無事起動
         TvRemoteViewer_VB_Start = 1
     End Sub
@@ -534,6 +539,15 @@ Public Class Form1
                 log1write("起動チェック　ASS字幕に必要なfonts.conf：OK")
             Else
                 log1write("ffmepgファイル再生時：ASS字幕を表示させるのに必要なfonts.confは見つかりませんでした")
+            End If
+        End If
+        'ptTimer用sqlite3.exeがあるかどうか確認
+        If ptTimer_path.Length > 0 Then
+            If file_exist("sqlite3.exe") = 1 Then
+                log1write("起動チェック　ptTimer番組表に必要なsqlite3.exe：OK")
+            Else
+                log1write("【エラー】ptTimer番組表に必要なsqlite3.exeが見つかりませんでした")
+                ptTimer_path = ""
             End If
         End If
 

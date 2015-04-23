@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.20
+TvRemoteViewer_VB v1.21
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -87,6 +87,10 @@ TvRemoteViewer_VB v1.20
 			HttpPort=5510
 		を書き加えてEpgTimerを再起動してください
 		参考　http://blog.livedoor.jp/kotositu/archives/1923002.html
+
+	・ptTimer番組表につきまして
+		sqlite3.exeをTvRemoteViewer_VB.exeと同じフォルダに設置してください
+		sqlite3.exeはググればすぐ見つかると思います
 
 
 	【安定性実験】
@@ -210,9 +214,9 @@ TvRemoteViewer_VB v1.20
 		fl_text		書き込む内容
 		結果：
 		0,SUCCESS(+改行[結果])　又は　2,[エラー内容]
-	WI_GET_PROGRAM_[TVROCK,EDCB].html(?temp=1-3)
+	WI_GET_PROGRAM_[TVROCK,EDCB,PTTIMER].html(?temp=1-3)
 		TVROCK,EDCBから番組表を取得
-		オプション temp=1～3 を指定することにより次番組が存在すれば併せて取得
+		オプション temp=1～3 を指定することにより次番組が存在すれば併せて取得(PTTIMERには未対応）
 		1:返値の各番組情報記述は従来通り
 		2:返値の各番組情報内の次番組名冒頭に「[Next]」を付加
 		3:返値の各番組情報末尾に現番組「,0」か次番組「,1」かを付加
@@ -497,6 +501,11 @@ TvRemoteViewer_VB v1.20
 	1.19	WI_GET_PROGRAM_[TVROCK,EDCB]に次番組も取得するオプションを追加（上に説明を記述)
 		標準番組表において番組終了まで7分を切っている場合に詳細欄に次番組情報を表示
 	1.20	配信要求時、BonDriverが別ストリームで使用中であればストリーム番号を変更するようにした
+	1.21	ptTimerに対応（要sqlite3.exeをTvRemoteViewer_VB.exeと同じフォルダに設置）
+		iniにptTimer_pathとTvProgramptTimer_NGwordを追加
+		WEBインターフェースにWI_GET_PROGRAM_PTTIMERを追加
+		標準HTMLのindex.htmlを修正しTvProgram_ptTimer.htmlを追加
+		番組表が取得できなかったときにエラーが出ることがあったバグを修正
 
 
 

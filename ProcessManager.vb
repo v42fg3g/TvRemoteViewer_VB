@@ -1351,6 +1351,8 @@ Public Class ProcessManager
                             str = program_translate4WI(999)
                         ElseIf TvProgram_EDCB_url.Length > 0 Then
                             str = program_translate4WI(998)
+                        ElseIf ptTimer_path.Length > 0 Then
+                            str = program_translate4WI(997)
                         End If
                         If str.Length > 0 Then
                             Dim d() As String = Split(str, vbCrLf)
