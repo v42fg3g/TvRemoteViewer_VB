@@ -3058,6 +3058,7 @@ Class WebRemocon
         r &= "TvProgram_EDCB_url=" & TvProgram_EDCB_url & vbCrLf
         r &= "SelectNum1=" & TvProgram_SelectUptoNum & vbCrLf
         r &= "TvProgramEDCB_premium=" & TvProgramEDCB_premium & vbCrLf
+        r &= "ptTimer_path=" & ptTimer_path & vbCrLf
         r &= vbCrLf
         r &= "【ファイル再生】" & vbCrLf
         If Me._videopath IsNot Nothing Then
