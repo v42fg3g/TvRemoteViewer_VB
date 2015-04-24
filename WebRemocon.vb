@@ -79,6 +79,9 @@ Class WebRemocon
     'ビデオ一覧で表示する拡張子
     Public VideoExtensions() As String
 
+    '同一BonDriverを複数ストリームで使用可能とする
+    Public Allow_BonDriver4Streams As Integer = 0
+
     Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String(), ByVal id As String, ByVal pass As String)
         'Public Sub New(udpPort As Integer, wwwroot As String, wwwport As Integer) ', num As Integer)
         '初期化 
@@ -1333,6 +1336,8 @@ Class WebRemocon
                                         ptTimer_path += "\"
                                     End If
                                 End If
+                            Case "Allow_BonDriver4Streams"
+                                Allow_BonDriver4Streams = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -2429,7 +2434,9 @@ Class WebRemocon
                                 'パラメーターが正しいかチェック
                                 If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
                                     'BonDriverが使用中ならばそのnumに変更する
-                                    num = GET_num_check_BonDriver(num, bondriver)
+                                    If Allow_BonDriver4Streams = 0 Then
+                                        num = GET_num_check_BonDriver(num, bondriver)
+                                    End If
                                     '正しければ配信スタート
                                     Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0)
                                     'すぐさま視聴ページへリダイレクトする
@@ -3028,6 +3035,7 @@ Class WebRemocon
             Next
             r &= vbCrLf
         End If
+        r &= "Allow_BonDriver4Streams=" & Me.Allow_BonDriver4Streams & vbCrLf
         r &= vbCrLf
         r &= "【HLSアプリ】" & vbCrLf
         r &= "_hlsApp=" & Me._hlsApp & vbCrLf

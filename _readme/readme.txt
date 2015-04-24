@@ -503,9 +503,11 @@ TvRemoteViewer_VB v1.21
 	1.20	配信要求時、BonDriverが別ストリームで使用中であればストリーム番号を変更するようにした
 	1.21	ptTimerに対応（要sqlite3.exeをTvRemoteViewer_VB.exeと同じフォルダに設置）
 		iniにptTimer_pathとTvProgramptTimer_NGwordを追加
+		iniにBonDriverの複数ストリーム使用を許可するAllow_BonDriver4Streamsを追加
 		WEBインターフェースにWI_GET_PROGRAM_PTTIMERを追加
 		標準HTMLのindex.htmlを修正しTvProgram_ptTimer.htmlを追加
 		番組表が取得できなかったときにエラーが出ることがあったバグを修正
+		WI_GET_TVRV_STATUSにptTimer_pathとAllow_BonDriver4Streamsを追加
 
 
 
