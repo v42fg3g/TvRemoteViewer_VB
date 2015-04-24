@@ -2863,7 +2863,7 @@ Class WebRemocon
                                 While s.IndexOf("%TVPROGRAM-PTTIMER-BUTTON") >= 0
                                     Dim gt() As String = get_atags("%TVPROGRAM-PTTIMER-BUTTON", s)
                                     If ptTimer_path.Length > 0 Then
-                                        s = s.Replace("%TVPROGRAM-PTTIMER-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" class=""c_btn_pedcb"" value=""ptTimer番組表"" onClick=""location.href='TvProgram_ptTimer.html'"">") & gt(3)
+                                        s = s.Replace("%TVPROGRAM-PTTIMER-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" class=""c_btn_ppttimer"" value=""ptTimer番組表"" onClick=""location.href='TvProgram_ptTimer.html'"">") & gt(3)
                                     Else
                                         s = s.Replace("%TVPROGRAM-PTTIMER-BUTTON" & gt(0) & "%", gt(4))
                                     End If
