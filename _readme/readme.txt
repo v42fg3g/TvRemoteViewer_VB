@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.21
+TvRemoteViewer_VB v1.22
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -508,6 +508,9 @@ TvRemoteViewer_VB v1.21
 		標準HTMLのindex.htmlを修正しTvProgram_ptTimer.htmlを追加
 		番組表が取得できなかったときにエラーが出ることがあったバグを修正
 		WI_GET_TVRV_STATUSにptTimer_pathとAllow_BonDriver4Streamsを追加
+		VideoSizeCheckバグ修正
+	1.22	iniにStop_ffmpeg_at_StartEndとStop_vlc_at_StartEndを追加
+		（別用途でffmpegやvlcを使用している場合は0にしてください）
 
 
 

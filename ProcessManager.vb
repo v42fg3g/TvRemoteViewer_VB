@@ -828,8 +828,12 @@ Public Class ProcessManager
         If hls_only = 0 Then
             If num = -2 Then
                 log1write("関連アプリのプロセスを停止しています")
-                stopProcName("vlc")
-                stopProcName("ffmpeg")
+                If Stop_vlc_at_StartEnd = 1 Then
+                    stopProcName("vlc")
+                End If
+                If Stop_ffmpeg_at_StartEnd = 1 Then
+                    stopProcName("ffmpeg")
+                End If
                 If Stop_RecTask_at_StartEnd = 1 Then
                     stopProcName("RecTask")
                 End If

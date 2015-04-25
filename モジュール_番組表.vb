@@ -1504,6 +1504,7 @@ Module モジュール_番組表
             log1write("ptTimerのデータベースを認識しました")
         Else
             log1write("【エラー】ptTimerのデータベースを認識できませんでした")
+            ptTimer_path = ""
         End If
         Return r
         Exit Function
@@ -1524,6 +1525,7 @@ Module モジュール_番組表
             log1write("ptTimerのデータベースを" & r & "つ認識しました")
         Else
             log1write("【エラー】ptTimerのデータベースを認識できませんでした")
+            ptTimer_path = ""
         End If
 
         Return r

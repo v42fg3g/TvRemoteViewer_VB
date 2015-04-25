@@ -471,7 +471,7 @@ Class WebRemocon
 
                                         If filename.Length > 0 Then
                                             'ファイルのサイズを取得 fi.length
-                                            Dim flength As Integer = 100
+                                            Dim flength As Long = 100
                                             If VideoSizeCheck = 1 Then
                                                 Dim fi As New System.IO.FileInfo(fullpath)
                                                 flength = fi.Length
@@ -1261,6 +1261,10 @@ Class WebRemocon
                                 End If
                             Case "Stop_RecTask_at_StartQuit", "Stop_RecTask_at_StartEnd"
                                 Stop_RecTask_at_StartEnd = Val(youso(1).ToString)
+                            Case "Stop_ffmpeg_at_StartEnd"
+                                Stop_ffmpeg_at_StartEnd = Val(youso(1).ToString)
+                            Case "Stop_vlc_at_StartEnd"
+                                Stop_vlc_at_StartEnd = Val(youso(1).ToString)
                             Case "NHK_dual_mono_mode"
                                 Me._NHK_dual_mono_mode = Val(youso(1).ToString)
                             Case "tsfile_wait"
@@ -2998,6 +3002,8 @@ Class WebRemocon
         r &= "【全般】" & vbCrLf
         r &= "_tsfile_wait=" & Me._tsfile_wait & vbCrLf
         r &= "Stop_RecTask_at_StartEnd=" & Stop_RecTask_at_StartEnd & vbCrLf
+        r &= "Stop_ffmpeg_at_StartEnd=" & Stop_ffmpeg_at_StartEnd & vbCrLf
+        r &= "Stop_vlc_at_StartEnd=" & Stop_vlc_at_StartEnd & vbCrLf
         r &= "MAX_STREAM_NUMBER=" & MAX_STREAM_NUMBER & vbCrLf
         r &= "STOP_IDLEMINUTES=" & STOP_IDLEMINUTES & vbCrLf
         r &= vbCrLf
