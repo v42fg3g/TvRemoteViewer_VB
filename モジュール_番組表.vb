@@ -32,6 +32,9 @@ Module モジュール_番組表
     '次番組を表示する分数デフォルト(7分に設定）
     Public nextmin_default As Integer = 7
 
+    'EDCBの/addprogres.htmlでEDCB管理チャンネルを抽出しない場合=1
+    Public EDCB_thru_addprogres As Integer = 0
+
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
         Public stationDispName As String
@@ -418,10 +421,12 @@ Module モジュール_番組表
                             Dim chk_j As Integer = 0
 
                             'EDCB番組表に存在しているかチェック
-                            Dim ct As Integer = check_TSID_in_EDCBprogram(ch_list(i).tsid, ch_list(i).sid)
-                            If ct < 0 Then
-                                '存在していない
-                                chk_j = 1
+                            If EDCB_thru_addprogres = 0 Then
+                                Dim ct As Integer = check_TSID_in_EDCBprogram(ch_list(i).tsid, ch_list(i).sid)
+                                If ct < 0 Then
+                                    '存在していない
+                                    chk_j = 1
+                                End If
                             End If
 
                             'プレミアム指定（1.16からは指定しなくてもOK）

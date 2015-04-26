@@ -412,7 +412,11 @@ Public Class Form1
         start_watch_folders()
 
         'EDCB番組表に表示する局（TSID）を取得
-        EDCB_GET_TSID()
+        If EDCB_thru_addprogres = 0 Then
+            EDCB_GET_TSID()
+        Else
+            log1write("【EDCB】EDCB_thru_addprogresが指定されています")
+        End If
 
         'ptTimerが管理するPT2の数を取得
         If ptTimer_path.Length > 0 Then
