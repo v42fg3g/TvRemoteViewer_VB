@@ -1272,6 +1272,8 @@ Module モジュール_番組表
                     log1write(url & " からEDCB番組表に表示する局を取得しました")
                 Else
                     log1write("【エラー】EDCBからEDCB番組表に表示する局の取得に失敗しました")
+                    EDCB_thru_addprogres = 1
+                    log1write("EDCB番組表に全チャンネルを表示するようにセットしました")
                 End If
             Else
                 log1write("【エラー】" & TvProgram_EDCB_url & " の指定が不正です")
