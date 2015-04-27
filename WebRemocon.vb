@@ -1120,7 +1120,7 @@ Class WebRemocon
                                 ElseIf clset.Length > 0 Then
                                     ReDim Preserve TvProgram_NGword(clset.Length - 1)
                                     For j = 0 To clset.Length - 1
-                                        TvProgram_NGword(j) = trim8(clset(j))
+                                        TvProgram_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
                                     Next
                                 End If
                             Case "TvProgramptTimer_NGword"
@@ -1130,7 +1130,7 @@ Class WebRemocon
                                 ElseIf clset.Length > 0 Then
                                     ReDim Preserve TvProgramptTimer_NGword(clset.Length - 1)
                                     For j = 0 To clset.Length - 1
-                                        TvProgramptTimer_NGword(j) = trim8(clset(j))
+                                        TvProgramptTimer_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
                                     Next
                                 End If
                             Case "TvProgramEDCB_NGword"
@@ -1140,7 +1140,7 @@ Class WebRemocon
                                 ElseIf clset.Length > 0 Then
                                     ReDim Preserve TvProgramEDCB_NGword(clset.Length - 1)
                                     For j = 0 To clset.Length - 1
-                                        TvProgramEDCB_NGword(j) = trim8(clset(j))
+                                        TvProgramEDCB_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
                                     Next
                                 End If
                             Case "TvProgramTvRock_NGword"
@@ -1150,7 +1150,7 @@ Class WebRemocon
                                 ElseIf clset.Length > 0 Then
                                     ReDim Preserve TvProgramTvRock_NGword(clset.Length - 1)
                                     For j = 0 To clset.Length - 1
-                                        TvProgramTvRock_NGword(j) = trim8(clset(j))
+                                        TvProgramTvRock_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
                                     Next
                                 End If
                             Case "TvProgramEDCB_ignore"
@@ -1160,7 +1160,7 @@ Class WebRemocon
                                 ElseIf clset.Length > 0 Then
                                     ReDim Preserve TvProgramEDCB_ignore(clset.Length - 1)
                                     For j = 0 To clset.Length - 1
-                                        TvProgramEDCB_ignore(j) = trim8(clset(j))
+                                        TvProgramEDCB_ignore(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
                                     Next
                                 End If
                             Case "TvProgramD_BonDriver1st"

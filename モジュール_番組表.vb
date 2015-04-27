@@ -1154,25 +1154,42 @@ Module モジュール_番組表
     'ngword()に局がマッチしているかチェック
     Public Function isMATCHhosokyoku(ByVal ngwords As Object, ByVal name As String, Optional ByVal sid As Integer = 0) As Integer
         'ngword()に指定されていれば1を返す
-        Dim r As Integer = 0
-        Dim i As Integer = 0
+        Dim r As Integer = -1
+        name = StrConv(name, VbStrConv.Wide) '全角に
+        Dim sidstr As String = StrConv(sid.ToString, VbStrConv.Wide) '全角に
         If ngwords IsNot Nothing Then
-            For j As Integer = 0 To ngwords.Length - 1
-                If IsNumeric(ngwords(j)) = True And sid > 0 Then
-                    'サービスIDで指定
-                    If sid = Val(ngwords(j)) Then
-                        r = 1
-                        Exit For
-                    End If
-                Else
-                    '局名で指定
-                    If StrConv(name, VbStrConv.Wide) = StrConv(ngwords(j), VbStrConv.Wide) Then
-                        r = 1
-                        Exit For
-                    End If
-                End If
-            Next
+            If name.Length > 0 Then
+                r = Array.IndexOf(ngwords, name) '局名で指定
+            End If
+            If r < 0 And sidstr <> "０" Then
+                r = Array.IndexOf(ngwords, sidstr) 'サービスIDで指定
+            End If
         End If
+        If r >= 0 Then
+            r = 1
+        Else
+            r = 0
+        End If
+
+        'Dim r As Integer = -1
+        'Dim i As Integer = 0
+        'If ngwords IsNot Nothing Then
+        'For j As Integer = 0 To ngwords.Length - 1
+        'If IsNumeric(ngwords(j)) = True And sid > 0 Then
+        ''サービスIDで指定
+        'If sid = Val(ngwords(j)) Then
+        'r = 1
+        'Exit For
+        'End If
+        'Else
+        ''局名で指定
+        'If StrConv(name, VbStrConv.Wide) = StrConv(ngwords(j), VbStrConv.Wide) Then
+        'r = 1
+        'Exit For
+        'End If
+        'End If
+        'Next
+        'End If
 
         Return r
     End Function
