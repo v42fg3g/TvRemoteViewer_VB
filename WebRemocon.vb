@@ -24,6 +24,9 @@ Imports System.Net
 '★PT2/Friioの映像をiPhone/Kindle Fire HDで見る
 'http://frmmpgit.blog.fc2.com/blog-entry-127.html
 '
+'★【ffmpeg】倍速再生できる動画にエンコードする
+'http://looooooooop.blog35.fc2.com/blog-entry-1014.html
+
 Class WebRemocon
     Public _isWebStart As [Boolean] = False
     Private _listener As HttpListener = Nothing
@@ -1390,7 +1393,7 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをファイル再生用に書き換える
-    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer) As String
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
 
         Dim new_file As String = ""
@@ -1472,6 +1475,54 @@ Class WebRemocon
             If VideoSeekSeconds > 0 Then
                 sp = hlsOpt.IndexOf("-i ")
                 hlsOpt = hlsOpt.Substring(0, sp) & "-ss " & VideoSeekSeconds & " " & hlsOpt.Substring(sp)
+            End If
+
+            '倍速指定があれば
+            If baisoku <> "1" And baisoku.Length > 0 Then
+                Dim bunsuu As String = get_bunsuu_R(baisoku) 'おかしな数値の場合は1で返ってくる
+                If bunsuu <> "1/1" Then
+                    '2倍速より上の場合はatempoを分割しないといけない
+                    Dim atempo As String = ""
+                    Dim dbl As Double
+                    Try
+                        dbl = Decimal.Parse(baisoku)
+                        If dbl > 2 Then
+                            Dim sep As String = ""
+                            While dbl > 2
+                                atempo &= sep & "atempo=2"
+                                dbl = dbl / 2
+                                sep = ","
+                            End While
+                            If dbl <> 1 Then
+                                '小数点3桁までにしておく
+                                dbl = Math.Round(dbl, 3, MidpointRounding.AwayFromZero)
+                                atempo &= sep & "atempo=" & dbl
+                            End If
+                        Else
+                            atempo = "atempo=" & baisoku
+                        End If
+                    Catch ex As Exception
+                        dbl = 0
+                        log1write("【エラー】倍速指定が不正です")
+                    End Try
+
+                    If dbl > 0 Then
+                        If hlsOpt.IndexOf(" -vf ") < 0 Then
+                            sp = hlsOpt.IndexOf(" -f ")
+                            If sp >= 0 Then
+                                '-fの前に付ける
+                                If sp > 0 Then
+                                    hlsOpt = hlsOpt.Substring(0, sp) & " -af " & atempo & " -vf setpts=" & bunsuu & "*PTS" & hlsOpt.Substring(sp)
+                                Else
+                                    log1write("HLSオプションに-f部分が見つからないため倍速指定に失敗しました")
+                                End If
+                            End If
+                        Else
+                            '-vfが存在している場合は前部に追加
+                            hlsOpt = hlsOpt.Replace(" -vf ", " -af " & atempo & " -vf setpts=" & bunsuu & "*PTS,")
+                        End If
+                    End If
+                End If
             End If
         Else
             log1write("【エラー】HlsOptが指定されていません")
@@ -1572,7 +1623,7 @@ Class WebRemocon
     End Function
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer)
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         'テスト　多重テストを違うexeファイルで行う
@@ -1657,7 +1708,7 @@ Class WebRemocon
                 'ファイル再生
                 If filename.Length > 0 And Stream_mode = 3 Then
                     'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku)
                 End If
             ElseIf hlsApp.IndexOf("vlc") >= 0 Then
                 'hlsOptを置き換える
@@ -1752,7 +1803,7 @@ Class WebRemocon
                             End If
                         End If
                     End If
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku)
                 Else
                     'その他vlc
                     '今のところ未対応
@@ -1952,10 +2003,10 @@ Class WebRemocon
         'パラメーターが正しいかチェック
         If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
             '正しければ配信スタート
-            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0, 0)
+            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0, 0, "1")
         ElseIf num > 0 And videoname.Length > 0 Then
             'ファイル再生
-            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds, nohsub)
+            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds, nohsub, "1")
         End If
 
     End Sub
@@ -2237,6 +2288,11 @@ Class WebRemocon
                             Else
                                 VideoSeekSeconds = Val(VideoSeekSeconds_str)
                             End If
+                            '倍速ファイル再生
+                            Dim baisoku As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSpeed") & ""
+                            If baisoku.Length = 0 Then
+                                baisoku = "1" '等速
+                            End If
                             'URLエンコードしておいたフルパスを文字列に変換
                             'UTF-8化で解決
                             'videoname = System.Web.HttpUtility.UrlDecode(videoname)
@@ -2448,14 +2504,14 @@ Class WebRemocon
                                         num = GET_num_check_BonDriver(num, bondriver)
                                     End If
                                     '正しければ配信スタート
-                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0)
+                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1")
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
                                     If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
                                         'ffmpegなら
-                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub)
+                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku)
                                     Else
                                         '今のところVLCには未対応
                                         request_page = 12
@@ -3419,6 +3475,45 @@ Class WebRemocon
     '　本体はProcessManager.vbに
     Public Function WI_GET_PROGRAM_NUM(ByVal num As Integer) As String
         Return Me._procMan.WI_GET_PROGRAM_NUM(num)
+    End Function
+
+    '倍速ファイル再生のために逆数の分数を求める
+    Public Function get_bunsuu_R(ByVal s As String) As String
+        Dim r As String = "1/1" '標準は等速
+        If Val(s.Replace(".", "")) <> 0 And s.IndexOf("-") < 0 Then
+            Dim bunbo As Integer
+            Dim bunshi As Integer
+            Dim s2() As String = s.Split(".")
+            If s2.Length = 2 Then
+                bunshi = Val(s.Replace(".", ""))
+                bunbo = 10 ^ s2(1).Length
+                Dim k As Double = F_Gcd(bunshi, bunbo)
+                If k > 1 Then
+                    bunshi = (bunshi / k)
+                    bunbo = (bunbo / k)
+                End If
+            ElseIf s2.Length = 1 Then
+                bunshi = Val(s)
+                bunbo = 1
+            End If
+            r = bunbo & "/" & bunshi '逆数
+        End If
+        Return r
+    End Function
+
+    Public Function F_Gcd(ByVal a As Integer, ByVal b As Integer) As Integer
+        '最大公約数を求める
+        '参考　http://ameblo.jp/sdw7/entry-11022575474.html
+        If a < b Then
+            Return F_Gcd(b, a)
+        End If
+        Dim d As Integer = 0
+        Do
+            d = a Mod b
+            a = b
+            b = d
+        Loop Until d = 0
+        Return a
     End Function
 
 End Class
