@@ -1344,6 +1344,8 @@ Class WebRemocon
                                 Allow_BonDriver4Streams = Val(youso(1).ToString)
                             Case "EDCB_thru_addprogres"
                                 EDCB_thru_addprogres = Val(youso(1).ToString)
+                            Case "EDCB_Velmy_niisaka"
+                                EDCB_Velmy_niisaka = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception

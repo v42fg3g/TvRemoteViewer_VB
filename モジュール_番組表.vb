@@ -35,6 +35,9 @@ Module モジュール_番組表
     'EDCBの/addprogres.htmlでEDCB管理チャンネルを抽出しない場合=1
     Public EDCB_thru_addprogres As Integer = 0
 
+    'EDCBがVelmy,niisaka版の場合は1
+    Public EDCB_Velmy_niisaka As Integer = 0
+
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
         Public stationDispName As String
@@ -1198,6 +1201,50 @@ Module モジュール_番組表
                     sp = html.IndexOf("serviceID")
                     Dim ep As Integer = html.IndexOf("</select>")
                     If sp > 0 Then
+                        Dim d_tsid As Integer = 0
+                        Dim d_sid As Integer = 8
+                        Dim s_tsid As Integer = 1
+                        Dim s_sid As Integer = 5
+
+                        'Velmy版かどうかチェック
+                        '通常                   Velmy
+                        'x[TSID][SID]           x[SID][TSID]
+                        '[TSID][SID][TSID]      [TSID][TSID][SID]
+                        Dim Velmy_chk As Integer = 0
+                        If EDCB_Velmy_niisaka = 1 Then
+                            'Velmy版が指定されている
+                            Velmy_chk = 1
+                            log1write("【EDCB】Velmy,niisaka版の指定がありました")
+                        ElseIf html.IndexOf("17186504945") > 0 Then
+                            'Velmy版のBS1文字列が存在した
+                            Velmy_chk = 1
+                            log1write("【EDCB】BS文字列からVelmy,niisaka版であると判断しました")
+                        Else
+                            ''冒頭のsidで判断（これは確実ではなさそうなので却下）
+                            'Dim test_hex As String = Hex(Val(Instr_pickup(html, "option value=""", """", sp, ep)))
+                            'Dim test_sid As Integer = 0
+                            'Dim test_tsid As Integer = 0
+                            'If test_hex.Length = 12 Then
+                            'test_sid = h16_10("0x" & Val(test_hex.Substring(4, 4)))
+                            'ElseIf test_hex.Length = 9 Then
+                            'test_sid = h16_10("0x" & Val(test_hex.Substring(1, 4)))
+                            'End If
+                            'If test_sid > 0 Then
+                            'If Array.IndexOf(ch_list, test_sid) >= 0 Then
+                            ''ch_list()にVelmy版sidが見つかった場合はVelmy,niisaka版と判断
+                            'Velmy_chk = 1
+                            'log1write("【EDCB】サービスIDからVelmy,niisaka版であると判断しました")
+                            'End If
+                            'End If
+                        End If
+                        If Velmy_chk = 1 Then
+                            'Velmy版
+                            d_tsid = 0
+                            d_sid = 4
+                            s_tsid = 5
+                            s_sid = 1
+                        End If
+
                         While sp > 0
                             Dim dex1 As String = Instr_pickup(html, "option value=""", """", sp, ep)
                             Dim tsid_long As String = Hex(dex1) '16進数に変換
@@ -1208,17 +1255,17 @@ Module モジュール_番組表
 
                             If tsid_long.Length = 12 Then
                                 '地デジ
-                                tsid_hex = tsid_long.Substring(0, 4) '初めの4文字
+                                tsid_hex = tsid_long.Substring(d_tsid, 4) '初めの4文字
                                 tsid = h16_10("0x" & tsid_hex)
-                                sid_hex = tsid_long.Substring(8, 4) '最後の4文字
+                                sid_hex = tsid_long.Substring(d_sid, 4) '最後の4文字
                                 sid = h16_10("0x" & sid_hex)
                             ElseIf tsid_long.Length = 9 Then
                                 'BS/CS
-                                sid_hex = tsid_long.Substring(5, 4) '最後の4文字
+                                sid_hex = tsid_long.Substring(s_sid, 4) '最後の4文字
                                 sid = h16_10("0x" & sid_hex)
                                 If sid < SPHD_sid_start Or sid > SPHD_sid_end Then
                                     'SPHDでなければTSIDを記録
-                                    tsid_hex = tsid_long.Substring(1, 4) '初めの4文字
+                                    tsid_hex = tsid_long.Substring(s_tsid, 4) '初めの4文字
                                     tsid = h16_10("0x" & tsid_hex)
                                 Else
                                     'SPHDの場合、TSIDはあてにならないみたいなのでTSIDは記録しない
@@ -1425,66 +1472,69 @@ Module モジュール_番組表
                                         'ptTimerはCSのサービスIDが+65536されている
                                         sid = sid - 65536
                                     End If
-                                    Dim eid As Integer = Val(youso(1))
-                                    Dim title As String = escape_program_str(youso(4)) 'タイトル
-                                    Dim texts As String = escape_program_str(youso(5)) '内容
-                                    '開始時間
-                                    Dim ystart As Integer = Val(youso(2))
-                                    Dim ystartDate As DateTime = unix2time(Val(youso(2)))
-                                    Dim ystart_time As String = ystartDate.ToString("HH:mm")
-                                    '終了時間
-                                    Dim yend As Integer = Val(youso(2)) + Val(youso(3))
-                                    Dim yendDate As DateTime = DateAdd(DateInterval.Second, Val(youso(3)), ystartDate)
-                                    Dim yend_time As String = yendDate.ToString("HH:mm")
+                                    If Array.IndexOf(ch_list, sid) >= 0 Then
+                                        'ch_list()にsidが登録されていれば
+                                        Dim eid As Integer = Val(youso(1))
+                                        Dim title As String = escape_program_str(youso(4)) 'タイトル
+                                        Dim texts As String = escape_program_str(youso(5)) '内容
+                                        '開始時間
+                                        Dim ystart As Integer = Val(youso(2))
+                                        Dim ystartDate As DateTime = unix2time(Val(youso(2)))
+                                        Dim ystart_time As String = ystartDate.ToString("HH:mm")
+                                        '終了時間
+                                        Dim yend As Integer = Val(youso(2)) + Val(youso(3))
+                                        Dim yendDate As DateTime = DateAdd(DateInterval.Second, Val(youso(3)), ystartDate)
+                                        Dim yend_time As String = yendDate.ToString("HH:mm")
 
-                                    '放送局名
-                                    Dim station As String
-                                    station = sid2jigyousha(sid) 'BS-TBSとQVCが区別できない
-                                    If chk161 = 1 Then
-                                        station = "ＱＶＣ"
-                                    End If
-                                    If chk161 = 2 Then
-                                        station = ""
-                                    End If
+                                        '放送局名
+                                        Dim station As String
+                                        station = sid2jigyousha(sid) 'BS-TBSとQVCが区別できない
+                                        If chk161 = 1 Then
+                                            station = "ＱＶＣ"
+                                        End If
+                                        If chk161 = 2 Then
+                                            station = ""
+                                        End If
 
-                                    If station.Length > 0 And sid <> skip_sid Then
-                                        '放送局名が見つかっていれば
-                                        Dim chk As Integer = -1
-                                        If r IsNot Nothing Then
-                                            chk = Array.IndexOf(r, sid)
-                                            If chk >= 0 Then
-                                                If r(chk).startDateTime = "1970/01/01 " & ystart_time And r(chk).programTitle = title Then
-                                                    '重複（同じ時刻、同じタイトル）
-                                                    chk = 1
-                                                Else
-                                                    chk = -1
+                                        If station.Length > 0 And sid <> skip_sid Then
+                                            '放送局名が見つかっていれば
+                                            Dim chk As Integer = -1
+                                            If r IsNot Nothing Then
+                                                chk = Array.IndexOf(r, sid)
+                                                If chk >= 0 Then
+                                                    If r(chk).startDateTime = "1970/01/01 " & ystart_time And r(chk).programTitle = title Then
+                                                        '重複（同じ時刻、同じタイトル）
+                                                        chk = 1
+                                                    Else
+                                                        chk = -1
+                                                    End If
                                                 End If
                                             End If
-                                        End If
-                                        If chk < 0 Then
-                                            '重複がなければ
-                                            If r Is Nothing Then
-                                                ReDim Preserve r(0)
-                                            Else
-                                                i = r.Length
-                                                ReDim Preserve r(i)
+                                            If chk < 0 Then
+                                                '重複がなければ
+                                                If r Is Nothing Then
+                                                    ReDim Preserve r(0)
+                                                Else
+                                                    i = r.Length
+                                                    ReDim Preserve r(i)
+                                                End If
+                                                r(i).sid = sid
+                                                r(i).tsid = 0
+                                                r(i).stationDispName = station
+                                                Dim t1s As String = "1970/01/01 " & ystart_time
+                                                Dim t2s As String = "1970/01/01 " & yend_time
+                                                r(i).startDateTime = t1s
+                                                r(i).endDateTime = t2s
+                                                r(i).programTitle = title
+                                                r(i).programContent = texts
+                                                '次番組かどうかチェック
+                                                If sid = last_sid Then
+                                                    '2回目の場合は次番組であろう
+                                                    r(i).nextFlag = 1
+                                                    skip_sid = sid '3回目以降はスキップするように
+                                                End If
+                                                last_sid = sid
                                             End If
-                                            r(i).sid = sid
-                                            r(i).tsid = 0
-                                            r(i).stationDispName = station
-                                            Dim t1s As String = "1970/01/01 " & ystart_time
-                                            Dim t2s As String = "1970/01/01 " & yend_time
-                                            r(i).startDateTime = t1s
-                                            r(i).endDateTime = t2s
-                                            r(i).programTitle = title
-                                            r(i).programContent = texts
-                                            '次番組かどうかチェック
-                                            If sid = last_sid Then
-                                                '2回目の場合は次番組であろう
-                                                r(i).nextFlag = 1
-                                                skip_sid = sid '3回目以降はスキップするように
-                                            End If
-                                            last_sid = sid
                                         End If
                                     End If
                                 End If

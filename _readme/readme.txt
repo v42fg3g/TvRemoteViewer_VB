@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.22
+TvRemoteViewer_VB v1.23
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -511,6 +511,9 @@ TvRemoteViewer_VB v1.22
 		VideoSizeCheckバグ修正
 	1.22	iniにStop_ffmpeg_at_StartEndとStop_vlc_at_StartEndを追加
 		（別用途でffmpegやvlcを使用している場合は0にしてください）
+	1.23	iniにEDCBのVelmy版とniisaka版で番組表を表示できるようEDCB_Velmy_niisakaを追加
+		（BSが受信できる状態ならば指定しなくとも自動判断できると思います）
+		ptTimer番組表作成時に.ch2ファイルに記載されているもののみ表示するようにした
 
 
 
