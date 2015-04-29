@@ -1494,8 +1494,8 @@ Class WebRemocon
                                 sep = ","
                             End While
                             If dbl <> 1 Then
-                                '小数点3桁までにしておく
-                                dbl = Math.Round(dbl, 3, MidpointRounding.AwayFromZero)
+                                '小数点3桁までにしておく　→ 廃止。よく考えたら2で割って無理数にはならないわな
+                                'dbl = Math.Round(dbl, 3, MidpointRounding.AwayFromZero)
                                 atempo &= sep & "atempo=" & dbl
                             End If
                         Else
