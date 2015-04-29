@@ -1507,19 +1507,39 @@ Class WebRemocon
                     End Try
 
                     If dbl > 0 Then
+                        Dim bchk As Integer = 0
                         If hlsOpt.IndexOf(" -vf ") < 0 Then
                             sp = hlsOpt.IndexOf(" -f ")
                             If sp >= 0 Then
                                 '-fの前に付ける
                                 If sp > 0 Then
-                                    hlsOpt = hlsOpt.Substring(0, sp) & " -af " & atempo & " -vf setpts=" & bunsuu & "*PTS" & hlsOpt.Substring(sp)
-                                Else
-                                    log1write("HLSオプションに-f部分が見つからないため倍速指定に失敗しました")
+                                    hlsOpt = hlsOpt.Substring(0, sp) & " -vf setpts=" & bunsuu & "*PTS" & hlsOpt.Substring(sp)
+                                    bchk = 1
                                 End If
                             End If
                         Else
                             '-vfが存在している場合は前部に追加
-                            hlsOpt = hlsOpt.Replace(" -vf ", " -af " & atempo & " -vf setpts=" & bunsuu & "*PTS,")
+                            hlsOpt = hlsOpt.Replace(" -vf ", " -vf setpts=" & bunsuu & "*PTS,")
+                            bchk = 1
+                        End If
+                        If bchk = 1 Then
+                            If hlsOpt.IndexOf(" -af ") < 0 Then
+                                sp = hlsOpt.IndexOf(" -f ")
+                                If sp >= 0 Then
+                                    '-fの前に付ける
+                                    If sp > 0 Then
+                                        hlsOpt = hlsOpt.Substring(0, sp) & " -af " & atempo & hlsOpt.Substring(sp)
+                                        bchk = 2
+                                    End If
+                                End If
+                            Else
+                                '-afが存在している場合は前部に追加
+                                hlsOpt = hlsOpt.Replace(" -af ", " -af " & atempo & ",")
+                                bchk = 2
+                            End If
+                        End If
+                        If bchk <> 2 Then
+                            log1write("HLSオプションへの倍速指定に失敗しました")
                         End If
                     End If
                 End If
