@@ -1402,8 +1402,8 @@ Class WebRemocon
         End If
 
         Dim new_file As String = ""
-        If fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0 Then
-            'fonts.confが存在し、無変換でなく、ハードサブ禁止でなければ
+        If (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0) Or nohsub = 2 Then
+            'fonts.confが存在し、無変換でなく、ハードサブ禁止でなければ （又はnohsub=2）
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
                 Dim ass_file As String = filename.Substring(0, dt) & ".ass"
@@ -1426,7 +1426,11 @@ Class WebRemocon
                         End While
                         log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
                         'オプションに挿入する文字列を作成
-                        new_file = " -vf ass=""" & new_file & """"
+                        If nohsub = 0 Then
+                            new_file = " -vf ass=""" & new_file & """"
+                        Else
+                            new_file = ""
+                        End If
                     Else
                         'シークが指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
                         log1write("字幕ASSファイルを修正しています")
@@ -1435,11 +1439,16 @@ Class WebRemocon
                             log1write("字幕ASSファイルの修正が完了しました")
                             log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
                             'オプションに挿入する文字列を作成
-                            new_file = " -vf ass=""" & new_file & """"
+                            If nohsub = 0 Then
+                                new_file = " -vf ass=""" & new_file & """"
+                            Else
+                                new_file = ""
+                            End If
                         Else
                             'エラー
                             log1write("字幕ASSファイルの修正に失敗しました")
                             'オプションに-vfは挿入しない
+                            new_file = ""
                         End If
                     End If
                     'Catch ex As Exception
@@ -1448,8 +1457,8 @@ Class WebRemocon
                     'End Try
                 End If
             End If
-        ElseIf nohsub = 2 Then
-            'nohsub=2の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
+        ElseIf nohsub = 3 Then
+            'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
                 Dim ass_file As String = filename.Substring(0, dt) & ".ass"
