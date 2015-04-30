@@ -1396,6 +1396,11 @@ Class WebRemocon
     Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
 
+        '古いsub%num%.assがあれば削除
+        If file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") = 1 Then
+            deletefile(fileroot & "\" & "sub" & num.ToString & ".ass")
+        End If
+
         Dim new_file As String = ""
         If fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0 Then
             'fonts.confが存在し、無変換でなく、ハードサブ禁止でなければ
@@ -1409,7 +1414,7 @@ Class WebRemocon
                     new_file = "sub" & num.ToString & ".ass"
                     '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
                     Dim rename_file As String = fileroot & "\" & new_file
-                    If VideoSeekSeconds <= 0 Then
+                    If VideoSeekSeconds <= 0 And baisoku = "1" Then
                         'シークが指定されていなければそのままコピー
                         'リネーム
                         My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
@@ -1425,7 +1430,7 @@ Class WebRemocon
                     Else
                         'シークが指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
                         log1write("字幕ASSファイルを修正しています")
-                        If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds) = 1 Then
+                        If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds, baisoku) = 1 Then
                             '修正完了
                             log1write("字幕ASSファイルの修正が完了しました")
                             log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
@@ -1441,6 +1446,28 @@ Class WebRemocon
                     'log1write("字幕ASSファイル処理でエラーが発生しました。" & ex.Message)
                     'new_file = ""
                     'End Try
+                End If
+            End If
+        ElseIf nohsub = 2 Then
+            'nohsub=2の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
+            Dim dt As Integer = filename.LastIndexOf(".")
+            If dt > 0 Then
+                Dim ass_file As String = filename.Substring(0, dt) & ".ass"
+                If file_exist(ass_file) = 1 Then
+                    log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
+                    '存在していればstreamフォルダに名前を変えてコピー
+                    '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                    Dim rename_file As String = fileroot & "\" & "sub" & num.ToString & ".ass"
+                    'シークが指定されていなければそのままコピー
+                    'リネーム
+                    My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                    'ファイルが出来るまで待機
+                    Dim i As Integer = 0
+                    While i < 100 And file_exist(rename_file) < 1
+                        System.Threading.Thread.Sleep(50)
+                        i += 1
+                    End While
+                    log1write("字幕ASSファイルとして" & rename_file & "をセットしました[CopyOnly]")
                 End If
             End If
         End If

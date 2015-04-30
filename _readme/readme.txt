@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.24
+TvRemoteViewer_VB v1.25
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -516,6 +516,7 @@ TvRemoteViewer_VB v1.24
 		ptTimer番組表作成時に.ch2ファイルに記載されているもののみ表示するようにした
 	1.24	倍速ファイル再生に対応
 		標準HTMLのSelectVideo.htmlを修正
+	1.25	倍速ファイル再生時のハードサブに対応
 
 
 

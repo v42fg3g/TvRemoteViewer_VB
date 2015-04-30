@@ -135,8 +135,18 @@ Module モジュール_ニコニコ実況
     End Function
 
     '字幕assファイルをシーク秒数に合わせて修正する
-    Public Function ass_adjust_seektime(ByVal ass_file As String, ByVal rename_file As String, ByVal SeekSeconds As Integer) As Integer
+    Public Function ass_adjust_seektime(ByVal ass_file As String, ByVal rename_file As String, ByVal SeekSeconds As Integer, ByVal baisoku As String) As Integer
         Dim r As Integer = 0
+
+        Dim speed As Double = 0
+        Try
+            speed = Double.Parse(baisoku)
+        Catch ex As Exception
+            speed = 1
+        End Try
+        If speed <= 0 Then
+            speed = 1
+        End If
 
         Dim txtass As String = file2str(ass_file, "UTF-8")
         Dim sp As Integer = 0
@@ -162,6 +172,14 @@ Module モジュール_ニコニコ実況
                 Dim dy2 As DateTime = CDate("2000/01/01 " & d2(2))
                 Dim howlong As Integer = DateDiff(DateInterval.Second, dy1, dy2)
 
+                '可変対応(表示時間を変えるべきかどうか）
+                If speed <> 1 Then
+                    howlong = Int(Math.Ceiling(howlong / speed))
+                    If howlong <= 0 Then
+                        howlong = 1
+                    End If
+                End If
+
                 log1write("コメントをシークに合わせてシフトしています")
                 For i = 0 To asss.Length - 1
                     Dim d() As String = asss(i).Split(",")
@@ -172,6 +190,16 @@ Module モジュール_ニコニコ実況
                         dy1 = DateAdd(DateInterval.Second, -SeekSeconds, dy1)
                         If Year(dy1) >= 2000 Then
                             '表示しなくていいコメントは1999年になる
+                            '可変対応
+                            If speed <> 1 Then
+                                Dim ta As Integer = (Hour(dy1) * 60 * 60) + (Minute(dy1) * 60) + Second(dy1)
+                                ta = Int(ta / speed)
+                                Dim h1 As Integer = Int(ta / 3600)
+                                Dim h2 As Integer = Int((ta Mod 3600) / 60)
+                                Dim h3 As Integer = ta Mod 60
+                                Dim lt As String = h1 & ":" & h2 & ":" & h3
+                                dy1 = CDate("2000/01/01 " & lt)
+                            End If
                             dy2 = DateAdd(DateInterval.Second, howlong, dy1) '表示終了時間　指定秒後
                             Dim dy1_str As String = dy1.ToLongTimeString & ms 'マイクロセカンドも足す
                             Dim dy2_str As String = dy2.ToLongTimeString & ms 'マイクロセカンドも足す

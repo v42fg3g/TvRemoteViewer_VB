@@ -790,6 +790,10 @@ Public Class ProcessManager
 
                 '関連するファイルを削除
                 delete_mystreamnum(Me._list(i)._num)
+                '古いsub%num%.assがあれば削除
+                If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass") = 1 Then
+                    deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass")
+                End If
 
                 Try
                     '★ リストから取り除く
