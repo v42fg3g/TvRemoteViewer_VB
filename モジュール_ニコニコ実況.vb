@@ -173,12 +173,12 @@ Module モジュール_ニコニコ実況
                 Dim howlong As Integer = DateDiff(DateInterval.Second, dy1, dy2)
 
                 '可変対応(表示時間を変えるべきかどうか）
-                If speed <> 1 Then
-                    howlong = Int(Math.Ceiling(howlong / speed))
-                    If howlong <= 0 Then
-                        howlong = 1
-                    End If
-                End If
+                'If speed <> 1 Then
+                'howlong = Int(Math.Ceiling(howlong / speed))
+                'If howlong <= 0 Then
+                'howlong = 1
+                'End If
+                'End If
 
                 log1write("コメントをシークに合わせてシフトしています")
                 For i = 0 To asss.Length - 1

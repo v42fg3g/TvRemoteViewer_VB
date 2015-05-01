@@ -120,8 +120,14 @@ Public Class ProcessManager
                 End If
             End If
 
+            '新ストリームがファイル再生ならば作成したばかりのassファイルを消さないようにする
+            Dim NoDeleteAss As Integer = 0
+            If i >= 0 And (stream_mode = 1 Or stream_mode = 3) Then
+                NoDeleteAss = 1
+            End If
+
             '★起動している場合は既存のプロセスを止める
-            stopProc(num, hls_only) 'hls_only=1ならばHLSアプリのみを停止する
+            stopProc(num, hls_only, NoDeleteAss) 'hls_only=1ならばHLSアプリのみを停止する
             'stopProcでチャンネル変更ならstopping=-2になる
 
             stopping = get_stopping_status(num)
@@ -591,7 +597,7 @@ Public Class ProcessManager
     End Sub
 
     '指定numberプロセスを停止する
-    Public Sub stopProc(num As Integer, Optional ByVal hls_only As Integer = 0)
+    Public Sub stopProc(num As Integer, Optional ByVal hls_only As Integer = 0, Optional ByVal NoDeleteAss As Integer = 0)
         'index = -1 の場合は全て停止
         Dim proc As System.Diagnostics.Process = Nothing
 
@@ -790,9 +796,11 @@ Public Class ProcessManager
 
                 '関連するファイルを削除
                 delete_mystreamnum(Me._list(i)._num)
-                '古いsub%num%.assがあれば削除
-                If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass") = 1 Then
-                    deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass")
+                If NoDeleteAss = 0 Then
+                    '古いsub%num%.assがあれば削除
+                    If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass") = 1 Then
+                        deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass")
+                    End If
                 End If
 
                 Try
@@ -1167,9 +1175,9 @@ Public Class ProcessManager
     Public Sub delete_mystreamnum(ByVal num As Integer)
         For Each tempFile As String In System.IO.Directory.GetFiles(Me._fileroot)
             If tempFile.IndexOf("mystream" & num.ToString & "-") >= 0 Or tempFile.IndexOf("mystream" & num.ToString & ".") >= 0 Then
-                Dim i As Integer = 20 '2秒間は再チャレンジする
+                Dim i As Integer = 40 '2秒間は再チャレンジする
                 While deletefile(tempFile) = 0 And i >= 0
-                    System.Threading.Thread.Sleep(100)
+                    System.Threading.Thread.Sleep(50)
                     i -= 1
                 End While
             End If
