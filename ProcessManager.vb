@@ -526,7 +526,7 @@ Public Class ProcessManager
                 ElseIf Me._list(i)._stopping >= 100 Then '=3
                     'ffmpeg HTTPストリーム UDPアプリだけが起動してHLSアプリの起動を待っている
                 ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 0 Or Me._list(i)._stream_mode = 2) Then
-                    '再起動させる
+                    '通常再生　順調かどうかチェック
                     Dim chk As Integer = 0
                     Dim procudp As System.Diagnostics.Process = Nothing
                     Dim prochls As System.Diagnostics.Process = Nothing
@@ -587,6 +587,29 @@ Public Class ProcessManager
                         'プロセスを開始
                         startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
                         log1write("No.=" & p5 & "のプロセスを再起動しました")
+                    End If
+                ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 1 Or Me._list(i)._stream_mode = 3) Then
+                    'ファイル再生　順調かどうかチェック
+                    Dim chk As Integer = 0
+                    Dim prochls As System.Diagnostics.Process = Nothing
+                    prochls = Me._list(i).GetHlsProc()
+                    If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
+                    Else
+                        'エラー
+                        Me._list(i)._chk_proc += 100
+                        chk += 1
+                        log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
+                    End If
+
+                    If chk = 0 Then
+                        'エラーがなければエラーカウンタをリセット
+                        Me._list(i)._chk_proc = 0
+                    End If
+
+                    If Me._list(i)._chk_proc >= 300 Then 'プロセスが無いか3秒応答がなければ
+                        '再起動させようと思ったがffmpegの場合再起動させても無意味っぽいので停止させることにする
+                        log1write("No.=" & Me._list(i)._num.ToString & " 再起動しても無駄な可能性が高いのでファイル再生を停止します")
+                        stopProc(Me._list(i)._num)
                     End If
                 End If
             Next
