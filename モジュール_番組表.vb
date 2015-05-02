@@ -1574,8 +1574,16 @@ Module モジュール_番組表
                                                     r(j).stationDispName = sid2jigyousha(sid, tsid)
                                                     r(j).startDateTime = t1s
                                                     r(j).endDateTime = t2s
-                                                    If ei.event_name IsNot Nothing Then r(j).programTitle = escape_program_str(ei.event_name)
-                                                    If ei.text_char IsNot Nothing Then r(j).programContent = escape_program_str(ei.text_char)
+                                                    If ei.event_name IsNot Nothing Then
+                                                        r(j).programTitle = escape_program_str(ei.event_name)
+                                                    Else
+                                                        r(j).programTitle = ""
+                                                    End If
+                                                    If ei.text_char IsNot Nothing Then
+                                                        r(j).programContent = escape_program_str(ei.text_char)
+                                                    Else
+                                                        r(j).programContent = ""
+                                                    End If
                                                     r(j).sid = ch_list(i).sid
                                                     r(j).tsid = ch_list(i).tsid '一致しない可能性がある
 
@@ -1609,8 +1617,16 @@ Module モジュール_番組表
                                                         r(j).stationDispName = ch_list(i).jigyousha 'sid2jigyousha(sid, tsid)
                                                         r(j).startDateTime = t1s
                                                         r(j).endDateTime = t2s
-                                                        If ei.event_name IsNot Nothing Then r(j).programTitle = escape_program_str(ei.event_name)
-                                                        If ei.text_char IsNot Nothing Then r(j).programContent = escape_program_str(ei.text_char)
+                                                        If ei.event_name IsNot Nothing Then
+                                                            r(j).programTitle = escape_program_str(ei.event_name)
+                                                        Else
+                                                            r(j).programTitle = ""
+                                                        End If
+                                                        If ei.text_char IsNot Nothing Then
+                                                            r(j).programContent = escape_program_str(ei.text_char)
+                                                        Else
+                                                            r(j).programContent = ""
+                                                        End If
                                                         r(j).sid = ch_list(i).sid
                                                         r(j).tsid = ch_list(i).tsid '一致しない可能性がある
 
