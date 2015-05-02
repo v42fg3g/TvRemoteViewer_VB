@@ -417,180 +417,8 @@ Module モジュール_番組表
             r = get_ptTimer_program(getnext)
         ElseIf regionID = 998 Then
             'EDCB
-            Try
-                If TvProgram_EDCB_url.Length > 0 Then
-                    If ch_list IsNot Nothing Then
-                        For i As Integer = 0 To ch_list.Length - 1
-                            Dim chk_j As Integer = 0
-
-                            'EDCB番組表に存在しているかチェック
-                            If EDCB_thru_addprogres = 0 Then
-                                Dim ct As Integer = check_TSID_in_EDCBprogram(ch_list(i).tsid, ch_list(i).sid)
-                                If ct < 0 Then
-                                    '存在していない
-                                    chk_j = 1
-                                End If
-                            End If
-
-                            'プレミアム指定（1.16からは指定しなくてもOK）
-                            If chk_j = 0 Then
-                                If TvProgramEDCB_premium = 1 Then
-                                    'プレミアム指定されている場合、プレミアム以外は無視
-                                    If ch_list(i).sid < SPHD_sid_start Or ch_list(i).sid > SPHD_sid_end Then
-                                        chk_j = 1
-                                    End If
-                                ElseIf TvProgramEDCB_premium = 2 Then
-                                    'プレミアムを表示しないよう指定されている場合はプレミアムは無視
-                                    If ch_list(i).sid >= SPHD_sid_start And ch_list(i).sid <= SPHD_sid_end Then
-                                        chk_j = 1
-                                    End If
-                                End If
-                            End If
-                            'NGワードに指定されているものは無視
-                            If chk_j = 0 Then
-                                chk_j = isMATCHhosokyoku(TvProgramEDCB_NGword, ch_list(i).jigyousha, ch_list(i).sid)
-                            End If
-                            '番組情報を取得しないものは無視
-                            If chk_j = 0 Then
-                                chk_j = isMATCHhosokyoku(TvProgramEDCB_ignore, ch_list(i).jigyousha, ch_list(i).sid)
-                            End If
-
-                            If chk_j = 0 Then
-                                Dim wc As WebClient = New WebClient()
-                                Dim st_add As String = ""
-                                If TvProgram_EDCB_url.IndexOf("?") < 0 Then
-                                    st_add = "?"
-                                Else
-                                    st_add = "&"
-                                End If
-                                Dim st_str As String = TvProgram_EDCB_url & st_add & "SID=" & ch_list(i).sid.ToString
-                                If ch_list(i).sid < SPHD_sid_start Or ch_list(i).sid > SPHD_sid_end Then
-                                    'SPHD以外ならTSIDも指定
-                                    If ch_list(i).tsid > 0 Then
-                                        st_str = st_str & "&TSID=" & ch_list(i).tsid.ToString
-                                    End If
-                                End If
-                                Dim st As Stream = wc.OpenRead(st_str)
-                                Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
-                                Dim sr As StreamReader = New StreamReader(st, enc)
-                                Dim html As String = sr.ReadToEnd()
-
-                                Dim sp As Integer = html.IndexOf("<eventinfo>")
-                                Dim ep As Integer = html.IndexOf("</eventinfo>", sp + 1)
-                                Dim chk As Integer = 0
-                                While sp >= 0 And ep > sp
-                                    Try
-                                        'まず現在時刻にあてはまるかチェック
-                                        Dim t As DateTime = Now()
-                                        Dim t1date As String = Instr_pickup(html, "<startDate>", "</startDate>", sp, ep)
-                                        Dim t1time As String = Instr_pickup(html, "<startTime>", "</startTime>", sp, ep)
-                                        Dim t1long As Integer = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
-                                        Dim t1 As DateTime = CDate(t1date & " " & t1time)
-                                        Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
-                                        Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
-                                        Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
-                                        '次番組を探すための文字列
-                                        Dim t2str As String = "<startDate>" & Year(t2) & "/" & Month(t2) & "/" & t2.Day & "</startDate><startTime>" & Hour(t2) & ":" & Minute(t2) & ":" & Second(t2) & "</startTime>"
-
-                                        If t >= t1 And t < t2 Then
-                                            Dim j As Integer = 0
-                                            If r Is Nothing Then
-                                                j = 0
-                                            Else
-                                                j = r.Length
-                                            End If
-                                            ReDim Preserve r(j)
-                                            Dim sid As Integer = Val(Instr_pickup(html, "<SID>", "</SID>", sp, ep))
-                                            Dim tsid As Integer = Val(Instr_pickup(html, "<TSID>", "</TSID>", sp, ep))
-                                            r(j).stationDispName = sid2jigyousha(sid, tsid)
-                                            r(j).startDateTime = t1s
-                                            r(j).endDateTime = t2s
-                                            r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
-                                            r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
-                                            'sidを追加 
-                                            'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
-                                            r(j).sid = ch_list(i).sid
-                                            r(j).tsid = ch_list(i).tsid '一致しない可能性がある
-
-                                            chk = 1
-                                            If getnext > 0 Then
-                                                '次の番組を探す
-                                                sp = html.IndexOf(t2str)
-                                                If sp > 0 Then
-                                                    ep = html.IndexOf("</eventinfo>", sp)
-                                                    j = r.Length
-                                                    ReDim Preserve r(j)
-                                                    r(j).stationDispName = r(j - 1).stationDispName
-                                                    r(j).startDateTime = t2s
-                                                    t1long = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
-                                                    t1 = t2
-                                                    t2 = DateAdd(DateInterval.Minute, t1long, t1)
-                                                    t1s = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
-                                                    t2s = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
-                                                    r(j).endDateTime = t2s
-                                                    r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
-                                                    r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
-                                                    'sidを追加 
-                                                    'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
-                                                    r(j).sid = ch_list(i).sid
-                                                    r(j).tsid = ch_list(i).tsid '一致しない可能性がある
-
-                                                    '次の番組であることを記録
-                                                    r(j).nextFlag = 1
-                                                End If
-                                            End If
-                                            Exit While
-                                        End If
-                                    Catch ex As Exception
-                                    End Try
-
-                                    sp = html.IndexOf("<eventinfo>", sp + 1)
-                                    ep = html.IndexOf("</eventinfo>", sp + 1)
-                                End While
-
-                                sr.Close()
-                                st.Close()
-
-                                If chk = 0 Then
-                                    '該当時間帯の番組が無かった場合
-                                    Dim j As Integer = 0
-                                    If r Is Nothing Then
-                                        j = 0
-                                    Else
-                                        j = r.Length
-                                    End If
-                                    ReDim Preserve r(j)
-                                    r(j).stationDispName = ch_list(i).jigyousha
-                                    r(j).startDateTime = ""
-                                    r(j).endDateTime = ""
-                                    r(j).programTitle = ""
-                                    r(j).programContent = ""
-                                    r(j).sid = ch_list(i).sid
-                                    r(j).tsid = ch_list(i).tsid
-                                End If
-                            ElseIf chk_j = 2 Then
-                                'ダミー
-                                Dim j As Integer = 0
-                                If r Is Nothing Then
-                                    j = 0
-                                Else
-                                    j = r.Length
-                                End If
-                                ReDim Preserve r(j)
-                                r(j).stationDispName = ch_list(i).jigyousha
-                                r(j).startDateTime = ""
-                                r(j).endDateTime = ""
-                                r(j).programTitle = ""
-                                r(j).programContent = ""
-                                r(j).sid = ch_list(i).sid
-                                r(j).tsid = ch_list(i).tsid
-                            End If
-                        Next
-                    End If
-                End If
-            Catch ex As Exception
-                log1write("EDCBからの番組表取得に失敗しました。" & ex.Message)
-            End Try
+            r = get_EDCB_program(getnext)
+            'r = get_EDCB_program_old(getnext) '旧方式
         ElseIf regionID = 999 Then
             'TvRock
             Try
@@ -1601,6 +1429,426 @@ Module モジュール_番組表
             log1write("【エラー】ptTimerのデータベースを認識できませんでした")
             ptTimer_path = ""
         End If
+
+        Return r
+    End Function
+
+    'EDCB番組表
+    Public EDCB_cmd As New CtrlCmdCLI.CtrlCmdUtil
+    Public Function get_EDCB_program(ByVal getnext As Integer) As Object
+        Dim r() As TVprogramstructure = Nothing
+
+        If TvProgram_EDCB_url.Length > 0 Then
+            If ch_list IsNot Nothing Then
+                Dim i As Integer = 0
+                Dim k As Integer = 0
+
+                Dim ip As String = Instr_pickup(TvProgram_EDCB_url, "://", ":", 0)
+                ip = host2ip(ip) 'ホストネームからIPに変換
+                Dim sp As Integer = TvProgram_EDCB_url.IndexOf("://")
+                Dim port As String = ""
+                'If sp > 0 Then
+                'port = Instr_pickup(TvProgram_EDCB_url, ":", "/", sp + 3)
+                'End If
+                port = 4510 'CtrlCmdCLIのポート　決め打ち？
+
+                If ip.Length > 0 And Val(port) > 0 Then
+                    EDCB_cmd.SetSendMode(True)
+                    EDCB_cmd.SetNWSetting(ip, port)
+                    Dim epgList As New System.Collections.Generic.List(Of CtrlCmdCLI.Def.EpgServiceEventInfo)()
+                    Dim ret As Integer = EDCB_cmd.SendEnumPgAll(epgList) 'IPやportがおかしいとここで止まる可能性有り
+                    If ret = 1 Then
+                        For i = 0 To ch_list.Length - 1
+                            Dim kc As Integer = -1
+                            For k = 0 To epgList.Count - 1
+                                If epgList(k).serviceInfo.SID = ch_list(i).sid And epgList(k).serviceInfo.TSID = ch_list(i).tsid Then
+                                    'TSID&SID一致
+                                    kc = k
+                                    Exit For
+                                ElseIf epgList(k).serviceInfo.SID = ch_list(i).sid And StrConv(epgList(k).serviceInfo.service_name, VbStrConv.Wide) = StrConv(ch_list(i).jigyousha, VbStrConv.Wide) Then
+                                    'SIDと放送局名が一致
+                                    kc = k
+                                    Exit For
+                                ElseIf epgList(k).serviceInfo.SID = ch_list(i).sid Then
+                                    'SIDが一致
+                                    kc = k
+                                    Exit For
+                                End If
+                            Next
+
+                            If kc >= 0 Then
+                                Dim info As CtrlCmdCLI.Def.EpgServiceEventInfo = epgList(kc)
+
+                                Dim chk_j As Integer = 0
+
+                                Dim tsid As Integer = info.serviceInfo.TSID
+                                Dim sid As Integer = info.serviceInfo.SID
+                                Dim jigyousha As String = info.serviceInfo.service_name
+
+                                'EDCB番組表に存在しているかチェック
+                                If EDCB_thru_addprogres = 0 Then
+                                    Dim ct As Integer = check_TSID_in_EDCBprogram(tsid, sid)
+                                    If ct < 0 Then
+                                        '存在していない
+                                        chk_j = 1
+                                    End If
+                                End If
+
+                                'プレミアム指定（1.16からは指定しなくてもOK）
+                                If chk_j = 0 Then
+                                    If TvProgramEDCB_premium = 1 Then
+                                        'プレミアム指定されている場合、プレミアム以外は無視
+                                        If sid < SPHD_sid_start Or sid > SPHD_sid_end Then
+                                            chk_j = 1
+                                        End If
+                                    ElseIf TvProgramEDCB_premium = 2 Then
+                                        'プレミアムを表示しないよう指定されている場合はプレミアムは無視
+                                        If sid >= SPHD_sid_start And sid <= SPHD_sid_end Then
+                                            chk_j = 1
+                                        End If
+                                    End If
+                                End If
+                                'NGワードに指定されているものは無視
+                                If chk_j = 0 Then
+                                    chk_j = isMATCHhosokyoku(TvProgramEDCB_NGword, jigyousha, sid)
+                                End If
+                                '番組情報を取得しないものは無視
+                                If chk_j = 0 Then
+                                    chk_j = isMATCHhosokyoku(TvProgramEDCB_ignore, jigyousha, sid)
+                                End If
+
+                                If chk_j = 0 Then
+                                    Dim chk As Integer = 0
+                                    Dim t2next As DateTime = CDate("1970/01/01 9:00:00")
+                                    For k = 0 To info.eventList.Count - 1
+                                        Try
+                                            'まず現在時刻にあてはまるかチェック
+                                            Dim t As DateTime = Now()
+                                            Dim t1long As Integer = Int(info.eventList.Item(k).durationSec / 60) '分
+                                            Dim t1 As DateTime = info.eventList.Item(k).start_time
+                                            Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
+                                            Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
+                                            Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
+                                            '次番組を探すための開始時間
+                                            t2next = t2
+
+                                            If t >= t1 And t < t2 Then
+                                                Dim ei As CtrlCmdCLI.Def.EpgShortEventInfo
+                                                ei = info.eventList.Item(k).ShortInfo
+                                                If ei IsNot Nothing Then
+                                                    Dim j As Integer = 0
+                                                    If r Is Nothing Then
+                                                        j = 0
+                                                    Else
+                                                        j = r.Length
+                                                    End If
+                                                    ReDim Preserve r(j)
+
+                                                    r(j).stationDispName = sid2jigyousha(sid, tsid)
+                                                    r(j).startDateTime = t1s
+                                                    r(j).endDateTime = t2s
+                                                    If ei.event_name IsNot Nothing Then r(j).programTitle = escape_program_str(ei.event_name)
+                                                    If ei.text_char IsNot Nothing Then r(j).programContent = escape_program_str(ei.text_char)
+                                                    r(j).sid = ch_list(i).sid
+                                                    r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+
+                                                    chk = 1
+                                                End If
+                                                Exit For
+                                            End If
+                                        Catch ex As Exception
+                                        End Try
+                                    Next
+
+                                    If chk = 1 And getnext > 0 Then
+                                        '次の番組を探す
+                                        For k = 0 To info.eventList.Count - 1
+                                            Try
+                                                'まず現在時刻にあてはまるかチェック
+                                                Dim t As DateTime = Now()
+                                                Dim t1long As Integer = Int(info.eventList.Item(k).durationSec / 60) '分
+                                                Dim t1 As DateTime = info.eventList.Item(k).start_time
+                                                Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
+                                                Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
+                                                Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
+
+                                                If t1 = t2next Then
+                                                    Dim ei As CtrlCmdCLI.Def.EpgShortEventInfo
+                                                    ei = info.eventList.Item(k).ShortInfo
+                                                    If ei IsNot Nothing Then
+                                                        Dim j As Integer = r.Length
+                                                        ReDim Preserve r(j)
+
+                                                        r(j).stationDispName = ch_list(i).jigyousha 'sid2jigyousha(sid, tsid)
+                                                        r(j).startDateTime = t1s
+                                                        r(j).endDateTime = t2s
+                                                        If ei.event_name IsNot Nothing Then r(j).programTitle = escape_program_str(ei.event_name)
+                                                        If ei.text_char IsNot Nothing Then r(j).programContent = escape_program_str(ei.text_char)
+                                                        r(j).sid = ch_list(i).sid
+                                                        r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+
+                                                        '次の番組であることを記録
+                                                        r(j).nextFlag = 1
+                                                    End If
+                                                    Exit For
+                                                End If
+                                            Catch ex As Exception
+                                            End Try
+                                        Next
+                                    End If
+
+                                    If chk = 0 Then
+                                        '該当時間帯の番組が無かった場合
+                                        Dim j As Integer = 0
+                                        If r Is Nothing Then
+                                            j = 0
+                                        Else
+                                            j = r.Length
+                                        End If
+                                        ReDim Preserve r(j)
+                                        r(j).stationDispName = ch_list(i).jigyousha
+                                        r(j).startDateTime = ""
+                                        r(j).endDateTime = ""
+                                        r(j).programTitle = ""
+                                        r(j).programContent = ""
+                                        r(j).sid = ch_list(i).sid
+                                        r(j).tsid = ch_list(i).tsid
+                                    End If
+                                ElseIf chk_j = 2 Then
+                                    'ダミー
+                                    Dim j As Integer = 0
+                                    If r Is Nothing Then
+                                        j = 0
+                                    Else
+                                        j = r.Length
+                                    End If
+                                    ReDim Preserve r(j)
+                                    r(j).stationDispName = ch_list(i).jigyousha
+                                    r(j).startDateTime = ""
+                                    r(j).endDateTime = ""
+                                    r(j).programTitle = ""
+                                    r(j).programContent = ""
+                                    r(j).sid = ch_list(i).sid
+                                    r(j).tsid = ch_list(i).tsid
+                                End If
+                            End If
+                        Next
+                    End If
+                End If
+            End If
+        End If
+
+        Return r
+    End Function
+
+    'ホストネームからIP
+    Public Function host2ip(ByVal url As String) As String
+        'ホスト名からIPアドレス、IPアドレスからホスト名を取得する
+        'http://dobon.net/vb/dotnet/internet/dnslookup.html
+
+        Dim r As String = ""
+
+        Try
+            '解決したいホスト名
+            Dim hostName As String = url
+
+            'IPHostEntryオブジェクトを取得
+            Dim iphe As System.Net.IPHostEntry = System.Net.Dns.GetHostEntry(hostName)
+
+            'IPアドレスのリストを取得
+            Dim adList As System.Net.IPAddress() = iphe.AddressList
+
+            If adList IsNot Nothing Then
+                r = adList(0).ToString
+            End If
+        Catch ex As Exception
+        End Try
+
+        If r.Length = 0 Then
+            r = url
+        End If
+
+        Return r
+    End Function
+
+    'EDCB番組表　旧方式
+    Public Function get_EDCB_program_old(ByVal getnext As Integer) As Object
+        Dim r() As TVprogramstructure = Nothing
+        Try
+            'If TvProgram_EDCB_url.Length > 0 Then
+            If 1 = 2 And TvProgram_EDCB_url.Length > 0 Then
+                If ch_list IsNot Nothing Then
+                    For i As Integer = 0 To ch_list.Length - 1
+                        Dim chk_j As Integer = 0
+
+                        'EDCB番組表に存在しているかチェック
+                        If EDCB_thru_addprogres = 0 Then
+                            Dim ct As Integer = check_TSID_in_EDCBprogram(ch_list(i).tsid, ch_list(i).sid)
+                            If ct < 0 Then
+                                '存在していない
+                                chk_j = 1
+                            End If
+                        End If
+
+                        'プレミアム指定（1.16からは指定しなくてもOK）
+                        If chk_j = 0 Then
+                            If TvProgramEDCB_premium = 1 Then
+                                'プレミアム指定されている場合、プレミアム以外は無視
+                                If ch_list(i).sid < SPHD_sid_start Or ch_list(i).sid > SPHD_sid_end Then
+                                    chk_j = 1
+                                End If
+                            ElseIf TvProgramEDCB_premium = 2 Then
+                                'プレミアムを表示しないよう指定されている場合はプレミアムは無視
+                                If ch_list(i).sid >= SPHD_sid_start And ch_list(i).sid <= SPHD_sid_end Then
+                                    chk_j = 1
+                                End If
+                            End If
+                        End If
+                        'NGワードに指定されているものは無視
+                        If chk_j = 0 Then
+                            chk_j = isMATCHhosokyoku(TvProgramEDCB_NGword, ch_list(i).jigyousha, ch_list(i).sid)
+                        End If
+                        '番組情報を取得しないものは無視
+                        If chk_j = 0 Then
+                            chk_j = isMATCHhosokyoku(TvProgramEDCB_ignore, ch_list(i).jigyousha, ch_list(i).sid)
+                        End If
+
+                        If chk_j = 0 Then
+                            Dim wc As WebClient = New WebClient()
+                            Dim st_add As String = ""
+                            If TvProgram_EDCB_url.IndexOf("?") < 0 Then
+                                st_add = "?"
+                            Else
+                                st_add = "&"
+                            End If
+                            Dim st_str As String = TvProgram_EDCB_url & st_add & "SID=" & ch_list(i).sid.ToString
+                            If ch_list(i).sid < SPHD_sid_start Or ch_list(i).sid > SPHD_sid_end Then
+                                'SPHD以外ならTSIDも指定
+                                If ch_list(i).tsid > 0 Then
+                                    st_str = st_str & "&TSID=" & ch_list(i).tsid.ToString
+                                End If
+                            End If
+                            Dim st As Stream = wc.OpenRead(st_str)
+                            Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
+                            Dim sr As StreamReader = New StreamReader(st, enc)
+                            Dim html As String = sr.ReadToEnd()
+
+                            Dim sp As Integer = html.IndexOf("<eventinfo>")
+                            Dim ep As Integer = html.IndexOf("</eventinfo>", sp + 1)
+                            Dim chk As Integer = 0
+                            While sp >= 0 And ep > sp
+                                Try
+                                    'まず現在時刻にあてはまるかチェック
+                                    Dim t As DateTime = Now()
+                                    Dim t1date As String = Instr_pickup(html, "<startDate>", "</startDate>", sp, ep)
+                                    Dim t1time As String = Instr_pickup(html, "<startTime>", "</startTime>", sp, ep)
+                                    Dim t1long As Integer = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
+                                    Dim t1 As DateTime = CDate(t1date & " " & t1time)
+                                    Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
+                                    Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
+                                    Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
+                                    '次番組を探すための文字列
+                                    Dim t2str As String = "<startDate>" & Year(t2) & "/" & Month(t2) & "/" & t2.Day & "</startDate><startTime>" & Hour(t2) & ":" & Minute(t2) & ":" & Second(t2) & "</startTime>"
+
+                                    If t >= t1 And t < t2 Then
+                                        Dim j As Integer = 0
+                                        If r Is Nothing Then
+                                            j = 0
+                                        Else
+                                            j = r.Length
+                                        End If
+                                        ReDim Preserve r(j)
+                                        Dim sid As Integer = Val(Instr_pickup(html, "<SID>", "</SID>", sp, ep))
+                                        Dim tsid As Integer = Val(Instr_pickup(html, "<TSID>", "</TSID>", sp, ep))
+                                        r(j).stationDispName = sid2jigyousha(sid, tsid)
+                                        r(j).startDateTime = t1s
+                                        r(j).endDateTime = t2s
+                                        r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
+                                        r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
+                                        'sidを追加 
+                                        'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
+                                        r(j).sid = ch_list(i).sid
+                                        r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+
+                                        chk = 1
+                                        If getnext > 0 Then
+                                            '次の番組を探す
+                                            sp = html.IndexOf(t2str)
+                                            If sp > 0 Then
+                                                ep = html.IndexOf("</eventinfo>", sp)
+                                                j = r.Length
+                                                ReDim Preserve r(j)
+                                                r(j).stationDispName = r(j - 1).stationDispName
+                                                r(j).startDateTime = t2s
+                                                t1long = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
+                                                t1 = t2
+                                                t2 = DateAdd(DateInterval.Minute, t1long, t1)
+                                                t1s = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
+                                                t2s = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
+                                                r(j).endDateTime = t2s
+                                                r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
+                                                r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
+                                                'sidを追加 
+                                                'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
+                                                r(j).sid = ch_list(i).sid
+                                                r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+
+                                                '次の番組であることを記録
+                                                r(j).nextFlag = 1
+                                            End If
+                                        End If
+                                        Exit While
+                                    End If
+                                Catch ex As Exception
+                                End Try
+
+                                sp = html.IndexOf("<eventinfo>", sp + 1)
+                                ep = html.IndexOf("</eventinfo>", sp + 1)
+                            End While
+
+                            sr.Close()
+                            st.Close()
+
+                            If chk = 0 Then
+                                '該当時間帯の番組が無かった場合
+                                Dim j As Integer = 0
+                                If r Is Nothing Then
+                                    j = 0
+                                Else
+                                    j = r.Length
+                                End If
+                                ReDim Preserve r(j)
+                                r(j).stationDispName = ch_list(i).jigyousha
+                                r(j).startDateTime = ""
+                                r(j).endDateTime = ""
+                                r(j).programTitle = ""
+                                r(j).programContent = ""
+                                r(j).sid = ch_list(i).sid
+                                r(j).tsid = ch_list(i).tsid
+                            End If
+                        ElseIf chk_j = 2 Then
+                            'ダミー
+                            Dim j As Integer = 0
+                            If r Is Nothing Then
+                                j = 0
+                            Else
+                                j = r.Length
+                            End If
+                            ReDim Preserve r(j)
+                            r(j).stationDispName = ch_list(i).jigyousha
+                            r(j).startDateTime = ""
+                            r(j).endDateTime = ""
+                            r(j).programTitle = ""
+                            r(j).programContent = ""
+                            r(j).sid = ch_list(i).sid
+                            r(j).tsid = ch_list(i).tsid
+                        End If
+                    Next
+                End If
+            End If
+        Catch ex As Exception
+            log1write("EDCBからの番組表取得に失敗しました。" & ex.Message)
+        End Try
 
         Return r
     End Function
