@@ -423,6 +423,16 @@ Public Class Form1
             pttimer_pt2count = F_get_pt2count()
         End If
 
+        If TvProgram_EDCB_url.Length > 0 Then
+            If file_exist("CtrlCmdCLI.dll") = 1 Then
+                EDCB_new_program = 1
+                log1write("【EDCB】CtrlCmdCLI.dllが見つかりました。新方式で番組情報を取得します")
+            Else
+                EDCB_new_program = 0
+                log1write("【EDCB】CtrlCmdCLI.dllが見つかりませんでした。旧方式で番組情報を取得します")
+            End If
+        End If
+
         '無事起動
         TvRemoteViewer_VB_Start = 1
     End Sub

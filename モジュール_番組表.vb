@@ -38,6 +38,9 @@ Module モジュール_番組表
     'EDCBがVelmy,niisaka版の場合は1
     Public EDCB_Velmy_niisaka As Integer = 0
 
+    'EDCBで新番組情報取得方式を使う場合は1
+    Public EDCB_new_program As Integer = 0
+
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
         Public stationDispName As String
@@ -417,8 +420,11 @@ Module モジュール_番組表
             r = get_ptTimer_program(getnext)
         ElseIf regionID = 998 Then
             'EDCB
-            r = get_EDCB_program(getnext)
-            'r = get_EDCB_program_old(getnext) '旧方式
+            If EDCB_new_program = 1 Then
+                r = get_EDCB_program(getnext)
+            Else
+                r = get_EDCB_program_old(getnext) '旧方式
+            End If
         ElseIf regionID = 999 Then
             'TvRock
             Try
@@ -1054,7 +1060,7 @@ Module モジュール_番組表
                         'Velmy版かどうかチェック
                         '通常                   Velmy
                         'x[TSID][SID]           x[SID][TSID]
-                        '[TSID][SID][TSID]      [TSID][TSID][SID]
+                        '[TSID][TSID][SID]      [TSID][SID][TSID]      
                         Dim Velmy_chk As Integer = 0
                         If EDCB_Velmy_niisaka = 1 Then
                             'Velmy版が指定されている
@@ -1065,22 +1071,36 @@ Module モジュール_番組表
                             Velmy_chk = 1
                             log1write("【EDCB】BS文字列からVelmy,niisaka版であると判断しました")
                         Else
-                            ''冒頭のsidで判断（これは確実ではなさそうなので却下）
-                            'Dim test_hex As String = Hex(Val(Instr_pickup(html, "option value=""", """", sp, ep)))
-                            'Dim test_sid As Integer = 0
-                            'Dim test_tsid As Integer = 0
-                            'If test_hex.Length = 12 Then
-                            'test_sid = h16_10("0x" & Val(test_hex.Substring(4, 4)))
-                            'ElseIf test_hex.Length = 9 Then
-                            'test_sid = h16_10("0x" & Val(test_hex.Substring(1, 4)))
-                            'End If
-                            'If test_sid > 0 Then
-                            'If Array.IndexOf(ch_list, test_sid) >= 0 Then
-                            ''ch_list()にVelmy版sidが見つかった場合はVelmy,niisaka版と判断
-                            'Velmy_chk = 1
-                            'log1write("【EDCB】サービスIDからVelmy,niisaka版であると判断しました")
-                            'End If
-                            'End If
+                            ''[TSID]と[TSID]の並びで判断
+                            Dim sp2 As Integer = sp
+                            Dim chk As Integer = 0
+                            While sp2 > 0
+                                Dim dex1 As String = Instr_pickup(html, "option value=""", """", sp2, ep)
+                                Dim tsid_long As String = Hex(dex1) '16進数に変換
+                                Dim tsid_hex As String = ""
+                                Dim tsid As Integer = 0
+                                Dim sid_hex As String = ""
+                                Dim sid As Integer = 0
+
+                                If tsid_long.Length = 12 Then
+                                    '地デジ　velmy版なら[TSID][SID][TSID]
+                                    tsid_hex = tsid_long.Substring(0, 4) '初めの4文字
+                                    tsid = h16_10("0x" & tsid_hex)
+                                    sid_hex = tsid_long.Substring(8, 4) '3番目の4文字
+                                    sid = h16_10("0x" & sid_hex)
+                                    If sid > 0 And tsid = sid Then
+                                        chk += 1
+                                    End If
+                                End If
+                                sp2 = html.IndexOf("option", sp2 + 1)
+                                If sp2 > ep Then
+                                    sp2 = -1
+                                End If
+                            End While
+                            If chk >= 2 Then
+                                Velmy_chk = 1
+                                log1write("【EDCB】TSIDとSIDの並びからVelmy,niisaka版であると判断しました")
+                            End If
                         End If
                         If Velmy_chk = 1 Then
                             'Velmy版
@@ -1469,12 +1489,19 @@ Module モジュール_番組表
                                     'SIDと放送局名が一致
                                     kc = k
                                     Exit For
-                                ElseIf epgList(k).serviceInfo.SID = ch_list(i).sid Then
-                                    'SIDが一致
-                                    kc = k
-                                    Exit For
                                 End If
                             Next
+
+                            '該当がなければSIDだけ一致とか・・（念のため。たぶん役に立たない）
+                            If kc < 0 Then
+                                For k = 0 To epgList.Count - 1
+                                    If epgList(k).serviceInfo.SID = ch_list(i).sid Then
+                                        'SIDが一致
+                                        kc = k
+                                        Exit For
+                                    End If
+                                Next
+                            End If
 
                             If kc >= 0 Then
                                 Dim info As CtrlCmdCLI.Def.EpgServiceEventInfo = epgList(kc)
@@ -1648,21 +1675,33 @@ Module モジュール_番組表
 
         Dim r As String = ""
 
-        Try
-            '解決したいホスト名
-            Dim hostName As String = url
-
-            'IPHostEntryオブジェクトを取得
-            Dim iphe As System.Net.IPHostEntry = System.Net.Dns.GetHostEntry(hostName)
-
-            'IPアドレスのリストを取得
-            Dim adList As System.Net.IPAddress() = iphe.AddressList
-
-            If adList IsNot Nothing Then
-                r = adList(0).ToString
+        'まずipかどうかチェック
+        Dim isIP As Integer = 0
+        Dim d() As String = url.Split(".")
+        If d.Length = 4 Then
+            If IsNumeric(d(0)) And IsNumeric(d(1)) And IsNumeric(d(2)) And IsNumeric(d(3)) Then
+                isIP = 1
+                r = url
             End If
-        Catch ex As Exception
-        End Try
+        End If
+
+        If isIP = 0 Then
+            Try
+                '解決したいホスト名
+                Dim hostName As String = url
+
+                'IPHostEntryオブジェクトを取得
+                Dim iphe As System.Net.IPHostEntry = System.Net.Dns.GetHostEntry(hostName)
+
+                'IPアドレスのリストを取得
+                Dim adList As System.Net.IPAddress() = iphe.AddressList
+
+                If adList IsNot Nothing Then
+                    r = adList(0).ToString
+                End If
+            Catch ex As Exception
+            End Try
+        End If
 
         If r.Length = 0 Then
             r = url
@@ -1676,7 +1715,7 @@ Module モジュール_番組表
         Dim r() As TVprogramstructure = Nothing
         Try
             'If TvProgram_EDCB_url.Length > 0 Then
-            If 1 = 2 And TvProgram_EDCB_url.Length > 0 Then
+            If TvProgram_EDCB_url.Length > 0 Then
                 If ch_list IsNot Nothing Then
                     For i As Integer = 0 To ch_list.Length - 1
                         Dim chk_j As Integer = 0
