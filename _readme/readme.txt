@@ -528,3 +528,4 @@ TvRemoteViewer_VB v1.29
 
 ※ConnectedSelect.jsはhttp://d.hatena.ne.jp/Mars/20071109のスクリプトを使用させていただきました。
 ※ch_sid.txtはNicoJKPlayModのjkch.sh.txtを参照し修正を加えたものです。作者様ありがとうございます。
+※CtrlCmdCLI.dllはEDCBからコピペしてきたものです。作者様及び派生版の作者様ありがとうございます。
