@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.28"
+    Private version As String = "TvRemoteViewer_VB version 1.29"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -269,6 +269,12 @@ Public Class Form1
             Close()
         End If
 
+        If file_exist("CtrlCmdCLI.dll") = 0 Then
+            MsgBox("CtrlCmdCLI.dllが見つかりません" & vbCrLf & "TvRemoteViewer_VB.exeと同じフォルダにコピーしてください")
+            '終了
+            Close()
+        End If
+
         log1write(version)
     End Sub
 
@@ -421,16 +427,6 @@ Public Class Form1
         'ptTimerが管理するPT2の数を取得
         If ptTimer_path.Length > 0 Then
             pttimer_pt2count = F_get_pt2count()
-        End If
-
-        If TvProgram_EDCB_url.Length > 0 Then
-            If file_exist("CtrlCmdCLI.dll") = 1 Then
-                EDCB_new_program = 1
-                log1write("【EDCB】CtrlCmdCLI.dllが見つかりました。新方式で番組情報を取得します")
-            Else
-                EDCB_new_program = 0
-                log1write("【EDCB】CtrlCmdCLI.dllが見つかりませんでした。旧方式で番組情報を取得します")
-            End If
         End If
 
         '無事起動

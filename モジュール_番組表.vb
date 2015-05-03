@@ -38,9 +38,6 @@ Module モジュール_番組表
     'EDCBがVelmy,niisaka版の場合は1
     Public EDCB_Velmy_niisaka As Integer = 0
 
-    'EDCBで新番組情報取得方式を使う場合は1
-    Public EDCB_new_program As Integer = 0
-
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
         Public stationDispName As String
@@ -416,15 +413,11 @@ Module モジュール_番組表
         Dim r() As TVprogramstructure = Nothing
         If regionID = 997 Then
             'ptTimer
-            '次番組表には未対応
             r = get_ptTimer_program(getnext)
         ElseIf regionID = 998 Then
             'EDCB
-            If EDCB_new_program = 1 Then
-                r = get_EDCB_program(getnext)
-            Else
-                r = get_EDCB_program_old(getnext) '旧方式
-            End If
+            r = get_EDCB_program(getnext)
+            'r = get_EDCB_program_old(getnext) '旧方式
         ElseIf regionID = 999 Then
             'TvRock
             Try
@@ -568,7 +561,7 @@ Module モジュール_番組表
                             If te >= re Then
                                 '次番組があれば
                                 If r(i + 1).nextFlag = 1 And r(i).sid = r(i + 1).sid Then
-                                    r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & " ～ " & r(i + 1).programTitle
+                                    r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & "-" & Trim(r(i + 1).endDateTime.Substring(r(i + 1).endDateTime.IndexOf(" "))) & " " & r(i + 1).programTitle
                                 End If
                             End If
                         Catch ex As Exception
@@ -901,7 +894,6 @@ Module モジュール_番組表
                                                 hosokyoku = StrConv(d(0), VbStrConv.Wide)
                                             End If
 
-                                            'html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & p.programTitle & "," & p.programContent & vbCrLf
                                             If getnext = 2 And p.nextFlag = 1 Then
                                                 p.programTitle = "[Next]" & p.programTitle
                                             End If
@@ -1340,8 +1332,8 @@ Module モジュール_番組表
                                     If Array.IndexOf(ch_list, sid) >= 0 Then
                                         'ch_list()にsidが登録されていれば
                                         Dim eid As Integer = Val(youso(1))
-                                        Dim title As String = escape_program_str(youso(4)) 'タイトル
-                                        Dim texts As String = escape_program_str(youso(5)) '内容
+                                        Dim title As String = Trim(youso(4)) 'タイトル
+                                        Dim texts As String = Trim(youso(5)) '内容
                                         '開始時間
                                         Dim ystart As Integer = Val(youso(2))
                                         Dim ystartDate As DateTime = unix2time(Val(youso(2)))
@@ -1547,6 +1539,8 @@ Module モジュール_番組表
                                 If chk_j = 0 Then
                                     Dim chk As Integer = 0
                                     Dim t2next As DateTime = CDate("1970/01/01 9:00:00")
+                                    '次番組を調べる時にすでに調べたイベントの開始時間をキャッシュする配列
+                                    Dim scache(info.eventList.Count - 1) As DateTime
                                     For k = 0 To info.eventList.Count - 1
                                         Try
                                             'まず現在時刻にあてはまるかチェック
@@ -1556,8 +1550,8 @@ Module モジュール_番組表
                                             Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
                                             Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
                                             Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
-                                            '次番組を探すための開始時間
-                                            t2next = t2
+                                            '次番組を調べる時用に開始時間をキャッシュ
+                                            scache(k) = t1
 
                                             If t >= t1 And t < t2 Then
                                                 Dim ei As CtrlCmdCLI.Def.EpgShortEventInfo
@@ -1575,17 +1569,20 @@ Module モジュール_番組表
                                                     r(j).startDateTime = t1s
                                                     r(j).endDateTime = t2s
                                                     If ei.event_name IsNot Nothing Then
-                                                        r(j).programTitle = escape_program_str(ei.event_name)
+                                                        r(j).programTitle = Trim(ei.event_name)
                                                     Else
                                                         r(j).programTitle = ""
                                                     End If
                                                     If ei.text_char IsNot Nothing Then
-                                                        r(j).programContent = escape_program_str(ei.text_char)
+                                                        r(j).programContent = Trim(ei.text_char)
                                                     Else
                                                         r(j).programContent = ""
                                                     End If
                                                     r(j).sid = ch_list(i).sid
                                                     r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+
+                                                    '次番組を探すための開始時間
+                                                    t2next = t2
 
                                                     chk = 1
                                                 End If
@@ -1597,19 +1594,29 @@ Module モジュール_番組表
 
                                     If chk = 1 And getnext > 0 Then
                                         '次の番組を探す
-                                        For k = 0 To info.eventList.Count - 1
+                                        '今までに調べたなかにあったかキャッシュから探す
+                                        Dim k2 As Integer = Array.IndexOf(scache, t2next)
+                                        If k2 < 0 And (k + 1) < info.eventList.Count Then
+                                            '見つからなければ途中から探す
+                                            For k0 As Integer = k + 1 To info.eventList.Count - 1
+                                                If t2next = info.eventList.Item(k0).start_time Then
+                                                    k2 = k0
+                                                    Exit For
+                                                End If
+                                            Next
+                                        End If
+                                        If k2 >= 0 Then
+                                            '次番組が存在すれば
                                             Try
-                                                'まず現在時刻にあてはまるかチェック
                                                 Dim t As DateTime = Now()
-                                                Dim t1long As Integer = Int(info.eventList.Item(k).durationSec / 60) '分
-                                                Dim t1 As DateTime = info.eventList.Item(k).start_time
+                                                Dim t1long As Integer = Int(info.eventList.Item(k2).durationSec / 60) '分
+                                                Dim t1 As DateTime = info.eventList.Item(k2).start_time
                                                 Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
                                                 Dim t1s As String = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
                                                 Dim t2s As String = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
-
                                                 If t1 = t2next Then
                                                     Dim ei As CtrlCmdCLI.Def.EpgShortEventInfo
-                                                    ei = info.eventList.Item(k).ShortInfo
+                                                    ei = info.eventList.Item(k2).ShortInfo
                                                     If ei IsNot Nothing Then
                                                         Dim j As Integer = r.Length
                                                         ReDim Preserve r(j)
@@ -1618,12 +1625,12 @@ Module モジュール_番組表
                                                         r(j).startDateTime = t1s
                                                         r(j).endDateTime = t2s
                                                         If ei.event_name IsNot Nothing Then
-                                                            r(j).programTitle = escape_program_str(ei.event_name)
+                                                            r(j).programTitle = Trim(ei.event_name)
                                                         Else
                                                             r(j).programTitle = ""
                                                         End If
                                                         If ei.text_char IsNot Nothing Then
-                                                            r(j).programContent = escape_program_str(ei.text_char)
+                                                            r(j).programContent = Trim(ei.text_char)
                                                         Else
                                                             r(j).programContent = ""
                                                         End If
@@ -1633,11 +1640,10 @@ Module モジュール_番組表
                                                         '次の番組であることを記録
                                                         r(j).nextFlag = 1
                                                     End If
-                                                    Exit For
                                                 End If
                                             Catch ex As Exception
                                             End Try
-                                        Next
+                                        End If
                                     End If
 
                                     If chk = 0 Then
@@ -1726,7 +1732,7 @@ Module モジュール_番組表
         Return r
     End Function
 
-    'EDCB番組表　旧方式
+    'EDCB番組表　旧方式 '■未使用
     Public Function get_EDCB_program_old(ByVal getnext As Integer) As Object
         Dim r() As TVprogramstructure = Nothing
         Try
