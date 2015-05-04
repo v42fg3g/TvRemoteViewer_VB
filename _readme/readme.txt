@@ -524,6 +524,7 @@ TvRemoteViewer_VB v1.30
 	1.29	起動時にCtrlCmdCLI.dlの存在チェックをするようにした
 		EDCBの次番組検索をスピードアップ
 	1.30	ファイル再生が不安定になるようなので1.27での変更を廃棄した
+		ファイル再生時HLS_option_ffmpeg_file.txtが存在しない場合のHLSオプション書き換えを修正
 
 
 
