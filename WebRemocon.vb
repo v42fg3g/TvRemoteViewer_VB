@@ -1505,6 +1505,15 @@ Class WebRemocon
                 If sp >= 0 And se > sp Then
                     hlsOpt = hlsOpt.Substring(0, sp) & hlsOpt.Substring(se)
                 End If
+                'セグメントリスト数部分を修正(-hls)
+                Dim hsize As Integer = Val(instr_pickup_para(hlsOpt, "-hls_list_size ", " ", 0))
+                If hsize <> 0 Then
+                    sp = hlsOpt.IndexOf("-hls_list_size ")
+                    se = hlsOpt.IndexOf(" ", sp + "-hls_list_size ".Length)
+                    If sp >= 0 And se > sp Then
+                        hlsOpt = hlsOpt.Substring(0, sp) & "-hls_list_size 0" & hlsOpt.Substring(se)
+                    End If
+                End If
             End If
 
             'シーク秒数が指定されていれば「-ss 秒」を挿入
