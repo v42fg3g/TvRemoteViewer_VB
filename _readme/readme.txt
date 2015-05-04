@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.29
+TvRemoteViewer_VB v1.30
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -523,6 +523,7 @@ TvRemoteViewer_VB v1.29
 		EDCBのVelmy版とniisaka版をなるべく自動で判別するようにした
 	1.29	起動時にCtrlCmdCLI.dlの存在チェックをするようにした
 		EDCBの次番組検索をスピードアップ
+	1.30	ファイル再生が不安定になるようなので1.27での変更を廃棄した
 
 
 
