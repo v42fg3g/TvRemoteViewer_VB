@@ -695,6 +695,8 @@ Public Class Form1
         Catch ex As Exception
         End Try
 
+        NotifyIcon1.Visible = False
+        NotifyIcon1.Dispose()
     End Sub
 
     Private Sub Form1_FormClosed(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
