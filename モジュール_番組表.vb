@@ -1695,7 +1695,7 @@ Module モジュール_番組表
         'ホスト名からIPアドレス、IPアドレスからホスト名を取得する
         'http://dobon.net/vb/dotnet/internet/dnslookup.html
 
-        Dim r As String = ""
+        Dim r As String = url
 
         'まずipかどうかチェック
         Dim isIP As Integer = 0
@@ -1703,7 +1703,6 @@ Module モジュール_番組表
         If d.Length = 4 Then
             If IsNumeric(d(0)) And IsNumeric(d(1)) And IsNumeric(d(2)) And IsNumeric(d(3)) Then
                 isIP = 1
-                r = url
             End If
         End If
 
@@ -1725,12 +1724,21 @@ Module モジュール_番組表
                         r = adList(0).ToString
                     End If
                 Catch ex As Exception
+                    log1write("【エラー】iniのTvProgram_EDCB_urlで指定された" & url & "のIPアドレス変換に失敗しました")
                 End Try
             End If
-        End If
 
-        If r.Length = 0 Then
-            r = url
+            '最後にipかどうかチェック
+            Dim d2() As String = r.Split(".")
+            If d2.Length = 4 Then
+                If IsNumeric(d2(0)) And IsNumeric(d2(1)) And IsNumeric(d2(2)) And IsNumeric(d2(3)) Then
+                    'OK
+                Else
+                    r = url
+                End If
+            Else
+                r = url
+            End If
         End If
 
         Return r
