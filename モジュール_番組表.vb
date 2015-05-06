@@ -1708,21 +1708,25 @@ Module モジュール_番組表
         End If
 
         If isIP = 0 Then
-            Try
-                '解決したいホスト名
-                Dim hostName As String = url
+            If url = "localhost" Then
+                r = "127.0.0.1"
+            Else
+                Try
+                    '解決したいホスト名
+                    Dim hostName As String = url
 
-                'IPHostEntryオブジェクトを取得
-                Dim iphe As System.Net.IPHostEntry = System.Net.Dns.GetHostEntry(hostName)
+                    'IPHostEntryオブジェクトを取得
+                    Dim iphe As System.Net.IPHostEntry = System.Net.Dns.GetHostEntry(hostName)
 
-                'IPアドレスのリストを取得
-                Dim adList As System.Net.IPAddress() = iphe.AddressList
+                    'IPアドレスのリストを取得
+                    Dim adList As System.Net.IPAddress() = iphe.AddressList
 
-                If adList IsNot Nothing Then
-                    r = adList(0).ToString
-                End If
-            Catch ex As Exception
-            End Try
+                    If adList IsNot Nothing Then
+                        r = adList(0).ToString
+                    End If
+                Catch ex As Exception
+                End Try
+            End If
         End If
 
         If r.Length = 0 Then
