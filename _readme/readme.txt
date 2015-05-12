@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.31
+TvRemoteViewer_VB v1.32
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -526,6 +526,10 @@ TvRemoteViewer_VB v1.31
 	1.30	ファイル再生が不安定になるようなので1.27での変更を廃棄した
 		ファイル再生時HLS_option_ffmpeg_file.txtが存在しない場合のHLSオプション書き換えを修正
 	1.31	可変スピードファイル再生時のハードサブ表示においてコメントが重ならないように調整
+	1.32	Tvmaidに対応
+		iniにTvmaid_urlとTvProgramTvmaid_NGwordを追加
+		WEBインターフェースにWI_GET_PROGRAM_TVMAIDを追加
+		標準HTMLのindex.htmlを修正しTvProgram_Tvmaid.htmlを追加
 
 
 

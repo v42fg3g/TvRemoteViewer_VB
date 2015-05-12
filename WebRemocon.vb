@@ -1138,6 +1138,16 @@ Class WebRemocon
                                         TvProgramptTimer_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
                                     Next
                                 End If
+                            Case "TvProgramTvmaid_NGword"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve TvProgramTvmaid_NGword(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        TvProgramTvmaid_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
+                                    Next
+                                End If
                             Case "TvProgramEDCB_NGword"
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                 Dim clset() As String = youso(1).Split(",")
@@ -1351,6 +1361,8 @@ Class WebRemocon
                                 EDCB_thru_addprogres = Val(youso(1).ToString)
                             Case "EDCB_Velmy_niisaka"
                                 EDCB_Velmy_niisaka = Val(youso(1).ToString)
+                            Case "Tvmaid_url"
+                                Tvmaid_url = youso(1).ToString
                         End Select
                     End If
                 Catch ex As Exception
@@ -2444,6 +2456,10 @@ Class WebRemocon
                                         '地デジ番組表取得
                                         WI_cmd_reply = Me.WI_GET_PROGRAM_D()
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_PROGRAM_TVMAID"
+                                        'Tvmaid番組表取得
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_TVMAID(Val(temp))
+                                        WI_cmd_reply_force = 1
                                     Case "WI_GET_PROGRAM_PTTIMER"
                                         'EDCB番組表取得
                                         WI_cmd_reply = Me.WI_GET_PROGRAM_PTTIMER(Val(temp))
@@ -2775,6 +2791,15 @@ Class WebRemocon
                                     End If
                                 End If
 
+                                'Tvmaid番組表
+                                If s.IndexOf("%TVPROGRAM-TVMAID%") >= 0 Then
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                        s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, Me._NHK_dual_mono_mode))
+                                    Else
+                                        s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, -1))
+                                    End If
+                                End If
+
                                 'ニコニコ実況用jkチャンネル変換
                                 If s.IndexOf("%JKNUM%") >= 0 Then
                                     'numからsidとchspaceを取得する
@@ -3007,6 +3032,16 @@ Class WebRemocon
                                     End If
                                 End While
 
+                                'Tvmaid番組表ボタン
+                                While s.IndexOf("%TVPROGRAM-TVMAID-BUTTON") >= 0
+                                    Dim gt() As String = get_atags("%TVPROGRAM-TVMAID-BUTTON", s)
+                                    If Tvmaid_url.Length > 0 Then
+                                        s = s.Replace("%TVPROGRAM-TVMAID-BUTTON" & gt(0) & "%", gt(1) & "<input type=""button"" class=""c_btn_ptvmaid"" value=""Tvmaid番組表"" onClick=""location.href='TvProgram_Tvmaid.html'"">") & gt(3)
+                                    Else
+                                        s = s.Replace("%TVPROGRAM-TVMAID-BUTTON" & gt(0) & "%", gt(4))
+                                    End If
+                                End While
+
                                 sw.WriteLine(s)
                                 'sw.Flush()
 
@@ -3200,6 +3235,7 @@ Class WebRemocon
         r &= "SelectNum1=" & TvProgram_SelectUptoNum & vbCrLf
         r &= "TvProgramEDCB_premium=" & TvProgramEDCB_premium & vbCrLf
         r &= "ptTimer_path=" & ptTimer_path & vbCrLf
+        r &= "Tvmaid_url=" & Tvmaid_url & vbCrLf
         r &= vbCrLf
         r &= "【ファイル再生】" & vbCrLf
         If Me._videopath IsNot Nothing Then
@@ -3253,6 +3289,13 @@ Class WebRemocon
     Public Function WI_GET_PROGRAM_D() As String
         Dim r As String = ""
         r = program_translate4WI(0)
+        Return r
+    End Function
+
+    'Tvmaid番組表取得
+    Public Function WI_GET_PROGRAM_TVMAID(Optional ByVal getnext As Integer = 0) As String
+        Dim r As String = ""
+        r = program_translate4WI(996, getnext)
         Return r
     End Function
 
