@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.32
+TvRemoteViewer_VB v1.33
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -195,6 +195,18 @@ TvRemoteViewer_VB v1.32
 	%rc-host%	"127.0.0.1:%UDPPORT%"に変換されます。
 	%NUM%		ストリームナンバー
 	%VIDEOFILE%	ビデオファイルに変換（実際は「-i %VIDEOFILE%」の決め打ちで-iの後ろの文字列がファイル名に変換）
+
+	・StartTv.html呼び出し時のオプション	
+	hlsOptAdd	配信時のHLSオプションに動的にパラメーターを追加できます
+	hlsOptAdd=[1～2],[1～4],[文字列]
+	hlsOptAdd=2,2,-map 0,0 -map 0,1
+	第1パラメータ：	1=HLSオプションの-iより前に文字列を追加します
+			2=HLSオプションの-iの後に文字列を追加します
+	第2パラメータ：	HLSオプション上に同じパラメータがあった場合にどうするか
+			1=変更しない
+			2=既存のHLSオプション上のパラメータを破棄し新しく追加します
+			3=既存のHLSオプションの要素に追加を試みます（例：-vf a→-vf a,b)
+			4=単純に追加
 
 
 
@@ -530,6 +542,10 @@ TvRemoteViewer_VB v1.32
 		iniにTvmaid_urlとTvProgramTvmaid_NGwordを追加
 		WEBインターフェースにWI_GET_PROGRAM_TVMAIDを追加
 		標準HTMLのindex.htmlを修正しTvProgram_Tvmaid.htmlを追加
+	1.33	標準HTMLにおいてNHKMODE=3(選択式)の場合はNHK以外も選択するようにした
+		配信スタート時に渡されるNHKMODEをiniの設定より優先させるようにした
+		NHKMODE=4(-map 0,0 -map 0,1)とNHKMODE=5(-map 0,0 -map 0,1)を追加
+		配信スタート時に渡されるパラメーターとしてhlsOptAddを追加（上述）
 
 
 
