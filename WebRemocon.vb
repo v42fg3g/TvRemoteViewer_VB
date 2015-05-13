@@ -1921,23 +1921,23 @@ Class WebRemocon
                         log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
                     End If
                 End If
-            End If
 
-            'hlsOptに追加で文字列
-            If hlsoptadd.Length > 0 Then
-                '例 hlsOptAdd="2,2,-map 0,0 -map 0,1"
-                Dim d() As String = hlsoptadd.Split(",")
-                If d.Length >= 3 Then
-                    Dim ba As Integer = Val(d(0)) '1=-iの前　2=-iの後
-                    Dim force As Integer = Val(d(1)) '重複の場合、0,1=入れ替えしない 2=交換 3=追加(要素追加優先) 4=追加
-                    Dim str As String = ""
-                    Dim sep As String = ""
-                    For i = 2 To d.Length - 1
-                        str &= sep & d(i)
-                        sep = ","
-                    Next
-                    '文字列を追加
-                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, str, ba, force)
+                'hlsOptに追加で文字列
+                If hlsOptAdd.Length > 0 Then
+                    '例 hlsOptAdd="2,2,-map 0,0 -map 0,1"
+                    Dim d() As String = hlsOptAdd.Split(",")
+                    If d.Length >= 3 Then
+                        Dim ba As Integer = Val(d(0)) '1=-iの前　2=-iの後
+                        Dim force As Integer = Val(d(1)) '重複の場合、0,1=入れ替えしない 2=交換 3=追加(要素追加優先) 4=追加
+                        Dim str As String = ""
+                        Dim sep As String = ""
+                        For i = 2 To d.Length - 1
+                            str &= sep & d(i)
+                            sep = ","
+                        Next
+                        '文字列を追加
+                        hlsOpt = insert_str_in_hlsOpt(hlsOpt, str, ba, force)
+                    End If
                 End If
             End If
 
