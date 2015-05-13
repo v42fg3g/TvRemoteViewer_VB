@@ -463,7 +463,7 @@ Public Class ProcessManager
         LIVE_STREAM_STR = WI_GET_LIVE_STREAM()
     End Sub
 
-    'このプロセスがＮＨＫ関連かどうか調べる
+    'このプロセスがＮＨＫ関連かどうか調べる　■未使用
     Public Function check_isNHK(ByVal num As Integer, Optional ByVal udpOpt As String = "") As Integer
         Dim r As Integer = 0
         Dim i As Integer = -1

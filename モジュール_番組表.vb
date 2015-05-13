@@ -240,13 +240,14 @@ Module モジュール_番組表
                                                 html &= "<input type=""hidden"" name=""ChSpace"" value=""" & d(3) & """>" & vbCrLf
                                                 html &= "<span class=""p_hosokyoku""> " & d(0) & " </span>" & vbCrLf
                                                 'NHK音声選択
-                                                If hosokyoku.IndexOf("ＮＨＫ") >= 0 Then
-                                                    If NHKMODE = 3 Then
-                                                        html &= WEB_make_NHKMODE_html_B()
-                                                    ElseIf NHKMODE >= 0 Then
-                                                        html &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
-                                                    End If
+                                                'If hosokyoku.IndexOf("ＮＨＫ") >= 0 Then
+                                                'NHKでなくとも表示するようにした
+                                                If NHKMODE = 3 Then
+                                                    html &= WEB_make_NHKMODE_html_B()
+                                                ElseIf NHKMODE >= 0 Then
+                                                    html &= "<input type=""hidden"" name=""NHKMODE"" value=""" & NHKMODE & """>" & vbCrLf
                                                 End If
+                                                'End If
                                                 html &= "<input type=""submit"" value=""視聴"">" & vbCrLf
                                                 html &= "</form>" & vbCrLf
                                             End If
@@ -417,6 +418,8 @@ Module モジュール_番組表
         html &= vbCrLf & "<option value=""0"">主・副</option>" & vbCrLf
         html &= "<option value=""1"">主</option>" & vbCrLf
         html &= "<option value=""2"">副</option>" & vbCrLf
+        html &= "<option value=""4"">音声1</option>" & vbCrLf
+        html &= "<option value=""5"">音声2</option>" & vbCrLf
         If BS1_hlsApp.Length > 0 Then
             html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
         End If

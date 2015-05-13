@@ -556,6 +556,8 @@ Class WebRemocon
         html &= vbCrLf & "<option value=""0"">主・副</option>" & vbCrLf
         html &= "<option value=""1"">主</option>" & vbCrLf
         html &= "<option value=""2"">副</option>" & vbCrLf
+        html &= "<option value=""4"">音声1</option>" & vbCrLf
+        html &= "<option value=""5"">音声2</option>" & vbCrLf
         If BS1_hlsApp.Length > 0 Then
             html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
         End If
@@ -1700,7 +1702,7 @@ Class WebRemocon
     End Function
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String)
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         'テスト　多重テストを違うexeファイルで行う
@@ -1892,44 +1894,50 @@ Class WebRemocon
         If hlsOpt.Length > 0 Then
             'NHK BS1、BSプレミアム対策
             If hlsApp.IndexOf("ffmpeg") >= 0 Then
-                'まずこの放送がＮＨＫかどうか
                 Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
-                If isNHK = 1 Then
-                    If NHK_dual_mono_mode_select = 1 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                        '主モノラル固定
-                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
-                    ElseIf NHK_dual_mono_mode_select = 2 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                        '副モノラル固定
-                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
-                    ElseIf NHK_dual_mono_mode_select = 11 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                        '主モノラル固定
-                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
-                    ElseIf NHK_dual_mono_mode_select = 12 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                        '副モノラル固定
-                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
-                    ElseIf NHK_dual_mono_mode_select = 9 Then
-                        If BS1_hlsApp.Length > 0 Then
-                            'hlsAppとhlsOptをVLCに置き換える
-                            Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode)
-                            If hlsOpt_temp.Length > 0 Then
-                                hlsOpt = hlsOpt_temp
-                                hlsApp = BS1_hlsApp
-                            End If
-                        Else
-                            NHK_dual_mono_mode_select = 0
-                            log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
+                '放送がＮＨＫかどうかは関係無くパラメーターの指定を優先
+                If (NHK_dual_mono_mode_select Mod 10) = 1 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                    '主モノラル固定 1or11
+                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
+                ElseIf (NHK_dual_mono_mode_select Mod 10) = 2 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                    '副モノラル固定 2or12
+                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
+                ElseIf NHK_dual_mono_mode_select = 4 Then
+                    '音声1 -map 0.0 -map 0.0
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0.0 -map 0.0", 2, 2)
+                ElseIf NHK_dual_mono_mode_select = 5 Then
+                    '音声2 -map 0.0 -map 0.1
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0.0 -map 0.1", 2, 2)
+                ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
+                    If BS1_hlsApp.Length > 0 Then
+                        'hlsAppとhlsOptをVLCに置き換える
+                        Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode)
+                        If hlsOpt_temp.Length > 0 Then
+                            hlsOpt = hlsOpt_temp
+                            hlsApp = BS1_hlsApp
                         End If
+                    Else
+                        NHK_dual_mono_mode_select = 0
+                        log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
                     End If
-                Else
-                    'NHKではないがNHK_dual_mono_mode_select=11,12ならば-dual_mono_mode subを書き加える
-                    'CS等でのNHK再放送モノに有効　元からモノラルの端末ならこちらのほうがいいかも
-                    If NHK_dual_mono_mode_select = 11 Then
-                        '主モノラル固定
-                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
-                    ElseIf NHK_dual_mono_mode_select = 12 Then
-                        '副モノラル固定
-                        hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
-                    End If
+                End If
+            End If
+
+            'hlsOptに追加で文字列
+            If hlsoptadd.Length > 0 Then
+                '例 hlsOptAdd="2,2,-map 0,0 -map 0,1"
+                Dim d() As String = hlsoptadd.Split(",")
+                If d.Length >= 3 Then
+                    Dim ba As Integer = Val(d(0)) '1=-iの前　2=-iの後
+                    Dim force As Integer = Val(d(1)) '重複の場合、0,1=入れ替えしない 2=交換 3=追加(要素追加優先) 4=追加
+                    Dim str As String = ""
+                    Dim sep As String = ""
+                    For i = 2 To d.Length - 1
+                        str &= sep & d(i)
+                        sep = ","
+                    Next
+                    '文字列を追加
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, str, ba, force)
                 End If
             End If
 
@@ -1972,6 +1980,244 @@ Class WebRemocon
             log1write("【エラー】HLSオプションが指定されていません。解像度を指定するかフォーム上のHLSオプションを記入してください")
         End If
     End Sub
+
+    'hlsOptに任意のパラメーターを挿入する
+    Public Function insert_str_in_hlsOpt(ByVal hlsstr As String, ByVal str As String, ByVal ba As Integer, ByVal force As Integer) As String
+        'ba=1 -iの前　ba=2 -iの後
+        'force=0,1 既にパラメーターが存在すれば書き換えない、force=2 入れ替える force=3追加（値に追加を優先）force=4 そのまま追加
+        Dim r As String = ""
+
+        '2重空白を除去
+        While hlsstr.IndexOf("  ") >= 0
+            hlsstr = hlsstr.Replace("  ", " ")
+        End While
+
+        'まず挿入しようとするパラメーターの種類を取得
+        hlsstr = " " & hlsstr
+        Dim s0 As String = "" 'パラメーターより前
+        Dim s1 As String = "" '-i前半
+        Dim s2 As String = "" '-i部分
+        Dim s3 As String = "" '-i後半
+        Dim sp As Integer = hlsstr.IndexOf(" -")
+        If sp > 0 Then
+            'パラメーター前に文字列があればs0に保存
+            s0 = Trim(hlsstr.Substring(0, sp))
+            hlsstr = hlsstr.Substring(sp)
+        ElseIf sp < 0 Then
+            s0 = hlsstr
+            hlsstr = ""
+        End If
+        hlsstr = Trim(hlsstr)
+        If hlsstr.Length > 0 Then
+            'hlsOptを前半、後半に分解
+            sp = hlsstr.IndexOf("-i ")
+            If sp >= 0 Then
+                If sp > 0 Then
+                    s1 = Trim(hlsstr.Substring(0, sp))
+                End If
+                Dim sp2 As Integer = hlsstr.IndexOf("""", sp)
+                Dim sp3 As Integer = hlsstr.IndexOf(""" ", sp + 4)
+                If sp2 = sp + 3 And sp3 > sp2 Then
+                    '-iの値が""で囲まれている
+                    s2 = "-i " & instr_pickup_para(hlsstr, "-i ", """ ", sp) & """"
+                    s3 = Trim(hlsstr.Substring(sp3 + 1))
+                Else
+                    '-iの値は空白まで
+                    sp3 = hlsstr.IndexOf(" ", sp + 3)
+                    s2 = "-i " & instr_pickup_para(hlsstr, "-i ", " ", sp)
+                    s3 = Trim(hlsstr.Substring(sp3))
+                End If
+            Else
+                '-iが無い
+                s2 = hlsstr
+            End If
+
+            'ここまでで以下のような値になっているはず
+            'hlsOpt構成要素
+            's0 = ""
+            's1 = "-vf a"
+            's2 = "-i a.mp4"
+            's3 = "-af b"
+
+            '挿入予定パラメーター
+            Dim p1() As String = Nothing 'パラメータ「-map」
+            Dim p2() As String = Nothing 'パラメータのかたまり 「-map 0,1」
+            Dim p3() As Integer = Nothing '重複無し1　重複有り0
+            Dim d() As String = str.Split(" ")
+            Dim i As Integer = 0
+            Dim j As Integer = 0
+            For i = 0 To d.Length - 1
+                If d(i).Length > 0 Then
+                    If d(i).Substring(0, 1) = "-" Then
+                        ReDim Preserve p1(j)
+                        ReDim Preserve p2(j)
+                        ReDim Preserve p3(j)
+                        p1(j) = d(i)
+                        p2(j) = d(i)
+                        p3(j) = 1
+                        j += 1
+                    Else
+                        If p2 IsNot Nothing Then
+                            'パラメーターに付随する値
+                            p2(j - 1) &= " " & d(i)
+                        End If
+                    End If
+                End If
+            Next
+
+            Dim targetstr As String = "" 'パラメーターを追加するターゲットstring
+            Dim anotherstr As String = ""
+            If ba = 1 Then
+                targetstr = s1
+                anotherstr = s3
+            Else
+                targetstr = s3
+                anotherstr = s1
+            End If
+
+            If p1 IsNot Nothing Then
+                'パラメーターがすでに指定されているかチェック
+                For i = 0 To p1.Length - 1
+                    If targetstr.IndexOf(p1(i) & " ") >= 0 Then
+                        'すでにtargetstr内に存在する
+                        p3(i) = 0
+                    End If
+                Next
+            End If
+
+            targetstr = " " & targetstr
+            Dim ps0 As String = ""
+            sp = targetstr.IndexOf(" -")
+            If sp > 0 Then
+                'パラメーター前に文字列があればp0に保存
+                ps0 = Trim(targetstr.Substring(0, sp))
+                targetstr = str.Substring(sp)
+            End If
+            targetstr = Trim(targetstr)
+            Dim ps1() As String = Nothing 'パラメータ「-map」
+            Dim ps2() As String = Nothing 'パラメータのかたまり 「-map 0,1」
+            Dim ps3() As Integer = Nothing '更新済み=1
+            d = targetstr.Split(" ")
+            For i = 0 To d.Length - 1
+                If d(i).Length > 0 Then
+                    If d(i).Substring(0, 1) = "-" Then
+                        ReDim Preserve ps1(j)
+                        ReDim Preserve ps2(j)
+                        ReDim Preserve ps3(j)
+                        ps1(j) = d(i)
+                        ps2(j) = d(i)
+                        ps3(j) = 0
+                        j += 1
+                    Else
+                        If ps2 IsNot Nothing Then
+                            'パラメーターに付随する値
+                            ps2(j - 1) &= " " & d(i)
+                        End If
+                    End If
+                End If
+            Next
+
+            'target文字列構成要素
+            'ps0 = ""
+            'ps1(y) = "-vf"
+            'ps2(y) = "-vf a"
+            'ps3(y) = 0
+            '追加するパラメーター
+            'p1(x) = "-map"
+            'p2(x) = "-map 0,1"
+            'p3(x) = 1
+
+            If p1 IsNot Nothing Then
+                'targetにパラメーターを追加
+                For i = 0 To p2.Length - 1
+                    If p3(i) = 1 Then
+                        '重複していないのでパラメーターを追加
+                        ps0 = ps0 & " " & p2(i)
+                    Else
+                        'すでにパラメーターが存在する
+                        Select Case force
+                            Case 0, 1 '入れ替えない　追加すべきパラメーターは破棄
+                            Case 2
+                                '入れ替え
+                                'まず該当パラメータを削除
+                                If ps1 IsNot Nothing Then
+                                    For j = ps1.Length - 1 To 0 Step -1
+                                        If ps1(j) = p1(i) Then
+                                            ps1(j) = ""
+                                            ps2(j) = ""
+                                        End If
+                                    Next
+                                End If
+                                'そのうえで追加
+                                ps0 = ps0 & " " & p2(i)
+                            Case 3
+                                '追加（まず要素に追加を試みる）
+                                If p2(i) > p1(i) Then
+                                    Dim chk As Integer = 0
+                                    For j = ps1.Length - 1 To 0 Step -1
+                                        If ps1(j) = p1(i) And ps3(j) = 0 Then
+                                            ps2(j) = ps2(j) & "," & p2(i).Replace(p1(i) & " ", "")
+                                            ps3(j) = 1
+                                            chk = 1
+                                            Exit For
+                                        End If
+                                    Next
+                                    If chk = 0 Then
+                                        '追加するパラメータが無かった場合
+                                        ps0 = ps0 & " " & p2(i)
+                                    End If
+                                Else
+                                    '値が無いので追加する必要無し
+                                End If
+                            Case 4
+                                'そのまま追加
+                                ps0 = ps0 & " " & p2(i)
+                            Case Else
+                        End Select
+                    End If
+                Next
+
+                '変化したtargetstrを結合
+                Dim fstr As String = ""
+                If ps2 IsNot Nothing Then
+                    For i = 0 To ps2.Length - 1
+                        fstr &= ps2(i) & " "
+                    Next
+                End If
+                'targetstrのヘッダを戻す
+                fstr = ps0 & fstr
+
+                '最終結合
+                If ba = 1 Then
+                    r = fstr & " " & s2 & " " & anotherstr
+                Else
+                    r = anotherstr & " " & s2 & " " & fstr
+                End If
+                'ヘッダを戻す
+                r = s0 & r
+            Else
+                '追加するパラ－メーターが無い
+                r = s0 & " " & hlsstr
+            End If
+        Else
+            'ターゲット文字列が無い
+            r = s0 & " " & str
+        End If
+
+        '2重空白を除去
+        While r.IndexOf("  ") >= 0
+            r = r.Replace("  ", " ")
+        End While
+
+        r = Trim(r)
+
+        If r.Length = 0 Then
+            '失敗した場合は元のhlsOptを返す
+            r = hlsstr
+        End If
+
+        Return r
+    End Function
 
     'hlsオプションをhttpストリームオプションに変換
     Public Function translate_hls2http(ByVal isVLC As Integer, ByVal hlsOpt As String, ByVal resolution As String) As String
@@ -2080,10 +2326,10 @@ Class WebRemocon
         'パラメーターが正しいかチェック
         If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
             '正しければ配信スタート
-            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0, 0, "1")
+            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0, 0, "1", "")
         ElseIf num > 0 And videoname.Length > 0 Then
             'ファイル再生
-            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds, nohsub, "1")
+            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds, nohsub, "1", "")
         End If
 
     End Sub
@@ -2416,10 +2662,20 @@ Class WebRemocon
                             Dim fl_text As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_text") & ""
 
                             'NHKの音声モード
-                            Dim NHK_dual_mono_mode_select As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & "")
-                            If Me._NHK_dual_mono_mode <> 3 Then
-                                NHK_dual_mono_mode_select = Me._NHK_dual_mono_mode
+                            Dim NHK_dual_mono_mode_select As Integer = Me._NHK_dual_mono_mode 'iniで指定された形式
+                            Dim NHK_dual_mono_mode_select_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & ""
+                            If IsNumeric(NHK_dual_mono_mode_select_str) Then
+                                'パラメーターとして指定があった場合はパラメーター優先
+                                NHK_dual_mono_mode_select = Val(NHK_dual_mono_mode_select_str)
                             End If
+                            'パラメーターが3（選択）だった場合はおかしいので修正
+                            If NHK_dual_mono_mode_select = 3 Then
+                                NHK_dual_mono_mode_select = 0 '主・副にしておく
+                                log1write("再生パラメーターにNHKMODE=3(選択)は指定できません。NHKMODE=0に修正しました")
+                            End If
+
+                            'hlsOptに追加するべき文字列
+                            Dim hlsOptAdd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("hlsOptAdd") & ""
 
                             '汎用文字列
                             Dim temp As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("temp") & ""
@@ -2585,14 +2841,14 @@ Class WebRemocon
                                         num = GET_num_check_BonDriver(num, bondriver)
                                     End If
                                     '正しければ配信スタート
-                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1")
+                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
                                     If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
                                         'ffmpegなら
-                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku)
+                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd)
                                     Else
                                         '今のところVLCには未対応
                                         request_page = 12
