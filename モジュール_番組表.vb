@@ -420,6 +420,7 @@ Module モジュール_番組表
         html &= "<option value=""12"">副</option>" & vbCrLf
         html &= "<option value=""4"">音声1</option>" & vbCrLf
         html &= "<option value=""5"">音声2</option>" & vbCrLf
+        html &= "<option value=""6"">音声3</option>" & vbCrLf
         If BS1_hlsApp.Length > 0 Then
             html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
         End If

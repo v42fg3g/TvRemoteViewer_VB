@@ -558,6 +558,7 @@ Class WebRemocon
         html &= "<option value=""12"">副</option>" & vbCrLf
         html &= "<option value=""4"">音声1</option>" & vbCrLf
         html &= "<option value=""5"">音声2</option>" & vbCrLf
+        html &= "<option value=""6"">音声3</option>" & vbCrLf
         If BS1_hlsApp.Length > 0 Then
             html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
         End If
@@ -1908,11 +1909,14 @@ Class WebRemocon
                     '副モノラル固定 2or12
                     hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
                 ElseIf NHK_dual_mono_mode_select = 4 Then
-                    '音声1 -map 0.0 -map 0.0
-                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0.0 -map 0.0", 2, 2)
+                    '音声1
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:0 -map 0:1", 2, 2)
                 ElseIf NHK_dual_mono_mode_select = 5 Then
-                    '音声2 -map 0.0 -map 0.1
-                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0.0 -map 0.1", 2, 2)
+                    '音声2
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:0 -map 0:2", 2, 2)
+                ElseIf NHK_dual_mono_mode_select = 6 Then
+                    '音声3
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:0 -map 0:3", 2, 2)
                 ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
                     If BS1_hlsApp.Length > 0 Then
                         'hlsAppとhlsOptをVLCに置き換える
@@ -2702,11 +2706,6 @@ Class WebRemocon
                             If IsNumeric(NHK_dual_mono_mode_select_str) Then
                                 'パラメーターとして指定があった場合はパラメーター優先
                                 NHK_dual_mono_mode_select = Val(NHK_dual_mono_mode_select_str)
-                            End If
-                            'パラメーターが3（選択）だった場合はおかしいので修正
-                            If NHK_dual_mono_mode_select = 3 Then
-                                NHK_dual_mono_mode_select = 0 '主・副にしておく
-                                log1write("再生パラメーターにNHKMODE=3(選択)は指定できません。NHKMODE=0に修正しました")
                             End If
 
                             'hlsOptに追加するべき文字列
