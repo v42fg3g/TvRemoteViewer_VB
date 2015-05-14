@@ -1925,19 +1925,30 @@ Class WebRemocon
                 'hlsOptに追加で文字列
                 If hlsOptAdd.Length > 0 Then
                     '例 hlsOptAdd="2,2,-map 0,0 -map 0,1"
-                    Dim d() As String = hlsOptAdd.Split(",")
-                    If d.Length >= 3 Then
-                        Dim ba As Integer = Val(d(0)) '1=-iの前　2=-iの後
-                        Dim force As Integer = Val(d(1)) '重複の場合、0,1=入れ替えしない 2=交換 3=追加(要素追加優先) 4=追加
-                        Dim str As String = ""
-                        Dim sep As String = ""
-                        For i = 2 To d.Length - 1
-                            str &= sep & d(i)
-                            sep = ","
-                        Next
-                        '文字列を追加
-                        hlsOpt = insert_str_in_hlsOpt(hlsOpt, str, ba, force)
+                    '例 hlsOptAdd="2,9,-map_-_2,2,-map 0,0 -map 0,1"
+                    Dim hOAs() As String = Nothing
+                    If hlsOptAdd.IndexOf("_-_") >= 0 Then
+                        '複数指定
+                        hOAs = hlsOptAdd.Split("_-_")
+                    Else
+                        ReDim Preserve hOAs(0)
+                        hOAs(0) = hlsOptAdd
                     End If
+                    For i As Integer = 0 To hOAs.Length - 1
+                        Dim d() As String = hOAs(i).Split(",")
+                        If d.Length >= 3 Then
+                            Dim ba As Integer = Val(d(0)) '1=-iの前　2=-iの後
+                            Dim force As Integer = Val(d(1)) '重複の場合、0,1=入れ替えしない 2=交換 3=追加(要素追加優先) 4=追加
+                            Dim str As String = ""
+                            Dim sep As String = ""
+                            For j As Integer = 2 To d.Length - 1
+                                str &= sep & d(j)
+                                sep = ","
+                            Next
+                            '文字列を追加
+                            hlsOpt = insert_str_in_hlsOpt(hlsOpt, str, ba, force)
+                        End If
+                    Next
                 End If
             End If
 
@@ -1984,7 +1995,7 @@ Class WebRemocon
     'hlsOptに任意のパラメーターを挿入する
     Public Function insert_str_in_hlsOpt(ByVal hlsstr As String, ByVal str As String, ByVal ba As Integer, ByVal force As Integer) As String
         'ba=1 -iの前　ba=2 -iの後
-        'force=0,1 既にパラメーターが存在すれば書き換えない、force=2 入れ替える force=3追加（値に追加を優先）force=4 そのまま追加
+        'force=0,1 既にパラメーターが存在すれば書き換えない、force=2 入れ替える force=3追加（値に追加を優先）force=4 そのまま追加 force=9 指定されたパラメータを削除
         Dim r As String = ""
 
         '2重空白を除去
@@ -2076,13 +2087,20 @@ Class WebRemocon
             End If
 
             If p1 IsNot Nothing Then
-                'パラメーターがすでに指定されているかチェック
-                For i = 0 To p1.Length - 1
-                    If targetstr.IndexOf(p1(i) & " ") >= 0 Then
-                        'すでにtargetstr内に存在する
-                        p3(i) = 0
-                    End If
-                Next
+                If force = 9 Then
+                    '削除指定
+                    For i = 0 To p1.Length - 1
+                        p3(i) = -1
+                    Next
+                Else
+                    'パラメーターがすでに指定されているかチェック
+                    For i = 0 To p1.Length - 1
+                        If targetstr.IndexOf(p1(i) & " ") >= 0 Then
+                            'すでにtargetstr内に存在する
+                            p3(i) = 0
+                        End If
+                    Next
+                End If
             End If
 
             targetstr = " " & targetstr
@@ -2133,6 +2151,16 @@ Class WebRemocon
                     If p3(i) = 1 Then
                         '重複していないのでパラメーターを追加
                         ps0 = ps0 & " " & p2(i)
+                    ElseIf p3(i) = -1 Then
+                        '削除指定
+                        If ps1 IsNot Nothing Then
+                            For j = ps1.Length - 1 To 0 Step -1
+                                If ps1(j) = p1(i) Then
+                                    ps1(j) = ""
+                                    ps2(j) = ""
+                                End If
+                            Next
+                        End If
                     Else
                         'すでにパラメーターが存在する
                         Select Case force
