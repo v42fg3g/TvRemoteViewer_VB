@@ -416,8 +416,8 @@ Module モジュール_番組表
         Dim html As String = ""
         html &= "<select name=""NHKMODE"">"
         html &= vbCrLf & "<option value=""0"">主・副</option>" & vbCrLf
-        html &= "<option value=""1"">主</option>" & vbCrLf
-        html &= "<option value=""2"">副</option>" & vbCrLf
+        html &= "<option value=""11"">主</option>" & vbCrLf
+        html &= "<option value=""12"">副</option>" & vbCrLf
         html &= "<option value=""4"">音声1</option>" & vbCrLf
         html &= "<option value=""5"">音声2</option>" & vbCrLf
         If BS1_hlsApp.Length > 0 Then
