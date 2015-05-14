@@ -1895,11 +1895,16 @@ Class WebRemocon
             'NHK BS1、BSプレミアム対策
             If hlsApp.IndexOf("ffmpeg") >= 0 Then
                 Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
-                '放送がＮＨＫかどうかは関係無くパラメーターの指定を優先
-                If (NHK_dual_mono_mode_select Mod 10) = 1 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                '1=NHKなら主　それ以外はステレオ
+                '2=NHKなら主　それ以外はステレオ
+                '11=全部主
+                '12=N全部副
+                '4=メイン
+                '5=サブ
+                If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 11) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
                     '主モノラル固定 1or11
                     hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
-                ElseIf (NHK_dual_mono_mode_select Mod 10) = 2 And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 12) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
                     '副モノラル固定 2or12
                     hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
                 ElseIf NHK_dual_mono_mode_select = 4 Then
@@ -1920,6 +1925,8 @@ Class WebRemocon
                         NHK_dual_mono_mode_select = 0
                         log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
                     End If
+                Else
+                    'それ以外は書き換えない　→主・副
                 End If
 
                 'hlsOptに追加で文字列
