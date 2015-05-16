@@ -353,8 +353,8 @@ Public Class ProcessManager
                                     hlsPsi.UseShellExecute = False
                                 End If
                                 'ログ表示
-                                log1write("No.=" & num & "HLS アプリ=" & hlsApp)
-                                log1write("No.=" & num & "HLS option=" & hlsOpt)
+                                log1write("No.=" & num & " HLS アプリ=" & hlsApp)
+                                log1write("No.=" & num & " HLS option=" & hlsOpt)
                                 'アプリケーションを起動する
                                 Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
                                 Dim HLS_PRIORITY_STR As String = HLS_PRIORITY
