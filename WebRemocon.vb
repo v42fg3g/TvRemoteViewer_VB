@@ -1910,13 +1910,13 @@ Class WebRemocon
                     hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
                 ElseIf NHK_dual_mono_mode_select = 4 Then
                     '音声1
-                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:0 -map 0:1", 2, 2)
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:v -0:a:0", 2, 2)
                 ElseIf NHK_dual_mono_mode_select = 5 Then
                     '音声2
-                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:0 -map 0:2", 2, 2)
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:v -0:a:1", 2, 2)
                 ElseIf NHK_dual_mono_mode_select = 6 Then
                     '音声3
-                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:0 -map 0:3", 2, 2)
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:v -0:a:2", 2, 2)
                 ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
                     If BS1_hlsApp.Length > 0 Then
                         'hlsAppとhlsOptをVLCに置き換える
@@ -2068,16 +2068,30 @@ Class WebRemocon
             Dim d() As String = str.Split(" ")
             Dim i As Integer = 0
             Dim j As Integer = 0
+            Dim mapchk As Integer = 0
             For i = 0 To d.Length - 1
                 If d(i).Length > 0 Then
                     If d(i).Substring(0, 1) = "-" Then
-                        ReDim Preserve p1(j)
-                        ReDim Preserve p2(j)
-                        ReDim Preserve p3(j)
-                        p1(j) = d(i)
-                        p2(j) = d(i)
-                        p3(j) = 1
-                        j += 1
+                        Dim chk As Integer = 0
+                        If j > 0 And mapchk = 0 Then
+                            If p1(j - 1) = "-map" Then
+                                '-mapの直後ならば
+                                'パラメーターに付随する値
+                                p2(j - 1) &= " " & d(i)
+                                chk = 1
+                                mapchk = 1 '1度-mapの後に付けたら次は付けない
+                            End If
+                        End If
+                        If chk = 0 Then
+                            ReDim Preserve p1(j)
+                            ReDim Preserve p2(j)
+                            ReDim Preserve p3(j)
+                            p1(j) = d(i)
+                            p2(j) = d(i)
+                            p3(j) = 1
+                            j += 1
+                            mapchk = 0
+                        End If
                     Else
                         If p2 IsNot Nothing Then
                             'パラメーターに付随する値
@@ -2127,16 +2141,31 @@ Class WebRemocon
             Dim ps2() As String = Nothing 'パラメータのかたまり 「-map 0,1」
             Dim ps3() As Integer = Nothing '更新済み=1
             d = targetstr.Split(" ")
+            j = 0
+            mapchk = 0
             For i = 0 To d.Length - 1
                 If d(i).Length > 0 Then
                     If d(i).Substring(0, 1) = "-" Then
-                        ReDim Preserve ps1(j)
-                        ReDim Preserve ps2(j)
-                        ReDim Preserve ps3(j)
-                        ps1(j) = d(i)
-                        ps2(j) = d(i)
-                        ps3(j) = 0
-                        j += 1
+                        Dim chk As Integer = 0
+                        If j > 0 And mapchk = 0 Then
+                            If ps1(j - 1) = "-map" Then
+                                '-mapの直後ならば
+                                'パラメーターに付随する値
+                                ps2(j - 1) &= " " & d(i)
+                                chk = 1
+                                mapchk = 1
+                            End If
+                        End If
+                        If chk = 0 Then
+                            ReDim Preserve ps1(j)
+                            ReDim Preserve ps2(j)
+                            ReDim Preserve ps3(j)
+                            ps1(j) = d(i)
+                            ps2(j) = d(i)
+                            ps3(j) = 0
+                            j += 1
+                            mapchk = 0
+                        End If
                     Else
                         If ps2 IsNot Nothing Then
                             'パラメーターに付随する値
@@ -2224,7 +2253,7 @@ Class WebRemocon
                     Next
                 End If
                 'targetstrのヘッダを戻す
-                fstr = ps0 & fstr
+                fstr = ps0 & " " & fstr
 
                 '最終結合
                 If ba = 1 Then

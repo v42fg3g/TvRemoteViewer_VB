@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.33
+TvRemoteViewer_VB v1.34
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -561,6 +561,8 @@ TvRemoteViewer_VB v1.33
 		配信スタート時に渡されるNHKMODEをiniの設定より優先させるようにした
 		NHKMODE=4(-map 0,0 -map 0,1)とNHKMODE=5(-map 0,0 -map 0,1)を追加
 		配信スタート時に渡されるパラメーターとしてhlsOptAddを追加（上述）
+	1.34	hlsOptAddのバグ修正＆-map直後の-が付いた値を考慮
+		標準HTMLの音声1～3の修正
 
 
 
