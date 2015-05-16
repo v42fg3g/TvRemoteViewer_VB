@@ -2059,6 +2059,23 @@ Class WebRemocon
         'force=0,1 既にパラメーターが存在すれば書き換えない、force=2 入れ替える force=3追加（値に追加を優先）force=4 そのまま追加 force=9 指定されたパラメータを削除
         Dim r As String = ""
 
+        '"がある場合は一旦エスケープ　" -"がパラメータの始まりとは限らない＆日本語は何があるかわからないので
+        Dim zenkakufilename() As String = Nothing
+        Dim j As Integer = 0
+        While hlsstr.IndexOf("""") >= 0
+            Dim kakomi As String = Instr_pickup(hlsstr, """", """", 0)
+            If kakomi.Length = 0 Then
+                '抽出が失敗した　"が１つしかない・・
+                Exit While
+            Else
+                ReDim Preserve zenkakufilename(j)
+                zenkakufilename(j) = """" & kakomi & """"
+                '一旦エスケープ
+                hlsstr = hlsstr.Replace(zenkakufilename(j), "%VIDEOFILENAME" & j & "%")
+                j += 1
+            End If
+        End While
+
         '2重空白を除去
         While hlsstr.IndexOf("  ") >= 0
             hlsstr = hlsstr.Replace("  ", " ")
@@ -2117,7 +2134,7 @@ Class WebRemocon
             Dim p3() As Integer = Nothing '重複無し1　重複有り0
             Dim d() As String = str.Split(" ")
             Dim i As Integer = 0
-            Dim j As Integer = 0
+            j = 0
             Dim mapchk As Integer = 0
             For i = 0 To d.Length - 1
                 If d(i).Length > 0 Then
@@ -2328,6 +2345,15 @@ Class WebRemocon
         End While
 
         r = Trim(r)
+
+        'エスケープしたファイル名を戻す
+        If zenkakufilename IsNot Nothing Then
+            For j = 0 To zenkakufilename.Length - 1
+                If zenkakufilename(j).Length > 0 Then
+                    r = r.Replace("%VIDEOFILENAME" & j & "%", zenkakufilename(j))
+                End If
+            Next
+        End If
 
         If r.Length = 0 Then
             '失敗した場合は元のhlsOptを返す
