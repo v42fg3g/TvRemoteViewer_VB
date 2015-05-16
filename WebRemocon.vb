@@ -556,9 +556,9 @@ Class WebRemocon
         html &= vbCrLf & "<option value=""0"">主・副</option>" & vbCrLf
         html &= "<option value=""11"">主</option>" & vbCrLf
         html &= "<option value=""12"">副</option>" & vbCrLf
-        html &= "<option value=""4"">音声1</option>" & vbCrLf
-        html &= "<option value=""5"">音声2</option>" & vbCrLf
-        html &= "<option value=""6"">音声3</option>" & vbCrLf
+        html &= "<option value=""4"">第二音声</option>" & vbCrLf
+        html &= "<option value=""5"">動画主音声</option>" & vbCrLf
+        html &= "<option value=""6"">動画副音声</option>" & vbCrLf
         If BS1_hlsApp.Length > 0 Then
             html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
         End If
@@ -1909,14 +1909,14 @@ Class WebRemocon
                     '副モノラル固定 2or12
                     hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
                 ElseIf NHK_dual_mono_mode_select = 4 Then
-                    '音声1
-                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:v -0:a:0", 2, 2)
+                    '第二音声
+                    hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-map 0:v:0 -map 0:a -map -0:a:0")
                 ElseIf NHK_dual_mono_mode_select = 5 Then
-                    '音声2
-                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:v -0:a:1", 2, 2)
+                    '動画主音声
+                    hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-af pan=stereo|c0=c0|c1=c0")
                 ElseIf NHK_dual_mono_mode_select = 6 Then
-                    '音声3
-                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-map 0:v -0:a:2", 2, 2)
+                    '動画副音声
+                    hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-af pan=stereo|c0=c1|c1=c1")
                 ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
                     If BS1_hlsApp.Length > 0 Then
                         'hlsAppとhlsOptをVLCに置き換える
@@ -2002,6 +2002,56 @@ Class WebRemocon
             log1write("【エラー】HLSオプションが指定されていません。解像度を指定するかフォーム上のHLSオプションを記入してください")
         End If
     End Sub
+
+    'hlsOptの-iの直後にパラメーターを挿入する
+    Public Function insert_str_after_i_in_hlsOpt(ByVal hlsstr As String, ByVal str As String) As String
+        '-iの直後を探す
+
+        '"がある場合は一旦エスケープ　" -"がパラメータの始まりとは限らない＆日本語は何があるかわからないので
+        Dim zenkakufilename() As String = Nothing
+        Dim j As Integer = 0
+        While hlsstr.IndexOf("""") >= 0
+            Dim kakomi As String = Instr_pickup(hlsstr, """", """", 0)
+            If kakomi.Length = 0 Then
+                '抽出が失敗した　"が１つしかない・・
+                Exit While
+            Else
+                ReDim Preserve zenkakufilename(j)
+                zenkakufilename(j) = """" & kakomi & """"
+                '一旦エスケープ
+                hlsstr = hlsstr.Replace(zenkakufilename(j), "%VIDEOFILENAME" & j & "%")
+                j += 1
+            End If
+        End While
+
+        '-iの後に挿入
+        Dim sp As Integer = hlsstr.IndexOf("-i ")
+        If sp >= 0 Then
+            '日本語が入っていない状態で次のパラメーターの始まりを探すことにした
+            sp = hlsstr.IndexOf(" -", sp)
+            If sp > 0 Then
+                '正常
+                hlsstr = hlsstr.Substring(0, sp) & " " & str & hlsstr.Substring(sp)
+            Else
+                'ありえないだろうが-iの次のパラメーターが無い場合はそのまま追加
+                hlsstr = hlsstr & " " & str
+            End If
+        Else
+            'ありえないが-iが無い場合はそのまま追加
+            hlsstr = hlsstr & " " & str
+        End If
+
+        'エスケープしたファイル名を戻す
+        If zenkakufilename IsNot Nothing Then
+            For j = 0 To zenkakufilename.Length - 1
+                If zenkakufilename(j).Length > 0 Then
+                    hlsstr = hlsstr.Replace("%VIDEOFILENAME" & j & "%", zenkakufilename(j))
+                End If
+            Next
+        End If
+
+        Return hlsstr
+    End Function
 
     'hlsOptに任意のパラメーターを挿入する
     Public Function insert_str_in_hlsOpt(ByVal hlsstr As String, ByVal str As String, ByVal ba As Integer, ByVal force As Integer) As String

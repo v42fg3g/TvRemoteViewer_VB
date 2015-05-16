@@ -418,9 +418,9 @@ Module モジュール_番組表
         html &= vbCrLf & "<option value=""0"">主・副</option>" & vbCrLf
         html &= "<option value=""11"">主</option>" & vbCrLf
         html &= "<option value=""12"">副</option>" & vbCrLf
-        html &= "<option value=""4"">音声1</option>" & vbCrLf
-        html &= "<option value=""5"">音声2</option>" & vbCrLf
-        html &= "<option value=""6"">音声3</option>" & vbCrLf
+        html &= "<option value=""4"">第二音声</option>" & vbCrLf
+        html &= "<option value=""5"">動画主音声</option>" & vbCrLf
+        html &= "<option value=""6"">動画副音声</option>" & vbCrLf
         If BS1_hlsApp.Length > 0 Then
             html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
         End If
