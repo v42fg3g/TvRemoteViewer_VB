@@ -385,18 +385,35 @@ Public Class ProcessManager
                             End If
                         Else
                             'チャンネル切り替え失敗したのでUDPアプリを終了させる
-                            stopProc(num)
-                            log1write("No.=" & num & "　チャンネル変更に失敗したので配信を中止しました")
+                            If num2i(num) >= 0 Then
+                                stopProc(num)
+                                log1write("No.=" & num & "　チャンネル変更に失敗したので配信を中止しました")
+                            Else
+                                'まだlistが作られていない場合
+                                udpProc.Kill()
+                                If wait_stop_proc(udpProc) = 1 Then
+                                    log1write("No.=" & num & "のudpアプリを強制終了しました[B]")
+                                Else
+                                    log1write("No.=" & num & "のudpアプリ強制終了に失敗しました[B]")
+                                End If
+                                udpProc.Close()
+                                udpProc.Dispose()
+                            End If
                         End If
                     Else
                         Try
                             'UDPアプリ終了　pipeindexがわからないので強制終了
                             udpProc.Kill()
+                            If wait_stop_proc(udpProc) = 1 Then
+                                log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリを終了しました")
+                            Else
+                                log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリ終了を試みましたが失敗しました")
+                            End If
                             udpProc.Dispose()
                             udpProc.Close()
                         Catch ex As Exception
+                            log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリを終了しました[B]")
                         End Try
-                        log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリを終了しました")
                     End If
                 ElseIf stream_mode = 1 Or stream_mode = 3 Then
                     'ファイル再生
@@ -604,27 +621,65 @@ Public Class ProcessManager
         Dim hls_stop As Integer = 0 '上手く停止したら1
         Dim udp_stop As Integer = 0 '上手く停止したら1
 
-        For i As Integer = Me._list.Count - 1 To 0 Step -1
-            If Me._list(i)._num = num Or num <= -1 Then
+        If Me._list.Count > 0 Then
+            For i As Integer = Me._list.Count - 1 To 0 Step -1
+                If Me._list(i)._num = num Or num <= -1 Then
 
-                log1write("No.=" & num & "のプロセスを停止しています")
+                    log1write("No.=" & num & "のプロセスを停止しています")
 
-                '停止フラグを書き込んでおいたほうがいいかな
-                Me._list(i)._stopping = 1 'checkAllProc()でチェックさせないため・・
+                    '停止フラグを書き込んでおいたほうがいいかな
+                    Me._list(i)._stopping = 1 'checkAllProc()でチェックさせないため・・
 
-                '★ HLS
-                Try
-                    proc = Me._list(i).GetHlsProc()
-                    If proc IsNot Nothing AndAlso Not proc.HasExited Then
-                        If Me._list(i)._hlsApp.IndexOf("vlc") >= 0 Then
-                            'VLCならば
-                            If quit_VLC(i) = 1 Then
-                                'プロセスが無くなるまで待機
+                    '★ HLS
+                    Try
+                        proc = Me._list(i).GetHlsProc()
+                        If proc IsNot Nothing AndAlso Not proc.HasExited Then
+                            If Me._list(i)._hlsApp.IndexOf("vlc") >= 0 Then
+                                'VLCならば
+                                If quit_VLC(i) = 1 Then
+                                    'プロセスが無くなるまで待機
+                                    If wait_stop_proc(proc) = 1 Then
+                                        log1write("No.=" & num & "のVLCを終了しました")
+                                        hls_stop = 1
+                                    Else
+                                        log1write("No.=" & num & "のVLC終了に失敗しました")
+                                    End If
+                                    proc.Close()
+                                    proc.Dispose()
+                                Else
+                                    '強制的に終了
+                                    'proc.CloseMainWindow()
+                                    proc.Kill()
+                                    If wait_stop_proc(proc) = 1 Then
+                                        log1write("No.=" & num & "のVLCを強制終了しました")
+                                        hls_stop = 1
+                                    Else
+                                        log1write("No.=" & num & "のVLC強制終了に失敗しました")
+                                    End If
+                                    'proc.WaitForExit()
+                                    proc.Close()
+                                    proc.Dispose()
+                                End If
+                            ElseIf Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                'ffmpeg
+                                'コンソールが表示されてないときにも有効かどうかわからないのでsendkeyは却下
+                                'AppActivate(proc.Id) '最前面にする
+                                'SendKeys.Send("q") 'qを送る
+                                'F_sendkeycode(&HD) 'エンターキー
+                                'proc.CloseMainWindow()
+                                'proc.WaitForExit()
+
+                                If Me._list(i)._stream_mode = 2 Or Me._list(i)._stream_mode = 3 Then
+                                    ffmpeg_http_stream_Stop(num)
+                                    log1write("No.=" & num & "のffmpeg HTTPストリームを終了しました")
+                                End If
+
+                                proc.Kill()
                                 If wait_stop_proc(proc) = 1 Then
-                                    log1write("No.=" & num & "のVLCを終了しました")
+                                    log1write("No.=" & num & "のffmpegを強制終了しました")
                                     hls_stop = 1
                                 Else
-                                    log1write("No.=" & num & "のVLC終了に失敗しました")
+                                    log1write("No.=" & num & "のffmpeg強制終了に失敗しました")
                                 End If
                                 proc.Close()
                                 proc.Dispose()
@@ -633,209 +688,175 @@ Public Class ProcessManager
                                 'proc.CloseMainWindow()
                                 proc.Kill()
                                 If wait_stop_proc(proc) = 1 Then
-                                    log1write("No.=" & num & "のVLCを強制終了しました")
+                                    log1write("No.=" & num & "のhlsアプリを強制終了しました")
                                     hls_stop = 1
                                 Else
-                                    log1write("No.=" & num & "のVLC強制終了に失敗しました")
+                                    log1write("No.=" & num & "のhlsアプリ強制終了に失敗しました")
                                 End If
-                                'proc.WaitForExit()
                                 proc.Close()
                                 proc.Dispose()
                             End If
-                        ElseIf Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                            'ffmpeg
-                            'コンソールが表示されてないときにも有効かどうかわからないのでsendkeyは却下
-                            'AppActivate(proc.Id) '最前面にする
-                            'SendKeys.Send("q") 'qを送る
-                            'F_sendkeycode(&HD) 'エンターキー
-                            'proc.CloseMainWindow()
-                            'proc.WaitForExit()
 
-                            If Me._list(i)._stream_mode = 2 Or Me._list(i)._stream_mode = 3 Then
-                                ffmpeg_http_stream_Stop(num)
-                                log1write("No.=" & num & "のffmpeg HTTPストリームを終了しました")
-                            End If
-
-                            proc.Kill()
-                            If wait_stop_proc(proc) = 1 Then
-                                log1write("No.=" & num & "のffmpegを強制終了しました")
-                                hls_stop = 1
-                            Else
-                                log1write("No.=" & num & "のffmpeg強制終了に失敗しました")
-                            End If
-                            proc.Close()
-                            proc.Dispose()
+                            'ウェイトを入れないと関連ファイル削除に失敗することがある →　ファイル削除のところで対処
+                            'System.Threading.Thread.Sleep(1000)
                         Else
-                            '強制的に終了
-                            'proc.CloseMainWindow()
-                            proc.Kill()
-                            If wait_stop_proc(proc) = 1 Then
-                                log1write("No.=" & num & "のhlsアプリを強制終了しました")
-                                hls_stop = 1
-                            Else
-                                log1write("No.=" & num & "のhlsアプリ強制終了に失敗しました")
-                            End If
-                            proc.Close()
-                            proc.Dispose()
+                            'プロセスが無い
+                            hls_stop = 1
                         End If
-
-                        'ウェイトを入れないと関連ファイル削除に失敗することがある →　ファイル削除のところで対処
-                        'System.Threading.Thread.Sleep(1000)
-                    Else
-                        'プロセスが無い
+                    Catch ex As Exception
+                        'Procが存在しない
+                        log1write("No.=" & num & "のHLSプロセスが見つかりません。" & ex.Message)
                         hls_stop = 1
-                    End If
-                Catch ex As Exception
-                    'Procが存在しない
-                    log1write("No.=" & num & "のHLSプロセスが見つかりません。" & ex.Message)
-                    hls_stop = 1
-                End Try
+                    End Try
 
-                If hls_only = 0 Then
-                    '★ UDP
-                    Try
-                        proc = Me._list(i).GetUdpProc()
-                        If proc IsNot Nothing AndAlso Not proc.HasExited Then
-                            Dim udpPipeIndex As Integer = Me._list(i).GetProcUdpPipeIndex
-                            If udpPipeIndex > 0 Then
-                                Dim rr As String = sendRecTaskMsg("EndTask", udpPipeIndex)
+                    If hls_only = 0 Then
+                        '★ UDP
+                        Try
+                            proc = Me._list(i).GetUdpProc()
+                            If proc IsNot Nothing AndAlso Not proc.HasExited Then
+                                Dim udpPipeIndex As Integer = Me._list(i).GetProcUdpPipeIndex
+                                If udpPipeIndex > 0 Then
+                                    Dim rr As String = sendRecTaskMsg("EndTask", udpPipeIndex)
 
-                                'UDPソフトが終了するまで待つ
-                                '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
-                                Dim chk As Integer = 1000
-                                While chk > 0
-                                    Dim listOfPipes As String() = Nothing
-                                    'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                                    listOfPipes = GetPipes()
-                                    If listOfPipes Is Nothing Then
-                                        '名前付きパイプ一覧取得でエラーが起こった
-                                        '外部プログラムによりパイプ一覧取得を試みる
-                                        listOfPipes = F_get_NamedPipeList_from_program()
+                                    'UDPソフトが終了するまで待つ
+                                    '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
+                                    Dim chk As Integer = 1000
+                                    While chk > 0
+                                        Dim listOfPipes As String() = Nothing
+                                        'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+                                        listOfPipes = GetPipes()
                                         If listOfPipes Is Nothing Then
-                                            '何をやってもエラー
-                                            chk = -1
-                                            Exit While
-                                        End If
-                                    End If
-
-                                    Dim chk2 As Integer = 0
-                                    For Each pipeName As String In listOfPipes
-                                        If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                            Dim pindex1 As Integer = 0
-                                            Try
-                                                pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20))
-                                            Catch ex As Exception
-                                            End Try
-                                            If pindex1 = udpPipeIndex Then
-                                                'まだ起動中
-                                                chk2 = 1
+                                            '名前付きパイプ一覧取得でエラーが起こった
+                                            '外部プログラムによりパイプ一覧取得を試みる
+                                            listOfPipes = F_get_NamedPipeList_from_program()
+                                            If listOfPipes Is Nothing Then
+                                                '何をやってもエラー
+                                                chk = -1
+                                                Exit While
                                             End If
                                         End If
-                                    Next
-                                    If chk2 = 0 Then
-                                        'パイプ一覧に該当が無くなった
-                                        Exit While
-                                    End If
-                                    System.Threading.Thread.Sleep(10)
-                                    chk -= 1
-                                End While
-                                If chk > 0 Then
-                                    '最後にプロセスチェック
-                                    If wait_stop_proc(proc) = 1 Then
-                                        log1write("No.=" & num & "のUDPアプリを終了しました。")
-                                        udp_stop = 1
+
+                                        Dim chk2 As Integer = 0
+                                        For Each pipeName As String In listOfPipes
+                                            If pipeName.Contains("RecTask_Server_Pipe_") Then
+                                                Dim pindex1 As Integer = 0
+                                                Try
+                                                    pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20))
+                                                Catch ex As Exception
+                                                End Try
+                                                If pindex1 = udpPipeIndex Then
+                                                    'まだ起動中
+                                                    chk2 = 1
+                                                End If
+                                            End If
+                                        Next
+                                        If chk2 = 0 Then
+                                            'パイプ一覧に該当が無くなった
+                                            Exit While
+                                        End If
+                                        System.Threading.Thread.Sleep(10)
+                                        chk -= 1
+                                    End While
+                                    If chk > 0 Then
+                                        '最後にプロセスチェック
+                                        If wait_stop_proc(proc) = 1 Then
+                                            log1write("No.=" & num & "のUDPアプリを終了しました。")
+                                            udp_stop = 1
+                                        Else
+                                            log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了が行われたはずにもかかわらず")
+                                            log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
+                                        End If
                                     Else
-                                        log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了が行われたはずにもかかわらず")
-                                        log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
+                                        'タイムアウト
+                                        log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了に失敗しました")
+                                        log1write("No.=" & num & "のUDPアプリの強制終了を試みます")
+                                        '引き続き強制終了を試みる
+                                        proc.Kill()
+                                        '最後にプロセスチェック
+                                        If wait_stop_proc(proc) = 1 Then
+                                            log1write("No.=" & num & "のudpアプリを強制終了しました")
+                                            udp_stop = 1
+                                        Else
+                                            log1write("No.=" & num & "のUDPアプリの強制終了に失敗しました")
+                                            log1write("No.=" & num & "のUDPアプリのプロセスが残っています")
+                                        End If
                                     End If
+                                    proc.Close()
+                                    proc.Dispose()
                                 Else
-                                    'タイムアウト
-                                    log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了に失敗しました")
-                                    log1write("No.=" & num & "のUDPアプリの強制終了を試みます")
-                                    '引き続き強制終了を試みる
+                                    'パイプが見当たらない
+                                    '強制的に終了
+                                    'proc.CloseMainWindow()
                                     proc.Kill()
-                                    '最後にプロセスチェック
+                                    'proc.WaitForExit()
                                     If wait_stop_proc(proc) = 1 Then
                                         log1write("No.=" & num & "のudpアプリを強制終了しました")
                                         udp_stop = 1
                                     Else
-                                        log1write("No.=" & num & "のUDPアプリの強制終了に失敗しました")
-                                        log1write("No.=" & num & "のUDPアプリのプロセスが残っています")
+                                        log1write("No.=" & num & "のudpアプリ強制終了に失敗しました")
                                     End If
+                                    proc.Close()
+                                    proc.Dispose()
                                 End If
-                                proc.Close()
-                                proc.Dispose()
                             Else
-                                'パイプが見当たらない
-                                '強制的に終了
-                                'proc.CloseMainWindow()
-                                proc.Kill()
-                                'proc.WaitForExit()
-                                If wait_stop_proc(proc) = 1 Then
-                                    log1write("No.=" & num & "のudpアプリを強制終了しました")
-                                    udp_stop = 1
-                                Else
-                                    log1write("No.=" & num & "のudpアプリ強制終了に失敗しました")
-                                End If
-                                proc.Close()
-                                proc.Dispose()
+                                'プロセスが無い
+                                udp_stop = 1
                             End If
-                        Else
-                            'プロセスが無い
+                        Catch ex As Exception
+                            'Procが存在しない
+                            log1write("No.=" & num & "のUDPプロセスが見つかりません。" & ex.Message)
                             udp_stop = 1
+                        End Try
+                    Else
+                        'パイプでのチャンネル変更によって、停止するように指定されていない
+                        udp_stop = 1
+                    End If
+
+                    '関連するファイルを削除
+                    delete_mystreamnum(Me._list(i)._num)
+                    If NoDeleteAss = 0 Then
+                        '古いsub%num%.assがあれば削除
+                        If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass") = 1 Then
+                            deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass")
+                        End If
+                    End If
+
+                    Try
+                        '★ リストから取り除く
+                        If hls_only = 0 Then
+                            If num = -2 Then
+                                '強制全停止　実際に停止されたかどうかかまわず
+                                Me._list.RemoveAt(i)
+                                'delete_mystreamnum(num) 'm3u8,tsを削除
+                                log1write("No.=" & num & "のプロセスを停止しました")
+                            ElseIf hls_stop = 1 And udp_stop = 1 Then
+                                Me._list.RemoveAt(i)
+                                'delete_mystreamnum(num) 'm3u8,tsを削除
+                                log1write("No.=" & num & "のプロセスを停止しました")
+                            Else
+                                log1write("No.=" & num & "のプロセス停止に失敗しました")
+                                'me._list(i)._stopping=1のまま残るので後で判別できる
+                            End If
+                        ElseIf hls_only = 1 Then
+                            'Me._listからの削除はしない
+                            If hls_stop = 1 Then 'udpは起動し続けている
+                                log1write("No.=" & num & "のHLSプロセスを停止しました")
+                                Me._list(i)._stopping = 2 '後で無事起動したときに0にする
+                            Else
+                                log1write("No.=" & num & "のHLSプロセス停止に失敗しました")
+                                'me._list(i)._stopping=1のまま残るので後で判別できる
+                            End If
                         End If
                     Catch ex As Exception
-                        'Procが存在しない
-                        log1write("No.=" & num & "のUDPプロセスが見つかりません。" & ex.Message)
-                        udp_stop = 1
+                        log1write("停止時listから取り除く際のエラー:" & ex.Message)
                     End Try
-                Else
-                    'パイプでのチャンネル変更によって、停止するように指定されていない
-                    udp_stop = 1
+
+                    'System.Threading.Thread.Sleep(1000)
                 End If
-
-                '関連するファイルを削除
-                delete_mystreamnum(Me._list(i)._num)
-                If NoDeleteAss = 0 Then
-                    '古いsub%num%.assがあれば削除
-                    If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass") = 1 Then
-                        deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass")
-                    End If
-                End If
-
-                Try
-                    '★ リストから取り除く
-                    If hls_only = 0 Then
-                        If num = -2 Then
-                            '強制全停止　実際に停止されたかどうかかまわず
-                            Me._list.RemoveAt(i)
-                            'delete_mystreamnum(num) 'm3u8,tsを削除
-                            log1write("No.=" & num & "のプロセスを停止しました")
-                        ElseIf hls_stop = 1 And udp_stop = 1 Then
-                            Me._list.RemoveAt(i)
-                            'delete_mystreamnum(num) 'm3u8,tsを削除
-                            log1write("No.=" & num & "のプロセスを停止しました")
-                        Else
-                            log1write("No.=" & num & "のプロセス停止に失敗しました")
-                            'me._list(i)._stopping=1のまま残るので後で判別できる
-                        End If
-                    ElseIf hls_only = 1 Then
-                        'Me._listからの削除はしない
-                        If hls_stop = 1 Then 'udpは起動し続けている
-                            log1write("No.=" & num & "のHLSプロセスを停止しました")
-                            Me._list(i)._stopping = 2 '後で無事起動したときに0にする
-                        Else
-                            log1write("No.=" & num & "のHLSプロセス停止に失敗しました")
-                            'me._list(i)._stopping=1のまま残るので後で判別できる
-                        End If
-                    End If
-                Catch ex As Exception
-                    log1write("停止時listから取り除く際のエラー:" & ex.Message)
-                End Try
-
-                'System.Threading.Thread.Sleep(1000)
-            End If
-        Next
+            Next
+        Else
+            log1write("配信中のストリームlistが存在しません")
+        End If
 
         If hls_only = 0 Then
             If num = -2 Then
