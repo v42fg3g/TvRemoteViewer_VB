@@ -248,7 +248,7 @@ Public Class ProcessManager
                                         udpProc.Close()
                                     Catch ex As Exception
                                     End Try
-                                    log1write("No.=" & num & "のUDPアプリを強制終了しました")
+                                    log1write("No.=" & num & "のUDPアプリを強制終了しました[F]")
                                     Exit Sub
                                 End If
 
@@ -386,18 +386,12 @@ Public Class ProcessManager
                         Else
                             'チャンネル切り替え失敗したのでUDPアプリを終了させる
                             If num2i(num) >= 0 Then
+                                'RecTaskを終了させる
                                 stopProc(num)
                                 log1write("No.=" & num & "　チャンネル変更に失敗したので配信を中止しました")
                             Else
-                                'まだlistが作られていない場合
-                                udpProc.Kill()
-                                If wait_stop_proc(udpProc) = 1 Then
-                                    log1write("No.=" & num & "のudpアプリを強制終了しました[B]")
-                                Else
-                                    log1write("No.=" & num & "のudpアプリ強制終了に失敗しました[B]")
-                                End If
-                                udpProc.Close()
-                                udpProc.Dispose()
+                                'RecTaskを終了させる（まだlistが作られていない場合）
+                                Dim rr As Integer = stroUdpProc_by_pipeindex(num, pipeIndex, udpProc)
                             End If
                         End If
                     Else
@@ -716,73 +710,8 @@ Public Class ProcessManager
                             If proc IsNot Nothing AndAlso Not proc.HasExited Then
                                 Dim udpPipeIndex As Integer = Me._list(i).GetProcUdpPipeIndex
                                 If udpPipeIndex > 0 Then
-                                    Dim rr As String = sendRecTaskMsg("EndTask", udpPipeIndex)
-
-                                    'UDPソフトが終了するまで待つ
-                                    '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
-                                    Dim chk As Integer = 1000
-                                    While chk > 0
-                                        Dim listOfPipes As String() = Nothing
-                                        'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
-                                        listOfPipes = GetPipes()
-                                        If listOfPipes Is Nothing Then
-                                            '名前付きパイプ一覧取得でエラーが起こった
-                                            '外部プログラムによりパイプ一覧取得を試みる
-                                            listOfPipes = F_get_NamedPipeList_from_program()
-                                            If listOfPipes Is Nothing Then
-                                                '何をやってもエラー
-                                                chk = -1
-                                                Exit While
-                                            End If
-                                        End If
-
-                                        Dim chk2 As Integer = 0
-                                        For Each pipeName As String In listOfPipes
-                                            If pipeName.Contains("RecTask_Server_Pipe_") Then
-                                                Dim pindex1 As Integer = 0
-                                                Try
-                                                    pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20))
-                                                Catch ex As Exception
-                                                End Try
-                                                If pindex1 = udpPipeIndex Then
-                                                    'まだ起動中
-                                                    chk2 = 1
-                                                End If
-                                            End If
-                                        Next
-                                        If chk2 = 0 Then
-                                            'パイプ一覧に該当が無くなった
-                                            Exit While
-                                        End If
-                                        System.Threading.Thread.Sleep(10)
-                                        chk -= 1
-                                    End While
-                                    If chk > 0 Then
-                                        '最後にプロセスチェック
-                                        If wait_stop_proc(proc) = 1 Then
-                                            log1write("No.=" & num & "のUDPアプリを終了しました。")
-                                            udp_stop = 1
-                                        Else
-                                            log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了が行われたはずにもかかわらず")
-                                            log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
-                                        End If
-                                    Else
-                                        'タイムアウト
-                                        log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了に失敗しました")
-                                        log1write("No.=" & num & "のUDPアプリの強制終了を試みます")
-                                        '引き続き強制終了を試みる
-                                        proc.Kill()
-                                        '最後にプロセスチェック
-                                        If wait_stop_proc(proc) = 1 Then
-                                            log1write("No.=" & num & "のudpアプリを強制終了しました")
-                                            udp_stop = 1
-                                        Else
-                                            log1write("No.=" & num & "のUDPアプリの強制終了に失敗しました")
-                                            log1write("No.=" & num & "のUDPアプリのプロセスが残っています")
-                                        End If
-                                    End If
-                                    proc.Close()
-                                    proc.Dispose()
+                                    'RecTaskを終了させる
+                                    udp_stop = stroUdpProc_by_pipeindex(num, udpPipeIndex, proc)
                                 Else
                                     'パイプが見当たらない
                                     '強制的に終了
@@ -790,7 +719,7 @@ Public Class ProcessManager
                                     proc.Kill()
                                     'proc.WaitForExit()
                                     If wait_stop_proc(proc) = 1 Then
-                                        log1write("No.=" & num & "のudpアプリを強制終了しました")
+                                        log1write("No.=" & num & "のudpアプリを強制終了しました[D]")
                                         udp_stop = 1
                                     Else
                                         log1write("No.=" & num & "のudpアプリ強制終了に失敗しました")
@@ -882,6 +811,88 @@ Public Class ProcessManager
         '番組表用にライブストリームを記録
         LIVE_STREAM_STR = WI_GET_LIVE_STREAM()
     End Sub
+
+    '名前付きパイプを使用してRecTaskを終了させる
+    Public Function stroUdpProc_by_pipeindex(ByVal num As Integer, ByVal udpPipeIndex As Integer, ByRef proc As System.Diagnostics.Process) As Integer
+        Dim r As Integer = 1
+
+        '名前付きパイプを使用して終了を試みる
+        proc.WaitForInputIdle()
+        Dim rr As String = sendRecTaskMsg("EndTask", udpPipeIndex)
+
+        'UDPソフトが終了するまで待つ
+        '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
+        Dim chk As Integer = 1000
+        While chk > 0
+            Dim listOfPipes As String() = Nothing
+            'listOfPipes = System.IO.Directory.GetFiles("\\.\pipe\")
+            listOfPipes = GetPipes()
+            If listOfPipes Is Nothing Then
+                '名前付きパイプ一覧取得でエラーが起こった
+                '外部プログラムによりパイプ一覧取得を試みる
+                listOfPipes = F_get_NamedPipeList_from_program()
+                If listOfPipes Is Nothing Then
+                    '何をやってもエラー
+                    chk = -1
+                    Exit While
+                End If
+            End If
+
+            Dim chk2 As Integer = 0
+            For Each pipeName As String In listOfPipes
+                If pipeName.Contains("RecTask_Server_Pipe_") Then
+                    Dim pindex1 As Integer = 0
+                    Try
+                        pindex1 = Val(pipeName.Substring(pipeName.IndexOf("RecTask_Server_Pipe_") + 20))
+                    Catch ex As Exception
+                    End Try
+                    If pindex1 = udpPipeIndex Then
+                        'まだ起動中
+                        chk2 = 1
+                        If chk Mod 100 = 0 Then
+                            '1秒毎に何度も送る
+                            proc.WaitForInputIdle()
+                            sendRecTaskMsg("EndTask", udpPipeIndex)
+                        End If
+                    End If
+                End If
+            Next
+            If chk2 = 0 Then
+                'パイプ一覧に該当が無くなった
+                Exit While
+            End If
+            System.Threading.Thread.Sleep(10)
+            chk -= 1
+        End While
+        If chk > 0 Then
+            '最後にプロセスチェック
+            If wait_stop_proc(proc) = 1 Then
+                log1write("No.=" & num & "のUDPアプリを終了しました。")
+            Else
+                log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了が行われたはずにもかかわらず[C]")
+                log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
+                r = 0
+            End If
+        Else
+            'タイムアウト
+            log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了に失敗しました")
+            log1write("No.=" & num & "のUDPアプリの強制終了を試みます")
+            '引き続き強制終了を試みる
+            proc.Kill()
+            '最後にプロセスチェック
+            If wait_stop_proc(proc) = 1 Then
+                log1write("No.=" & num & "のudpアプリを強制終了しました[E]")
+            Else
+                log1write("No.=" & num & "のUDPアプリの強制終了に失敗しました")
+                log1write("No.=" & num & "のUDPアプリのプロセスが残っています")
+                r = 0
+            End If
+        End If
+        proc.Close()
+        proc.Dispose()
+
+        Return r
+    End Function
 
     'ストリームnumの放送局名を取得する
     Public Function get_channelname(ByVal num As Integer) As String
