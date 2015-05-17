@@ -849,7 +849,7 @@ Public Class ProcessManager
                     If pindex1 = udpPipeIndex Then
                         'まだ起動中
                         chk2 = 1
-                        If chk Mod 100 = 0 Then
+                        If chk Mod 100 = 1 Then
                             '1秒毎に何度も送る
                             proc.WaitForInputIdle()
                             sendRecTaskMsg("EndTask", udpPipeIndex)
