@@ -85,6 +85,10 @@ Class WebRemocon
     '同一BonDriverを複数ストリームで使用可能とする
     Public Allow_BonDriver4Streams As Integer = 0
 
+    'ファイル再生において前回使用したファイル名file_last_filename(num)
+    'ファイル再生　nohsub=3用
+    Public file_last_filename(MAX_STREAM_NUMBER + 1) As String
+
     Public Sub New(udpApp As String, udpPort As Integer, udpOpt3 As String, chSpace As Integer, hlsApp As String, hlsOpt1 As String, hlsOpt2 As String, wwwroot As String, fileroot As String, wwwport As Integer, BonDriverPath As String, ShowConsole As Boolean, BonDriver_NGword As String(), ByVal id As String, ByVal pass As String)
         'Public Sub New(udpPort As Integer, wwwroot As String, wwwport As Integer) ', num As Integer)
         '初期化 
@@ -1433,12 +1437,20 @@ Class WebRemocon
     Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
 
-        '古いsub%num%.assがあれば削除
-        If file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") = 1 Then
-            deletefile(fileroot & "\" & "sub" & num.ToString & ".ass")
+        'エラー防止
+        If file_last_filename(num) Is Nothing Then
+            file_last_filename(num) = ""
         End If
-        If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
-            deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
+
+        '前回のファイル名と違えば字幕ファイルを削除
+        If file_last_filename(num) <> filename Or nohsub <> 3 Then
+            '古いsub%num%.assがあれば削除
+            If file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") = 1 Then
+                deletefile(fileroot & "\" & "sub" & num.ToString & ".ass")
+            End If
+            If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
+                deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
+            End If
         End If
 
         Dim new_file As String = ""
@@ -1526,40 +1538,48 @@ Class WebRemocon
                 If file_exist(ass_file) <= 0 Then
                     ass_file = ""
                 End If
-                'NicoJKログをassに変換
-                If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
-                    If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
-                        'txtを探してassに変換してファイル(ass_file)として保存
-                        'txtのファイルネームを取得
-                        Dim txt_file As String = search_NicoJKtxt_file(filename)
-                        If txt_file.Length > 0 Then
-                            'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                            ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1)
-                            If ass_file.Length > 0 Then
-                                log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+
+                '前回と違うファイル、または字幕ファイルが存在しなければ作成
+                '前回と同じファイルならすでに存在しているので無駄なことはしない
+                If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") < 0) Then
+                    'NicoJKログをassに変換
+                    If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
+                        If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
+                            'txtを探してassに変換してファイル(ass_file)として保存
+                            'txtのファイルネームを取得
+                            Dim txt_file As String = search_NicoJKtxt_file(filename)
+                            If txt_file.Length > 0 Then
+                                'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
+                                ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1)
+                                If ass_file.Length > 0 Then
+                                    log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+                                End If
                             End If
                         End If
                     End If
-                End If
 
-                If ass_file.Length > 0 Then
-                    log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
-                    '存在していればstreamフォルダに名前を変えてコピー
-                    '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
-                    Dim rename_file As String = fileroot & "\" & "sub" & num.ToString & ".ass"
-                    'シークが指定されていなければそのままコピー
-                    'リネーム
-                    My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
-                    'ファイルが出来るまで待機
-                    Dim i As Integer = 0
-                    While i < 100 And file_exist(rename_file) < 1
-                        System.Threading.Thread.Sleep(50)
-                        i += 1
-                    End While
-                    log1write("字幕ASSファイルとして" & rename_file & "をセットしました[CopyOnly]")
+                    If ass_file.Length > 0 Then
+                        log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
+                        '存在していればstreamフォルダに名前を変えてコピー
+                        '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                        Dim rename_file As String = fileroot & "\" & "sub" & num.ToString & ".ass"
+                        'シークが指定されていなければそのままコピー
+                        'リネーム
+                        My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                        'ファイルが出来るまで待機
+                        Dim i As Integer = 0
+                        While i < 100 And file_exist(rename_file) < 1
+                            System.Threading.Thread.Sleep(50)
+                            i += 1
+                        End While
+                        log1write("字幕ASSファイルとして" & rename_file & "をセットしました[CopyOnly]")
+                    End If
                 End If
             End If
         End If
+
+        '使用したファイル名を記録
+        file_last_filename(num) = filename
 
         filename = """" & filename & """"
 

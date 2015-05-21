@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.35
+TvRemoteViewer_VB v1.36
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -564,6 +564,8 @@ TvRemoteViewer_VB v1.35
 	1.34	hlsOptAddのバグ修正＆-map直後の-が付いた値を考慮
 		標準HTMLの音声1～3の修正
 	1.35	UDPチャンネル変更に失敗した場合にUDPプロセスが停止しなかったバグを修正
+	1.36	NicoJKのコメントファイルを読み込めるようにした
+		iniにNicoJK_path,NicoConvAss_path,NicoJK_firstを追加
 
 
 
