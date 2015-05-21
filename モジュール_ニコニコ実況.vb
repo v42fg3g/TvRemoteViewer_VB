@@ -5,6 +5,12 @@ Imports System
 Imports System.IO
 
 Module モジュール_ニコニコ実況
+    'NicoJKフォルダ
+    Public NicoJK_path As String = ""
+    'NicoJKフォルダのtxtを優先する(=1)
+    Public NicoJK_first As Integer = 0
+    'NicoConvAss_path
+    Public NicoConvAss_path As String = ""
 
     'fonts.confの存在を確認
     Public fonts_conf_ok As Integer = 0
@@ -547,4 +553,318 @@ Module モジュール_ニコニコ実況
             End If
         Next
     End Sub
+
+    Public Function F_xml2txt(ByVal s As String, Optional ByVal jkcg As Integer = 0) As String
+        'xmlをテキストに変換
+        '行末の改行を修正
+        s = s.Replace("</chat>" & vbCrLf, "</chat>[]-]")
+        '文中の改行を変換
+        If jkcg = 1 Then
+            'jkcommentgetterと同じ
+            s = s.Replace(vbCrLf, "&#10;")
+            s = s.Replace(vbLf, "&#10;")
+        Else
+            'jikkyorecと同じ
+            s = s.Replace(vbCrLf, "&#13;&#10;")
+            s = s.Replace(vbLf, "&#10;")
+        End If
+        '行末の改行を戻す
+        s = s.Replace("</chat>[]-]", "</chat>" & vbCrLf)
+        '行の始まりを修正
+        While s.IndexOf(" <chat") >= 0
+            s = s.Replace(" <chat", "<chat")
+        End While
+
+        'ヘッダを除去
+        Dim sp As Integer
+        sp = s.IndexOf("<chat")
+        If sp >= 0 Then
+            s = s.Substring(sp)
+        End If
+        'フッターを除去
+        sp = s.LastIndexOf("</packet>")
+        s = s.Substring(0, sp)
+
+        Return s
+    End Function
+
+    '文字列の中で一番長い全角部分を抜き出して返す（ファイル名の全角部分を取得）
+    Public Function zenkakudake_max(ByVal s As String, Optional ByVal a As Integer = 0) As String
+        Dim r As String = ""
+        Dim h() As String
+        Dim hi As Integer = -1
+        Dim z() As String
+        Dim zi As Integer = -1
+
+        'Dim hstr As String = "0123456789-+_()[]{}#^@!$.,;'=&~`"
+
+        Dim i As Integer
+
+        Dim f As Integer = 0
+        Dim si As String = ""
+        Dim zh As Integer
+        If s.Length > 0 Then
+            For i = 0 To s.Length - 1
+                si = s.Substring(i, 1)
+                zh = System.Text.Encoding.GetEncoding(932).GetByteCount(si)
+                If zh = 2 Then
+                    '全角
+                    If f = 2 Then
+                        z(zi) &= si
+                    Else
+                        zi += 1
+                        ReDim Preserve z(zi)
+                        z(zi) = si
+                        f = 2
+                    End If
+                    '半角はいらないので取得しないことにした
+                ElseIf zh = 1 Then
+                    'If f = 1 Then
+                    'h(hi) &= si
+                    'Else
+                    'hi += 1
+                    'ReDim Preserve h(hi)
+                    'h(hi) = si
+                    f = 1
+                    'End If
+                End If
+            Next
+        End If
+
+        Dim b As String = ""
+
+        If z Is Nothing Then
+        ElseIf z.Length > 0 Then
+            r = z(0)
+            For i = 0 To z.Length - 1
+                If z(i).Length > r.Length Then
+                    b = r '1つ前を記録
+                    r = z(i)
+                End If
+            Next
+        End If
+
+        If a = 1 And b <> r Then
+            '指定があれば2番目を返す
+            r = b
+        End If
+
+        If r.Length = 0 Then
+            '全角が無いファイル名の場合
+            Dim fsp As Integer = s.LastIndexOf("\")
+            Dim fed As Integer = s.LastIndexOf(".")
+            If fsp > 0 And fed > 0 Then
+                r = Instr_pickup(s, "\", ".", fsp)
+            ElseIf fed > 0 Then
+                r = s.Substring(0, fed)
+            Else
+                r = s
+            End If
+        End If
+
+        Return r
+    End Function
+
+    '.tsファイル名からニコニココメントファイル.txtか.xmlを取得
+    Public Function search_NicoJKtxt_file(ByVal fullpathfilename As String) As String
+        Dim filepath As String = ""
+        Dim filename As String = ""
+        Dim filestamp As Integer = 0
+
+        Dim targetfile As String = ""
+
+        Dim i As Integer = 0
+
+        If file_exist(fullpathfilename) = 1 Then
+            filename = Path.GetFileName(fullpathfilename)
+            filepath = IO.Path.GetDirectoryName(fullpathfilename)
+            filestamp = time2unix(System.IO.File.GetLastWriteTime(fullpathfilename))
+            If filename.Length > 0 Then
+                'ファイル名と同名でtxtまたはxmlがあるか
+                Dim filename_xml As String = fullpathfilename.Replace(".ts", ".xml")
+                Dim filename_txt As String = fullpathfilename.Replace(".ts", ".txt")
+                If file_exist(filename_xml) = 1 Then
+                    targetfile = filepath & "\" & filename_xml
+                ElseIf file_exist(filename_txt) = 1 Then
+                    targetfile = filepath & "\" & filename_txt
+                Else
+                    'NicoJKフォルダを探す
+                    If folder_exist(NicoJK_path) = 1 Then
+                        Dim jklfilename As String = ""
+                        '一番長い全角文字列を抜き出す
+                        Dim z As String = zenkakudake_max(filename)
+                        If z.Length = 0 Then
+                            z = filename
+                        End If
+                        'NicoJK_pathにあるjklファイルをチェックする
+                        Dim files As String() = System.IO.Directory.GetFiles(NicoJK_path, "*")
+                        Dim chk_nojkl As Integer = 0
+                        If files IsNot Nothing Then
+                            For i = 0 To files.Length - 1
+                                If files(i).IndexOf(z) >= 0 Then
+                                    '文字列が含まれている場合、更新時間を照らし合わせる
+                                    If files(i).IndexOf(".jkl") > 0 Or files(i).IndexOf(".xml") > 0 Then
+                                        Dim stamp As Integer = time2unix(System.IO.File.GetLastWriteTime(files(i)))
+                                        If System.Math.Abs(stamp - filestamp) < (60 * 20) Then
+                                            '更新時間が前後20分未満ならほぼビンゴ
+                                            jklfilename = Path.GetFileName(files(i))
+                                            Exit For
+                                        End If
+                                    End If
+                                End If
+                            Next
+                            If jklfilename.Length > 0 Then
+                                If jklfilename.IndexOf(".xml") > 0 Then
+                                    targetfile = NicoJK_path & "\" & jklfilename
+                                Else
+                                    Dim sp As Integer = jklfilename.IndexOf("[jk")
+                                    If sp >= 0 Then
+                                        'NicojCatch形式
+                                        targetfile = NicoJK_path & "\" & "jk" & Instr_pickup(jklfilename, "[jk", "]", sp) & "\" & Instr_pickup(jklfilename, ")", ".", sp) & ".txt"
+                                        If file_exist(targetfile) <= 0 Then
+                                            targetfile = "" 'ファイルが存在しない　失敗
+                                        End If
+                                    Else
+                                        'jikkyorec形式と思われる
+                                        '<JikkyoRec startTime="1367049600000" channel="jk6" />
+                                        Dim str As String = file2str(jklfilename, "UTF-8")
+                                        Dim jkstr As String = "jk" & Instr_pickup(str, "channel=""jk", """", 0)
+                                        Dim starttimestr As String = Instr_pickup(str, "startTime=""", """", 0)
+                                        Dim starttime As Integer = 0
+                                        If starttimestr.Length > 10 Then
+                                            starttimestr = starttimestr.Substring(0, 10)
+                                        End If
+                                        Try
+                                            starttime = Val(starttimestr)
+                                        Catch ex As Exception
+                                            starttime = 0
+                                        End Try
+                                        If jkstr.Length > 2 And starttime > 0 Then
+                                            Dim commentfolder As String = NicoJK_path & "\" & jkstr
+                                            If folder_exist(commentfolder) = 1 Then
+                                                starttime += 600 '開始時間から10分の余裕を持たせる
+                                                Dim chk_over As Integer = 0
+                                                Dim files2 As String() = System.IO.Directory.GetFiles(commentfolder, "*.txt")
+                                                If files2 IsNot Nothing Then
+                                                    'unixtimeだけを抜き出して並び替え
+                                                    For i = 0 To files2.Length - 1
+                                                        files2(i) = Val(Path.GetFileName(files2(i))).ToString
+                                                    Next
+                                                    Dim k As Integer = files2.Length
+                                                    ReDim Preserve files2(k)
+                                                    files2(k) = time2unix(C_DAY2038).ToString 'ダミー
+                                                    Array.Sort(files2)
+                                                    '該当時間のファイルがあれば
+                                                    For i = 0 To files2.Length - 2
+                                                        If starttime >= Val(files2(i)) And starttime < Val(files2(i + 1)) Then
+                                                            If starttime - Val(files2(i)) < (60 * 60 * 24) Then
+                                                                '24時間以内のものならば
+                                                                targetfile = commentfolder & "\" & files2(i) & ".txt"
+                                                            End If
+                                                            Exit For
+                                                        End If
+                                                    Next
+                                                End If
+                                            End If
+                                        End If
+                                    End If
+                                End If
+                            Else
+                                chk_nojkl = 1
+                            End If
+                        Else
+                            chk_nojkl = 1
+                        End If
+                        If chk_nojkl = 1 Then
+                            '純粋NicoJK（jklファイル無し）
+                            '動画ファイルからjkナンバーを取得しなければならないが時間がかかるので止める
+                        End If
+                    End If
+                End If
+            End If
+        End If
+
+        Return targetfile
+    End Function
+
+    'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存　
+    Public Function convert_NicoJK2ass(ByVal num As Integer, ByVal txt_file As String, ByVal fileroot As String, ByVal margin1 As Integer) As String
+        'NicoConvAssを呼び出して処理
+        Dim r As Integer = 0
+        Dim targetfile As String = ""
+
+        Try
+            Dim filename As String = Path.GetFileName(txt_file)
+            Dim tempfilename As String = filename
+            Dim sp As Integer = filename.LastIndexOf(".")
+            If sp > 0 Then
+                tempfilename = filename.Substring(0, sp) & ".ass"
+            End If
+            Dim sourcefile As String = fileroot & "\" & tempfilename
+            targetfile = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
+
+            Dim results As String = ""
+            Dim psi As New System.Diagnostics.ProcessStartInfo()
+
+            psi.FileName = System.Environment.GetEnvironmentVariable("ComSpec") 'ComSpecのパスを取得する
+            psi.RedirectStandardInput = False '出力を読み取れるようにする
+            psi.RedirectStandardOutput = True
+            psi.UseShellExecute = False
+            psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
+            ''プログラムが存在するディレクトリ
+            Dim ppath As String = IO.Path.GetDirectoryName(NicoConvAss_path)
+            If ppath.Length > 0 Then
+                ''カレントディレクトリ変更
+                System.IO.Directory.SetCurrentDirectory(ppath)
+                ''作業ディレクトリ変更
+                psi.WorkingDirectory = ppath
+            End If
+            '出力エンコード
+            psi.StandardOutputEncoding = Encoding.UTF8
+
+            'psi.Arguments = "/c /d " & NicoConvAss_path & " """ & txt_file & """ -tx_margin " & VideoSeekDefault & " -tx_programname 0 -tx_writefolder """ & fileroot & """"
+            psi.Arguments = "/c NicoConvAss.exe """ & txt_file & """ -tx_margin " & margin1 & " -tx_programname 0 -tx_writefolder """ & fileroot & """"
+            log1write("NicoConvAss実行：" & txt_file & " 録画前マージン：" & margin1 & "秒")
+
+            Dim p As System.Diagnostics.Process
+            Try
+                p = System.Diagnostics.Process.Start(psi)
+                '出力を読み取る
+                results = p.StandardOutput.ReadToEnd
+                'WaitForExitはReadToEndの後である必要がある
+                '(親プロセス、子プロセスでブロック防止のため)
+                p.WaitForExit()
+            Catch ex As Exception
+            End Try
+
+            'カレントディレクトリを戻す必要も無いかもだが
+            F_set_ppath4program()
+
+            'ファイルが作られたことを確認してリネームして終了
+            If file_exist(sourcefile) = 1 Then
+                'リネームして完了
+                My.Computer.FileSystem.MoveFile(sourcefile, targetfile, True)
+                'ファイルが出来るまで待機
+                Dim j As Integer = 100 '5秒
+                While j > 0 And file_exist(targetfile) < 1
+                    System.Threading.Thread.Sleep(50)
+                    j += 1
+                End While
+                If j > 0 Then
+                    '成功
+                    r = 1
+                End If
+            End If
+        Catch ex As Exception
+            log1write("【エラー】NicoJKログからASSへの変換中にエラーが発生しました。" & ex.Message)
+        End Try
+
+        If r = 0 Then
+            '失敗
+            targetfile = ""
+        End If
+
+        Return targetfile
+    End Function
+
 End Module

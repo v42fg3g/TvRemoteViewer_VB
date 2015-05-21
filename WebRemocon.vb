@@ -1366,6 +1366,28 @@ Class WebRemocon
                                 EDCB_Velmy_niisaka = Val(youso(1).ToString)
                             Case "Tvmaid_url"
                                 Tvmaid_url = youso(1).ToString
+                            Case "NicoJK_path"
+                                NicoJK_path = youso(1).ToString
+                                If NicoJK_path.Length > 0 Then
+                                    If folder_exist(NicoJK_path) <= 0 Then
+                                        log1write("【エラー】" & NicoJK_path & " が見つかりません")
+                                        NicoJK_path = ""
+                                    Else
+                                        log1write("NicoJKフォルダ：" & NicoJK_path & " が指定されました")
+                                    End If
+                                End If
+                            Case "NicoJK_first"
+                                NicoJK_first = Val(youso(1).ToString)
+                            Case "NicoConvAss_path"
+                                NicoConvAss_path = youso(1).ToString
+                                If NicoConvAss_path.Length > 0 Then
+                                    If file_exist(NicoConvAss_path) <= 0 Then
+                                        log1write("【エラー】" & NicoConvAss_path & " が見つかりません")
+                                        NicoConvAss_path = ""
+                                    Else
+                                        log1write("NicoConvAss：" & NicoConvAss_path & " が指定されました")
+                                    End If
+                                End If
                         End Select
                     End If
                 Catch ex As Exception
@@ -1408,12 +1430,15 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをファイル再生用に書き換える
-    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String) As String
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
 
         '古いsub%num%.assがあれば削除
         If file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") = 1 Then
             deletefile(fileroot & "\" & "sub" & num.ToString & ".ass")
+        End If
+        If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
+            deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
         End If
 
         Dim new_file As String = ""
@@ -1422,36 +1447,42 @@ Class WebRemocon
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
                 Dim ass_file As String = filename.Substring(0, dt) & ".ass"
-                If file_exist(ass_file) = 1 Then
-                    'Try
-                    log1write("字幕ASSファイルとして" & ass_file & "を読み込みます")
-                    '存在していればstreamフォルダに名前を変えてコピー
-                    new_file = "sub" & num.ToString & ".ass"
-                    '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
-                    Dim rename_file As String = fileroot & "\" & new_file
-                    If VideoSeekSeconds <= 0 And baisoku = "1" Then
-                        'シークが指定されていなければそのままコピー
-                        'リネーム
-                        My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
-                        'ファイルが出来るまで待機
-                        Dim i As Integer = 0
-                        While i < 100 And file_exist(rename_file) < 1
-                            System.Threading.Thread.Sleep(50)
-                            i += 1
-                        End While
-                        log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
-                        'オプションに挿入する文字列を作成
-                        If nohsub = 0 Then
-                            new_file = " -vf ass=""" & new_file & """"
-                        Else
-                            new_file = ""
+                If file_exist(ass_file) <= 0 Then
+                    ass_file = ""
+                End If
+                'NicoJKログをassに変換
+                If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
+                    If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
+                        'txtを探してassに変換してファイル(ass_file)として保存
+                        'txtのファイルネームを取得
+                        Dim txt_file As String = search_NicoJKtxt_file(filename)
+                        If txt_file.Length > 0 Then
+                            'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
+                            ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1)
+                            If ass_file.Length > 0 Then
+                                log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+                            End If
                         End If
-                    Else
-                        'シークが指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
-                        log1write("字幕ASSファイルを修正しています")
-                        If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds, baisoku) = 1 Then
-                            '修正完了
-                            log1write("字幕ASSファイルの修正が完了しました")
+                    End If
+                End If
+                If ass_file.Length > 0 Then
+                    If file_exist(ass_file) = 1 Then
+                        'Try
+                        log1write("字幕ASSファイルとして" & ass_file & "を読み込みます")
+                        '存在していればstreamフォルダに名前を変えてコピー
+                        new_file = "sub" & num.ToString & ".ass"
+                        '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                        Dim rename_file As String = fileroot & "\" & new_file
+                        If VideoSeekSeconds <= 0 And baisoku = "1" Then
+                            'シークが指定されていなければそのままコピー
+                            'リネーム
+                            My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                            'ファイルが出来るまで待機
+                            Dim i As Integer = 0
+                            While i < 100 And file_exist(rename_file) < 1
+                                System.Threading.Thread.Sleep(50)
+                                i += 1
+                            End While
                             log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
                             'オプションに挿入する文字列を作成
                             If nohsub = 0 Then
@@ -1460,16 +1491,30 @@ Class WebRemocon
                                 new_file = ""
                             End If
                         Else
-                            'エラー
-                            log1write("字幕ASSファイルの修正に失敗しました")
-                            'オプションに-vfは挿入しない
-                            new_file = ""
+                            'シークが指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
+                            log1write("字幕ASSファイルを修正しています")
+                            If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds, baisoku) = 1 Then
+                                '修正完了
+                                log1write("字幕ASSファイルの修正が完了しました")
+                                log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
+                                'オプションに挿入する文字列を作成
+                                If nohsub = 0 Then
+                                    new_file = " -vf ass=""" & new_file & """"
+                                Else
+                                    new_file = ""
+                                End If
+                            Else
+                                'エラー
+                                log1write("字幕ASSファイルの修正に失敗しました")
+                                'オプションに-vfは挿入しない
+                                new_file = ""
+                            End If
                         End If
+                        'Catch ex As Exception
+                        'log1write("字幕ASSファイル処理でエラーが発生しました。" & ex.Message)
+                        'new_file = ""
+                        'End Try
                     End If
-                    'Catch ex As Exception
-                    'log1write("字幕ASSファイル処理でエラーが発生しました。" & ex.Message)
-                    'new_file = ""
-                    'End Try
                 End If
             End If
         ElseIf nohsub = 3 Then
@@ -1477,7 +1522,27 @@ Class WebRemocon
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
                 Dim ass_file As String = filename.Substring(0, dt) & ".ass"
-                If file_exist(ass_file) = 1 Then
+
+                If file_exist(ass_file) <= 0 Then
+                    ass_file = ""
+                End If
+                'NicoJKログをassに変換
+                If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
+                    If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
+                        'txtを探してassに変換してファイル(ass_file)として保存
+                        'txtのファイルネームを取得
+                        Dim txt_file As String = search_NicoJKtxt_file(filename)
+                        If txt_file.Length > 0 Then
+                            'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
+                            ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1)
+                            If ass_file.Length > 0 Then
+                                log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+                            End If
+                        End If
+                    End If
+                End If
+
+                If ass_file.Length > 0 Then
                     log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
                     '存在していればstreamフォルダに名前を変えてコピー
                     '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
@@ -1703,7 +1768,7 @@ Class WebRemocon
     End Function
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String)
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         'テスト　多重テストを違うexeファイルで行う
@@ -1788,7 +1853,7 @@ Class WebRemocon
                 'ファイル再生
                 If filename.Length > 0 And Stream_mode = 3 Then
                     'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
                 End If
             ElseIf hlsApp.IndexOf("vlc") >= 0 Then
                 'hlsOptを置き換える
@@ -1883,7 +1948,7 @@ Class WebRemocon
                             End If
                         End If
                     End If
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
                 Else
                     'その他vlc
                     '今のところ未対応
@@ -2470,10 +2535,10 @@ Class WebRemocon
         'パラメーターが正しいかチェック
         If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
             '正しければ配信スタート
-            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0, 0, "1", "")
+            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0, 0, "1", "", 0)
         ElseIf num > 0 And videoname.Length > 0 Then
             'ファイル再生
-            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds, nohsub, "1", "")
+            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds, nohsub, "1", "", 0)
         End If
 
     End Sub
@@ -2799,6 +2864,13 @@ Class WebRemocon
 
                             'ハードサブ不許可
                             Dim nohsub As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nohsub") & "")
+                            'ファイル再生時NicoJKコメント調整　録画前マージンを知らせる
+                            Dim margin1 As Integer = VideoSeekDefault
+                            Dim margin1_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("margin1") & ""
+                            If IsNumeric(margin1_str) Then
+                                'パラメーターとして指定があった場合はパラメーター優先
+                                margin1 = Val(margin1_str)
+                            End If
 
                             'ファイル書き込みコマンド
                             Dim fl_cmd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_cmd") & ""
@@ -2980,14 +3052,14 @@ Class WebRemocon
                                         num = GET_num_check_BonDriver(num, bondriver)
                                     End If
                                     '正しければ配信スタート
-                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd)
+                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
                                     If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
                                         'ffmpegなら
-                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd)
+                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1)
                                     Else
                                         '今のところVLCには未対応
                                         request_page = 12

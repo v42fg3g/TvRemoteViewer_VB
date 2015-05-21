@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.35"
+    Private version As String = "TvRemoteViewer_VB version 1.36"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -50,7 +50,7 @@ Public Class Form1
                         If s.Length = 3 Then
                             sid = Val(s(1))
                             Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
-                            Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP, "", 0, 0, "1", "")
+                            Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP, "", 0, 0, "1", "", 0)
                         Else
                             MsgBox("サービスIDを指定してください")
                         End If
