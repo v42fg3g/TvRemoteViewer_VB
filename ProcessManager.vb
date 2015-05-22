@@ -599,7 +599,7 @@ Public Class ProcessManager
                         startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
                         log1write("No.=" & p5 & "のプロセスを再起動しました")
                     End If
-                ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 1 Or Me._list(i)._stream_mode = 3) Then
+                ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And Me._list(i)._stream_mode = 1 Then
                     'ファイル再生　エンコードが終わったかどうかチェック
                     Dim prochls As System.Diagnostics.Process = Me._list(i).GetHlsProc()
                     If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
@@ -618,7 +618,7 @@ Public Class ProcessManager
                         'm3u8をチェックして#EXT-X-ENDLISTが無ければ付加
                         Dim m3u8filename As String = _fileroot & "\mystream" & Me._list(i)._num & ".m3u8"
                         Dim str As String = ReadAllTexts(m3u8filename) 'file2str(m3u8filename, "UTF-8")
-                        If str.IndexOf("#EXT-X-ENDLIST") < 0 Then
+                        If str.Length > 0 And str.IndexOf("#EXT-X-ENDLIST") < 0 Then
                             '最後の改行を消す
                             Try
                                 While str.Substring(str.Length - 2, 2) = vbCrLf

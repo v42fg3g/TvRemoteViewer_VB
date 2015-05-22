@@ -567,6 +567,8 @@ TvRemoteViewer_VB v1.37
 	1.36	NicoJKのコメントファイルを読み込めるようにした
 		iniにNicoJK_path,NicoConvAss_path,NicoJK_firstを追加
 	1.37	ファイル再生においてエンコード終了後のm3u8終端文字列をチェックすることにした
+		動画ファイル名にサービスID情報が含まれている場合にNicoJKコメント機能が働くようにした
+		（例：おはようにゃんこ[s0x410].ts　[s1040]でも可。TVTestの保存形式で挿入可能）
 
 
 
