@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.36
+TvRemoteViewer_VB v1.37
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -566,6 +566,7 @@ TvRemoteViewer_VB v1.36
 	1.35	UDPチャンネル変更に失敗した場合にUDPプロセスが停止しなかったバグを修正
 	1.36	NicoJKのコメントファイルを読み込めるようにした
 		iniにNicoJK_path,NicoConvAss_path,NicoJK_firstを追加
+	1.37	ファイル再生においてエンコード終了後のm3u8終端文字列をチェックすることにした
 
 
 

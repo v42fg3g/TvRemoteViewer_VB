@@ -599,6 +599,41 @@ Public Class ProcessManager
                         startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
                         log1write("No.=" & p5 & "のプロセスを再起動しました")
                     End If
+                ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 1 Or Me._list(i)._stream_mode = 3) Then
+                    'ファイル再生　エンコードが終わったかどうかチェック
+                    Dim prochls As System.Diagnostics.Process = Me._list(i).GetHlsProc()
+                    If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
+                        'エラーがなければエラーカウンタをリセット
+                        Me._list(i)._chk_proc = 0
+                    Else
+                        'エラー
+                        If Me._list(i)._chk_proc < 100000 Then 'フロー防止
+                            Me._list(i)._chk_proc += 100
+                        End If
+                        'log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
+                    End If
+
+                    If Me._list(i)._chk_proc = 1000 Then 'プロセスが無いか10秒応答がなければ
+                        log1write("No.=" & Me._list(i)._num.ToString & " のエンコードが終了したようです")
+                        'm3u8をチェックして#EXT-X-ENDLISTが無ければ付加
+                        Dim m3u8filename As String = _fileroot & "\mystream" & Me._list(i)._num & ".m3u8"
+                        Dim str As String = ReadAllTexts(m3u8filename) 'file2str(m3u8filename, "UTF-8")
+                        If str.IndexOf("#EXT-X-ENDLIST") < 0 Then
+                            '最後の改行を消す
+                            Try
+                                While str.Substring(str.Length - 2, 2) = vbCrLf
+                                    str = str.Substring(0, str.Length - 2)
+                                End While
+                            Catch ex As Exception
+                            End Try
+                            str &= vbCrLf & "#EXT-X-ENDLIST" & vbCrLf
+                            If str2file(m3u8filename, str, "shift_jis") = 1 Then 'shift_jisのほうが余計なものがつかないかな
+                                log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルに#EXT-X-ENDLISTを追記しました")
+                            Else
+                                log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルへの#EXT-X-ENDLIST追記に失敗しました")
+                            End If
+                        End If
+                    End If
                 End If
             Next
 
