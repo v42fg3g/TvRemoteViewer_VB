@@ -1442,6 +1442,14 @@ Class WebRemocon
             file_last_filename(num) = ""
         End If
 
+        '動画の開始日時（微妙な誤差はあるかも）
+        Dim VideoStartTime As DateTime = C_DAY2038
+        Try
+            VideoStartTime = System.IO.File.GetCreationTime(filename)
+        Catch ex As Exception
+            VideoStartTime = C_DAY2038
+        End Try
+
         '前回のファイル名と違えば字幕ファイルを削除
         If file_last_filename(num) <> filename Or nohsub <> 3 Then
             '古いsub%num%.assがあれば削除
@@ -1466,11 +1474,11 @@ Class WebRemocon
                 If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                     If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                         'txtを探してassに変換してファイル(ass_file)として保存
-                        'txtのファイルネームを取得
-                        Dim txt_file As String = search_NicoJKtxt_file(filename)
+                        'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
+                        Dim txt_file As String = search_NicoJKtxt_file(filename, VideoStartTime, margin1)
                         If txt_file.Length > 0 Then
                             'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                            ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1)
+                            ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
                             If ass_file.Length > 0 Then
                                 log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
                             End If
@@ -1546,11 +1554,11 @@ Class WebRemocon
                     If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                             'txtを探してassに変換してファイル(ass_file)として保存
-                            'txtのファイルネームを取得
-                            Dim txt_file As String = search_NicoJKtxt_file(filename)
+                            'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
+                            Dim txt_file As String = search_NicoJKtxt_file(filename, VideoStartTime, margin1)
                             If txt_file.Length > 0 Then
                                 'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                                ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1)
+                                ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
                                 If ass_file.Length > 0 Then
                                     log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
                                 End If

@@ -665,8 +665,8 @@ Module モジュール_ニコニコ実況
         Return r
     End Function
 
-    '.tsファイル名からニコニココメントファイル.txtか.xmlを取得
-    Public Function search_NicoJKtxt_file(ByVal fullpathfilename As String) As String
+    '.tsファイル名からニコニココメントファイル.txtか.xmlを取得 ByRefで動画開始時間とマージンを返す
+    Public Function search_NicoJKtxt_file(ByVal fullpathfilename As String, ByRef VideoStartTime As DateTime, ByRef margin1 As Integer) As String
         Dim filepath As String = ""
         Dim filename As String = ""
         Dim filestamp As Integer = 0
@@ -679,6 +679,7 @@ Module モジュール_ニコニコ実況
             filename = Path.GetFileName(fullpathfilename)
             filepath = IO.Path.GetDirectoryName(fullpathfilename)
             filestamp = time2unix(System.IO.File.GetLastWriteTime(fullpathfilename))
+            VideoStartTime = System.IO.File.GetCreationTime(fullpathfilename) '動画開始時間
             If filename.Length > 0 Then
                 '動画ファイル名内にサービスIDがあれば
                 Dim fjk As String = ""
@@ -699,6 +700,7 @@ Module モジュール_ニコニコ実況
                                 End Try
                                 If st > 0 Then
                                     targetfile = search_commentfile_in_folder(NicoJK_path & "\" & fjk, st)
+                                    margin1 = 0 'マージンが必要無い　動画開始時間がコメント開始時間
                                 End If
                             End If
                         End If
@@ -711,8 +713,10 @@ Module モジュール_ニコニコ実況
                     Dim filename_txt As String = fullpathfilename.Replace(".ts", ".txt")
                     If file_exist(filename_xml) = 1 Then
                         targetfile = filepath & "\" & filename_xml
+                        margin1 = 0 'マージンが必要無い　動画開始時間がコメント開始時間
                     ElseIf file_exist(filename_txt) = 1 Then
                         targetfile = filepath & "\" & filename_txt
+                        margin1 = 0 'マージンが必要無い　動画開始時間がコメント開始時間
                     Else
                         'NicoJKフォルダを探す
                         If folder_exist(NicoJK_path) = 1 Then
@@ -747,6 +751,7 @@ Module モジュール_ニコニコ実況
                                         If sp >= 0 Then
                                             'NicojCatch形式
                                             targetfile = NicoJK_path & "\" & "jk" & Instr_pickup(jklfilename, "[jk", "]", sp) & "\" & Instr_pickup(jklfilename, ")", ".", sp) & ".txt"
+                                            VideoStartTime = unix2time(Val(Instr_pickup(jklfilename, "(", ")", sp))) '動画開始日時
                                             If file_exist(targetfile) <= 0 Then
                                                 targetfile = "" 'ファイルが存在しない　失敗
                                             End If
@@ -765,6 +770,7 @@ Module モジュール_ニコニコ実況
                                             Catch ex As Exception
                                                 starttime = 0
                                             End Try
+                                            VideoStartTime = unix2time(starttime) '動画開始日時
                                             If jkstr.Length > 2 And starttime > 0 Then
                                                 Dim commentfolder As String = NicoJK_path & "\" & jkstr
                                                 If folder_exist(commentfolder) = 1 Then
@@ -823,10 +829,15 @@ Module モジュール_ニコニコ実況
     End Function
 
     'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存　
-    Public Function convert_NicoJK2ass(ByVal num As Integer, ByVal txt_file As String, ByVal fileroot As String, ByVal margin1 As Integer) As String
+    Public Function convert_NicoJK2ass(ByVal num As Integer, ByVal txt_file As String, ByVal fileroot As String, ByVal margin1 As Integer, ByVal fullpathfilename As String, ByVal VideoStartTime As DateTime) As String
         'NicoConvAssを呼び出して処理
         Dim r As Integer = 0
         Dim targetfile As String = ""
+
+        If VideoStartTime = C_DAY2038 Or VideoStartTime < CDate("1980/01/01") Then
+            VideoStartTime = System.IO.File.GetCreationTime(fullpathfilename)
+            log1write("【警告】コメント開始日時が指定されていません")
+        End If
 
         Try
             Dim filename As String = Path.GetFileName(txt_file)
@@ -858,8 +869,8 @@ Module モジュール_ニコニコ実況
             psi.StandardOutputEncoding = Encoding.UTF8
 
             'psi.Arguments = "/c /d " & NicoConvAss_path & " """ & txt_file & """ -tx_margin " & VideoSeekDefault & " -tx_programname 0 -tx_writefolder """ & fileroot & """"
-            psi.Arguments = "/c NicoConvAss.exe """ & txt_file & """ -tx_margin " & margin1 & " -tx_programname 0 -ext .ass -tx_writefolder """ & fileroot & """"
-            log1write("NicoConvAss実行：" & txt_file & " 録画前マージン：" & margin1 & "秒")
+            psi.Arguments = "/c NicoConvAss.exe """ & txt_file & """ -tx_margin " & margin1 & " -tx_programname 0 -ext .ass -tx_writefolder """ & fileroot & """ -tx_starttime """ & VideoStartTime & """"
+            log1write("NicoConvAss実行：" & txt_file & " 動画開始日時：" & VideoStartTime & " 録画前マージン：" & margin1 & "秒")
 
             Dim p As System.Diagnostics.Process
             Try
