@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.37
+TvRemoteViewer_VB v1.38
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -569,6 +569,9 @@ TvRemoteViewer_VB v1.37
 	1.37	ファイル再生においてエンコード終了後のm3u8終端文字列をチェックすることにした
 		動画ファイル名にサービスID情報が含まれている場合にNicoJKコメント機能が働くようにした
 		（例：おはようにゃんこ[s0x410].ts　[s1040]でも可。TVTestの保存形式で挿入可能）
+	1.38	pt3Timerに対応
+		配信を開始するとptTimer番組表が表示されなくなるバグを修正
+		標準HTMLのViewTV～.htmlにptTimer&Tvmaid番組表ボタンを追加
 
 
 

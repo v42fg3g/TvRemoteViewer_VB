@@ -25,6 +25,7 @@ Module モジュール_番組表
     Public ptTimer_path As String = "" 'pttimerのパス　末尾\
     Public pttimer_pt2count As Integer = 0
     Public TvProgramptTimer_NGword() As String
+    Public pt3Timer_str As String = "" 'ptTimer3ならば"3"が入る
     'Tvmaid
     Public Tvmaid_url As String = "" 'Tvmaidのサーバーurl
     Public TvProgramTvmaid_NGword() As String
@@ -1299,14 +1300,17 @@ Module モジュール_番組表
             '出力エンコード
             psi.StandardOutputEncoding = Encoding.UTF8
 
+            'カレントディレクトリ変更
+            F_set_ppath4program()
+
             Dim pt2number As Integer
             For pt2number = 1 To pttimer_pt2count
                 Dim msql As String = ""
                 Dim db_name As String
                 If pt2number <= 1 Then
-                    db_name = ptTimer_path & "ptTimer.db"
+                    db_name = ptTimer_path & "pt" & pt3Timer_str & "Timer.db"
                 Else
-                    db_name = ptTimer_path & "ptTimer-" & pt2number & ".db"
+                    db_name = ptTimer_path & "pt" & pt3Timer_str & "Timer-" & pt2number & ".db"
                 End If
 
                 Dim nowtime As DateTime = Now()
@@ -1443,10 +1447,13 @@ Module モジュール_番組表
         Dim r As Integer = 0
 
         'よく考えたら番組表は複数枚チェックする必要は無さそう
-        '不具合があるときは↓6行を削除
         If file_exist(ptTimer_path & "ptTimer.db") > 0 Then
             r = 1
             log1write("ptTimerのデータベースを認識しました")
+        ElseIf file_exist(ptTimer_path & "pt3Timer.db") > 0 Then
+            r = 1
+            log1write("pt3Timerのデータベースを認識しました")
+            pt3Timer_str = "3"
         Else
             log1write("【エラー】ptTimerのデータベースを認識できませんでした")
             ptTimer_path = ""
