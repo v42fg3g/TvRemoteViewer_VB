@@ -610,7 +610,7 @@ Module モジュール_ニコニコ実況
             For i = 0 To s.Length - 1
                 si = s.Substring(i, 1)
                 zh = System.Text.Encoding.GetEncoding(932).GetByteCount(si)
-                If zh = 2 Then
+                If zh = 2 And si <> "　" Then
                     '全角
                     If f = 2 Then
                         z(zi) &= si
@@ -630,6 +630,8 @@ Module モジュール_ニコニコ実況
                     'h(hi) = si
                     f = 1
                     'End If
+                Else
+                    f = 1
                 End If
             Next
         End If
@@ -720,17 +722,18 @@ Module モジュール_ニコニコ実況
                         'NicoJKフォルダを探す
                         If folder_exist(NicoJK_path) = 1 Then
                             Dim jklfilename As String = ""
-                            '一番長い全角文字列を抜き出す
-                            Dim z As String = zenkakudake_max(filename)
-                            If z.Length = 0 Then
-                                z = filename
-                            End If
                             'NicoJK_pathにあるjklファイルをチェックする
                             Dim files As String() = System.IO.Directory.GetFiles(NicoJK_path, "*")
                             Dim chk_nojkl As Integer = 0
                             If files IsNot Nothing Then
                                 For i = 0 To files.Length - 1
-                                    If files(i).IndexOf(z) >= 0 Then
+                                    '一番長い全角文字列を抜き出す
+                                    Dim fn As String = Path.GetFileName(files(i))
+                                    Dim z As String = zenkakudake_max(fn)
+                                    If z.Length = 0 Then
+                                        z = Path.GetFileNameWithoutExtension(files(i))
+                                    End If
+                                    If filename.IndexOf(z) >= 0 Then
                                         '文字列が含まれている場合、更新時間を照らし合わせる
                                         If files(i).IndexOf(".jkl") > 0 Or files(i).IndexOf(".xml") > 0 Then
                                             Dim stamp As Integer = time2unix(System.IO.File.GetLastWriteTime(files(i)))
@@ -746,7 +749,7 @@ Module モジュール_ニコニコ実況
                                     If jklfilename.IndexOf(".xml") > 0 Then
                                         targetfile = NicoJK_path & "\" & jklfilename
                                     Else
-                                        Dim sp As Integer = jklfilename.IndexOf("[jk")
+                                        Dim sp As Integer = jklfilename.LastIndexOf("[jk")
                                         If sp >= 0 Then
                                             'NicojCatch形式
                                             targetfile = NicoJK_path & "\" & "jk" & Instr_pickup(jklfilename, "[jk", "]", sp) & "\" & Instr_pickup(jklfilename, ")", ".", sp) & ".txt"
