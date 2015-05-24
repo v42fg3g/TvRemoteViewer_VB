@@ -1392,6 +1392,8 @@ Class WebRemocon
                                         log1write("NicoConvAss：" & NicoConvAss_path & " が指定されました")
                                     End If
                                 End If
+                            Case "Nico_delay"
+                                Nico_delay = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -1475,7 +1477,7 @@ Class WebRemocon
                     If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                         'txtを探してassに変換してファイル(ass_file)として保存
                         'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
-                        Dim txt_file As String = search_NicoJKtxt_file(filename, VideoStartTime, margin1)
+                        Dim txt_file As String = search_NicoJKtxt_file(filename)
                         If txt_file.Length > 0 Then
                             'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
                             ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
@@ -1555,7 +1557,7 @@ Class WebRemocon
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                             'txtを探してassに変換してファイル(ass_file)として保存
                             'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
-                            Dim txt_file As String = search_NicoJKtxt_file(filename, VideoStartTime, margin1)
+                            Dim txt_file As String = search_NicoJKtxt_file(filename)
                             If txt_file.Length > 0 Then
                                 'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
                                 ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
@@ -2893,9 +2895,9 @@ Class WebRemocon
                             'ハードサブ不許可
                             Dim nohsub As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nohsub") & "")
                             'ファイル再生時NicoJKコメント調整　録画前マージンを知らせる
-                            Dim margin1 As Integer = VideoSeekDefault
-                            Dim margin1_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("margin1") & ""
-                            If IsNumeric(margin1_str) Then
+                            Dim margin1 As Integer = Nico_delay
+                            Dim margin1_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nicodelay") & ""
+                            If Trim(margin1_str.Length) > 0 Then
                                 'パラメーターとして指定があった場合はパラメーター優先
                                 margin1 = Val(margin1_str)
                             End If
