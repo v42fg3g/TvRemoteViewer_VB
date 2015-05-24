@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.38
+TvRemoteViewer_VB v1.39
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -572,6 +572,9 @@ TvRemoteViewer_VB v1.38
 	1.38	pt3Timerに対応
 		配信を開始するとptTimer番組表が表示されなくなるバグを修正
 		標準HTMLのViewTV～.htmlにptTimer&Tvmaid番組表ボタンを追加
+	1.39	NicoJKコメント再生でコメント開始時間が正確でなかったバグを修正
+		NicoJKコメント開始時間を動画ファイル作成日時にし、iniのNico_delayで微調整することにした
+		一旦再生終了し同じファイルを再生させた場合にNicoJKコメントが流れなかったバグを修正
 
 
 

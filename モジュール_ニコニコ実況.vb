@@ -875,11 +875,8 @@ Module モジュール_ニコニコ実況
             '出力エンコード
             psi.StandardOutputEncoding = Encoding.UTF8
 
-            'margin1はスタート時間を＋－させたい秒数なのでマージンとして逆にする
-            margin1 = -margin1
-
             psi.Arguments = "/c NicoConvAss.exe """ & txt_file & """ -tx_margin " & margin1 & " -tx_programname 0 -ext .ass -tx_writefolder """ & fileroot & """ -tx_starttime """ & VideoStartTime & """"
-            log1write("NicoConvAss実行：" & txt_file & " 動画開始日時：" & VideoStartTime & " 開始日時調整：" & margin1 & "秒")
+            log1write("NicoConvAss実行：" & txt_file & " 動画開始日時：" & VideoStartTime & " 開始マージン：" & margin1 & "秒")
 
             Dim p As System.Diagnostics.Process
             Try

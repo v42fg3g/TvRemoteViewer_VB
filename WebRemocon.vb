@@ -1551,7 +1551,7 @@ Class WebRemocon
 
                 '前回と違うファイル、または字幕ファイルが存在しなければ作成
                 '前回と同じファイルならすでに存在しているので無駄なことはしない
-                If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") < 0) Then
+                If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") <= 0) Then
                     'NicoJKログをassに変換
                     If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
