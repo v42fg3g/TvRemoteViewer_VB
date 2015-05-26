@@ -1461,6 +1461,9 @@ Class WebRemocon
             If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
                 deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
             End If
+            If file_exist(fileroot & "\" & "chapter" & num.ToString & ".chapter") = 1 Then
+                deletefile(fileroot & "\" & "chapter" & num.ToString & ".chapter")
+            End If
         End If
 
         Dim new_file As String = ""
@@ -1884,6 +1887,8 @@ Class WebRemocon
                 If filename.Length > 0 And Stream_mode = 3 Then
                     'VLC httpストリームのとき
                     hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
+                    'chapterをコピー
+                    copy_chapter_to_fileroot(num, filename, fileroot)
                 End If
             ElseIf hlsApp.IndexOf("vlc") >= 0 Then
                 'hlsOptを置き換える
@@ -1979,6 +1984,8 @@ Class WebRemocon
                         End If
                     End If
                     hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
+                    'chapterをコピー
+                    copy_chapter_to_fileroot(num, filename, fileroot)
                 Else
                     'その他vlc
                     '今のところ未対応
@@ -2095,6 +2102,37 @@ Class WebRemocon
             Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, Stream_mode, NHK_dual_mono_mode_select, resolution, VideoSeekSeconds)
         Else
             log1write("【エラー】HLSオプションが指定されていません。解像度を指定するかフォーム上のHLSオプションを記入してください")
+        End If
+    End Sub
+
+    '.chapterがあればストリームフォルダにコピー
+    Public Sub copy_chapter_to_fileroot(ByVal num As Integer, ByVal fullpathfilename As String, ByVal fileroot1 As String)
+        Dim targetfilename As String = fileroot1 & "\chapter" & num & ".chapter"
+        Dim chapterfullpathfilename As String = ""
+        Dim chapterpath As String = Path.GetDirectoryName(fullpathfilename)
+        Dim chapterfilename As String = Path.GetFileNameWithoutExtension(fullpathfilename) & ".chapter"
+        If chapterfilename.Length > 0 Then
+            If file_exist(chapterpath & "\" & chapterfilename) = 1 Then
+                chapterfullpathfilename = chapterpath & "\" & chapterfilename
+            ElseIf file_exist(chapterpath & "\chapters\" & chapterfilename) = 1 Then
+                chapterfullpathfilename = chapterpath & "\chapters\" & chapterfilename
+            End If
+        End If
+        If chapterfullpathfilename.Length > 0 Then
+            '見つかればコピー
+            Try
+                System.IO.File.Copy(chapterfullpathfilename, targetfilename)
+                Dim i As Integer = 100 '最大5秒間待つ
+                While file_exist(targetfilename) <= 0 And i > 0
+                    System.Threading.Thread.Sleep(50)
+                    i -= 1
+                End While
+                If i > 0 Then
+                    '成功
+                    log1write(chapterfullpathfilename & "を" & targetfilename & "としてコピーしました")
+                End If
+            Catch ex As Exception
+            End Try
         End If
     End Sub
 
