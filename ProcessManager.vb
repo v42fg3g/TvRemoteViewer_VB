@@ -1741,6 +1741,18 @@ Public Class ProcessManager
 
         Return d
     End Function
+
+    'numで再生中のファイル名を返す
+    Public Function get_fullpathfilename(ByVal num As Integer) As String
+        Dim r As String = ""
+        If num > 0 Then
+            Dim i As Integer = num2i(num)
+            If i >= 0 Then
+                r = Me._list(i)._fullpathfilename
+            End If
+        End If
+        Return r
+    End Function
 End Class
 
 

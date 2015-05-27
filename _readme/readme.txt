@@ -248,6 +248,9 @@ TvRemoteViewer_VB v1.40
 		2:返値の各番組情報内の次番組名冒頭に「[Next]」を付加
 		3:返値の各番組情報末尾に現番組「,0」か次番組「,1」かを付加
 		4以上:番組終了までtemp分以内しか残っていない場合は現番組の詳細欄に次番組情報を表示（データは無指定と同じ）
+	WI_GET_CHAPTER.html?temp=録画ファイルフルパス
+		録画ファイルの.chapterファイルの内容を取得（chaptersフォルダの中でも可）
+	WI_WRITE_CHAPTER.html?temp=num,書き込むチャプター文字列
 
 
 
@@ -575,9 +578,9 @@ TvRemoteViewer_VB v1.40
 	1.39	NicoJKコメント再生でコメント開始時間が正確でなかったバグを修正
 		NicoJKコメント開始時間を動画ファイル作成日時にし、iniのNico_delayで微調整することにした
 		一旦再生終了し同じファイルを再生させた場合にNicoJKコメントが流れなかったバグを修正
-	1.40	TvtPlay用chapterファイルがあればfilerootにchapter%num%.chapterとしてコピーするようにした
-		（優先順位：tsファイルと同じフォルダに存在するchapter、ついでchaptersフォルダ内）
-		WEBインターフェース、WI_GET_CHAPTER.html?temp=[録画ファイルのフルパス]を追加
+	1.40	録画ファイルの.chapterファイルの内容を読み書きできるようにした（chaptersフォルダの中でも可）
+		読み込み：WI_GET_CHAPTER.html?temp=録画ファイルフルパス
+		書き込み：WI_WRITE_CHAPTER.html?temp=num,書き込むチャプター文字列
 
 
 

@@ -1888,7 +1888,7 @@ Class WebRemocon
                     'VLC httpストリームのとき
                     hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
                     'chapterをコピー
-                    copy_chapter_to_fileroot(num, filename, fileroot)
+                    'copy_chapter_to_fileroot(num, filename, fileroot)
                 End If
             ElseIf hlsApp.IndexOf("vlc") >= 0 Then
                 'hlsOptを置き換える
@@ -1985,7 +1985,7 @@ Class WebRemocon
                     End If
                     hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
                     'chapterをコピー
-                    copy_chapter_to_fileroot(num, filename, fileroot)
+                    'copy_chapter_to_fileroot(num, filename, fileroot)
                 Else
                     'その他vlc
                     '今のところ未対応
@@ -2105,7 +2105,7 @@ Class WebRemocon
         End If
     End Sub
 
-    '.chapterがあればストリームフォルダにコピー
+    '.chapterがあればストリームフォルダにコピー ■未使用
     Public Sub copy_chapter_to_fileroot(ByVal num As Integer, ByVal fullpathfilename As String, ByVal fileroot1 As String)
         Dim targetfilename As String = fileroot1 & "\chapter" & num & ".chapter"
         Dim chapterfullpathfilename As String = ""
@@ -3077,6 +3077,12 @@ Class WebRemocon
                                         '録画ファイルのチャプター取得
                                         If temp.Length > 0 Then
                                             WI_cmd_reply = Me.WI_GET_CHAPTER(temp)
+                                            WI_cmd_reply_force = 1
+                                        End If
+                                    Case "WI_WRITE_CHAPTER"
+                                        'チャプターファイルへ書き込み
+                                        If temp.Length > 0 Then
+                                            WI_cmd_reply = Me.WI_WRITE_CHAPTER(temp)
                                             WI_cmd_reply_force = 1
                                         End If
                                 End Select
@@ -4181,6 +4187,69 @@ Class WebRemocon
         If chapterfullpathfilename.Length > 0 Then
             '見つかれば取得
             r = ReadAllTexts(chapterfullpathfilename)
+        End If
+        Return r
+    End Function
+
+    '録画ファイルのチャプター情報を書き出す(↓のいずれか）
+    'temp = num,チャプター文字列
+    '↓は危険かもしれないので廃止
+    'temp = chapterファイルフルパス,チャプター文字列
+    'temp = 録画ファイルフルパス,チャプター文字列
+    Public Function WI_WRITE_CHAPTER(ByVal temp As String) As String
+        Dim r As String = ""
+        Dim chapterfullpathfilename As String = ""
+        Dim d() As String = temp.Split(",")
+        If d.Length = 2 Then
+            Dim chapterstr As String = trim8(d(1)) '書き込むchapter情報
+            If IsNumeric(d(0)) = True Then
+                'numで指定された場合
+                d(0) = Me._procMan.get_fullpathfilename(d(0)) 'ProcessManager.vbで取得
+                'endif 'ファイル名での指定を廃止したのでend ifは下に移動
+                If trim8(d(0)).Length > 0 Then
+                    'ファイル名で指定された場合
+                    Dim ext As String = Path.GetExtension(d(0))
+                    If ext = ".chapter" Then
+                        chapterfullpathfilename = d(0)
+                    Else
+                        '動画ファイルが指定された場合は.chapterを探す
+                        Dim p1 As String = Path.GetDirectoryName(d(0))
+                        Dim f1 As String = Path.GetFileNameWithoutExtension(d(0))
+                        'まずchaptersフォルダの中にあるかどうか
+                        If file_exist(p1 & "\chapters\" & f1 & ".chapter") = 1 Then
+                            chapterfullpathfilename = p1 & "\chapters\" & f1 & ".chapter"
+                        ElseIf file_exist(p1 & "\" & f1 & ".chapter") = 1 Then
+                            chapterfullpathfilename = p1 & "\" & f1 & ".chapter"
+                        End If
+                        If chapterfullpathfilename.Length = 0 Then
+                            '既存のファイルがなかった
+                            If folder_exist(p1 & "\chapters") = 1 Then
+                                chapterfullpathfilename = p1 & "\chapters\" & f1 & ".chapter"
+                            Else
+                                chapterfullpathfilename = p1 & "\" & f1 & ".chapter"
+                            End If
+                        End If
+                    End If
+
+                    If chapterfullpathfilename.Length > 0 Then
+                        '修正するファイルの更新日時
+                        Dim modifydate As DateTime = Now()
+                        Try
+                            modifydate = System.IO.File.GetLastWriteTime(chapterfullpathfilename)
+                        Catch ex As Exception
+                        End Try
+                        If str2file(chapterfullpathfilename, trim8(chapterstr)) = 1 Then
+                            log1write(chapterfullpathfilename & "にチャプター情報を書き出しました")
+                            '更新日時を元に戻す
+                            F_modify_filedate(chapterfullpathfilename, modifydate)
+                            r = "SUCCESS"
+                        Else
+                            log1write(chapterfullpathfilename & "へのチャプター情報書き出しに失敗しました")
+                            r = "FAILED"
+                        End If
+                    End If
+                End If
+            End If
         End If
         Return r
     End Function
