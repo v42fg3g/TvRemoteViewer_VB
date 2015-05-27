@@ -577,6 +577,7 @@ TvRemoteViewer_VB v1.40
 		一旦再生終了し同じファイルを再生させた場合にNicoJKコメントが流れなかったバグを修正
 	1.40	TvtPlay用chapterファイルがあればfilerootにchapter%num%.chapterとしてコピーするようにした
 		（優先順位：tsファイルと同じフォルダに存在するchapter、ついでchaptersフォルダ内）
+		WEBインターフェース、WI_GET_CHAPTER.html?temp=[録画ファイルのフルパス]を追加
 
 
 

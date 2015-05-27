@@ -3073,6 +3073,12 @@ Class WebRemocon
                                         'ログ出力
                                         WI_cmd_reply = Me.WI_SHOW_LOG()
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_CHAPTER"
+                                        '録画ファイルのチャプター取得
+                                        If temp.Length > 0 Then
+                                            WI_cmd_reply = Me.WI_GET_CHAPTER(temp)
+                                            WI_cmd_reply_force = 1
+                                        End If
                                 End Select
                             End If
 
@@ -4157,6 +4163,26 @@ Class WebRemocon
             b = d
         Loop Until d = 0
         Return a
+    End Function
+
+    '録画ファイルのチャプターを返す
+    Public Function WI_GET_CHAPTER(ByVal fullpathfilename As String) As String
+        Dim r As String = ""
+        Dim chapterfullpathfilename As String = ""
+        Dim chapterpath As String = Path.GetDirectoryName(fullpathfilename)
+        Dim chapterfilename As String = Path.GetFileNameWithoutExtension(fullpathfilename) & ".chapter"
+        If chapterfilename.Length > 0 Then
+            If file_exist(chapterpath & "\" & chapterfilename) = 1 Then
+                chapterfullpathfilename = chapterpath & "\" & chapterfilename
+            ElseIf file_exist(chapterpath & "\chapters\" & chapterfilename) = 1 Then
+                chapterfullpathfilename = chapterpath & "\chapters\" & chapterfilename
+            End If
+        End If
+        If chapterfullpathfilename.Length > 0 Then
+            '見つかれば取得
+            r = ReadAllTexts(chapterfullpathfilename)
+        End If
+        Return r
     End Function
 
 End Class
