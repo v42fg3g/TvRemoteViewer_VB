@@ -1461,9 +1461,9 @@ Class WebRemocon
             If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
                 deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
             End If
-            If file_exist(fileroot & "\" & "chapter" & num.ToString & ".chapter") = 1 Then
-                deletefile(fileroot & "\" & "chapter" & num.ToString & ".chapter")
-            End If
+            'If file_exist(fileroot & "\" & "chapter" & num.ToString & ".chapter") = 1 Then
+            'deletefile(fileroot & "\" & "chapter" & num.ToString & ".chapter")
+            'End If
         End If
 
         Dim new_file As String = ""

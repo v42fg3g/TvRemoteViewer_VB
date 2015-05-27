@@ -786,9 +786,9 @@ Public Class ProcessManager
                         If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass") = 1 Then
                             deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass")
                         End If
-                        If file_exist(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter") = 1 Then
-                            deletefile(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter")
-                        End If
+                        'If file_exist(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter") = 1 Then
+                        'deletefile(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter")
+                        'End If
                     End If
 
                     Try
