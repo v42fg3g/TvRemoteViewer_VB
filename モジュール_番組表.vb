@@ -44,6 +44,9 @@ Module モジュール_番組表
     'EDCBがVelmy,niisaka版の場合は1
     Public EDCB_Velmy_niisaka As Integer = 0
 
+    'EDCBの管理するチャンネルの取得方法
+    Public EDCB_GetCh_method As Integer = 0 '1=旧方式
+
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
         Implements IComparable
@@ -1051,6 +1054,73 @@ Module モジュール_番組表
 
         Return r
     End Function
+
+    'EDCBが管理し番組表で表示するTSIDを取得する(CtrlCmdCLI使用）
+    Public Sub EDCB_GET_TSID_CtrlCmdCLI()
+        If TvProgram_EDCB_url.Length > 0 Then
+            Dim i As Integer = 0
+            Dim k As Integer = 0
+
+            Dim ip As String = Instr_pickup(TvProgram_EDCB_url, "://", ":", 0)
+            ip = host2ip(ip) 'ホストネームからIPに変換
+            Dim sp As Integer = TvProgram_EDCB_url.IndexOf("://")
+            Dim port As String = ""
+            port = 4510 'CtrlCmdCLIのポート　決め打ち？
+
+            If ip.Length > 0 And Val(port) > 0 Then
+                EDCB_cmd.SetSendMode(True)
+                EDCB_cmd.SetNWSetting(ip, port)
+                Dim serviceList As New System.Collections.Generic.List(Of CtrlCmdCLI.Def.EpgServiceInfo)()
+                Dim ret As Integer = EDCB_cmd.SendEnumService(serviceList) 'IPやportがおかしいとここで止まる可能性有り
+
+                If ret = 1 Then
+                    Dim last_name As String = ""
+                    For k = 0 To serviceList.Count - 1
+                        If serviceList(k).SID > 0 And serviceList(k).service_type = 1 Then
+                            'ch_listに存在するTSIDならばリストに追加
+                            If i = 0 Then
+                                ReDim Preserve EDCB_TSID(i)
+                                EDCB_TSID(i) = serviceList(k).TSID
+                                ReDim Preserve EDCB_SID(i)
+                                EDCB_SID(i) = serviceList(k).SID
+                                i += 1
+                            Else
+                                Dim si As Integer = Array.IndexOf(EDCB_SID, serviceList(k).SID)
+                                If si < 0 Then
+                                    ReDim Preserve EDCB_TSID(i)
+                                    EDCB_TSID(i) = serviceList(k).TSID
+                                    ReDim Preserve EDCB_SID(i)
+                                    EDCB_SID(i) = serviceList(k).SID
+                                    i += 1
+                                Else
+                                    '重複有り
+                                    If EDCB_TSID(si) <> serviceList(k).TSID Then
+                                        'TSIDが違えば登録
+                                        ReDim Preserve EDCB_TSID(i)
+                                        EDCB_TSID(i) = serviceList(k).TSID
+                                        ReDim Preserve EDCB_SID(i)
+                                        EDCB_SID(i) = serviceList(k).SID
+                                        i += 1
+                                    End If
+                                End If
+                            End If
+                        End If
+                    Next
+                End If
+            Else
+
+            End If
+
+            '最後にチェック
+            If EDCB_TSID IsNot Nothing Then
+                log1write("EDCB(CtrlCmdCLI)からEDCB番組表に表示する局を取得しました")
+            Else
+                log1write("【エラー】EDCB(CtrlCmdCLI)からEDCB番組表に表示する局の取得に失敗しました")
+                EDCB_thru_addprogres = 1
+                log1write("EDCB番組表に全チャンネルを表示するようにセットしました")
+            End If
+        End If
+    End Sub
 
     'EDCBが管理し番組表で表示するTSIDを取得する
     Public Sub EDCB_GET_TSID()

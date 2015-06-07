@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.40"
+    Private version As String = "TvRemoteViewer_VB version 1.41"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
@@ -419,7 +419,13 @@ Public Class Form1
 
         'EDCB番組表に表示する局（TSID）を取得
         If EDCB_thru_addprogres = 0 Then
-            EDCB_GET_TSID()
+            If EDCB_GetCh_method = 0 Then
+                'CtrlCmdCLIを使用
+                EDCB_GET_TSID_CtrlCmdCLI()
+            Else
+                '旧方式
+                EDCB_GET_TSID()
+            End If
         Else
             log1write("【EDCB】EDCB_thru_addprogresが指定されています")
         End If
@@ -680,6 +686,12 @@ Public Class Form1
         '全プロセスを停止
         Try
             Me._worker.stopProc(-2)
+        Catch ex As Exception
+        End Try
+
+        'EDCB TCP接続終了
+        Try
+            EDCB_cmd.Dispose()
         Catch ex As Exception
         End Try
 

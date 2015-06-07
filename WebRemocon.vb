@@ -1368,6 +1368,8 @@ Class WebRemocon
                                 EDCB_thru_addprogres = Val(youso(1).ToString)
                             Case "EDCB_Velmy_niisaka"
                                 EDCB_Velmy_niisaka = Val(youso(1).ToString)
+                            Case "EDCB_GetCh_method"
+                                EDCB_GetCh_method = Val(youso(1).ToString)
                             Case "Tvmaid_url"
                                 Tvmaid_url = youso(1).ToString
                             Case "NicoJK_path"
