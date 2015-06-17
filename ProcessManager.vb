@@ -295,7 +295,7 @@ Public Class ProcessManager
 
                         '実際にチャンネルが変わったかどうかパイプで確認してから次へ
                         'GetChannelでサービスIDが変わっているかチェック
-                        Dim j As Integer = 10 '最大10回チャレンジ
+                        Dim j As Integer = 60 '最大60回チャレンジ 3秒
                         While Pipe_get_channel(pipeIndex, hls_only_sid) = 0 And j >= 0
                             log1write("No.=" & num & "UDPの配信チャンネルが切り替わるまで待機しています")
                             j -= 1
