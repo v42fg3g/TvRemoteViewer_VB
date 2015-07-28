@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.41
+TvRemoteViewer_VB v1.42
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -583,6 +583,7 @@ TvRemoteViewer_VB v1.41
 		書き込み：WI_WRITE_CHAPTER.html?temp=num,書き込むチャプター文字列
 	1.41	EDCBが管理するチャンネル一覧取得をCtrlCmdCLIを使うようにした
 		iniに旧方式で取得するオプション(EDCB_GetCh_method)を追加
+	1.42	iniにRecTaskがチャンネル変更時に待機する最大秒数(RecTask_CH_MaxWait)を追加
 
 
 

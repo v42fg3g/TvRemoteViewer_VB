@@ -45,6 +45,9 @@
     'チャンネル切り替え時にRecTaskを必ず再起動するかどうか
     Public RecTask_force_restart As Integer = 0
 
+    'RecTaskのチャンネル変更最大待機時間
+    Public RecTask_CH_MaxWait As Integer = 5 '標準は5秒
+
     Public Function time2unix(ByVal t As DateTime) As Integer
         Dim ut As Integer = DateDiff("s", #1/1/1970#, t)
         ut = ut - (60 * 60 * 9) '日本時間

@@ -1396,6 +1396,12 @@ Class WebRemocon
                                 End If
                             Case "Nico_delay"
                                 Nico_delay = Val(youso(1).ToString)
+                            Case "RecTask_CH_MaxWait"
+                                RecTask_CH_MaxWait = Val(youso(1).ToString)
+                                If RecTask_CH_MaxWait < 1 Then
+                                    RecTask_CH_MaxWait = 1 '最小値1秒
+                                End If
+                                log1write("RecTaskがチャンネル変更する際に待機する最大秒数を" & RecTask_CH_MaxWait & "秒に設定しました")
                         End Select
                     End If
                 Catch ex As Exception
