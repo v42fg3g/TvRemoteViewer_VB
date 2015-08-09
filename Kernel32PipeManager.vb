@@ -8,8 +8,8 @@ Class Kernel32PipeManager
     Private _pipeHandle As SafeFileHandle
     Private streamEncoding As UnicodeEncoding
 
-    Public Sub New(pipeIndex As String)
-        Me._pipeHandle = CreateFile("\\.\pipe\RecTask_Server_Pipe_" & pipeIndex, DesiredAccess.GENERIC_WRITE, 0, IntPtr.Zero, CreationDisposition.OPEN_EXISTING, 0, _
+    Public Sub New(pipeIndex_str As String)
+        Me._pipeHandle = CreateFile("\\.\pipe\" & pipeIndex_str, DesiredAccess.GENERIC_WRITE, 0, IntPtr.Zero, CreationDisposition.OPEN_EXISTING, 0, _
          IntPtr.Zero)
         streamEncoding = New UnicodeEncoding()
     End Sub

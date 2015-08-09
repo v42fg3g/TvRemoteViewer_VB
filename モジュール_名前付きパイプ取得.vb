@@ -157,10 +157,10 @@ Module モジュール_名前付きパイプ取得
 
     '==========================================================
     'RecTask現在配信中のチャンネルを取得
-    Public Function Pipe_get_channel(ByVal pipeindex As Integer, ByVal sidstr As String) As Integer
+    Public Function Pipe_get_channel(ByVal pipeindex_str As String, ByVal sidstr As String) As Integer
         Dim r As Integer = 0
         Dim cmd As String = "GetChannel"
-        Dim rstr As String = Pipe_Send_Command(pipeindex, cmd)
+        Dim rstr As String = Pipe_Send_Command(pipeindex_str, cmd)
         If rstr.IndexOf("ServiceID:" & sidstr) >= 0 Then
             r = 1
         End If
@@ -168,7 +168,7 @@ Module モジュール_名前付きパイプ取得
     End Function
 
     'RecTaskチャンネル変更エントリー
-    Public Function Pipe_change_channel(ByVal pipeindex As Integer, ByVal sidstr As Integer, ByVal chspacestr As Integer, ByVal channel As Integer, ByVal TSID As Integer, ByVal NID As Integer) As String
+    Public Function Pipe_change_channel(ByVal pipeindex_str As String, ByVal sidstr As Integer, ByVal chspacestr As Integer, ByVal channel As Integer, ByVal TSID As Integer, ByVal NID As Integer) As String
         Dim r As String = ""
         'Dim cmd As String = "SetChannel" & vbCrLf _
         '& "ServiceID:" & sidstr & vbCrLf _
@@ -179,16 +179,16 @@ Module モジュール_名前付きパイプ取得
             & "TuningSpace:" & chspacestr & vbCrLf _
             & "TransportStreamID:" & TSID.ToString & vbCrLf _
             & "NetworkID:" & NID.ToString
-        r = Pipe_Send_Command(pipeindex, cmd)
+        r = Pipe_Send_Command(pipeindex_str, cmd)
         Return r
     End Function
 
     '名前付きパイプ　コマンド
     'https://github.com/nullpohoge/PipeTest
     'のソースを使用させていただいております
-    Public Function Pipe_Send_Command(ByVal pipeindex As Integer, ByVal cmdstr As String) As String
+    Public Function Pipe_Send_Command(ByVal pipeindex_str As String, ByVal cmdstr As String) As String
         Dim r As String = ""
-        Dim Pipe As NamedPipeClientStream = New NamedPipeClientStream(".", "RecTask_Server_Pipe_" & pipeindex.ToString, PipeDirection.InOut, PipeOptions.None)
+        Dim Pipe As NamedPipeClientStream = New NamedPipeClientStream(".", pipeindex_str.ToString, PipeDirection.InOut, PipeOptions.None)
         Try
             Pipe.Connect(5000)
             If Pipe.IsConnected Then

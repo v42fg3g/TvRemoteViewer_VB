@@ -1529,28 +1529,26 @@ Module モジュール_番組表
             ptTimer_path = ""
         End If
         Return r
-        Exit Function
+        'Exit Function
 
         '以下、複数のデータベースを調べる場合　■未使用
-
-        If file_exist(ptTimer_path & "ptTimer.db") > 0 Then
-            r = 1
-            Dim i As Integer = 2
-            While file_exist(ptTimer_path & "ptTimer-" & i & ".db") > 0
-                r += 1
-                i += 1
-            End While
-        End If
-        If r = 1 Then
-            log1write("ptTimerのデータベースを認識しました")
-        ElseIf r > 1 Then
-            log1write("ptTimerのデータベースを" & r & "つ認識しました")
-        Else
-            log1write("【エラー】ptTimerのデータベースを認識できませんでした")
-            ptTimer_path = ""
-        End If
-
-        Return r
+        'If file_exist(ptTimer_path & "ptTimer.db") > 0 Then
+        'r = 1
+        'Dim i As Integer = 2
+        'While file_exist(ptTimer_path & "ptTimer-" & i & ".db") > 0
+        'r += 1
+        'i += 1
+        'End While
+        'End If
+        'If r = 1 Then
+        'log1write("ptTimerのデータベースを認識しました")
+        'ElseIf r > 1 Then
+        'log1write("ptTimerのデータベースを" & r & "つ認識しました")
+        'Else
+        'log1write("【エラー】ptTimerのデータベースを認識できませんでした")
+        'ptTimer_path = ""
+        'End If
+        'Return r
     End Function
 
     'EDCB番組表

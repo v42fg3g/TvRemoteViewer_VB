@@ -594,9 +594,9 @@ Module モジュール_ニコニコ実況
     '文字列の中で一番長い全角部分を抜き出して返す（ファイル名の全角部分を取得）
     Public Function zenkakudake_max(ByVal s As String, Optional ByVal a As Integer = 0) As String
         Dim r As String = ""
-        Dim h() As String
+        Dim h() As String = Nothing
         Dim hi As Integer = -1
-        Dim z() As String
+        Dim z() As String = Nothing
         Dim zi As Integer = -1
 
         'Dim hstr As String = "0123456789-+_()[]{}#^@!$.,;'=&~`"
