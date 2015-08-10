@@ -181,7 +181,7 @@ Public Class ProcessManager
 
                     If hls_only = 0 Then
                         '通常起動
-                        Dim pipeListBefore As New List(Of Integer)()
+                        Dim pipeListBefore As New List(Of String)()
                         '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
                         Dim listOfPipes As String() = Nothing
                         listOfPipes = GetPipes()
@@ -249,7 +249,7 @@ Public Class ProcessManager
                                 If pipeName.Contains(PipeSearchStr) Then
                                     Dim c2 As Integer = 0
                                     '起動前のパイプindexに存在しなければOK
-                                    For Each pt As Integer In pipeListBefore
+                                    For Each pt As String In pipeListBefore
                                         If pipeName = pt Then
                                             c2 = 1
                                             Exit For
