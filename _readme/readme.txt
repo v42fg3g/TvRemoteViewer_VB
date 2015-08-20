@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.43
+TvRemoteViewer_VB v1.44
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -585,6 +585,8 @@ TvRemoteViewer_VB v1.43
 		iniに旧方式で取得するオプション(EDCB_GetCh_method)を追加
 	1.42	iniにRecTaskがチャンネル変更時に待機する最大秒数(RecTask_CH_MaxWait)を追加
 	1.43	TSTaskに対応
+	1.44	BonDriver_TSTask.dllを再生候補から外した
+		FILEROOTがWWWROOTの子ディレクトリでない場合にソフトサブが機能しなかった現象を解消
 
 
 

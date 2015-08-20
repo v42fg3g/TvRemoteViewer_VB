@@ -3,10 +3,10 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.43"
+    Private version As String = "TvRemoteViewer_VB version 1.44"
 
     '指定語句が含まれるBonDriverは無視する
-    Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe"}
+    Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
 
     Private chk_timer1 As Integer = 0 'timer1重複回避用temp
     Private chk_timer1_deleteTS As Integer = 0 '古いtsファイルを削除する間隔調整用
@@ -491,6 +491,20 @@ Public Class Form1
         If f_fileroot.Length > 0 Then
             If folder_exist(f_fileroot) = 1 Then
                 log1write("起動チェック　FILEROOT：OK")
+                'fileroot 末尾がstreamでなければ警告
+                If f_fileroot.IndexOf(f_wwwroot) >= 0 Then
+                    '子ディレクトリ
+                    Dim chkf As String = f_fileroot.Replace(f_wwwroot, "")
+                    If chkf <> "\stream" Then
+                        log1write("【警告】FILEROOTはWWWROOT直下に「stream」フォルダを作成することが推奨されています。コメント再生されない場合があります")
+                    End If
+                Else
+                    'まったく違うディレクトリ
+                    Dim chkf As String = Path.GetFileName(f_fileroot)
+                    If chkf <> "stream" Then
+                        log1write("【警告】FILEROOTは「stream」という名のフォルダが末尾になるよう作成することが推奨されています。コメント再生されない場合があります")
+                    End If
+                End If
             Else
                 log1write("【エラー】FILEROOT " & f_fileroot & " が見つかりません")
             End If
@@ -522,7 +536,7 @@ Public Class Form1
                                     End If
                                 Next
                             End If
-                            If bonfile.IndexOf("_file") >= 0 Or bonfile.IndexOf("_udp") >= 0 Or bonfile.IndexOf("_pipe") >= 0 Then
+                            If bonfile.IndexOf("_file") >= 0 Or bonfile.IndexOf("_udp") >= 0 Or bonfile.IndexOf("_pipe") >= 0 Or bonfile.IndexOf("_tstask") >= 0 Then
                                 bonfile = ""
                             End If
                             If bonfile.IndexOf("bondriver") = 0 Then

@@ -3941,6 +3941,14 @@ Class WebRemocon
             Catch ex As Exception
                 fl_file = ""
             End Try
+            '先頭が\なら削る
+            Try
+                While fl_file.Substring(0, 1) = "\"
+                    fl_file = fl_file.Substring(1)
+                End While
+            Catch ex As Exception
+                fl_file = ""
+            End Try
         End If
         If fl_cmd = "dir" Then
             filepath = fl_file
@@ -3954,8 +3962,21 @@ Class WebRemocon
                 filename = fl_file
             End If
         End If
-        Dim fullpath As String = Me._wwwroot & "\" & filepath '末尾は\
-        Dim fullpathfilename As String = Me._wwwroot & "\" & filepath & "\" & filename
+
+        Dim fullpath As String = ""
+        Dim fullpathfilename As String = ""
+
+        If Me._fileroot.IndexOf(Me._wwwroot) < 0 And filepath = "stream" Then
+            'TvRemoteFilesが動画フォルダへのアクセスでは必ず"\stream"への要求をしてくれるので個別対処
+            'filerootがwwwrootの子フォルダではなく、かつ要求が「stream」フォルダへの場合
+            '設計ミス
+            'wwwrootへの要求を想定していたため、filerootへの要求は区別がつかない・・
+            fullpath = Me._fileroot & "\" '末尾は\
+            fullpathfilename = Me._fileroot & "\" & filename
+        Else
+            fullpath = Me._wwwroot & "\" & filepath '末尾は\
+            fullpathfilename = Me._wwwroot & "\" & filepath & "\" & filename
+        End If
 
         'フォルダが存在しなければ作成
         If fl_cmd.IndexOf("write") >= 0 Then
