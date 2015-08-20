@@ -45,12 +45,6 @@ Module モジュール_ニコニコ実況
         '放送局sidからjkフォルダに変換
         Dim r As String = ""
 
-        '難視聴かCSか　CSなら排除
-        Select Case sid
-            Case 291, 292, 294, 295, 296, 297, 298
-                If chspace = 1 Then sid = 999999999
-        End Select
-
         Try
             Dim i As Integer = Array.IndexOf(jk_list, sid)
 
@@ -599,7 +593,8 @@ Module モジュール_ニコニコ実況
         Dim z() As String = Nothing
         Dim zi As Integer = -1
 
-        'Dim hstr As String = "0123456789-+_()[]{}#^@!$.,;'=&~`"
+        '全角とは見なさない文字
+        Dim hstr As String = "「」　＃（）" '"0123456789-+_()[]{}#^@!$.,;'=&~`"
 
         Dim i As Integer
 
@@ -610,7 +605,8 @@ Module モジュール_ニコニコ実況
             For i = 0 To s.Length - 1
                 si = s.Substring(i, 1)
                 zh = System.Text.Encoding.GetEncoding(932).GetByteCount(si)
-                If zh = 2 And si <> "　" Then
+                'If zh = 2 And si <> "　" Then
+                If zh = 2 And hstr.IndexOf(si) < 0 Then
                     '全角
                     If f = 2 Then
                         z(zi) &= si
@@ -729,12 +725,18 @@ Module モジュール_ニコニコ実況
                                 Dim files As String() = System.IO.Directory.GetFiles(NicoJK_path, "*")
                                 Dim chk_nojkl As Integer = 0
                                 If files IsNot Nothing Then
+                                    Dim jklfilename_sub As String = ""
                                     For i = 0 To files.Length - 1
                                         '一番長い全角文字列を抜き出す
                                         Dim fn As String = Path.GetFileName(files(i))
                                         Dim z As String = zenkakudake_max(fn)
                                         If z.Length = 0 Then
                                             z = Path.GetFileNameWithoutExtension(files(i))
+                                            'jklファイルから番組名を抜き出す
+                                            Dim z2 As String = Trim(Instr_pickup(files(i), "-", "[", 0))
+                                            If z2.Length > 0 Then
+                                                z = z2
+                                            End If
                                         End If
                                         If filename.IndexOf(z) >= 0 Then
                                             '文字列が含まれている場合、更新時間を照らし合わせる
@@ -745,9 +747,15 @@ Module モジュール_ニコニコ実況
                                                     jklfilename = Path.GetFileName(files(i))
                                                     Exit For
                                                 End If
+                                                '予備として
+                                                jklfilename_sub = Path.GetFileName(files(i))
                                             End If
                                         End If
                                     Next
+                                    If jklfilename.Length = 0 Then
+                                        '見つからない場合時間が合わないがタイトルは該当しているものを当てはめてみる
+                                        jklfilename = jklfilename_sub
+                                    End If
                                     If jklfilename.Length > 0 Then
                                         If jklfilename.IndexOf(".xml") > 0 Then
                                             targetfile = NicoJK_path & "\" & jklfilename

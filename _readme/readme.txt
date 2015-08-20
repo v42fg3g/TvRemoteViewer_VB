@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.44
+TvRemoteViewer_VB v1.45
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -587,6 +587,8 @@ TvRemoteViewer_VB v1.44
 	1.43	TSTaskに対応
 	1.44	BonDriver_TSTask.dllを再生候補から外した
 		FILEROOTがWWWROOTの子ディレクトリでない場合にソフトサブが機能しなかった現象を解消
+	1.45	NicoJKコメントファイルを探すルーチンを改良
+		残っていた難視聴関連部分を削除
 
 
 
