@@ -727,33 +727,47 @@ Module モジュール_ニコニコ実況
                                 If files IsNot Nothing Then
                                     Dim jklfilename_sub As String = ""
                                     For i = 0 To files.Length - 1
-                                        '一番長い全角文字列を抜き出す
-                                        Dim fn As String = Path.GetFileName(files(i))
-                                        Dim z As String = zenkakudake_max(fn)
-                                        If z.Length = 0 Then
-                                            z = Path.GetFileNameWithoutExtension(files(i))
-                                            'jklファイルから番組名を抜き出す
-                                            Dim z2 As String = Trim(Instr_pickup(files(i), "-", "[", 0))
+                                        If files(i).IndexOf(".jkl") > 0 Or files(i).IndexOf(".xml") > 0 Then
+                                            '一番長い全角文字列を抜き出す
+                                            Dim fn As String = Path.GetFileName(files(i))
+                                            Dim z As String = zenkakudake_max(fn)
+                                            Dim zh As String = StrConv(z, VbStrConv.Narrow) '半角でも調べる
+                                            'タイトル最初の3文字
+                                            Dim z2 As String = Trim(Instr_pickup(fn, "-", "[", 0))
                                             If z2.Length > 0 Then
-                                                z = z2
+                                                Try
+                                                    z2 = z2.Substring(0, 3)
+                                                Catch ex As Exception
+                                                End Try
+                                            Else
+                                                'xmlを想定
+                                                Try
+                                                    z2 = Path.GetFileNameWithoutExtension(files(i)).Substring(0, 3)
+                                                Catch ex As Exception
+                                                End Try
                                             End If
-                                        End If
-                                        If filename.IndexOf(z) >= 0 Then
-                                            '文字列が含まれている場合、更新時間を照らし合わせる
-                                            If files(i).IndexOf(".jkl") > 0 Or files(i).IndexOf(".xml") > 0 Then
+                                            Dim z2h As String = StrConv(z2, VbStrConv.Narrow)
+
+                                            If z.Length > 0 And (filename.IndexOf(z) >= 0 Or filename.IndexOf(zh) >= 0) Then
+                                                '文字列が含まれている場合、更新時間を照らし合わせる
                                                 Dim stamp As Integer = time2unix(System.IO.File.GetLastWriteTime(files(i)))
                                                 If System.Math.Abs(stamp - filestamp) < (60 * 20) Then
                                                     '更新時間が前後20分未満ならほぼビンゴ
                                                     jklfilename = Path.GetFileName(files(i))
                                                     Exit For
                                                 End If
-                                                '予備として
-                                                jklfilename_sub = Path.GetFileName(files(i))
+                                            End If
+                                            If z2.Length > 0 And (filename.IndexOf(z2) >= 0 Or filename.IndexOf(z2h) >= 0) Then
+                                                'タイトル最初の3文字が含まれている場合、更新時間を照らし合わせる
+                                                Dim stamp As Integer = time2unix(System.IO.File.GetLastWriteTime(files(i)))
+                                                If System.Math.Abs(stamp - filestamp) < (60 * 20) Then
+                                                    '更新時間が前後20分未満なら予備として記録
+                                                    jklfilename_sub = Path.GetFileName(files(i))
+                                                End If
                                             End If
                                         End If
                                     Next
-                                    If jklfilename.Length = 0 Then
-                                        '見つからない場合時間が合わないがタイトルは該当しているものを当てはめてみる
+                                    If jklfilename.Length = 0 And jklfilename_sub.Length > 0 Then
                                         jklfilename = jklfilename_sub
                                     End If
                                     If jklfilename.Length > 0 Then
