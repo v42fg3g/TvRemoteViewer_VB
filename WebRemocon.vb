@@ -3966,14 +3966,13 @@ Class WebRemocon
         Dim fullpath As String = ""
         Dim fullpathfilename As String = ""
 
-        If Me._fileroot.IndexOf(Me._wwwroot) < 0 And filepath = "stream" Then
-            'TvRemoteFilesが動画フォルダへのアクセスでは必ず"\stream"への要求をしてくれるので個別対処
-            'filerootがwwwrootの子フォルダではなく、かつ要求が「stream」フォルダへの場合
-            '設計ミス
-            'wwwrootへの要求を想定していたため、filerootへの要求は区別がつかない・・
+        Dim lastf As String = Path.GetFileName(Me._fileroot) '末フォルダ名
+        If Me._fileroot.Length > 0 And Me._fileroot.IndexOf(Me._wwwroot) < 0 And filepath = lastf Then
+            '動画フォルダへのアクセス
             fullpath = Me._fileroot & "\" '末尾は\
             fullpathfilename = Me._fileroot & "\" & filename
         Else
+            '普通のフォルダへのアクセスだった
             fullpath = Me._wwwroot & "\" & filepath '末尾は\
             fullpathfilename = Me._wwwroot & "\" & filepath & "\" & filename
         End If
