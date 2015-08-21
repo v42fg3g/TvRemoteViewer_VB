@@ -862,17 +862,15 @@ Module モジュール_ニコニコ実況
         Dim r As Integer = 0
         Dim targetfile As String = ""
 
-        If VideoStartTime = C_DAY2038 Or VideoStartTime < CDate("1980/01/01") Then
+        If VideoStartTime = C_DAY2038 Or VideoStartTime < CDate("1980/02/01") Then
             log1write("【警告】コメント開始日時が指定されていません")
-            Try
-                '指定が無ければ動画ファイル作成日時を使用
-                VideoStartTime = System.IO.File.GetCreationTime(fullpathfilename)
-            Catch ex As Exception
+            VideoStartTime = get_TOT(fullpathfilename)
+            If VideoStartTime = C_DAY2038 Then
                 'エラー
-                log1write("【エラー】" & VideoStartTime & "の作成日時取得に失敗しました")
+                log1write("【エラー】" & fullpathfilename & "の作成日時取得に失敗しました")
                 Return ""
                 Exit Function
-            End Try
+            End If
         End If
 
         Try

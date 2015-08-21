@@ -1453,12 +1453,7 @@ Class WebRemocon
         End If
 
         '動画の開始日時（微妙な誤差はあるかも）
-        Dim VideoStartTime As DateTime = C_DAY2038
-        Try
-            VideoStartTime = System.IO.File.GetCreationTime(filename)
-        Catch ex As Exception
-            VideoStartTime = C_DAY2038
-        End Try
+        Dim VideoStartTime As DateTime = get_TOT(filename)
 
         '前回のファイル名と違えば字幕ファイルを削除
         If file_last_filename(num) <> filename Or nohsub <> 3 Then
