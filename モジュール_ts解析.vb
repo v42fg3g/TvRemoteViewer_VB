@@ -5,6 +5,7 @@
         Public start_utime As Integer '開始日時 unixtime
         Public err As Integer 'エラー番号
         Public errstr As String 'エラーメッセージ
+        Public searchstr As String 'indexof用　fullpathfilename & ":" & start_utime
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
             Dim pF As String = CType(obj, String) '検索内容を取得
@@ -12,7 +13,7 @@
             If pF = "" Then '空白である場合
                 Return False '対象外
             Else
-                If Me.fullpathfilename = pF Then '録画ファイル名と一致するか
+                If Me.searchstr = pF Then '録画ファイル名&":"&開始日時unixtimeと一致するか
                     Return True '一致した
                 Else
                     Return False '一致しない
@@ -36,7 +37,13 @@
 
     Public Function TOT_read(ByVal fullpathfilename As String) As tot_structure
         Dim r As tot_structure = Nothing
-        Dim i As Integer = Array.IndexOf(TOT_cache, fullpathfilename)
+        Dim t2 As DateTime = C_DAY2038
+        Try
+            t2 = System.IO.File.GetCreationTime(fullpathfilename)
+        Catch ex As Exception
+        End Try
+        Dim searchstr As String = fullpathfilename & ":" & time2unix(t2)
+        Dim i As Integer = Array.IndexOf(TOT_cache, searchstr)
         If i >= 0 Then
             'キャッシュに該当有り
             r.fullpathfilename = TOT_cache(i).fullpathfilename
@@ -44,9 +51,11 @@
             r.start_utime = TOT_cache(i).start_utime
             r.err = TOT_cache(i).err
             r.errstr = TOT_cache(i).errstr
+            r.searchstr = TOT_cache(i).searchstr
+            log1write(fullpathfilename & "の開始時間をキャッシュから取得しました")
         Else
             '新規登録
-            r = F_ts2tot(fullpathfilename)
+            r = F_ts2tot(fullpathfilename, t2)
             TOT_cache_index += 1
             If TOT_cache_index > TOT_cache_max Then
                 TOT_cache_index = 0
@@ -56,13 +65,15 @@
             TOT_cache(TOT_cache_index).start_utime = r.start_utime
             TOT_cache(TOT_cache_index).err = r.err
             TOT_cache(TOT_cache_index).errstr = r.errstr
+            TOT_cache(TOT_cache_index).searchstr = searchstr
+            log1write(fullpathfilename & "の開始時間をTOTと作成日時から取得しました")
         End If
 
         Return r
     End Function
 
-    'tsファイルから開始時刻を取得する
-    Public Function F_ts2tot(ByVal fullpathfilename As String) As tot_structure
+    'tsファイルから開始時刻を取得する t2は予備としてファイル作成日を指定
+    Public Function F_ts2tot(ByVal fullpathfilename As String, ByVal t2 As DateTime) As tot_structure
         Dim r As tot_structure = Nothing
         Dim print_debug As Integer = -1 '結果を　0=ダンプしない 1=ダンプする -1=最終結果も表示しない
 
@@ -139,7 +150,6 @@
             tstart = DateAdd(DateInterval.Second, -s_ajust, tstart)
             'ファイル作成日時と比べ併せて間違いなければファイル作成日時のほうを優先
             Try
-                Dim t2 As DateTime = System.IO.File.GetCreationTime(fullpathfilename)
                 If System.Math.Abs(time2unix(t2) - time2unix(tstart)) <= 10 Then
                     '10秒以内のずれならばファイル作成日時に合わせる
                     tstart = t2
@@ -149,7 +159,7 @@
         Else
             'ファイル作成時間を返す
             Try
-                tstart = System.IO.File.GetCreationTime(fullpathfilename)
+                tstart = t2
                 log1write(fullpathfilename & "のTOTが取得できませんでした。作成日時を使用します")
             Catch ex As Exception
                 tstart = C_DAY2038
