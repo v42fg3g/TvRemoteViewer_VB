@@ -41,7 +41,7 @@ Module モジュール_GetHTTP
                 wc.Headers.Add("User-Agent", UserAgent)
             End If
             Dim st As Stream = wc.OpenRead(url)
-            Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
+            Dim enc As Encoding = Encoding.GetEncoding(enc_str)
             Dim sr As StreamReader = New StreamReader(st, enc)
             r = sr.ReadToEnd()
             wc.Dispose()
