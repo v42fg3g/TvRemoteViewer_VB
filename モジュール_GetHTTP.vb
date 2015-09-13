@@ -24,6 +24,8 @@ Module モジュール_GetHTTP
             Loop While WebBrowser1.IsBusy Or WebBrowser1.ReadyState <> WebBrowserReadyState.Complete
 
             r = WebBrowser1.Document.Body.OuterHtml
+
+            WebBrowser1.Dispose()
         Catch ex As Exception
             log1write("【エラー】HTML取得に失敗しました[1]。" & ex.Message)
         End Try
