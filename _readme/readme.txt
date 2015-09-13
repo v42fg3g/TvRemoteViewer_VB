@@ -251,7 +251,11 @@ TvRemoteViewer_VB v1.47
 	WI_GET_CHAPTER.html?temp=録画ファイルフルパス
 		録画ファイルの.chapterファイルの内容を取得（chaptersフォルダの中でも可）
 	WI_WRITE_CHAPTER.html?temp=num,書き込むチャプター文字列
-
+	WI_GET_HTML.html?[HTML取得方法],[エンコード],[UserAgent],http://www.google.co.jp/
+		HTML取得方法	1: webbrowser UserAgent無効。エラーにより現状使用不可
+				2: webclient
+				3: HttpWebRequest
+		例：WI_GET_HTML.html?2,UTF-8,,http://www.google.co.jp/
 
 
 ■Windows上でのm3u8再生につきまして
@@ -591,6 +595,8 @@ TvRemoteViewer_VB v1.47
 		残っていた難視聴関連部分を削除
 	1.46	動画再生において動画ファイルのTOTから開始時間を調べるようにした
 	1.47	動画再生において過去に同名ファイルを再生していた場合に開始時間を取り違えるバグを修正
+	1.48	動画再生において実況ログを使用しない場合はTOTを調べないようにした
+		WI_GET_HTML追加
 
 
 

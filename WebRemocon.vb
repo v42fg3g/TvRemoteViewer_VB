@@ -1452,9 +1452,6 @@ Class WebRemocon
             file_last_filename(num) = ""
         End If
 
-        '動画の開始日時（微妙な誤差はあるかも）
-        Dim VideoStartTime As DateTime = get_TOT(filename)
-
         '前回のファイル名と違えば字幕ファイルを削除
         If file_last_filename(num) <> filename Or nohsub <> 3 Then
             '古いsub%num%.assがあれば削除
@@ -1481,6 +1478,8 @@ Class WebRemocon
                 'NicoJKログをassに変換
                 If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                     If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
+                        '動画の開始日時（微妙な誤差はあるかも）
+                        Dim VideoStartTime As DateTime = get_TOT(filename)
                         'txtを探してassに変換してファイル(ass_file)として保存
                         'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
                         Dim txt_file As String = search_NicoJKtxt_file(filename)
@@ -1561,6 +1560,8 @@ Class WebRemocon
                     'NicoJKログをassに変換
                     If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
+                            '動画の開始日時（微妙な誤差はあるかも）
+                            Dim VideoStartTime As DateTime = get_TOT(filename)
                             'txtを探してassに変換してファイル(ass_file)として保存
                             'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
                             Dim txt_file As String = search_NicoJKtxt_file(filename)
@@ -3088,6 +3089,12 @@ Class WebRemocon
                                             WI_cmd_reply = Me.WI_WRITE_CHAPTER(temp)
                                             WI_cmd_reply_force = 1
                                         End If
+                                    Case "WI_GET_HTML"
+                                        'HTML取得
+                                        If temp.Length > 0 Then
+                                            WI_cmd_reply = Me.WI_GET_HTML(temp)
+                                            WI_cmd_reply_force = 1
+                                        End If
                                 End Select
                             End If
 
@@ -4274,6 +4281,53 @@ Class WebRemocon
                 End If
             End If
         End If
+        Return r
+    End Function
+
+    'HTMLを取得する
+    Public Function WI_GET_HTML(ByVal temp As String) As String
+        Dim r As String = ""
+        Dim d() As String = temp.Split(",")
+        Dim method As Integer = 0
+        Dim enc_str As String = ""
+        Dim UserAgent As String = ""
+        Dim url As String = ""
+        If d.Length >= 4 Then
+            '取得方法
+            method = Val(d(0))
+            If method > 0 Then
+                'エンコード
+                If d(1).Length > 0 Then
+                    enc_str = Trim(d(1))
+                End If
+                If enc_str.Length = 0 Then
+                    enc_str = "UTF-8"
+                End If
+                'UserAgent
+                UserAgent = Trim(d(2))
+                'URL
+                Dim sep1 As String = ""
+                For i As Integer = 3 To d.Length - 1
+                    url = d(i) & sep1
+                    sep1 = ","
+                Next
+
+                log1write("HTMLを取得します。" & url)
+                Select Case method
+                    Case 1
+                        r = get_html_by_WebBrowser(url, enc_str, UserAgent)
+                    Case 2
+                        r = get_html_by_webclient(url, enc_str, UserAgent)
+                    Case 3
+                        r = get_html_by_HttpWebRequest(url, enc_str, UserAgent)
+                    Case Else
+                        log1write("【エラー】HTML取得方法指定が不正です。" & temp)
+                End Select
+            End If
+        Else
+            log1write("【エラー】HTML取得パラメータが不正です。" & temp)
+        End If
+
         Return r
     End Function
 

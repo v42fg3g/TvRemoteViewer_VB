@@ -130,6 +130,7 @@
     <Compile Include="SharedMemory.vb" />
     <Compile Include="WebRemocon.vb" />
     <Compile Include="モジュール_crypt.vb" />
+    <Compile Include="モジュール_GetHTTP.vb" />
     <Compile Include="モジュール_HTMLキャッシュ.vb" />
     <Compile Include="モジュール_NHKBS対策_暫定.vb" />
     <Compile Include="モジュール_ts解析.vb" />
