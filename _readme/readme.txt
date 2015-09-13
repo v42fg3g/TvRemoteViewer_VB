@@ -255,7 +255,7 @@ TvRemoteViewer_VB v1.47
 		HTML取得方法	1: webbrowser UserAgent無効。エラーにより現状使用不可
 				2: webclient
 				3: HttpWebRequest
-		例：WI_GET_HTML.html?2,UTF-8,,http://www.google.co.jp/
+		例：WI_GET_HTML.html?temp=2,UTF-8,,http://www.google.co.jp/
 
 
 ■Windows上でのm3u8再生につきまして
