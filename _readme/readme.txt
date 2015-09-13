@@ -251,7 +251,7 @@ TvRemoteViewer_VB v1.47
 	WI_GET_CHAPTER.html?temp=録画ファイルフルパス
 		録画ファイルの.chapterファイルの内容を取得（chaptersフォルダの中でも可）
 	WI_WRITE_CHAPTER.html?temp=num,書き込むチャプター文字列
-	WI_GET_HTML.html?[HTML取得方法],[エンコード],[UserAgent],http://www.google.co.jp/
+	WI_GET_HTML.html?temp=[HTML取得方法],[エンコード],[UserAgent],http://www.google.co.jp/
 		HTML取得方法	1: webbrowser UserAgent無効。エラーにより現状使用不可
 				2: webclient
 				3: HttpWebRequest
