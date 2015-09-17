@@ -3251,7 +3251,7 @@ Class WebRemocon
                                 If File.Exists(path) Then
                                     s = ReadAllTexts(path)
                                 ElseIf path.IndexOf("ViewTV" & num.ToString & ".html") >= 0 Then
-                                    s = ViewTV_html_temp 'あらかじめ読み込んでおいたViewTV1.html
+                                    s = ReadAllTexts(path.Replace("ViewTV" & num.ToString & ".html", "ViewTV1.html"))
                                 Else
                                     '存在しない
                                 End If

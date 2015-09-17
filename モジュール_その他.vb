@@ -1,7 +1,4 @@
 ﻿Module モジュール_その他
-    'ViewTV%NUM%.htmlのひな形
-    Public ViewTV_html_temp As String = ""
-
     'アイドルが指定分続くときは切断する
     Public STOP_IDLEMINUTES As Integer = 300
     Public STOP_IDLEMINUTES_LAST As DateTime '最後に.htmlにアクセスがあった日時
