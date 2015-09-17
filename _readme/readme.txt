@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.47
+TvRemoteViewer_VB v1.49
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -597,6 +597,8 @@ TvRemoteViewer_VB v1.47
 	1.47	動画再生において過去に同名ファイルを再生していた場合に開始時間を取り違えるバグを修正
 	1.48	動画再生において実況ログを使用しない場合はTOTを調べないようにした
 		WI_GET_HTML追加
+	1.49	iniのMAX_STREAM_NUMBERが8より大きいとファイル再生でエラーになるバグを修正
+		ViewTV%NUM%.htmlが存在しない場合はViewTV1.htmlを使用して配信するようにした
 
 
 
