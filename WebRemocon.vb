@@ -1403,6 +1403,10 @@ Class WebRemocon
                                     RecTask_CH_MaxWait = 1 '最小値1秒
                                 End If
                                 log1write("RecTaskがチャンネル変更する際に待機する最大秒数を" & RecTask_CH_MaxWait & "秒に設定しました")
+                            Case "make_chapter"
+                                make_chapter = Val(youso(1).ToString)
+                            Case "chapter_bufsec"
+                                chapter_bufsec = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -1468,6 +1472,7 @@ Class WebRemocon
         End If
 
         Dim new_file As String = ""
+        Dim rename_file As String = "" 'assフルパス
         If (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0) Or nohsub = 2 Then
             'fonts.confが存在し、無変換でなく、ハードサブ禁止でなければ （又はnohsub=2）
             Dim dt As Integer = filename.LastIndexOf(".")
@@ -1500,7 +1505,7 @@ Class WebRemocon
                         '存在していればstreamフォルダに名前を変えてコピー
                         new_file = "sub" & num.ToString & ".ass"
                         '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
-                        Dim rename_file As String = fileroot & "\" & new_file
+                        rename_file = fileroot & "\" & new_file
                         If VideoSeekSeconds <= 0 And baisoku = "1" Then
                             'シークが指定されていなければそのままコピー
                             'リネーム
@@ -1580,7 +1585,7 @@ Class WebRemocon
                         log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
                         '存在していればstreamフォルダに名前を変えてコピー
                         '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
-                        Dim rename_file As String = fileroot & "\" & "sub" & num.ToString & ".ass"
+                        rename_file = fileroot & "\" & "sub" & num.ToString & ".ass"
                         'シークが指定されていなければそのままコピー
                         'リネーム
                         My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
@@ -1594,6 +1599,12 @@ Class WebRemocon
                     End If
                 End If
             End If
+        End If
+
+        '字幕があればチャプターを打てるかどうかチェック
+        If rename_file.Length > 0 And make_chapter = 1 Then
+            'rename_fileが実際のassファイル（フルパス）
+            F_make_chapter(filename, rename_file)
         End If
 
         '使用したファイル名を記録

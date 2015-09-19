@@ -18,6 +18,10 @@ Module モジュール_ニコニコ実況
     'NicoJKのコメント表示を調整（秒）
     Public Nico_delay As Integer = 0
 
+    'コメントファイルが存在＆チャプターファイルが無い場合にOP,A,B,C,EDを書き込んだチャプターファイルを作成するか
+    Public make_chapter As Integer = 0
+    Public chapter_bufsec As Integer = 3 '秒前の地点を送る
+
     Public jk_list() As sidstructure '放送局
     Public Structure sidstructure
         Public jkid As Integer
@@ -40,6 +44,147 @@ Module モジュール_ニコニコ実況
             End If
         End Function
     End Structure
+
+    'チャプターが存在していなければchapterファイルを作成する
+    Public Sub F_make_chapter(ByVal videofilename As String, ByVal ass_file As String)
+        Try
+            Dim max_filesize As Long = 6442450944 '6GB　これ以下のファイルなら調べる
+            Dim neart As Integer = 30 '秒より近いポイントは無視する
+
+            'すでにchapterファイルが存在すればスルー
+            Dim chapterfullpathfilename As String = ""
+            Dim chapterpath As String = Path.GetDirectoryName(videofilename)
+            Dim chapterfilename As String = Path.GetFileNameWithoutExtension(videofilename) & ".chapter"
+            If chapterfilename.Length > 0 Then
+                If file_exist(chapterpath & "\" & chapterfilename) = 1 Then
+                    chapterfullpathfilename = chapterpath & "\" & chapterfilename
+                ElseIf file_exist(chapterpath & "\chapters\" & chapterfilename) = 1 Then
+                    chapterfullpathfilename = chapterpath & "\chapters\" & chapterfilename
+                End If
+            End If
+            If chapterfullpathfilename.Length = 0 Then
+                '見つからなければ作成
+                'ビデオファイルのサイズを取得
+                Dim fi As New System.IO.FileInfo(videofilename)
+                If fi.Length < max_filesize Then
+                    '30分より長い番組は調べない
+                    Dim ctext As String = ""
+                    Dim html As String = ReadAllTexts(ass_file)
+                    If html.Length > 0 Then
+                        'html内から"OP","A","B",C","ED"を探し出して記録
+                        Dim c(7) As String
+                        c(2) = chapter_search_abc(html, "A")
+                        If c(2).Length >= 0 Then
+                            '"A"が存在すれば
+                            c(0) = chapter_search_abc(html, "ｷﾀ━")
+                            c(1) = chapter_search_abc(html, "OP")
+                            c(3) = chapter_search_abc(html, "B")
+                            c(4) = chapter_search_abc(html, "C")
+                            c(5) = chapter_search_abc(html, "ED")
+                            c(6) = get_chapter_mstime(html.Length - 2, html) '最後のコメントタイム
+                            Dim lastt As Integer = 0
+                            For i As Integer = 0 To 6
+                                If IsNumeric(c(i)) Then
+                                    If i > 0 Then
+                                        If (Val(c(i)) - lastt) > (10 * neart) Or lastt = 0 Then
+                                            ctext &= "-" & c(i) & "d"
+                                        ElseIf i = 1 Then
+                                            'キターが無かったまたは後で出現した場合はリセット
+                                            ctext = "-" & c(1) & "d"
+                                        End If
+                                    Else
+                                        'c(0)
+                                        If Val(c(i)) > 0 Then
+                                            ctext = "-" & c(0) & "d"
+                                        End If
+                                    End If
+                                    lastt = Val(c(i))
+                                End If
+                            Next
+                        End If
+                        If ctext.Length > 0 Then
+                            '始まりと最後に印を追加
+                            ctext = "c" & ctext & "-c"
+                            '書き込み
+                            Dim wf As String = chapterpath & "\" & chapterfilename
+                            If folder_exist(chapterpath & "\chapters") = 1 Then
+                                wf = chapterpath & "\chapters\" & chapterfilename
+                            End If
+                            str2file(wf, ctext, "UTF-8")
+                            log1write("チャプターファイル " & wf & " を作成しました")
+                        End If
+                    End If
+                End If
+            End If
+        Catch ex As Exception
+            log1write("チャプター作成中にエラーが発生しました。" & ex.Message)
+        End Try
+    End Sub
+
+    Private Function chapter_search_abc(ByRef html As String, ByVal s As String) As String
+        Dim r As String = ""
+
+        Dim sp As Integer = 0
+        Dim ms1 As Long = -1
+        Dim ms2 As Long = -1
+        Dim buf As Integer = chapter_bufsec '秒前を送る
+        Dim margin As Integer = 5 '秒以内に連続して現れれば正しいコメントだと判断
+
+        sp = html.IndexOf("[Events]")
+        If sp >= 0 Then
+            If s.Length >= 3 Then
+                s = ")}" & s
+            Else
+                s = ")}" & s & vbCrLf
+            End If
+
+            sp = html.IndexOf(s, sp + 1)
+            ms1 = get_chapter_mstime(sp, html)
+            sp = html.IndexOf(s, sp + 1)
+            If ms1 >= 0 Then
+                '1個目が見つかれば
+                While sp > 0
+                    ms2 = get_chapter_mstime(sp, html)
+
+                    If ms1 > 0 And ms2 > ms1 And (ms2 - ms1) < (10 * margin) Then
+                        '見つかった
+                        If ms1 + (buf * 10) >= 0 Then
+                            r = (ms1 - (buf * 10)).ToString
+                        Else
+                            r = "0"
+                        End If
+                        Exit While
+                    Else
+                        ms1 = ms2
+                        ms2 = -1
+                    End If
+
+                    sp = html.IndexOf(s, sp + 1)
+                End While
+            End If
+        End If
+
+        Return r
+    End Function
+
+    Public Function get_chapter_mstime(ByVal sp As Integer, ByRef html As String) As Integer
+        Dim r As Integer = -1
+        If sp > 0 Then
+            sp = html.LastIndexOf("Dialogue:", sp)
+            If sp > 0 Then
+                Try
+                    Dim start_str As String = Instr_pickup(html, ",", ",", sp)
+                    Dim d() As String = start_str.Split(".")
+                    Dim e() As String = d(0).Split(":")
+                    r = (e(0) * 60 * 60) + (e(1) * 60) + e(2) '秒数
+                    r = Val(r.ToString & d(1).Substring(0, 1)) '0.1秒単位
+                Catch ex As Exception
+                    r = -1
+                End Try
+            End If
+        End If
+        Return r
+    End Function
 
     Public Function sid2jk(ByVal sid As Integer, ByVal chspace As Integer) As String
         '放送局sidからjkフォルダに変換
