@@ -110,9 +110,17 @@ Module モジュール_ニコニコ実況
                             End If
                             str2file(wf, ctext, "UTF-8")
                             log1write("チャプターファイル " & wf & " を作成しました")
+                        Else
+                            log1write("チャプターを作成するポイントがありませんでした")
                         End If
+                    Else
+                        log1write("コメントデータがありませんでした")
                     End If
+                Else
+                    log1write("指定された録画ファイルの容量が6GBを超えているので作成を中断しました")
                 End If
+            Else
+                log1write("チャプターファイルがすでに存在しているので作成を中断しました")
             End If
 
         Catch ex As Exception

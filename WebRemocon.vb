@@ -1603,6 +1603,7 @@ Class WebRemocon
 
         '字幕があればチャプターを打てるかどうかチェック
         If rename_file.Length > 0 And make_chapter = 1 Then
+            log1write("コメントファイルからchapterファイル作成を試みます")
             'rename_fileが実際のassファイル（フルパス）
             F_make_chapter(filename, rename_file)
         End If
@@ -3642,8 +3643,20 @@ Class WebRemocon
                                 ' ローカルファイルが存在すればレスポンス・ストリームに書き出す
                                 'm3u8、tsへの要求はこちらへ来る
                                 Dim content As Byte() = ReadAllBytes(path)
-                                res.OutputStream.Write(content, 0, content.Length)
-                                log1write(path & "へのアクセスを受け付けました")
+                                Try
+                                    res.OutputStream.Write(content, 0, content.Length)
+                                    log1write(path & "へのアクセスを受け付けました")
+                                Catch ex As Exception
+                                    log1write("【エラー】" & path & "のバイトデータ発信に失敗しました。" & ex.Message)
+                                    'エラーが起こったら1回だけリトライするか・・
+                                    'System.Threading.Thread.Sleep(50)
+                                    'Try
+                                    'res.OutputStream.Write(content, 0, content.Length)
+                                    'log1write(path & "へのアクセスを受け付けました")
+                                    'Catch ex2 As Exception
+                                    'log1write("【エラー】" & path & "のバイトデータ発信に失敗しました。" & ex2.Message)
+                                    'End Try
+                                End Try
                             Else
                                 'ローカルファイルが存在していない
                                 Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
