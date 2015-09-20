@@ -48,6 +48,7 @@ Module モジュール_ニコニコ実況
     'チャプターが存在していなければchapterファイルを作成する
     Public Sub F_make_chapter(ByVal videofilename As String, ByVal ass_file As String)
         Try
+
             Dim max_filesize As Long = 6442450944 '6GB　これ以下のファイルなら調べる
             Dim neart As Integer = 30 '秒より近いポイントは無視する
 
@@ -72,9 +73,9 @@ Module モジュール_ニコニコ実況
                     Dim html As String = ReadAllTexts(ass_file)
                     If html.Length > 0 Then
                         'html内から"OP","A","B",C","ED"を探し出して記録
-                        Dim c(7) As String
+                        Dim c(7) As Integer
                         c(2) = chapter_search_abc(html, "A")
-                        If c(2).Length >= 0 Then
+                        If c(2) >= 0 Then
                             '"A"が存在すれば
                             c(0) = chapter_search_abc(html, "ｷﾀ━")
                             c(1) = chapter_search_abc(html, "OP")
@@ -82,21 +83,18 @@ Module モジュール_ニコニコ実況
                             c(4) = chapter_search_abc(html, "C")
                             c(5) = chapter_search_abc(html, "ED")
                             c(6) = get_chapter_mstime(html.Length - 2, html) '最後のコメントタイム
+                            'Aより後のキターなら削除
+                            If c(0) > c(2) Then
+                                c(0) = -1
+                            End If
+                            '並び替え
+                            Array.Sort(c)
+                            '文字列に変換
                             Dim lastt As Integer = 0
                             For i As Integer = 0 To 6
-                                If IsNumeric(c(i)) Then
-                                    If i > 0 Then
-                                        If (Val(c(i)) - lastt) > (10 * neart) Or lastt = 0 Then
-                                            ctext &= "-" & c(i) & "d"
-                                        ElseIf i = 1 Then
-                                            'キターが無かったまたは後で出現した場合はリセット
-                                            ctext = "-" & c(1) & "d"
-                                        End If
-                                    Else
-                                        'c(0)
-                                        If Val(c(i)) > 0 Then
-                                            ctext = "-" & c(0) & "d"
-                                        End If
+                                If c(i) > 0 Then
+                                    If (Val(c(i)) - lastt) > (10 * neart) Or lastt = 0 Then
+                                        ctext &= "-" & c(i) & "d"
                                     End If
                                     lastt = Val(c(i))
                                 End If
@@ -116,13 +114,14 @@ Module モジュール_ニコニコ実況
                     End If
                 End If
             End If
+
         Catch ex As Exception
             log1write("チャプター作成中にエラーが発生しました。" & ex.Message)
         End Try
     End Sub
 
-    Private Function chapter_search_abc(ByRef html As String, ByVal s As String) As String
-        Dim r As String = ""
+    Private Function chapter_search_abc(ByRef html As String, ByVal s As String) As Integer
+        Dim r As Integer = -1
 
         Dim sp As Integer = 0
         Dim ms1 As Long = -1
@@ -148,11 +147,7 @@ Module モジュール_ニコニコ実況
 
                     If ms1 > 0 And ms2 > ms1 And (ms2 - ms1) < (10 * margin) Then
                         '見つかった
-                        If ms1 + (buf * 10) >= 0 Then
-                            r = (ms1 - (buf * 10)).ToString
-                        Else
-                            r = "0"
-                        End If
+                        r = ms1 - (buf * 10)
                         Exit While
                     Else
                         ms1 = ms2
