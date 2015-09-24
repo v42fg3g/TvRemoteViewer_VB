@@ -73,7 +73,7 @@ Module モジュール_ニコニコ実況
                     Dim html As String = ReadAllTexts(ass_file)
                     If html.Length > 0 Then
                         'html内から"OP","A","B",C","ED"を探し出して記録
-                        Dim c(7) As Integer
+                        Dim c(8) As Integer
                         c(2) = chapter_search_abc(html, "A")
                         If c(2) >= 0 Then
                             '"A"が存在すれば
@@ -82,7 +82,8 @@ Module モジュール_ニコニコ実況
                             c(3) = chapter_search_abc(html, "B")
                             c(4) = chapter_search_abc(html, "C")
                             c(5) = chapter_search_abc(html, "ED")
-                            c(6) = get_chapter_mstime(html.Length - 2, html) '最後のコメントタイム
+                            c(6) = chapter_search_abc(html, "予告")
+                            c(7) = get_chapter_mstime(html.Length - 2, html) '最後のコメントタイム
                             'Aより後のキターなら削除
                             If c(0) > c(2) Then
                                 c(0) = -1
@@ -91,7 +92,7 @@ Module モジュール_ニコニコ実況
                             Array.Sort(c)
                             '文字列に変換
                             Dim lastt As Integer = 0
-                            For i As Integer = 0 To 6
+                            For i As Integer = 0 To 7
                                 If c(i) > 0 Then
                                     If (Val(c(i)) - lastt) > (10 * neart) Or lastt = 0 Then
                                         ctext &= "-" & c(i) & "d"
