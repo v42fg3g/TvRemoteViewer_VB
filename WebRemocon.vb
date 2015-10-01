@@ -1407,6 +1407,18 @@ Class WebRemocon
                                 make_chapter = Val(youso(1).ToString)
                             Case "chapter_bufsec"
                                 chapter_bufsec = Val(youso(1).ToString)
+                            Case "openfix_BonSid"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    If trim8(clset(0)).Length > 0 Then
+                                        ReDim Preserve openfix_BonSid(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            openfix_BonSid(j) = trim8(clset(j))
+                                        Next
+                                    End If
+                                End If
                         End Select
                     End If
                 Catch ex As Exception

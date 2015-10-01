@@ -181,6 +181,33 @@ Public Class ProcessManager
 
                     If hls_only = 0 Then
                         '通常起動
+
+                        '★★EDCBのopenfix前処理（一旦違うサービスＩＤに合わせてから目的のサービスＩＤに切り替える）
+                        Dim openfix_sid_dummy As Integer = 0
+                        Dim openfix_sid_org As Integer = 0
+                        Dim openfix_udpOpt_org As String = ""
+                        If openfix_BonSid IsNot Nothing Then
+                            Dim BonDriver_openfix As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0)) & ":"
+                            For k2 As Integer = 0 To openfix_BonSid.Length - 1
+                                If openfix_BonSid(k2).ToLower.IndexOf(BonDriver_openfix) = 0 Then
+                                    openfix_sid_dummy = Val(openfix_BonSid(k2).ToLower.Replace(BonDriver_openfix, ""))
+                                    '後で戻すときのためにサービスIDとhlsoptを保存
+                                    Dim openfix_sid_org_str As String = instr_pickup_para(udpOpt, "/sid ", " ", 0)
+                                    openfix_sid_org = Val(openfix_sid_org_str) '後で戻すsid
+                                    If openfix_sid_org > 0 Then
+                                        openfix_udpOpt_org = udpOpt
+                                        'hlsオプションを書き換える
+                                        udpOpt = udpOpt.Replace("/sid " & openfix_sid_org_str & " ", "/sid " & openfix_sid_dummy.ToString & " ")
+                                        log1write("【openfix】" & BonDriver_openfix & "起動時に別サービスID:" & openfix_sid_dummy.ToString & "にセットします")
+                                        Exit For
+                                    Else
+                                        'ありえない
+                                        log1write("【openfix】エラー：openfix_sid_org=" & openfix_sid_org)
+                                    End If
+                                End If
+                            Next
+                        End If
+
                         Dim pipeListBefore As New List(Of String)()
                         '★実行されている名前付きパイプのリストを取得する(プロセス実行前)
                         Dim listOfPipes As String() = Nothing
@@ -265,6 +292,56 @@ Public Class ProcessManager
                             System.Threading.Thread.Sleep(50)
                             chk += 1
                         End While
+
+                        '★★EDCBのopenfix後処理（一旦違うサービスIDに合わせてから目的のサービスIDへ）
+                        If pipeIndex_str.Length > 0 And openfix_sid_org > 0 And openfix_sid_dummy > 0 Then
+                            '目的のサービスＩＤに再変更する
+                            udpProc.WaitForInputIdle()
+
+                            'チャンネルが切り替わるまで待機
+                            Dim j As Integer = RecTask_CH_MaxWait * 20 '最大RecTask_CH_MaxWait秒チャレンジ
+                            While Pipe_get_channel(pipeIndex_str, openfix_sid_dummy) = 0 And j >= 0
+                                log1write("【openfix】No.=" & num & " UDPの配信チャンネルが切り替わるまで待機しています")
+                                j -= 1
+                                System.Threading.Thread.Sleep(50)
+                            End While
+                            If j >= 0 Then
+                                log1write("【openfix】No.=" & num & " サービスID:" & openfix_sid_dummy & "への切り替えに成功しました")
+                            Else
+                                log1write("【openfix】No.=" & num & " サービスID:" & openfix_sid_dummy & "への切り替えに失敗しました")
+                            End If
+
+                            If j >= 0 Then
+                                System.Threading.Thread.Sleep(UDP2HLS_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+                                log1write("【openfix】No.=" & num & " サービスID:" & openfix_sid_org & "への切り替えを試みます")
+
+                                '本来の目的サービスＩＤへ
+                                hls_only_chspace = Val(Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0)))
+                                Dim d() As Integer = F_sid2para(openfix_sid_org, Val(hls_only_chspace))
+                                hls_only_channel = d(0)
+                                hls_only_TSID = d(1)
+                                hls_only_NID = d(2)
+                                Dim ks As String = Pipe_change_channel(pipeIndex_str, openfix_sid_org, hls_only_chspace, hls_only_channel, hls_only_TSID, hls_only_NID)
+                                If ks.IndexOf("""OK""") > 0 Then
+                                    '成功
+                                    '既存プロセス
+                                    log1write("【openfix】No.=" & num & " 名前付きパイプを使用してサービスID:" & openfix_sid_org & "へ変更しました")
+                                    log1write("【openfix】pipeindex=" & pipeIndex_str & " sid=" & openfix_sid_org & " chspace=" & hls_only_chspace & " channel=" & hls_only_channel)
+                                Else
+                                    log1write(ks)
+                                    '失敗したら・・あきらめる！（スパゲティで限界orz）
+                                    log1write("【openfix】No.=" & num & " 名前付きパイプを使用してのサービスID:" & openfix_sid_org & "への変更に失敗しました。配信を停止します")
+                                    log1write("【openfix】pipeindex=" & pipeIndex_str & " sid=" & openfix_sid_org & " chspace=" & hls_only_chspace & " channel=" & hls_only_channel)
+                                End If
+                            Else
+                                '切り替え失敗
+                                'openfixでのサービスID変更失敗は↓で結局終了処理される
+                                log1write("【openfix】No.=" & num & " サービスID:" & openfix_sid_dummy & "へのチャンネル切り替えに失敗しました")
+                            End If
+
+                            'udpOptを元に戻す
+                            udpOpt = openfix_udpOpt_org
+                        End If
 
                         '配信が期待されるサービスID
                         hls_only_sid = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
