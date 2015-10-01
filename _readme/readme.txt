@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.49
+TvRemoteViewer_VB v1.51
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -599,6 +599,9 @@ TvRemoteViewer_VB v1.49
 		WI_GET_HTML追加
 	1.49	iniのMAX_STREAM_NUMBERが8より大きいとファイル再生でエラーになるバグを修正
 		ViewTV%NUM%.htmlが存在しない場合はViewTV1.htmlを使用して配信するようにした
+	1.50	iniにchapterファイルが無い30分以内の番組でチャプター作成を試みるオプションを追加
+		（make_chapterとchapter_bufsec）
+	1.51	iniにチューナー初使用時に一旦別のサービスIDに合わせるオプションを追加(openfix_BonSid)
 
 
 
