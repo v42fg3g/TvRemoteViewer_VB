@@ -189,20 +189,24 @@ Public Class ProcessManager
                         If openfix_BonSid IsNot Nothing Then
                             Dim BonDriver_openfix As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0)) & ":"
                             For k2 As Integer = 0 To openfix_BonSid.Length - 1
-                                If openfix_BonSid(k2).ToLower.IndexOf(BonDriver_openfix) = 0 Then
-                                    openfix_sid_dummy = Val(openfix_BonSid(k2).ToLower.Replace(BonDriver_openfix, ""))
-                                    '後で戻すときのためにサービスIDとhlsoptを保存
-                                    Dim openfix_sid_org_str As String = instr_pickup_para(udpOpt, "/sid ", " ", 0)
-                                    openfix_sid_org = Val(openfix_sid_org_str) '後で戻すsid
-                                    If openfix_sid_org > 0 Then
-                                        openfix_udpOpt_org = udpOpt
-                                        'hlsオプションを書き換える
-                                        udpOpt = udpOpt.Replace("/sid " & openfix_sid_org_str & " ", "/sid " & openfix_sid_dummy.ToString & " ")
-                                        log1write("【openfix】" & BonDriver_openfix & "起動時に別サービスID:" & openfix_sid_dummy.ToString & "にセットします")
-                                        Exit For
+                                If openfix_BonSid(k2).ToLower.IndexOf(BonDriver_openfix.ToLower) = 0 Then
+                                    openfix_sid_dummy = Val(openfix_BonSid(k2).ToLower.Replace(BonDriver_openfix.ToLower, ""))
+                                    If openfix_sid_dummy > 0 Then
+                                        '後で戻すときのためにサービスIDとhlsoptを保存
+                                        Dim openfix_sid_org_str As String = instr_pickup_para(udpOpt, "/sid ", " ", 0)
+                                        openfix_sid_org = Val(openfix_sid_org_str) '後で戻すsid
+                                        If openfix_sid_org > 0 Then
+                                            openfix_udpOpt_org = udpOpt
+                                            'hlsオプションを書き換える
+                                            udpOpt = udpOpt.Replace("/sid " & openfix_sid_org_str & " ", "/sid " & openfix_sid_dummy.ToString & " ")
+                                            log1write("【openfix】" & BonDriver_openfix & "起動時に別サービスID:" & openfix_sid_dummy.ToString & "にセットします")
+                                            Exit For
+                                        Else
+                                            'ありえない
+                                            log1write("【openfix】エラー：openfix_sid_org=" & openfix_sid_org)
+                                        End If
                                     Else
-                                        'ありえない
-                                        log1write("【openfix】エラー：openfix_sid_org=" & openfix_sid_org)
+                                        log1write("【openfix】エラー：ダミーサービスIDが不正です")
                                     End If
                                 End If
                             Next
