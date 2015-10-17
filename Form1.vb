@@ -351,6 +351,7 @@ Public Class Form1
 
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止
+        StopUdpAppName = Me.textBoxUdpApp.Text.ToString '名前指定でストップすべきUDPアプリを記録
         Me._worker.stopProc(-2)
 
         'HTMLキャラクターコード

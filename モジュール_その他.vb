@@ -2,6 +2,9 @@
     'EDCBのopenfix機能（チューナー初起動時に一旦違うチャンネルに合わせる）用
     Public openfix_BonSid() As String = Nothing
 
+    '名前指定で終了させるアプリ
+    Public StopUdpAppName As String = ""
+
     'アイドルが指定分続くときは切断する
     Public STOP_IDLEMINUTES As Integer = 300
     Public STOP_IDLEMINUTES_LAST As DateTime '最後に.htmlにアクセスがあった日時

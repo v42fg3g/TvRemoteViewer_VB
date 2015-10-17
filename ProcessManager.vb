@@ -733,8 +733,6 @@ Public Class ProcessManager
         Dim hls_stop As Integer = 0 '上手く停止したら1
         Dim udp_stop As Integer = 0 '上手く停止したら1
 
-        Dim udpAppName As String = "" '後で名前指定で終了させるとき用
-
         If Me._list.Count > 0 Then
             For i As Integer = Me._list.Count - 1 To 0 Step -1
                 If Me._list(i)._num = num Or num <= -1 Then
@@ -827,7 +825,6 @@ Public Class ProcessManager
                         Try
                             proc = Me._list(i).GetUdpProc()
                             If proc IsNot Nothing AndAlso Not proc.HasExited Then
-                                udpAppName = Me._list(i)._udpApp '後で名前指定で終了させるとき用にアプリ名を記録
                                 Dim udpPipeIndex_str As String = Me._list(i).GetProcUdpPipeIndex_str
                                 If udpPipeIndex_str.Length > 0 Then
                                     'RecTaskを終了させる
@@ -925,11 +922,11 @@ Public Class ProcessManager
                     log1write("名前指定で全てのffmpegのプロセスを停止しました")
                 End If
                 If Stop_RecTask_at_StartEnd = 1 Then
-                    If udpAppName.ToLower.IndexOf("rectask.exe") >= 0 Then
+                    If StopUdpAppName.ToLower.IndexOf("rectask.exe") >= 0 Then
                         stopProcName("RecTask")
                         log1write("名前指定で全てのRecTaskのプロセスを停止しました")
                     End If
-                    If udpAppName.ToLower.IndexOf("tstask.exe") >= 0 Then
+                    If StopUdpAppName.ToLower.IndexOf("tstask.exe") >= 0 Then
                         stopProcName("TSTask")
                         log1write("名前指定で全てのTSTaskのプロセスを停止しました")
                     End If
