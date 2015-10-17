@@ -183,23 +183,43 @@ Public Class ProcessManager
                         '通常起動
 
                         '★★EDCBのopenfix前処理（一旦違うサービスＩＤに合わせてから目的のサービスＩＤに切り替える）
-                        Dim openfix_sid_dummy As Integer = 0
-                        Dim openfix_sid_org As Integer = 0
+                        Dim openfix_sid_org As Integer = -1
+                        Dim openfix_chspace_org As Integer = 0
                         Dim openfix_udpOpt_org As String = ""
+                        Dim openfix_sid_dummy As Integer = 0
+                        Dim openfix_chspace_dummy As Integer = 0
                         If openfix_BonSid IsNot Nothing Then
+                            'このストリームで使用しようとしているBonDriverを取得
                             Dim BonDriver_openfix As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0)) & ":"
                             For k2 As Integer = 0 To openfix_BonSid.Length - 1
                                 If openfix_BonSid(k2).ToLower.IndexOf(BonDriver_openfix.ToLower) = 0 Then
-                                    openfix_sid_dummy = Val(openfix_BonSid(k2).ToLower.Replace(BonDriver_openfix.ToLower, ""))
+                                    'BonDriverが一致したら
+                                    Dim d() As String = openfix_BonSid(k2).Split(":")
+                                    If d.Length >= 2 Then
+                                        openfix_sid_dummy = Val(d(1)) '切り替えるべきsidを取得
+                                    End If
                                     If openfix_sid_dummy > 0 Then
-                                        '後で戻すときのためにサービスIDとhlsoptを保存
-                                        Dim openfix_sid_org_str As String = instr_pickup_para(udpOpt, "/sid ", " ", 0)
-                                        openfix_sid_org = Val(openfix_sid_org_str) '後で戻すsid
+                                        If d.Length = 3 Then
+                                            '指定があれば
+                                            openfix_chspace_dummy = Val(d(2))
+                                        Else
+                                            'sidからchspaceを取得
+                                            Dim o3 As Integer = Array.IndexOf(ch_list, openfix_sid_dummy)
+                                            If o3 >= 0 Then
+                                                openfix_chspace_dummy = ch_list(o3).chspace
+                                            Else
+                                                log1write("【openfix】エラー：チャンネル一覧にサービスIDが見つかりませんでした")
+                                            End If
+                                        End If
+                                        openfix_sid_org = Val(instr_pickup_para(udpOpt, "/sid ", " ", 0))
+                                        openfix_chspace_org = Val(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
                                         If openfix_sid_org > 0 Then
+                                            '後で戻すときのためにudpOptを保存しておく
                                             openfix_udpOpt_org = udpOpt
                                             'hlsオプションを書き換える
-                                            udpOpt = udpOpt.Replace("/sid " & openfix_sid_org_str & " ", "/sid " & openfix_sid_dummy.ToString & " ")
-                                            log1write("【openfix】" & BonDriver_openfix & "起動時に別サービスID:" & openfix_sid_dummy.ToString & "にセットします")
+                                            udpOpt = udpOpt.Replace("/sid " & openfix_sid_org.ToString & " ", "/sid " & openfix_sid_dummy.ToString & " ")
+                                            udpOpt = udpOpt.Replace("/chspace " & openfix_chspace_org.ToString & " ", "/chspace " & openfix_chspace_dummy.ToString & " ")
+                                            log1write("【openfix】" & BonDriver_openfix & " 起動時に別サービスID:" & openfix_sid_dummy.ToString & " chspace:" & openfix_chspace_dummy.ToString & " にセットします")
                                             Exit For
                                         Else
                                             'ありえない
@@ -713,11 +733,12 @@ Public Class ProcessManager
         Dim hls_stop As Integer = 0 '上手く停止したら1
         Dim udp_stop As Integer = 0 '上手く停止したら1
 
+        Dim udpAppName As String = "" '後で名前指定で終了させるとき用
+
         If Me._list.Count > 0 Then
             For i As Integer = Me._list.Count - 1 To 0 Step -1
                 If Me._list(i)._num = num Or num <= -1 Then
-
-                    log1write("No.=" & num & "のプロセスを停止しています")
+                    log1write("No.=" & Me._list(i)._num & "のプロセスを停止しています")
 
                     '停止フラグを書き込んでおいたほうがいいかな
                     Me._list(i)._stopping = 1 'checkAllProc()でチェックさせないため・・
@@ -731,10 +752,10 @@ Public Class ProcessManager
                                 If quit_VLC(i) = 1 Then
                                     'プロセスが無くなるまで待機
                                     If wait_stop_proc(proc) = 1 Then
-                                        log1write("No.=" & num & "のVLCを終了しました")
+                                        log1write("No.=" & Me._list(i)._num & "のVLCを終了しました")
                                         hls_stop = 1
                                     Else
-                                        log1write("No.=" & num & "のVLC終了に失敗しました")
+                                        log1write("No.=" & Me._list(i)._num & "のVLC終了に失敗しました")
                                     End If
                                     proc.Close()
                                     proc.Dispose()
@@ -743,10 +764,10 @@ Public Class ProcessManager
                                     'proc.CloseMainWindow()
                                     proc.Kill()
                                     If wait_stop_proc(proc) = 1 Then
-                                        log1write("No.=" & num & "のVLCを強制終了しました")
+                                        log1write("No.=" & Me._list(i)._num & "のVLCを強制終了しました")
                                         hls_stop = 1
                                     Else
-                                        log1write("No.=" & num & "のVLC強制終了に失敗しました")
+                                        log1write("No.=" & Me._list(i)._num & "のVLC強制終了に失敗しました")
                                     End If
                                     'proc.WaitForExit()
                                     proc.Close()
@@ -763,15 +784,15 @@ Public Class ProcessManager
 
                                 If Me._list(i)._stream_mode = 2 Or Me._list(i)._stream_mode = 3 Then
                                     ffmpeg_http_stream_Stop(num)
-                                    log1write("No.=" & num & "のffmpeg HTTPストリームを終了しました")
+                                    log1write("No.=" & Me._list(i)._num & "のffmpeg HTTPストリームを終了しました")
                                 End If
 
                                 proc.Kill()
                                 If wait_stop_proc(proc) = 1 Then
-                                    log1write("No.=" & num & "のffmpegを強制終了しました")
+                                    log1write("No.=" & Me._list(i)._num & "のffmpegを強制終了しました")
                                     hls_stop = 1
                                 Else
-                                    log1write("No.=" & num & "のffmpeg強制終了に失敗しました")
+                                    log1write("No.=" & Me._list(i)._num & "のffmpeg強制終了に失敗しました")
                                 End If
                                 proc.Close()
                                 proc.Dispose()
@@ -780,10 +801,10 @@ Public Class ProcessManager
                                 'proc.CloseMainWindow()
                                 proc.Kill()
                                 If wait_stop_proc(proc) = 1 Then
-                                    log1write("No.=" & num & "のhlsアプリを強制終了しました")
+                                    log1write("No.=" & Me._list(i)._num & "のhlsアプリを強制終了しました")
                                     hls_stop = 1
                                 Else
-                                    log1write("No.=" & num & "のhlsアプリ強制終了に失敗しました")
+                                    log1write("No.=" & Me._list(i)._num & "のhlsアプリ強制終了に失敗しました")
                                 End If
                                 proc.Close()
                                 proc.Dispose()
@@ -797,7 +818,7 @@ Public Class ProcessManager
                         End If
                     Catch ex As Exception
                         'Procが存在しない
-                        log1write("No.=" & num & "のHLSプロセスが見つかりません。" & ex.Message)
+                        log1write("No.=" & Me._list(i)._num & "のHLSプロセスが見つかりません。" & ex.Message)
                         hls_stop = 1
                     End Try
 
@@ -806,6 +827,7 @@ Public Class ProcessManager
                         Try
                             proc = Me._list(i).GetUdpProc()
                             If proc IsNot Nothing AndAlso Not proc.HasExited Then
+                                udpAppName = Me._list(i)._udpApp '後で名前指定で終了させるとき用にアプリ名を記録
                                 Dim udpPipeIndex_str As String = Me._list(i).GetProcUdpPipeIndex_str
                                 If udpPipeIndex_str.Length > 0 Then
                                     'RecTaskを終了させる
@@ -817,10 +839,10 @@ Public Class ProcessManager
                                     proc.Kill()
                                     'proc.WaitForExit()
                                     If wait_stop_proc(proc) = 1 Then
-                                        log1write("No.=" & num & "のudpアプリを強制終了しました[D]")
+                                        log1write("No.=" & Me._list(i)._num & "のudpアプリを強制終了しました[D]")
                                         udp_stop = 1
                                     Else
-                                        log1write("No.=" & num & "のudpアプリ強制終了に失敗しました")
+                                        log1write("No.=" & Me._list(i)._num & "のudpアプリ強制終了に失敗しました")
                                     End If
                                     proc.Close()
                                     proc.Dispose()
@@ -831,7 +853,7 @@ Public Class ProcessManager
                             End If
                         Catch ex As Exception
                             'Procが存在しない
-                            log1write("No.=" & num & "のUDPプロセスが見つかりません。" & ex.Message)
+                            log1write("No.=" & Me._list(i)._num & "のUDPプロセスが見つかりません。" & ex.Message)
                             udp_stop = 1
                         End Try
                     Else
@@ -859,24 +881,24 @@ Public Class ProcessManager
                         If hls_only = 0 Then
                             If num = -2 Then
                                 '強制全停止　実際に停止されたかどうかかまわず
+                                log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
                                 Me._list.RemoveAt(i)
                                 'delete_mystreamnum(num) 'm3u8,tsを削除
-                                log1write("No.=" & num & "のプロセスを停止しました")
                             ElseIf hls_stop = 1 And udp_stop = 1 Then
+                                log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
                                 Me._list.RemoveAt(i)
                                 'delete_mystreamnum(num) 'm3u8,tsを削除
-                                log1write("No.=" & num & "のプロセスを停止しました")
                             Else
-                                log1write("No.=" & num & "のプロセス停止に失敗しました")
+                                log1write("No.=" & Me._list(i)._num & "のプロセス停止に失敗しました")
                                 'me._list(i)._stopping=1のまま残るので後で判別できる
                             End If
                         ElseIf hls_only = 1 Then
                             'Me._listからの削除はしない
                             If hls_stop = 1 Then 'udpは起動し続けている
-                                log1write("No.=" & num & "のHLSプロセスを停止しました")
+                                log1write("No.=" & Me._list(i)._num & "のHLSプロセスを停止しました")
                                 Me._list(i)._stopping = 2 '後で無事起動したときに0にする
                             Else
-                                log1write("No.=" & num & "のHLSプロセス停止に失敗しました")
+                                log1write("No.=" & Me._list(i)._num & "のHLSプロセス停止に失敗しました")
                                 'me._list(i)._stopping=1のまま残るので後で判別できる
                             End If
                         End If
@@ -896,16 +918,23 @@ Public Class ProcessManager
                 log1write("関連アプリのプロセスを停止しています")
                 If Stop_vlc_at_StartEnd = 1 Then
                     stopProcName("vlc")
+                    log1write("名前指定で全てのvlcのプロセスを停止しました")
                 End If
                 If Stop_ffmpeg_at_StartEnd = 1 Then
                     stopProcName("ffmpeg")
+                    log1write("名前指定で全てのffmpegのプロセスを停止しました")
                 End If
                 If Stop_RecTask_at_StartEnd = 1 Then
-                    stopProcName("RecTask")
-                    stopProcName("TSTask")
+                    If udpAppName.ToLower.IndexOf("rectask.exe") >= 0 Then
+                        stopProcName("RecTask")
+                        log1write("名前指定で全てのRecTaskのプロセスを停止しました")
+                    End If
+                    If udpAppName.ToLower.IndexOf("tstask.exe") >= 0 Then
+                        stopProcName("TSTask")
+                        log1write("名前指定で全てのTSTaskのプロセスを停止しました")
+                    End If
                 End If
                 Me._list.Clear() 'リストクリア
-                log1write("関連アプリのプロセスを停止しました")
             End If
         End If
 

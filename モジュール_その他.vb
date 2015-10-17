@@ -21,7 +21,7 @@
     'UDPとHLSの間に挟むウェイト(ms)
     Public UDP2HLS_WAIT As Integer = 500
 
-    'TvRemoteViewer_VBの起動時、終了時、全停止時にRecTaskを名前付きで停止するかどうか
+    'TvRemoteViewer_VBの起動時、終了時、全停止時にRecTaskまたはTSTaskを名前付きで停止するかどうか
     Public Stop_RecTask_at_StartEnd As Integer = 1
 
     'TvRemoteViewer_VBの起動時、終了時、全停止時にffmpegを名前付きで停止するかどうか
