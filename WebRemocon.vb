@@ -4358,17 +4358,29 @@ Class WebRemocon
                     sep1 = ","
                 Next
 
-                log1write("HTMLを取得します。" & url)
-                Select Case method
-                    Case 1
-                        r = get_html_by_WebBrowser(url, enc_str, UserAgent)
-                    Case 2
-                        r = get_html_by_webclient(url, enc_str, UserAgent)
-                    Case 3
-                        r = get_html_by_HttpWebRequest(url, enc_str, UserAgent)
-                    Case Else
-                        log1write("【エラー】HTML取得方法指定が不正です。" & temp)
-                End Select
+                '.2ch.net以外ははじく
+                Dim chk As Integer = 0
+                If url.IndexOf("://") > 0 And url.IndexOf(".2ch.net/") > 0 And url.IndexOf("/read.cgi/") > 0 Or url.IndexOf("/subback.html") > 0 Then
+                    '正常
+                    chk = 1
+                Else
+                    '2ch以外
+                    log1write("【警告】" & url & " へのアクセスを拒否しました")
+                End If
+
+                If chk = 1 Then
+                    log1write("HTMLを取得します。" & url)
+                    Select Case method
+                        Case 1
+                            r = get_html_by_WebBrowser(url, enc_str, UserAgent)
+                        Case 2
+                            r = get_html_by_webclient(url, enc_str, UserAgent)
+                        Case 3
+                            r = get_html_by_HttpWebRequest(url, enc_str, UserAgent)
+                        Case Else
+                            log1write("【エラー】HTML取得方法指定が不正です。" & temp)
+                    End Select
+                End If
             End If
         Else
             log1write("【エラー】HTML取得パラメータが不正です。" & temp)
