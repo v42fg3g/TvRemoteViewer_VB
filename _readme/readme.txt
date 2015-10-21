@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.52
+TvRemoteViewer_VB v1.53
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -604,6 +604,7 @@ TvRemoteViewer_VB v1.52
 	1.51	iniにチューナー初使用時に一旦別のサービスIDに合わせるオプションを追加(openfix_BonSid)
 	1.52	起動・終了・全配信停止時にRecTaskとTSTask両方を名前指定終了させていたが使用中のもののみ終了とした
 		openfixでダミーサービスIDのchspaceを考慮していなかったことによる配信失敗バグを修正
+	1.53	関係の無いURLアクセスを抑制するようにした
 
 
 
