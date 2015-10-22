@@ -4360,7 +4360,7 @@ Class WebRemocon
 
                 '.2ch.net以外ははじく
                 Dim chk As Integer = 0
-                If url.IndexOf("://") > 0 And url.IndexOf(".2ch.net/") > 0 And url.IndexOf("/read.cgi/") > 0 Or url.IndexOf("/subback.html") > 0 Then
+                If url.IndexOf("://") > 0 And url.IndexOf(".2ch.net/") > 0 And (url.IndexOf("/read.cgi/") > 0 Or url.IndexOf("/subback.html") > 0 Or url.IndexOf("/bbsmenu.html") > 0) Then
                     '正常
                     chk = 1
                 Else
