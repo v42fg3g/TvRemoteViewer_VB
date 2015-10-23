@@ -1683,8 +1683,8 @@ Public Class ProcessManager
                                         If ch_list IsNot Nothing Then
                                             Dim chk As Integer = 0
                                             For i2 As Integer = 0 To ch_list.Length - 1
-                                                If ch_list(i2).sid = Val(s(5)) And ch_list(i2).tsid = Val(s(7)) Then
-                                                    'サービスIDとTSIDが一致した
+                                                If ch_list(i2).sid = Val(s(5)) And ch_list(i2).tsid = Val(s(7)) And ch_list(i2).chspace = Val(s(1)) Then
+                                                    'サービスIDとTSIDとchspaceが一致した
                                                     'すでに登録済み
                                                     chk = 1
                                                     Exit For
