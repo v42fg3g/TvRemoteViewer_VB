@@ -140,7 +140,7 @@ Module モジュール_ニコニコ実況
 
         sp = html.IndexOf("[Events]")
         If sp >= 0 Then
-            If s.Length >= 3 Then
+            If s.Length >= 3 Or s = "予告" Then '予告ｷﾀ━が多いため
                 s = ")}" & s
             Else
                 s = ")}" & s & vbCrLf
