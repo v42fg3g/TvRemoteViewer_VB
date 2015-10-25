@@ -55,9 +55,13 @@
     Public RecTask_CH_MaxWait As Integer = 5 '標準は5秒
 
     Public Function time2unix(ByVal t As DateTime) As Integer
-        Dim ut As Integer = DateDiff("s", #1/1/1970#, t)
-        ut = ut - (60 * 60 * 9) '日本時間
-        Return ut
+        Try
+            Dim ut As Integer = DateDiff("s", #1/1/1970#, t)
+            ut = ut - (60 * 60 * 9) '日本時間
+            Return ut
+        Catch ex As Exception
+            Return 0
+        End Try
     End Function
 
     Public Function unix2time(ByVal unixTimeStamp As Integer) As DateTime
