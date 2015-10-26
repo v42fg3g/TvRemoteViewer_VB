@@ -438,17 +438,7 @@ Class WebRemocon
                                         '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
                                         Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
                                         Dim datestr As String = modifytime.ToString("yyyyMMddHH")
-                                        Dim filename As String = ""
-                                        If fullpath.IndexOf("\") >= 0 Then
-                                            'ファイル名だけを取り出す
-                                            k = fullpath.LastIndexOf("\")
-                                            Try
-                                                filename = fullpath.Substring(k + 1)
-                                            Catch ex As Exception
-                                            End Try
-                                        Else
-                                            filename = fullpath
-                                        End If
+                                        Dim filename As String = System.IO.Path.GetFileName(fullpath)
                                         'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
                                         'UTF-8化で解決
                                         'Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
