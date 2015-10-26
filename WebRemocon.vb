@@ -427,23 +427,14 @@ Class WebRemocon
                                     '拡張子を取得
                                     Dim ext As String = System.IO.Path.GetExtension(fullpath)
                                     '表示拡張子が指定されていれば該当するかチェックする
-                                    Dim chk As Integer = 0
-                                    If VideoExtensions IsNot Nothing Then
-                                        For ii As Integer = 0 To VideoExtensions.Length - 1
-                                            'もしかすると""が送られてくるかもしれないので一応lengthをチェック
-                                            If VideoExtensions(ii).Length > 0 Then
-                                                chk = -1 '1つでも有効な拡張子指定があればchk=-1にする
-                                                If ext = VideoExtensions(ii) Then
-                                                    chk = 1 'マッチすればforから抜け出すのでchk=1になる
-                                                    Exit For
-                                                End If
-                                            End If
-                                        Next
+                                    Dim chk As Integer = -2
+                                    If VideoExtensions IsNot Nothing And ext.Length > 0 Then
+                                        chk = Array.IndexOf(VideoExtensions, ext)
                                     End If
-                                    'chk=0 拡張子指定は無い
-                                    'chk=1 拡張子指定が有り、一致した
+                                    'chk=-2 拡張子指定は無い
+                                    'chk>=0 拡張子指定が有り、一致した
                                     'chk=-1 拡張子指定が有り、一致しなかった
-                                    If chk = 1 Or (chk = 0 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass") Then
+                                    If chk >= 0 Or (chk = -2 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass") Then
                                         '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
                                         Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
                                         Dim datestr As String = modifytime.ToString("yyyyMMddHH")
