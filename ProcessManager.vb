@@ -872,6 +872,10 @@ Public Class ProcessManager
                         'deletefile(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter")
                         'End If
                     End If
+                    'サムネイル削除
+                    If file_exist(Me._fileroot & "\" & "thumb" & Me._list(i)._num.ToString & ".jpg") = 1 Then
+                        deletefile(Me._fileroot & "\" & "thumb" & Me._list(i)._num.ToString & ".jpg")
+                    End If
 
                     Try
                         '★ リストから取り除く

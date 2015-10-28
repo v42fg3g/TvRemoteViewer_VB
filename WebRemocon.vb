@@ -3101,6 +3101,15 @@ Class WebRemocon
                                             WI_cmd_reply = Me.WI_GET_HTML(temp)
                                             WI_cmd_reply_force = 1
                                         End If
+                                    Case "WI_GET_THUMBNAIL"
+                                        'サムネイル作成
+                                        If temp.Length > 0 Then
+                                            Dim d() As String = temp.Split(",")
+                                            If d.Length >= 4 Then
+                                                WI_cmd_reply = Me.WI_GET_THUMBNAIL(Val(d(0)), Val(d(1)), Val(d(2)), Val(d(3)))
+                                                WI_cmd_reply_force = 1
+                                            End If
+                                        End If
                                 End Select
                             End If
 
@@ -4370,6 +4379,38 @@ Class WebRemocon
         Return r
     End Function
 
+    'サムネイルを取得（ss=何秒目 w=幅 h=縦）
+    Public Function WI_GET_THUMBNAIL(ByVal num As Integer, ByVal ss As Integer, ByVal w As Integer, ByVal h As Integer) As String
+        Dim r As String = ""
+
+        If num > 0 And num <= MAX_STREAM_NUMBER Then
+            Dim i As Integer = 0
+
+            'numから再生中の動画ファイル名を取得
+            Dim video_path As String = ""
+            Dim linestr As String = Me._procMan.WI_GET_LIVE_STREAM
+            Dim line() As String = Split(linestr, vbCrLf)
+            For i = 0 To line.Length - 1
+                Dim d() As String = line(i).Split(",")
+                If d.Length >= 12 Then
+                    If Val(d(1)) = num And Val(d(6)) = 1 Then
+                        video_path = Trim(d(3))
+                        Exit For
+                    End If
+                End If
+            Next
+
+            Dim url_path As String = get_soutaiaddress_from_fileroot()
+
+            If video_path.Length > 0 Then
+                Dim ffmpeg_path As String = Me._hlsApp
+                Dim stream_folder As String = Me._fileroot
+                r = F_make_thumbnail(num, ffmpeg_path, stream_folder, url_path, video_path, ss, w, h)
+            End If
+        End If
+
+        Return r
+    End Function
 End Class
 
 

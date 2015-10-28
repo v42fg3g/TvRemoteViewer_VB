@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.54
+TvRemoteViewer_VB v1.55
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -256,6 +256,14 @@ TvRemoteViewer_VB v1.54
 				2: webclient
 				3: HttpWebRequest
 		例：WI_GET_HTML.html?temp=2,UTF-8,,http://www.google.co.jp/
+	WI_GET_THUMBNAIL.html?temp=%NUM%,[サムネイル作成秒数],[幅],[縦]
+		ファイル再生中動画のサムネイルを作成
+		返値：[URLルートからのパス]/thumb%NUM%.jpg
+		縦横に0を指定した場合はffmpeg標準の大きさのjpgが作成されます
+		例：ストリーム1の60秒目を144x108でサムネイルを作成する
+		     WI_GET_THUMBNAIL.html?temp=1,60,144,108
+		     返値：/stream/thumb1.jpg （失敗または別スレッドで作成中の場合は空白""）
+
 
 
 ■Windows上でのm3u8再生につきまして
@@ -604,6 +612,7 @@ TvRemoteViewer_VB v1.54
 		openfixでダミーサービスIDのchspaceを考慮していなかったことによる配信失敗バグを修正
 	1.53	関係の無いURLアクセスを抑制するようにした
 	1.54	BonDriverからチャンネルを取得するときにchspaceの違いも考慮するようにした（ptTimer対策。上述）
+	1.55	サムネイル作成機能、WI_GET_THUMBNAIL追加
 
 
 
