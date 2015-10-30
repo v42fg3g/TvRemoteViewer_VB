@@ -288,7 +288,7 @@ TvRemoteViewer_VB v1.56
 			　入力：WI_GET_THUMBNAIL.html?temp=1,60:120,144,108
 		     	　返値：/stream/mystream1_thumb.60.jpg,/stream/mystream1_thumb.120.jpg
 			・ストリーム１の60秒間隔のサムネイルを作成する
-			　入力：WI_GET_THUMBNAIL.html?temp=1,per60:120,144,108
+			　入力：WI_GET_THUMBNAIL.html?temp=1,per60,144,108
 		     	　返値：/stream/mystream1_thumb-%04d.jpg
 			　※１　等間隔の場合、「-」で連番数値と区切られています
 			　※２　間隔は 1/指定秒数 という計算式で導かれていますので無理数になった場合、
