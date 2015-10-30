@@ -1333,14 +1333,14 @@ Public Class ProcessManager
 
     'wwwrootにあるmystream[num]～というファイルを削除する
     Public Sub delete_mystreamnum(ByVal num As Integer)
-        For Each tempFile As String In System.IO.Directory.GetFiles(Me._fileroot)
-            If tempFile.IndexOf("mystream" & num.ToString & "-") >= 0 Or tempFile.IndexOf("mystream" & num.ToString & ".") >= 0 Then
-                Dim i As Integer = 40 '2秒間は再チャレンジする
-                While deletefile(tempFile) = 0 And i >= 0
-                    System.Threading.Thread.Sleep(50)
-                    i -= 1
-                End While
-            End If
+        For Each tempFile As String In System.IO.Directory.GetFiles(Me._fileroot, "mystream" & num.ToString & "*")
+            'If tempFile.IndexOf("mystream" & num.ToString & "-") >= 0 Or tempFile.IndexOf("mystream" & num.ToString & ".") >= 0 Then
+            Dim i As Integer = 40 '2秒間は再チャレンジする
+            While deletefile(tempFile) = 0 And i >= 0
+                System.Threading.Thread.Sleep(50)
+                i -= 1
+            End While
+            'End If
         Next
     End Sub
 

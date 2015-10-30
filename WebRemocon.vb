@@ -3076,8 +3076,12 @@ Class WebRemocon
                                         WI_cmd_reply = Me.WI_SET_HTTPSTREAM_App(n)
                                         WI_cmd_reply_force = 1
                                     Case "WI_FILE_OPE"
-                                        'ファイル書き込み
-                                        WI_cmd_reply = Me.WI_FILE_OPE(fl_cmd, fl_file, fl_text)
+                                        'ファイル書き込み dirのフィルタをtempで追加
+                                        WI_cmd_reply = Me.WI_FILE_OPE(fl_cmd, fl_file, fl_text, temp)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_STREAMFILE_EXIST"
+                                        'ストリームフォルダにファイルが存在するかどうか
+                                        WI_cmd_reply = Me.WI_STREAMFILE_EXIST(fl_file)
                                         WI_cmd_reply_force = 1
                                     Case "WI_SHOW_LOG"
                                         'ログ出力
@@ -3106,7 +3110,7 @@ Class WebRemocon
                                         If temp.Length > 0 Then
                                             Dim d() As String = temp.Split(",")
                                             If d.Length >= 4 Then
-                                                WI_cmd_reply = Me.WI_GET_THUMBNAIL(Val(d(0)), Val(d(1)), Val(d(2)), Val(d(3)))
+                                                WI_cmd_reply = Me.WI_GET_THUMBNAIL(d(0), d(1), Val(d(2)), Val(d(3)))
                                                 WI_cmd_reply_force = 1
                                             End If
                                         End If
@@ -3959,10 +3963,34 @@ Class WebRemocon
         Return r
     End Function
 
+    'ストリームフォルダにファイルが存在するかどうか
+    Public Function WI_STREAMFILE_EXIST(ByVal fl_file As String) As String
+        Dim r As String = ""
+
+        fl_file = trim8(fl_file)
+        If fl_file.IndexOf("\..\") < 0 And fl_file.IndexOf(":\") < 0 Then
+            If fl_file.Length > 0 Then
+                fl_file = Me._fileroot & "\" & fl_file
+                While fl_file.IndexOf("\\") >= 0
+                    fl_file = fl_file.Replace("\\", "\")
+                End While
+                If file_exist(fl_file) = 1 Then
+                    r = "1"
+                End If
+            End If
+        End If
+
+        Return r
+    End Function
+
     'ファイル書き込み
-    Public Function WI_FILE_OPE(ByVal fl_cmd As String, ByVal fl_file As String, ByVal fl_text As String) As String
+    Public Function WI_FILE_OPE(ByVal fl_cmd As String, ByVal fl_file As String, ByVal fl_text As String, ByVal dir_filter As String) As String
         Dim r As String = ""
         Dim i As Integer = 0
+
+        If dir_filter.Length = 0 Then
+            dir_filter = "*"
+        End If
 
         Dim filepath As String = ""
         Dim filename As String = ""
@@ -4009,6 +4037,16 @@ Class WebRemocon
             '動画フォルダへのアクセス
             fullpath = Me._fileroot & "\" '末尾は\
             fullpathfilename = Me._fileroot & "\" & filename
+        ElseIf Me._fileroot.Length > 0 And Me._fileroot.IndexOf(Me._wwwroot) < 0 And filepath.IndexOf(lastf & "\") >= 0 Then
+            '動画フォルダの子フォルダへのアクセス
+            Dim sp9 As Integer = filepath.IndexOf(lastf)
+            Dim cf As String = ""
+            Try
+                cf = filepath.Substring(sp9 + lastf.Length)
+            Catch ex As Exception
+            End Try
+            fullpath = Me._fileroot & cf & "\"
+            fullpathfilename = Me._fileroot & cf & "\" & filename
         Else
             '普通のフォルダへのアクセスだった
             fullpath = Me._wwwroot & "\" & filepath '末尾は\
@@ -4037,7 +4075,7 @@ Class WebRemocon
                 Case "dir"
                     'ファイル一覧
                     Try
-                        Dim files As String() = System.IO.Directory.GetFiles(fullpath, "*")
+                        Dim files As String() = System.IO.Directory.GetFiles(fullpath, dir_filter)
                         r &= "0,SUCCESS" & vbCrLf
                         If files IsNot Nothing Then
                             For Each fn As String In files
@@ -4380,14 +4418,17 @@ Class WebRemocon
     End Function
 
     'サムネイルを取得（ss=何秒目 w=幅 h=縦）
-    Public Function WI_GET_THUMBNAIL(ByVal num As Integer, ByVal ss As Integer, ByVal w As Integer, ByVal h As Integer) As String
+    Public Function WI_GET_THUMBNAIL(ByVal num_str As String, ByVal ss As String, ByVal w As Integer, ByVal h As Integer) As String
         Dim r As String = ""
 
-        If num > 0 And num <= MAX_STREAM_NUMBER Then
-            Dim i As Integer = 0
+        Dim i As Integer = 0
 
+        Dim num As Integer = Val(num_str)
+
+        '動画ファイル名
+        Dim video_path As String = ""
+        If num > 0 And num <= MAX_STREAM_NUMBER Then
             'numから再生中の動画ファイル名を取得
-            Dim video_path As String = ""
             Dim linestr As String = Me._procMan.WI_GET_LIVE_STREAM
             Dim line() As String = Split(linestr, vbCrLf)
             For i = 0 To line.Length - 1
@@ -4399,14 +4440,17 @@ Class WebRemocon
                     End If
                 End If
             Next
+        ElseIf num = 0 And num_str.Length >= 5 Then
+            'ファイルのフルパスで指定された
+            video_path = trim8(num_str)
+        End If
 
+        '対象ファイルが
+        If video_path.Length >= 5 Then
             Dim url_path As String = get_soutaiaddress_from_fileroot()
-
-            If video_path.Length > 0 Then
-                Dim ffmpeg_path As String = Me._hlsApp
-                Dim stream_folder As String = Me._fileroot
-                r = F_make_thumbnail(num, ffmpeg_path, stream_folder, url_path, video_path, ss, w, h)
-            End If
+            Dim ffmpeg_path As String = Me._hlsApp
+            Dim stream_folder As String = Me._fileroot
+            r = F_make_thumbnail(num, ffmpeg_path, stream_folder, url_path, video_path, ss, w, h)
         End If
 
         Return r

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.55
+TvRemoteViewer_VB v1.56
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -239,8 +239,14 @@ TvRemoteViewer_VB v1.55
 		fl_cmd		dir, read, write, write_add, delete
 		fl_file		フォルダ名又はファイル名（%WWWROOT%からの相対位置）
 		fl_text		書き込む内容
+		temp		dirの場合のフィルタ(無指定の場合は「*」)　例：「*.jpg」や「mystream*」
 		結果：
 		0,SUCCESS(+改行[結果])　又は　2,[エラー内容]
+	WI_STREAMFILE_EXIST.html?fl_file=[ファイル名]
+		ストリームフォルダ内にファイルが存在するかどうか
+		例：WI_STREAMFILE_EXIST.html?fl_file=mystream1_thumb.jpg
+　　　　　　　　　　WI_STREAMFILE_EXIST.html?fl_file=file_thumbs/動画ファイル名.jpg
+		返値：　存在すれば1、存在しなければ空白
 	WI_GET_PROGRAM_[TVROCK,EDCB,PTTIMER].html(?temp=1-3)
 		TVROCK,EDCBから番組表を取得
 		オプション temp=1～3 を指定することにより次番組が存在すれば併せて取得(PTTIMERには未対応）
@@ -256,13 +262,44 @@ TvRemoteViewer_VB v1.55
 				2: webclient
 				3: HttpWebRequest
 		例：WI_GET_HTML.html?temp=2,UTF-8,,http://www.google.co.jp/
-	WI_GET_THUMBNAIL.html?temp=%NUM%,[サムネイル作成秒数],[幅],[縦]
+	WI_GET_THUMBNAIL.html?temp=[作成ソース],[秒数指定],[幅],[縦]
 		ファイル再生中動画のサムネイルを作成
-		返値：[URLルートからのパス]/thumb%NUM%.jpg
-		縦横に0を指定した場合はffmpeg標準の大きさのjpgが作成されます
-		例：ストリーム1の60秒目を144x108でサムネイルを作成する
-		     WI_GET_THUMBNAIL.html?temp=1,60,144,108
-		     返値：/stream/thumb1.jpg （失敗または別スレッドで作成中の場合は空白""）
+		パラメータ
+			[作成ソース]	配信中のストリームナンバー、もしくは動画フルパスファイル名（ローカルパス）
+					ファイル名指定の場合はストリームフォルダ内のfile_thumbsというフォルダ内に、
+					ファイル名を使用してjpgが作成されます
+					■重要■ファイル名に#(半角)が含まれていた場合＃(全角)に変換されます
+						（URLアクセスができないため）
+			[秒数指定]	単独、「:」区切りで複数、per[等間隔秒数]
+					等間隔を指定した場合は、結果を待たずに返値が返されます
+			[幅],[縦]	縦横に0を指定した場合はffmpeg標準の大きさのjpgが作成されます
+		返値
+			[URLルートからのパス]/thumb%NUM%.jpg（複数の場合は「,」区切りで列挙）
+			等間隔作成の場合は、時間がかかるので完了前に結果予想が返される（%04dは4桁の数値）
+ 			失敗または別スレッドで作成中の場合は空白
+		例
+			・ストリーム1の60秒目を144x108でサムネイルを作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=1,60,144,108
+		     	　返値：/stream/mystream1_thumb.jpg
+			・ストリーム1の60秒目を秒数込みのファイルネームで作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=1,60:,144,108
+		     	　返値：/stream/mystream1_thumb.60.jpg
+			・ストリーム1の60秒目と120秒目を144x108でサムネイルを作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=1,60:120,144,108
+		     	　返値：/stream/mystream1_thumb.60.jpg,/stream/mystream1_thumb.120.jpg
+			・ストリーム１の60秒間隔のサムネイルを作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=1,per60:120,144,108
+		     	　返値：/stream/mystream1_thumb-%04d.jpg
+			　※１　等間隔の場合、「-」で連番数値と区切られています
+			　※２　間隔は 1/指定秒数 という計算式で導かれていますので無理数になった場合、
+				微妙なズレが出る可能性があります。60秒とか・・小数点10桁切り捨て
+			・特定動画をファイル名指定でサムネイルを作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=D:\My Videos\テスト #01.ts,60,144,108
+			　返値：/stream/file_thumbs/テスト ♯01.jpg 
+			　作成結果：　/stream/file_thumbs/テスト ♯01.60.jpg 
+			　ストリーム時の「mystream%NUM%_thumb」の代わりにファイル名が使用され、
+			　file_thumbsフォルダに作成されます
+			　また、入力時の#が出力時には＃に変換されて作成されます
 
 
 
@@ -613,6 +650,10 @@ TvRemoteViewer_VB v1.55
 	1.53	関係の無いURLアクセスを抑制するようにした
 	1.54	BonDriverからチャンネルを取得するときにchspaceの違いも考慮するようにした（ptTimer対策。上述）
 	1.55	サムネイル作成機能、WI_GET_THUMBNAIL追加
+	1.56	WI_FILE_OPEのdir指定でフィルタを利用できるようにした
+		WI_STREAMFILE_EXIST追加
+		WI_GET_THUMBNAIL修正
+		ファイル一括削除を若干高速化
 
 
 
