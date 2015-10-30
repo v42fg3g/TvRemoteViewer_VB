@@ -4427,7 +4427,7 @@ Class WebRemocon
 
         '動画ファイル名
         Dim video_path As String = ""
-        If num > 0 And num <= MAX_STREAM_NUMBER Then
+        If num > 0 And num <= MAX_STREAM_NUMBER And num_str.Length < 5 Then
             'numから再生中の動画ファイル名を取得
             Dim linestr As String = Me._procMan.WI_GET_LIVE_STREAM
             Dim line() As String = Split(linestr, vbCrLf)
@@ -4443,6 +4443,8 @@ Class WebRemocon
         ElseIf num = 0 And num_str.Length >= 5 Then
             'ファイルのフルパスで指定された
             video_path = trim8(num_str)
+        Else
+            '不正な指定
         End If
 
         '対象ファイルが
