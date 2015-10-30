@@ -70,6 +70,16 @@
         Return CDate(unixDate.ToShortDateString & " " & unixDate.ToLongTimeString)
     End Function
 
+    'ファイル名に含まれている,をエスケープ
+    Public Function filename_escape_set(ByVal s As String) As String
+        Return s.Replace(",", "_，") 'エスケープ
+    End Function
+
+    'ファイル名に含まれている,を戻す
+    Public Function filename_escape_recall(ByVal s As String) As String
+        Return s.Replace("_，", ",") 'エスケープしていた,を元に戻す
+    End Function
+
     '余計な改行等を削除
     Public Function trim8(ByVal s As String) As String
         s = Trim(s)

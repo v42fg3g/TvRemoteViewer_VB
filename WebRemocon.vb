@@ -467,8 +467,11 @@ Class WebRemocon
                                             If flength >= 100 Then
                                                 '登録
                                                 ReDim Preserve video2(cnt)
+                                                fullpath = filename_escape_set(fullpath) ',をエスケープ
                                                 video2(cnt).fullpathfilename = fullpath
+                                                filename = filename_escape_set(filename) ',をエスケープ
                                                 video2(cnt).filename = filename
+                                                encstr = filename_escape_set(encstr) ',をエスケープ
                                                 video2(cnt).encstr = encstr
                                                 video2(cnt).modifytime = modifytime
                                                 video2(cnt).datestr = datestr
@@ -1445,6 +1448,8 @@ Class WebRemocon
     Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
 
+        filename = filename_escape_recall(filename) ',エスケープを元に戻す
+
         'エラー防止
         If file_last_filename(num) Is Nothing Then
             file_last_filename(num) = ""
@@ -1813,6 +1818,8 @@ Class WebRemocon
     '映像配信開始
     Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
+
+        filename = filename_escape_recall(filename) ',を戻す
 
         'テスト　多重テストを違うexeファイルで行う
         Dim udpapp2 As String = change_exe_name(udpApp, num)
@@ -2872,14 +2879,23 @@ Class WebRemocon
                             'ファイル名
                             Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
                             Dim vname() As String = videoname.Split(",")
-                            If vname.Length = 2 Then
-                                'vname(0)には日付が入っているyyyyMMdd 20140101
-                                videoname = vname(1)
-                            ElseIf vname.Length = 1 Then
+                            If vname.Length = 1 Then
                                 If vname(0).Length > 0 Then
                                     '日付が入ってない場合も受け入れる
                                     videoname = vname(0)
                                 End If
+                            ElseIf vname.Length >= 2 Then
+                                '1番目が数値かどうか調べて対応
+                                Dim sep2 As String = ""
+                                Dim fl2 As Integer = 0
+                                videoname = ""
+                                If IsNumeric(vname(0)) Then
+                                    fl2 = 1
+                                End If
+                                For ii2 As Integer = fl2 To vname.Length - 1
+                                    videoname &= sep2 & vname(ii2)
+                                    sep2 = ","
+                                Next
                             End If
                             'ファイル再生シーク秒数
                             Dim VideoSeekSeconds As Integer = 0
@@ -3109,6 +3125,16 @@ Class WebRemocon
                                         'サムネイル作成
                                         If temp.Length > 0 Then
                                             Dim d() As String = temp.Split(",")
+                                            If d.Length > 4 Then
+                                                'ファイル名に,が混じっている可能性有り
+                                                Dim fname1 As String = ""
+                                                For ii2 = 1 To d.Length - 4
+                                                    d(0) &= "," & d(ii2)
+                                                Next
+                                                For ii2 = d.Length - 4 To d.Length - 2
+                                                    d(ii2) = d(ii2 + 1)
+                                                Next
+                                            End If
                                             If d.Length >= 4 Then
                                                 WI_cmd_reply = Me.WI_GET_THUMBNAIL(d(0), d(1), Val(d(2)), Val(d(3)))
                                                 WI_cmd_reply_force = 1
@@ -3967,6 +3993,8 @@ Class WebRemocon
     Public Function WI_STREAMFILE_EXIST(ByVal fl_file As String) As String
         Dim r As String = ""
 
+        'fl_file = filename_escape_recall(fl_file) ',エスケープを戻す　サムネイルはエスケープ済なので戻す必要がない
+
         fl_file = trim8(fl_file)
         If fl_file.IndexOf("\..\") < 0 And fl_file.IndexOf(":\") < 0 Then
             If fl_file.Length > 0 Then
@@ -4079,6 +4107,7 @@ Class WebRemocon
                         r &= "0,SUCCESS" & vbCrLf
                         If files IsNot Nothing Then
                             For Each fn As String In files
+                                fn = filename_escape_set(fn) ',をエスケープ
                                 r &= fn & vbCrLf
                             Next
                         End If
@@ -4427,7 +4456,7 @@ Class WebRemocon
 
         '動画ファイル名
         Dim video_path As String = ""
-        If num > 0 And num <= MAX_STREAM_NUMBER And num_str.Length < 5 Then
+        If num > 0 And num <= MAX_STREAM_NUMBER And num_str.IndexOf(".") < 0 Then
             'numから再生中の動画ファイル名を取得
             Dim linestr As String = Me._procMan.WI_GET_LIVE_STREAM
             Dim line() As String = Split(linestr, vbCrLf)
@@ -4440,7 +4469,7 @@ Class WebRemocon
                     End If
                 End If
             Next
-        ElseIf num = 0 And num_str.Length >= 5 Then
+        ElseIf num = 0 And num_str.IndexOf(".") > 0 Then
             'ファイルのフルパスで指定された
             video_path = trim8(num_str)
         Else
@@ -4448,7 +4477,7 @@ Class WebRemocon
         End If
 
         '対象ファイルが
-        If video_path.Length >= 5 Then
+        If video_path.IndexOf(".") > 0 Then
             Dim url_path As String = get_soutaiaddress_from_fileroot()
             Dim ffmpeg_path As String = Me._hlsApp
             Dim stream_folder As String = Me._fileroot

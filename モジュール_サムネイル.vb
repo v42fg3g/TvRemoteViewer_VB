@@ -10,6 +10,8 @@
 
         Dim ss2() As Integer = Nothing
 
+        video_path = filename_escape_recall(video_path) ',エスケープを戻す
+
         If ffmpeg_path.IndexOf("ffmpeg") >= 0 Then
             '指定秒数
             If ss.IndexOf("per") >= 0 Then
@@ -52,11 +54,13 @@
                 'ファイル名は、動画ファイル名(.秒数).jpg
                 thumb_filename_noex = System.IO.Path.GetFileNameWithoutExtension(video_path)
                 'ここで、#が含まれるとどうしても作成したサムネイルにアクセスできないので全角に変換
-                thumb_filename_noex = thumb_filename_noex.Replace("#", "♯")
+                thumb_filename_noex = thumb_filename_noex.Replace("#", "＃")
             Else
                 'ファイル名 thumb(.秒数).jpg
                 thumb_filename_noex = "mystream" & num & "_thumb"
             End If
+
+            thumb_filename_noex = filename_escape_set(thumb_filename_noex) ',をエスケープ
 
             '縦横指定があれば
             Dim wh As String = ""

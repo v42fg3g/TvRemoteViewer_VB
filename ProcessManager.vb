@@ -1757,6 +1757,7 @@ Public Class ProcessManager
                 If channel_name.Length = 0 And (stream_mode = 1 Or stream_mode = 3) Then
                     'ファイル再生ならばファイル名をBonDriverとして表示するようにする
                     BonDriver = fullpathfilename
+                    BonDriver = filename_escape_set(BonDriver) ',をエスケープ
                 End If
                 Dim sp As Integer = hlsApp.LastIndexOf("\")
                 If sp >= 0 Then
