@@ -113,7 +113,7 @@
 6	15	0x5818	ÂX	‚`‚s‚uÂXƒeƒŒƒr
 5	15	0x5820	ÂX	ÂX’©“ú•ú‘—
 9	15	0x5C38	“Œ‹ž	‚s‚n‚j‚x‚n ‚l‚w‚P
-9	15	0x5C39	“Œ‹ž	‚s‚n‚j‚x‚n ‚l‚w‚Q
+9	15	0x5C3A	“Œ‹ž	‚s‚n‚j‚x‚n ‚l‚w‚Q
 11	15	0x6038	_“Þì	‚”‚–‚‹
 1	15	0x6400	ŒQ”n	‚m‚g‚j‘‡E‘O‹´
 -1	15	0x6438	ŒQ”n	ŒQ”nƒeƒŒƒr
