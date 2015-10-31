@@ -665,6 +665,7 @@ TvRemoteViewer_VB v1.57
 		WI_WRITE_LOGを追加
 		終了時にTvRemoteViewr_VB.logにログを出力するようにした
 		ffmpegのシーク方法を変更するファイルを指定する機能をタスクトレイアイコンに追加
+		ch_sid.txt内のMX2サービスIDを修正
 
 
 
