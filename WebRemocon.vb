@@ -412,7 +412,7 @@ Class WebRemocon
     Public Function RefreshVideoList(ByVal videoexword As String) As Object
         Dim video2() As videostructure = Nothing
         Dim cnt As Integer = 0
-        Dim i, k As Integer
+        Dim i As Integer
         If Me._videopath IsNot Nothing Then
             If Me._videopath.Length > 0 Then
 
@@ -1403,6 +1403,8 @@ Class WebRemocon
                                         Next
                                     End If
                                 End If
+                            Case "log_size"
+                                log_size = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -1469,6 +1471,23 @@ Class WebRemocon
             'End If
         End If
 
+        'タイムシフトを古い方式でやるなら1
+        Dim timeshift_old_flg As Integer = 0
+        'シーク方式が旧式指定かどうか
+        If ffmpeg_seek_method_files.Length > 1 Then
+            Dim line() As String = Split(ffmpeg_seek_method_files, vbCrLf)
+            For j2 As Integer = 0 To line.Length - 1
+                If Trim(line(j2)).Length > 0 Then
+                    If filename.IndexOf(Trim(line(j2))) >= 0 Then
+                        'マッチ 古い方式でシークする
+                        timeshift_old_flg = 1
+                        log1write(filename & "のシーク方式を旧式にセットしました")
+                        Exit For
+                    End If
+                End If
+            Next
+        End If
+
         Dim new_file As String = ""
         Dim rename_file As String = "" 'assフルパス
         If (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0) Or nohsub = 2 Then
@@ -1504,7 +1523,8 @@ Class WebRemocon
                         new_file = "sub" & num.ToString & ".ass"
                         '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
                         rename_file = fileroot & "\" & new_file
-                        If VideoSeekSeconds <= 0 And baisoku = "1" Then
+
+                        If (VideoSeekSeconds <= 0 And baisoku = "1") Or timeshift_old_flg = 1 Then
                             'シークが指定されていなければそのままコピー
                             'リネーム
                             My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
@@ -1524,7 +1544,12 @@ Class WebRemocon
                         Else
                             'シークが指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
                             log1write("字幕ASSファイルを修正しています")
-                            If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds, baisoku) = 1 Then
+                            Dim VideoSeekSeconds_temp As Integer = VideoSeekSeconds
+                            If timeshift_old_flg = 1 Then
+                                '古い方式ならタイムシフトはしない
+                                VideoSeekSeconds_temp = 0
+                            End If
+                            If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds_temp, baisoku) = 1 Then
                                 '修正完了
                                 log1write("字幕ASSファイルの修正が完了しました")
                                 log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
@@ -1645,9 +1670,12 @@ Class WebRemocon
             End If
 
             'シーク秒数が指定されていれば「-ss 秒」を挿入
-            If VideoSeekSeconds > 0 Then
+            If VideoSeekSeconds > 0 And timeshift_old_flg = 0 Then
                 sp = hlsOpt.IndexOf("-i ")
                 hlsOpt = hlsOpt.Substring(0, sp) & "-ss " & VideoSeekSeconds & " " & hlsOpt.Substring(sp)
+            ElseIf VideoSeekSeconds > 0 And timeshift_old_flg = 1 Then
+                '古い方式でシフトするならば-iの後に挿入
+                hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-ss " & VideoSeekSeconds, 2, 4)
             End If
 
             '倍速指定があれば
@@ -3140,6 +3168,13 @@ Class WebRemocon
                                                 WI_cmd_reply_force = 1
                                             End If
                                         End If
+                                    Case "WI_WRITE_LOG"
+                                        'ログに出力
+                                        If Trim(temp).Length > 0 Then
+                                            log1write(temp)
+                                            WI_cmd_reply = "OK"
+                                            WI_cmd_reply_force = 1
+                                        End If
                                 End Select
                             End If
 
@@ -3656,7 +3691,7 @@ Class WebRemocon
                                     sw.WriteLine(s)
                                     'sw.Flush()
 
-                                    log1write(path & "へのアクセスを受け付けました")
+                                    'log1write(path & "へのアクセスを受け付けました")
                                 Else
                                     'ローカルファイルが存在していない
                                     'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
@@ -3677,7 +3712,7 @@ Class WebRemocon
                                 Dim content As Byte() = ReadAllBytes(path)
                                 Try
                                     res.OutputStream.Write(content, 0, content.Length)
-                                    log1write(path & "へのアクセスを受け付けました")
+                                    'log1write(path & "へのアクセスを受け付けました")
                                 Catch ex As Exception
                                     log1write("【エラー】" & path & "のバイトデータ発信に失敗しました。" & ex.Message)
                                     'エラーが起こったら1回だけリトライするか・・

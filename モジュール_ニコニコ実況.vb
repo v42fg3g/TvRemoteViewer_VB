@@ -22,6 +22,9 @@ Module モジュール_ニコニコ実況
     Public make_chapter As Integer = 0
     Public chapter_bufsec As Integer = 3 '秒前の地点を送る
 
+    'ffmpeg タイムシフト方式を変更するファイル名 vbcrlf区切り
+    Public ffmpeg_seek_method_files As String = ""
+
     Public jk_list() As sidstructure '放送局
     Public Structure sidstructure
         Public jkid As Integer

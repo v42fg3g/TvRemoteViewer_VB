@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.56"
+    Private version As String = "TvRemoteViewer_VB version 1.57"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -134,9 +134,9 @@ Public Class Form1
 
         'ログ処理
         If log1 <> log1_dummy Then
-            If log1.Length > 30000 Then
-                '30000文字以上になったらカット
-                log1 = log1.Substring(0, 30000)
+            If log1.Length > log_size Then
+                'log_size文字以上になったらカット
+                log1 = log1.Substring(0, log_size)
             End If
             TextBoxLog.Text = log1
             log1_dummy = log1
@@ -664,6 +664,8 @@ Public Class Form1
                             TextBoxPASS.Text = DecryptString(lr(1), TextBoxID.Text.ToString & "TRVVB")
                         Case "ComboBoxHLSorHTTP"
                             ComboBoxHLSorHTTP.Text = lr(1)
+                        Case "ffmpeg_seek_method_files"
+                            ffmpeg_seek_method_files = lr(1).Replace("\r\n", vbCrLf)
                     End Select
                 ElseIf lr.Length > 2 And trim8(lr(0)) = "textBoxHlsOpt" Then
                     'VLC OPTION
@@ -680,6 +682,9 @@ Public Class Form1
 
     Private Sub Form1_FormClosing(sender As System.Object, e As System.Windows.Forms.FormClosingEventArgs) Handles MyBase.FormClosing
         Timer1.Enabled = False
+
+        'カレントディレクトリ変更
+        F_set_ppath4program()
 
         'ビデオフォルダ　監視終了
         stop_watch_videofolders()
@@ -713,6 +718,8 @@ Public Class Form1
     End Sub
 
     Private Sub Form1_FormClosed(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
+        'ログをファイル出力
+        str2file("TvRemoteViewer_VB.log", log1, "UTF-8")
     End Sub
 
     Private Sub save_form_status()
@@ -736,10 +743,9 @@ Public Class Form1
         s &= "ID=" & TextBoxID.Text & vbCrLf
         s &= "PASS=" & EncryptString(TextBoxPASS.Text.ToString, TextBoxID.Text.ToString & "TRVVB") & vbCrLf
         s &= "textBoxHlsOpt=" & textBoxHlsOpt2.Text & vbCrLf
-        s &= "ComboBoxHLSorHTTP=" & ComboBoxHLSorHTTP.Text
+        s &= "ComboBoxHLSorHTTP=" & ComboBoxHLSorHTTP.Text & vbCrLf
+        s &= "ffmpeg_seek_method_files=" & ffmpeg_seek_method_files.Replace(vbCrLf, "\r\n") & vbCrLf
 
-        'カレントディレクトリ変更
-        F_set_ppath4program()
         'ステータスファイル書き込み
         str2file("form_status.txt", s)
     End Sub
@@ -1109,8 +1115,14 @@ Public Class Form1
     End Sub
 
     '最小化アイコン右クリック→終了
-    Private Sub ContextMenuStrip1_MouseClick(sender As System.Object, e As System.Windows.Forms.MouseEventArgs) Handles ContextMenuStrip1.MouseClick
-        Close()
+    Private Sub ContextMenuStrip1_ItemClicked(sender As System.Object, e As System.Windows.Forms.ToolStripItemClickedEventArgs) Handles ContextMenuStrip1.ItemClicked
+        Select Case e.ClickedItem.Name
+            Case "SeekMethodList"
+                Form2.Show()
+            Case "quit"
+                'close()
+                Application.Exit()
+        End Select
     End Sub
 
     'タスクトレイアイコンがダブルクリックされたとき
@@ -1225,5 +1237,9 @@ Public Class Form1
         Catch ex As Exception
             log1write("ログのクリップボードへのコピーに失敗しました。" & ex.Message)
         End Try
+    End Sub
+
+    Private Sub Button4_Click(sender As System.Object, e As System.EventArgs) Handles Button4.Click
+        Form2.Show()
     End Sub
 End Class
