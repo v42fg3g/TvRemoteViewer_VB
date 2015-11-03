@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.57
+TvRemoteViewer_VB v1.58
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -270,8 +270,9 @@ TvRemoteViewer_VB v1.57
 					ファイル名を使用してjpgが作成されます
 					■重要■ファイル名に#(半角)が含まれていた場合＃(全角)に変換されます
 						（URLアクセスができないため）
-			[秒数指定]	単独、「:」区切りで複数、per[等間隔秒数]
+			[秒数指定]	単独、「:」区切りで複数、thru[秒数指定]、per[等間隔秒数]
 					等間隔を指定した場合は、結果を待たずに返値が返されます
+					また、thru[秒数指定]で結果を待たずに返値が返されます
 			[幅],[縦]	縦横に0を指定した場合はffmpeg標準の大きさのjpgが作成されます
 		返値
 			単独　 [ストリーム出力フォルダ]/mystream%NUM%_thumb.jpg
@@ -289,6 +290,9 @@ TvRemoteViewer_VB v1.57
 			・ストリーム1の60秒目と120秒目を144x108でサムネイルを作成する
 			　入力：WI_GET_THUMBNAIL.html?temp=1,60:120,144,108
 		     	　返値：/stream/mystream1_thumb.60.jpg,/stream/mystream1_thumb.120.jpg
+			・ストリーム1の60秒目と120秒目を144x108でサムネイルを作成する（結果を待たない）
+			　入力：WI_GET_THUMBNAIL.html?temp=1,thru60:120,144,108
+		     	　返値：/stream/mystream1_thumb.60.jpg,/stream/mystream1_thumb.120.jpg
 			・ストリーム１の60秒間隔のサムネイルを作成する
 			　入力：WI_GET_THUMBNAIL.html?temp=1,per60,144,108
 		     	　返値：/stream/mystream1_thumb-%04d.jpg
@@ -303,6 +307,8 @@ TvRemoteViewer_VB v1.57
 			　	かつfile_thumbsフォルダに作成されます
 			　	また、入力時の#が出力時には＃に変換されて作成されます
 				複数や等間隔も同じように作成されます
+	WI_SHOW_MAKING_PER_THUMB.html
+			等間隔サムネイルを作成中の動画フルパスファイル名一覧が返されます
 	WI_WRITE_LOG.html?temp=[ログに書き込む文字列]
 		ログを出力　返値："OK"
 
@@ -666,6 +672,9 @@ TvRemoteViewer_VB v1.57
 		終了時にTvRemoteViewr_VB.logにログを出力するようにした
 		ffmpegのシーク方法を変更するファイルを指定する機能をタスクトレイアイコンに追加
 		ch_sid.txt内のMX2サービスIDを修正
+	1.58	WI_SHOW_MAKING_PER_THUMB追加
+		30分待っても等間隔サムネイルの作成が終了しない場合はプロセスを終了させるようにした
+		結果を待たずにサムネイルを作成するthru指定を追加
 
 
 

@@ -1,6 +1,29 @@
 ﻿Module モジュール_サムネイル
     Public making_thumbnail(MAX_STREAM_NUMBER) As Integer '作成中なら1
 
+    Public stop_per_thumbnail_minutes As Integer = 60 * 30 '一定間隔サムネイル作成を最大何秒待つか 30分
+    Public making_per_thumbnail() As making_thumbnail_structure '一定間隔サムネイル作成中かどうか
+    Public Structure making_thumbnail_structure
+        Public fullpathfilename As String '録画ファイルフルパス
+        Public indexofstr As String '重複認識用
+        Public unixtime As Integer '処理開始日時
+        Public process As Process
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            'indexof用
+            Dim pF As String = CType(obj, String) '検索内容を取得
+
+            If pF = "" Then '空白である場合
+                Return False '対象外
+            Else
+                If Me.indexofstr = pF Then '録画ファイル名と一致するか
+                    Return True '一致した
+                Else
+                    Return False '一致しない
+                End If
+            End If
+        End Function
+    End Structure
+
     'サムネイル作成
     Public Function F_make_thumbnail(ByVal num As Integer, ByVal ffmpeg_path As String, ByVal stream_folder As String, ByVal url_path As String, ByVal video_path As String, ByVal ss As String, ByVal w As Integer, ByVal h As Integer) As String
         Dim r As String = ""
@@ -10,9 +33,23 @@
 
         Dim ss2() As Integer = Nothing
 
+        Dim thru_wait As Integer = 0
+
         video_path = filename_escape_recall(video_path) ',エスケープを戻す
 
         If ffmpeg_path.IndexOf("ffmpeg") >= 0 Then
+            'サムネイル作成終了を待たない場合
+            If ss.IndexOf("thru") = 0 Then
+                Try
+                    ss = ss.Substring(4)
+                    thru_wait = 1
+                Catch ex As Exception
+                    'エラー
+                    log1write("サムネイルを作成する秒数指定が不正です")
+                    Return r
+                    Exit Function
+                End Try
+            End If
             '指定秒数
             If ss.IndexOf("per") >= 0 Then
                 '等間隔
@@ -75,33 +112,59 @@
             If file_exist(video_path) = 1 Then
                 If ss2(0) < 0 Then
                     '等間隔
-                    Dim t As DateTime = Now()
-                    log1write(video_path & " 等間隔サムネイルの作成を開始しました")
+                    Dim chk As Integer = -1
+                    If making_per_thumbnail IsNot Nothing Then
+                        chk = Array.IndexOf(making_per_thumbnail, video_path & "." & num.ToString)
+                    End If
+                    If chk < 0 Then
+                        '作成中でなければ
+                        Dim idx As Integer = F_find_making_per_thumbnail_number()
+                        If idx >= 0 Then
+                            '【プロセス監視用】作成中であることを記録
+                            making_per_thumbnail(idx).fullpathfilename = video_path
+                            making_per_thumbnail(idx).indexofstr = video_path & "." & num.ToString
+                            making_per_thumbnail(idx).unixtime = time2unix(Now())
 
-                    ss2(0) = -ss2(0)
+                            Dim t As DateTime = Now()
+                            log1write(video_path & " 等間隔サムネイルの作成を開始しました")
 
-                    Dim filename As String = thumb_filename_noex & "-%04d.jpg"
+                            ss2(0) = -ss2(0)
 
-                    'ProcessStartInfoオブジェクトを作成する
-                    Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
-                    '起動するファイルのパスを指定する
-                    hlsPsi.FileName = ffmpeg_path
-                    'コマンドライン引数を指定する
-                    'http://injury-time.hatenablog.com/entry/2015/01/07/040033
-                    Dim fps2 As Double = ToRoundDown(1 / ss2(0), 10) '小数点10桁にしておくか
-                    hlsPsi.Arguments = "-y -i """ & video_path & """ -filter:v fps=fps=" & fps2 & ":round=down" & wh & " """ & stream_folder & filename & """"
-                    ' コンソール・ウィンドウを開かない
-                    hlsPsi.CreateNoWindow = True
-                    ' シェル機能を使用しない
-                    hlsPsi.UseShellExecute = False
+                            Dim filename As String = thumb_filename_noex & "-%04d.jpg"
 
-                    'アプリケーションを起動する
-                    Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
+                            'ProcessStartInfoオブジェクトを作成する
+                            Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
+                            '起動するファイルのパスを指定する
+                            hlsPsi.FileName = ffmpeg_path
+                            'コマンドライン引数を指定する
+                            'http://injury-time.hatenablog.com/entry/2015/01/07/040033
+                            Dim fps2 As Double = ToRoundDown(1 / ss2(0), 10) '小数点10桁にしておくか
+                            hlsPsi.Arguments = "-y -i """ & video_path & """ -filter:v fps=fps=" & fps2 & ":round=down" & wh & " """ & stream_folder & filename & """"
+                            ' コンソール・ウィンドウを開かない
+                            hlsPsi.CreateNoWindow = True
+                            ' シェル機能を使用しない
+                            hlsPsi.UseShellExecute = False
 
-                    '時間がかかるので終了まで待機しない
+                            'アプリケーションを起動する
+                            Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
 
-                    '成功失敗にかかわらず結果を返す
-                    r = "/" & url_path & filename
+                            '【プロセス監視用】プロセスを記録
+                            making_per_thumbnail(idx).process = hlsProc
+
+                            '時間がかかるので終了まで待機しない
+
+                            '成功失敗にかかわらず結果を返す
+                            r = "/" & url_path & filename
+                        Else
+                            '全件使用中
+                            log1write("【警告】一定間隔サムネイル作成中配列が全て使用中です")
+                            r = ""
+                        End If
+                    Else
+                        '現在作成中
+                        log1write("【警告】同ファイルのサムネイル作成中です。作成を中止しました。num=" & num.ToString)
+                        r = ""
+                    End If
                 Else
                     '秒数指定
                     Dim t As DateTime = Now()
@@ -136,33 +199,39 @@
                                 'アプリケーションを起動する
                                 Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
 
-                                j = 15 * 100 '最大15秒待つ
-                                Try
-                                    While (hlsProc IsNot Nothing AndAlso Not hlsProc.HasExited) And j > 0
-                                        System.Threading.Thread.Sleep(10)
-                                        j -= 1
-                                    End While
-                                    If j > 0 Then
-                                        '待機時間内に終了した
-                                        If file_exist(stream_folder & filename) = 1 Then
-                                            r &= sep1 & "/" & url_path & filename
-                                            sep1 = ","
+                                If thru_wait = 0 Then
+                                    j = 15 * 100 '最大15秒待つ
+                                    Try
+                                        While (hlsProc IsNot Nothing AndAlso Not hlsProc.HasExited) And j > 0
+                                            System.Threading.Thread.Sleep(10)
+                                            j -= 1
+                                        End While
+                                        If j > 0 Then
+                                            '待機時間内に終了した
+                                            If file_exist(stream_folder & filename) = 1 Then
+                                                r &= sep1 & "/" & url_path & filename
+                                                sep1 = ","
+                                            Else
+                                                'ファイルが作成されていない
+                                            End If
                                         Else
-                                            'ファイルが作成されていない
+                                            '時間内に終了しなかった・・これを回数分繰り返すとやばい
+                                            Try
+                                                hlsProc.Kill()
+                                            Catch ex As Exception
+                                            End Try
+                                            log1write("【エラー】サムネイル作成が時間内に終了しませんでした")
+                                            Exit For
                                         End If
-                                    Else
-                                        '時間内に終了しなかった・・これを回数分繰り返すとやばい
-                                        Try
-                                            hlsProc.Kill()
-                                        Catch ex As Exception
-                                        End Try
+                                    Catch ex As Exception
+                                        '存在しないからエラーが出たOK
                                         log1write("【エラー】サムネイル作成が時間内に終了しませんでした")
-                                        Exit For
-                                    End If
-                                Catch ex As Exception
-                                    '存在しないからエラーが出たOK
-                                    log1write("【エラー】サムネイル作成が時間内に終了しませんでした")
-                                End Try
+                                    End Try
+                                Else
+                                    '終了を待たない
+                                    r &= sep1 & "/" & url_path & filename
+                                    sep1 = ","
+                                End If
 
                             Catch ex As Exception
                                 log1write("【エラー】サムネイル作成中にエラーが発生しました。" & ex.Message)
@@ -181,6 +250,34 @@
                 End If
             Else
                 log1write("【エラー】サムネイル作成対象ファイルが見つかりませんでした。" & video_path)
+            End If
+        End If
+
+        Return r
+    End Function
+
+    '使用可能なmaking_per_thumbnail配列indexを返す
+    Public Function F_find_making_per_thumbnail_number() As Integer
+        Dim r As Integer = -1
+        Dim ut As Integer = time2unix(Now())
+        If making_per_thumbnail Is Nothing Then
+            ReDim Preserve making_per_thumbnail(0)
+            r = 0
+        Else
+            For i As Integer = 0 To making_per_thumbnail.Length - 1
+                If making_per_thumbnail(i).fullpathfilename Is Nothing Then
+                    r = 0
+                    Exit For
+                End If
+                If making_per_thumbnail(i).fullpathfilename.Length = 0 Then
+                    r = i
+                    Exit For
+                End If
+            Next
+            If r < 0 Then
+                Dim j As Integer = making_per_thumbnail.Length
+                ReDim Preserve making_per_thumbnail(j)
+                r = j
             End If
         End If
 

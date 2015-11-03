@@ -3168,6 +3168,15 @@ Class WebRemocon
                                                 WI_cmd_reply_force = 1
                                             End If
                                         End If
+                                    Case "WI_SHOW_MAKING_PER_THUMB"
+                                        If making_per_thumbnail IsNot Nothing Then
+                                            For ii2 = 0 To making_per_thumbnail.Length - 1
+                                                If making_per_thumbnail(ii2).indexofstr.Length > 0 Then
+                                                    WI_cmd_reply &= making_per_thumbnail(ii2).fullpathfilename & vbCrLf
+                                                End If
+                                            Next
+                                        End If
+                                        WI_cmd_reply_force = 1
                                     Case "WI_WRITE_LOG"
                                         'ログに出力
                                         If Trim(temp).Length > 0 Then

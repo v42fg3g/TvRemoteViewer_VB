@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.57"
+    Private version As String = "TvRemoteViewer_VB version 1.58"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -127,6 +127,41 @@ Public Class Form1
                     log1write("アイドル時間が" & STOP_IDLEMINUTES.ToString & "分に達しましたので全切断します")
                     Me._worker.stop_movie(-2)
                 End If
+            End If
+
+            'サムネイル作成が終了したかどうかチェック
+            If making_per_thumbnail IsNot Nothing Then
+                Dim ut As Integer = time2unix(Now())
+                For i = 0 To making_per_thumbnail.Length - 1
+                    If making_per_thumbnail(i).indexofstr.Length > 0 Then
+                        Try
+                            If making_per_thumbnail(i).process.HasExited = True Then
+                                '終了している
+                                log1write(making_per_thumbnail(i).fullpathfilename & "の一定間隔サムネイル作成が終了しました")
+                                making_per_thumbnail(i).indexofstr = ""
+                            ElseIf making_per_thumbnail(i).indexofstr.Length > 0 Then
+                                If (ut - making_per_thumbnail(i).unixtime) > stop_per_thumbnail_minutes Then
+                                    '開始して指定秒数以上経過した案件がある場合プロセスを終了させる
+                                    Try
+                                        'プロセスを終了させる
+                                        Try
+                                            making_per_thumbnail(i).process.Kill()
+                                        Catch ex As Exception
+                                        End Try
+                                    Catch ex As Exception
+                                    End Try
+                                    log1write(making_per_thumbnail(i).fullpathfilename & "は等間隔サムネイル作成開始から" & stop_per_thumbnail_minutes.ToString & "秒経過していたので作成プロセスを破棄しました")
+                                    making_per_thumbnail(i).indexofstr = ""
+                                    Exit For
+                                End If
+                            End If
+                        Catch ex As Exception
+                            '存在していない
+                            log1write(making_per_thumbnail(i).fullpathfilename & "の一定間隔サムネイルプロセスが見つかりません")
+                            making_per_thumbnail(i).indexofstr = ""
+                        End Try
+                    End If
+                Next
             End If
 
             chk_timer1 = 0
