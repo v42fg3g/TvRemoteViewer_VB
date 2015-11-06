@@ -147,7 +147,8 @@ Module モジュール_ニコニコ実況
         If sp >= 0 Then
             If s.Length >= 3 Or s = "予告" Then '予告ｷﾀ━が多いため
                 s1 = ")}" & s
-                s2 = ")}" & StrConv(s, VbStrConv.Wide)
+                's2 = ")}" & StrConv(s, VbStrConv.Wide)
+                s2 = s1
             Else
                 s1 = ")}" & s & vbCrLf
                 s2 = ")}" & StrConv(s, VbStrConv.Wide) & vbCrLf
