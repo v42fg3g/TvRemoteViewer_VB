@@ -3256,17 +3256,20 @@ Class WebRemocon
                             '===========================================
                             'WEBページ表示
                             '===========================================
-                            Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
+                            'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
+                            Dim swdata As String = ""
 
                             If StartTv_param = -1 Then
                                 '/StartTvにリクエストがあったがパラメーターが不正な場合
                                 'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
-                                sw.WriteLine(ERROR_PAGE("パラメーターが不正です", "パラメーターが不正です"))
+                                'sw.WriteLine(ERROR_PAGE("パラメーターが不正です", "パラメーターが不正です"))
+                                swdata = ERROR_PAGE("パラメーターが不正です", "パラメーターが不正です")
                                 'sw.Flush()
                                 log1write("パラメーターが不正です")
                             ElseIf WI_cmd_reply.Length > 0 Or WI_cmd_reply_force = 1 Then
                                 'ＷＥＢインターフェース　コマンドの返事を返す
-                                sw.WriteLine(WI_cmd_reply)
+                                'sw.WriteLine(WI_cmd_reply)
+                                swdata = WI_cmd_reply
                             ElseIf request_page = 1 Or request_page = 11 Then
                                 'waitingページを表示する
                                 Dim s As String = ""
@@ -3311,7 +3314,8 @@ Class WebRemocon
                                     'sw.Flush()
                                 End If
 
-                                sw.WriteLine(s)
+                                'sw.WriteLine(s)
+                                swdata = s
 
                             ElseIf request_page = 19 Then
                                 Dim html19 As String = ""
@@ -3326,11 +3330,13 @@ Class WebRemocon
                                 'End If
                                 'End If
                                 'html19 &= "<a href=""WatchTV" & num & ".ts"">WatchTV" & num & ".ts</a>" & vbCrLf
-                                sw.WriteLine(ERROR_PAGE("HTTPストリーミング", html19))
+                                'sw.WriteLine(ERROR_PAGE("HTTPストリーミング", html19))
+                                swdata = ERROR_PAGE("HTTPストリーミング", html19)
                             ElseIf request_page = 12 Then
                                 'VLCはファイル再生未対応
                                 'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
-                                sw.WriteLine(ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません"))
+                                'sw.WriteLine(ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません"))
+                                swdata = ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません")
                                 'sw.Flush()
                                 log1write(num.ToString & ":配信されていません")
                             Else
@@ -3696,22 +3702,40 @@ Class WebRemocon
                                         End If
                                     End While
 
-                                    sw.WriteLine(s)
+                                    'sw.WriteLine(s)
+                                    swdata = s
                                     'sw.Flush()
 
                                     'log1write(path & "へのアクセスを受け付けました")
                                 Else
                                     'ローカルファイルが存在していない
                                     'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
-                                    sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
+                                    'sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
+                                    swdata = ERROR_PAGE("bad request", "ページが見つかりません")
                                     'sw.Flush()
                                     log1write(path & "が見つかりませんでした")
                                 End If
                             End If
 
-                            sw.Flush() 'ここでエラーになることが多い
+                            'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
+                            'sw.WriteLine(swdata)
+                            'sw.Flush() 'ここでエラーになることが多い
+                            'sw.Close()
 
-                            sw.Close()
+                            Dim content As Byte() = System.Text.Encoding.UTF8.GetBytes(swdata)
+                            Try
+                                res.OutputStream.Write(content, 0, content.Length)
+                            Catch ex As Exception
+                                log1write("【エラー】" & "HTML出力に失敗しました。" & ex.Message)
+                                'エラーが起こったら1回だけリトライするか・・
+                                System.Threading.Thread.Sleep(50)
+                                Try
+                                    res.OutputStream.Write(content, 0, content.Length)
+                                    log1write("【リトライ】HTML再出力に成功しました")
+                                Catch ex2 As Exception
+                                    log1write("【エラー】" & "HTML再出力に失敗しました。" & ex2.Message)
+                                End Try
+                            End Try
                         Else
                             'HTML以外なら
                             If File.Exists(path) Then
@@ -3722,15 +3746,15 @@ Class WebRemocon
                                     res.OutputStream.Write(content, 0, content.Length)
                                     'log1write(path & "へのアクセスを受け付けました")
                                 Catch ex As Exception
-                                    log1write("【エラー】" & path & "のバイトデータ発信に失敗しました。" & ex.Message)
+                                    log1write("【エラー】" & path & "のバイトデータ送信に失敗しました。" & ex.Message)
                                     'エラーが起こったら1回だけリトライするか・・
-                                    'System.Threading.Thread.Sleep(50)
-                                    'Try
-                                    'res.OutputStream.Write(content, 0, content.Length)
-                                    'log1write(path & "へのアクセスを受け付けました")
-                                    'Catch ex2 As Exception
-                                    'log1write("【エラー】" & path & "のバイトデータ発信に失敗しました。" & ex2.Message)
-                                    'End Try
+                                    System.Threading.Thread.Sleep(50)
+                                    Try
+                                        res.OutputStream.Write(content, 0, content.Length)
+                                        log1write("【リトライ】" & path & "のバイトデータ再送信に成功しました")
+                                    Catch ex2 As Exception
+                                        log1write("【エラー】" & path & "のバイトデータ再送信に失敗しました。" & ex2.Message)
+                                    End Try
                                 End Try
                             Else
                                 'ローカルファイルが存在していない
