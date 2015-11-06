@@ -2866,9 +2866,6 @@ Class WebRemocon
                             'ページが表示されないことがあるので
                             res.ContentType = "text/html"
 
-                            '反応が速くなるかなとこの1行を前に出してみたが何も変わらなかった・・
-                            Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
-
                             'ToLower小文字で比較
                             Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
                             Dim request_page As Integer = 0 '特別なリクエストかどうか
@@ -3259,6 +3256,8 @@ Class WebRemocon
                             '===========================================
                             'WEBページ表示
                             '===========================================
+                            Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
+
                             If StartTv_param = -1 Then
                                 '/StartTvにリクエストがあったがパラメーターが不正な場合
                                 'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
@@ -3710,7 +3709,7 @@ Class WebRemocon
                                 End If
                             End If
 
-                            sw.Flush()
+                            sw.Flush() 'ここでエラーになることが多い
 
                             sw.Close()
                         Else

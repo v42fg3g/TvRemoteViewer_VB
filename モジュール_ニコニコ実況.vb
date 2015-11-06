@@ -140,18 +140,22 @@ Module モジュール_ニコニコ実況
         Dim ms2 As Long = -1
         Dim buf As Integer = chapter_bufsec '秒前を送る
         Dim margin As Integer = 5 '秒以内に連続して現れれば正しいコメントだと判断
+        Dim s1 As String = ""
+        Dim s2 As String = ""
 
         sp = html.IndexOf("[Events]")
         If sp >= 0 Then
             If s.Length >= 3 Or s = "予告" Then '予告ｷﾀ━が多いため
-                s = ")}" & s
+                s1 = ")}" & s
+                s2 = ")}" & StrConv(s, VbStrConv.Wide)
             Else
-                s = ")}" & s & vbCrLf
+                s1 = ")}" & s & vbCrLf
+                s2 = ")}" & StrConv(s, VbStrConv.Wide) & vbCrLf
             End If
 
-            sp = html.IndexOf(s, sp + 1)
+            sp = indexof2z(html, s1, s2, sp + 1)
             ms1 = get_chapter_mstime(sp, html)
-            sp = html.IndexOf(s, sp + 1)
+            sp = indexof2z(html, s1, s2, sp + 1)
             If ms1 >= 0 Then
                 '1個目が見つかれば
                 While sp > 0
@@ -166,8 +170,34 @@ Module モジュール_ニコニコ実況
                         ms2 = -1
                     End If
 
-                    sp = html.IndexOf(s, sp + 1)
+                    sp = indexof2z(html, s1, s2, sp + 1)
                 End While
+            End If
+        End If
+
+        Return r
+    End Function
+
+    '文章に文字列（半角or全角）が含まれているかチェック
+    Public Function indexof2z(ByRef html As String, ByVal s1 As String, ByVal s2 As String, ByVal sp As Integer) As Integer
+        Dim r As Integer = -1
+
+        If s1 = s2 Then
+            r = html.IndexOf(s1, sp)
+        Else
+            Dim a1 As Integer = html.IndexOf(s1, sp)
+            Dim a2 As Integer = html.IndexOf(s2, sp)
+
+            If a1 >= 0 And a2 >= 0 Then
+                If a1 <= a2 Then
+                    r = a1
+                Else
+                    r = a2
+                End If
+            ElseIf a1 >= 0 Then
+                r = a1
+            ElseIf a2 >= 0 Then
+                r = a2
             End If
         End If
 
@@ -846,13 +876,14 @@ Module モジュール_ニコニコ実況
                                 fjk = sid2jk(fsid, 0)
                                 If fjk.Length > 0 Then
                                     Dim st As Integer = 0 '動画スタート時間
-                                    Try
-                                        '動画ファイル作成日時
-                                        st = time2unix(System.IO.File.GetCreationTime(fullpathfilename))
+                                    '動画ファイル作成日時
+                                    Dim dt As DateTime = get_TOT(fullpathfilename)
+                                    If dt < C_DAY2038 Then
+                                        st = time2unix(dt)
                                         st += (60 * 4) 'ファイルの更新日時＋4分にしておくか
-                                    Catch ex As Exception
+                                    Else
                                         st = 0
-                                    End Try
+                                    End If
                                     If st > 0 Then
                                         targetfile = search_commentfile_in_folder(NicoJK_path & "\" & fjk, st)
                                     End If
@@ -1015,14 +1046,10 @@ Module モジュール_ニコニコ実況
         Dim targetfile As String = ""
 
         If VideoStartTime = C_DAY2038 Or VideoStartTime < CDate("1980/02/01") Then
-            log1write("【警告】コメント開始日時が指定されていません")
-            VideoStartTime = get_TOT(fullpathfilename)
-            If VideoStartTime = C_DAY2038 Then
-                'エラー
-                log1write("【エラー】" & fullpathfilename & "の作成日時取得に失敗しました")
-                Return ""
-                Exit Function
-            End If
+            'エラー
+            log1write("【エラー】" & fullpathfilename & "の作成日時取得に失敗しました")
+            Return ""
+            Exit Function
         End If
 
         Try
