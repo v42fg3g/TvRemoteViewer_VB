@@ -678,6 +678,7 @@ TvRemoteViewer_VB v1.60
 	1.59	NicoJKコメントを探す際に、動画開始時間調査にTOTを使用するにした（以前の移行時に修正漏れ）
 		chapter作成で全角キーワードも調べるようにした
 	1.60	HTML送信時、まれにエラーが起こっていたので送信方法を変更してみた
+		それに伴いiniのHTML_IN_CHARACTER_CODEとHTML_OUT_CHARACTER_CODEを無効にした（UTF-8固定）
 
 
 

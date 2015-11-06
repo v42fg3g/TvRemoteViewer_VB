@@ -1313,10 +1313,11 @@ Class WebRemocon
                                 ALLOW_IDPASS2HTML = Val(youso(1).ToString)
                             Case "FFMPEG_HTTP_CUT_SECONDS"
                                 FFMPEG_HTTP_CUT_SECONDS = Val(youso(1).ToString)
-                            Case "HTML_IN_CHARACTER_CODE"
-                                HTML_IN_CHARACTER_CODE = trim8(youso(1).ToString)
-                            Case "HTML_OUT_CHARACTER_CODE"
-                                HTML_OUT_CHARACTER_CODE = trim8(youso(1).ToString)
+                                '入出力をUTF-8以外のものは扱わないようにした
+                                'Case "HTML_IN_CHARACTER_CODE"
+                                'HTML_IN_CHARACTER_CODE = trim8(youso(1).ToString)
+                                'Case "HTML_OUT_CHARACTER_CODE"
+                                'HTML_OUT_CHARACTER_CODE = trim8(youso(1).ToString)
                             Case "STOP_IDLEMINUTES"
                                 STOP_IDLEMINUTES = Val(youso(1).ToString)
                             Case "VideoSeekDefault"
@@ -3758,9 +3759,15 @@ Class WebRemocon
                                 End Try
                             Else
                                 'ローカルファイルが存在していない
-                                Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
-                                sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
-                                sw.Flush()
+                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
+                                'sw.WriteLine(ERROR_PAGE("bad request", "ページが見つかりません"))
+                                'sw.Flush()
+                                Dim content As Byte() = System.Text.Encoding.UTF8.GetBytes(ERROR_PAGE("bad request", "ページが見つかりません"))
+                                Try
+                                    res.OutputStream.Write(content, 0, content.Length)
+                                Catch ex As Exception
+                                    log1write("【エラー】" & "HTML出力に失敗しました[2]。" & ex.Message)
+                                End Try
                                 log1write(path & "が見つかりませんでした")
                             End If
                         End If
