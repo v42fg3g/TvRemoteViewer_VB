@@ -2713,6 +2713,8 @@ Class WebRemocon
                 Return
             End If
 
+            Dim WI_GET_HTML_output_encstr As String = "" 'WI_GET_HTMLでshift_jisが文字化けする対策
+
             Dim context As HttpListenerContext = listener.EndGetContext(result)
             'D:\TvRemoteViewer\html\WatchTV1.tsが見つかりませんでした
             If context.Request.RawUrl.IndexOf("/WatchTV") >= 0 And Me._hlsApp.IndexOf("ffmpeg.exe") >= 0 Then
@@ -3144,7 +3146,7 @@ Class WebRemocon
                                     Case "WI_GET_HTML"
                                         'HTML取得
                                         If temp.Length > 0 Then
-                                            WI_cmd_reply = Me.WI_GET_HTML(temp)
+                                            WI_cmd_reply = Me.WI_GET_HTML(temp, WI_GET_HTML_output_encstr)
                                             WI_cmd_reply_force = 1
                                         End If
                                     Case "WI_GET_THUMBNAIL"
@@ -3723,7 +3725,18 @@ Class WebRemocon
                             'sw.Flush() 'ここでエラーになることが多い
                             'sw.Close()
 
-                            Dim content As Byte() = System.Text.Encoding.UTF8.GetBytes(swdata)
+                            Dim content As Byte() = Nothing
+                            '出力エンコード
+                            Select Case WI_GET_HTML_output_encstr.ToLower
+                                Case "shift_jis", "sjis"
+                                    content = System.Text.Encoding.GetEncoding(932).GetBytes(swdata)
+                                    'Case "euc-jp"
+                                    'content = System.Text.Encoding.GetEncoding(51932).GetBytes(swdata)
+                                Case Else
+                                    'UTF-8
+                                    content = System.Text.Encoding.UTF8.GetBytes(swdata)
+                            End Select
+
                             Try
                                 res.OutputStream.Write(content, 0, content.Length)
                             Catch ex As Exception
@@ -4462,11 +4475,12 @@ Class WebRemocon
     End Function
 
     'HTMLを取得する
-    Public Function WI_GET_HTML(ByVal temp As String) As String
+    Public Function WI_GET_HTML(ByVal temp As String, ByRef enc_str As String) As String
+        'ByRefでエンコードを返す
         Dim r As String = ""
         Dim d() As String = temp.Split(",")
         Dim method As Integer = 0
-        Dim enc_str As String = ""
+        'Dim enc_str As String = ""
         Dim UserAgent As String = ""
         Dim url As String = ""
         If d.Length >= 4 Then
