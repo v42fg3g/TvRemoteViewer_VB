@@ -1,4 +1,7 @@
 ﻿Module モジュール_その他
+    'html発行方法 0=OutputStream.Write&BYTE() 1=StreamWriter&flush()←旧方式
+    Public html_publish_method As Integer = 0
+
     'EDCBのopenfix機能（チューナー初起動時に一旦違うチャンネルに合わせる）用
     Public openfix_BonSid() As String = Nothing
 

@@ -1406,6 +1406,8 @@ Class WebRemocon
                                 End If
                             Case "log_size"
                                 log_size = Val(youso(1).ToString)
+                            Case "html_publish_method"
+                                html_publish_method = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -3720,36 +3722,42 @@ Class WebRemocon
                                 End If
                             End If
 
-                            'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
-                            'sw.WriteLine(swdata)
-                            'sw.Flush() 'ここでエラーになることが多い
-                            'sw.Close()
+                            If html_publish_method = 1 Then
+                                Try
+                                    Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
+                                    sw.WriteLine(swdata) 'ここでエラーになることがある
+                                    sw.Flush() 'ここでエラーになることがある
+                                    sw.Close()
+                                Catch ex As Exception
+                                    log1write("【エラー】" & "HTML出力に失敗しました(StreamWriter)" & req_Url & " " & ex.Message)
+                                End Try
+                            Else
+                                Dim content As Byte() = Nothing
+                                '出力エンコード
+                                Select Case WI_GET_HTML_output_encstr.ToLower
+                                    Case "shift_jis", "sjis"
+                                        content = System.Text.Encoding.GetEncoding(932).GetBytes(swdata)
+                                        'Case "euc-jp"
+                                        'content = System.Text.Encoding.GetEncoding(51932).GetBytes(swdata)
+                                    Case Else
+                                        'UTF-8
+                                        content = System.Text.Encoding.UTF8.GetBytes(swdata)
+                                End Select
 
-                            Dim content As Byte() = Nothing
-                            '出力エンコード
-                            Select Case WI_GET_HTML_output_encstr.ToLower
-                                Case "shift_jis", "sjis"
-                                    content = System.Text.Encoding.GetEncoding(932).GetBytes(swdata)
-                                    'Case "euc-jp"
-                                    'content = System.Text.Encoding.GetEncoding(51932).GetBytes(swdata)
-                                Case Else
-                                    'UTF-8
-                                    content = System.Text.Encoding.UTF8.GetBytes(swdata)
-                            End Select
-
-                            Try
-                                res.OutputStream.Write(content, 0, content.Length)
-                            Catch ex As Exception
-                                log1write("【エラー】" & "HTML出力に失敗しました。" & ex.Message)
-                                'エラーが起こったら1回だけリトライするか・・
-                                System.Threading.Thread.Sleep(50)
                                 Try
                                     res.OutputStream.Write(content, 0, content.Length)
-                                    log1write("【リトライ】HTML再出力に成功しました")
-                                Catch ex2 As Exception
-                                    log1write("【エラー】" & "HTML再出力に失敗しました。" & ex2.Message)
+                                Catch ex As Exception
+                                    log1write("【エラー】" & "HTML出力に失敗しました。" & req_Url & " " & ex.Message)
+                                    'エラーが起こったら1回だけリトライするか・・
+                                    System.Threading.Thread.Sleep(50)
+                                    Try
+                                        res.OutputStream.Write(content, 0, content.Length)
+                                        log1write("【リトライ】HTML再出力に成功しました")
+                                    Catch ex2 As Exception
+                                        log1write("【エラー】" & "HTML再出力に失敗しました。" & ex2.Message)
+                                    End Try
                                 End Try
-                            End Try
+                            End If
                         Else
                             'HTML以外なら
                             If File.Exists(path) Then
@@ -4505,10 +4513,16 @@ Class WebRemocon
 
                 '.2ch.net以外ははじく
                 Dim chk As Integer = 0
-                If url.IndexOf("://") > 0 And url.IndexOf(".2ch.net/") > 0 And (url.IndexOf("/read.cgi/") > 0 Or url.IndexOf("/subback.html") > 0 Or url.IndexOf("/bbsmenu.html") > 0) Then
-                    '正常
-                    chk = 1
-                Else
+                Dim sp As Integer = url.IndexOf("://")
+                If sp = 4 Or sp = 5 Then
+                    If Instr_pickup(url, "://", "/", 0).indexof(".2ch.net") > 0 Then
+                        If url.IndexOf("/read.cgi/") > 0 Or url.IndexOf("/subback.html") > 0 Or url.IndexOf("/bbsmenu.html") > 0 Then
+                            '正常
+                            chk = 1
+                        End If
+                    End If
+                End If
+                If chk = 0 Then
                     '2ch以外
                     log1write("【警告】" & url & " へのアクセスを拒否しました")
                 End If

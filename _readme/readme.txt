@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.61
+TvRemoteViewer_VB v1.62
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -680,6 +680,8 @@ TvRemoteViewer_VB v1.61
 	1.60	HTML送信時、まれにエラーが起こっていたので送信方法を変更してみた
 		それに伴いiniのHTML_IN_CHARACTER_CODEとHTML_OUT_CHARACTER_CODEを無効にした（UTF-8固定）
 	1.61	1.60で２ちゃん実況が文字化けしていたバグを修正
+	1.62	iniでHTML発行方法を指定できるようにした(html_publish_method)
+		細かい修正
 
 
 
