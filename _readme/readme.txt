@@ -684,6 +684,7 @@ TvRemoteViewer_VB v1.63
 		細かい修正
 	1.63	HTMLテキスト配信エンコードをUTF-8固定とした
 		HTMLテキスト配信方式を1.59以前を標準とすることにした（iniのhtml_publish_methodで変更可能）
+	1.64	html_publish_method=0指定時に一部の環境で文字化けしていた現象に対処
 
 
 

@@ -3736,15 +3736,11 @@ Class WebRemocon
                             Else
                                 Dim content As Byte() = Nothing
                                 '出力エンコード
-                                'Select Case WI_GET_HTML_output_encstr.ToLower
-                                'Case "shift_jis", "sjis"
-                                'content = System.Text.Encoding.GetEncoding(932).GetBytes(swdata)
-                                ''Case "euc-jp"
-                                ''content = System.Text.Encoding.GetEncoding(51932).GetBytes(swdata)
-                                'Case Else
-                                ''UTF-8
-                                'content = System.Text.Encoding.UTF8.GetBytes(swdata)
-                                'End Select
+                                Select WI_GET_HTML_output_encstr.ToLower
+                                    Case "shift_jis", "sjis"
+                                        'charset=Shift_JISのままだと文字化けする
+                                        swdata = swdata.Replace("charset=Shift_JIS", "charset=UTF-8")
+                                End Select
                                 'UTF-8
                                 content = System.Text.Encoding.UTF8.GetBytes(swdata)
 
