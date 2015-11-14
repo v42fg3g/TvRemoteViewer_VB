@@ -1407,7 +1407,9 @@ Class WebRemocon
                             Case "log_size"
                                 log_size = Val(youso(1).ToString)
                             Case "html_publish_method"
-                                html_publish_method = Val(youso(1).ToString)
+                                If IsNumeric(youso(1)) Then
+                                    html_publish_method = Val(youso(1).ToString)
+                                End If
                         End Select
                     End If
                 Catch ex As Exception
@@ -3734,15 +3736,17 @@ Class WebRemocon
                             Else
                                 Dim content As Byte() = Nothing
                                 '出力エンコード
-                                Select Case WI_GET_HTML_output_encstr.ToLower
-                                    Case "shift_jis", "sjis"
-                                        content = System.Text.Encoding.GetEncoding(932).GetBytes(swdata)
-                                        'Case "euc-jp"
-                                        'content = System.Text.Encoding.GetEncoding(51932).GetBytes(swdata)
-                                    Case Else
-                                        'UTF-8
-                                        content = System.Text.Encoding.UTF8.GetBytes(swdata)
-                                End Select
+                                'Select Case WI_GET_HTML_output_encstr.ToLower
+                                'Case "shift_jis", "sjis"
+                                'content = System.Text.Encoding.GetEncoding(932).GetBytes(swdata)
+                                ''Case "euc-jp"
+                                ''content = System.Text.Encoding.GetEncoding(51932).GetBytes(swdata)
+                                'Case Else
+                                ''UTF-8
+                                'content = System.Text.Encoding.UTF8.GetBytes(swdata)
+                                'End Select
+                                'UTF-8
+                                content = System.Text.Encoding.UTF8.GetBytes(swdata)
 
                                 Try
                                     res.OutputStream.Write(content, 0, content.Length)

@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.62"
+    Private version As String = "TvRemoteViewer_VB version 1.63"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -392,6 +392,12 @@ Public Class Form1
         'HTMLキャラクターコード
         log1write("HTML入力キャラクターコード： " & HTML_IN_CHARACTER_CODE)
         log1write("HTML出力キャラクターコード： " & HTML_OUT_CHARACTER_CODE)
+        Select Case html_publish_method
+            Case 0
+                log1write("HTMLテキストをByte()変換のうえOutputStream Write出力するよう設定しました(テスト)。html_publish_method=" & html_publish_method)
+            Case 1
+                log1write("HTMLテキストをStreamWrite WriteLine出力するよう設定しました(旧方式)。html_publish_method=" & html_publish_method)
+        End Select
 
         'ffmpegバッファ
         log1write("ffmepg HTTPストリームバッファ：　" & HTTPSTREAM_FFMPEG_BUFFER & "MB")
