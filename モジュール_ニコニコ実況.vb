@@ -1082,7 +1082,8 @@ Module モジュール_ニコニコ実況
             '出力エンコード
             psi.StandardOutputEncoding = Encoding.UTF8
 
-            psi.Arguments = "/c NicoConvAss.exe """ & txt_file & """ -tx_margin " & margin1 & " -tx_programname 0 -ext .ass -tx_writefolder """ & fileroot & """ -tx_starttime """ & VideoStartTime & """"
+            psi.Arguments = "/c NicoConvAss.exe """ & txt_file & """ -tx_margin " & margin1 & " -tx_programname 0 -ext .ass -tx_writefolder """ & fileroot & """ -tx_starttime """ & VideoStartTime & """ -chapter 0"
+            log1write(psi.Arguments)
             log1write("NicoConvAss実行：" & txt_file & " 動画開始日時：" & VideoStartTime & " 開始マージン：" & margin1 & "秒")
 
             Dim p As System.Diagnostics.Process
