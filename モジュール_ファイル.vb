@@ -210,14 +210,23 @@ Module モジュール_ファイル
         Return s
     End Function
 
-    Public Function str2file(ByVal filename As String, ByVal str As String, Optional ByVal encode As String = "shift_jis") As Integer
+    Public Function str2file(ByVal filename As String, ByVal str As String, Optional ByVal encode As String = "shift_jis", Optional ByVal bom As Integer = 1) As Integer
         Dim r As Integer = 0
         Try
-            Dim sw As New System.IO.StreamWriter(filename, False, System.Text.Encoding.GetEncoding(encode))
-            '内容をすべて書き込む
-            sw.Write(str)
-            '閉じる
-            sw.Close()
+            If bom = 1 Then
+                Dim sw As New System.IO.StreamWriter(filename, False, System.Text.Encoding.GetEncoding(encode))
+                '内容をすべて書き込む
+                sw.Write(str)
+                '閉じる
+                sw.Close()
+            Else
+                'BOM無しで書き込む（ファイルがすでにあるならBOM無しであること）
+                Dim sw As New System.IO.StreamWriter(filename)
+                '内容をすべて書き込む
+                sw.Write(str)
+                '閉じる
+                sw.Close()
+            End If
             r = 1
         Catch ex As Exception
             'ファイルオープンエラー

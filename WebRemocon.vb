@@ -1412,6 +1412,16 @@ Class WebRemocon
                                 End If
                             Case "TOT_get_duration"
                                 TOT_get_duration = Val(youso(1).ToString)
+                                If TOT_get_duration > 0 Then
+                                    log1write("ファイル再生時に動画の長さを調べるようセットしました")
+                                End If
+                            Case "WhiteBrowserWB_path"
+                                WhiteBrowserWB_path = trim8(youso(1).ToString)
+                                If file_exist(WhiteBrowserWB_path) = 1 Then
+                                    log1write("WhiteBrowserのデータベースとして " & WhiteBrowserWB_path & " をセットしました")
+                                Else
+                                    log1write("【エラー】WhiteBrowserのデータベース " & WhiteBrowserWB_path & " が見つかりません")
+                                End If
                         End Select
                     End If
                 Catch ex As Exception
@@ -3542,7 +3552,7 @@ Class WebRemocon
                                     '動画の長さ
                                     If TOT_get_duration > 0 And num > 0 Then
                                         'ストリームからファイル名を取得
-                                        Dim duration As Integer = F_get_duration(num)
+                                        Dim duration As Integer = F_get_file_duration(num)
                                         s = s.Replace("%VIDEODURATION%", duration)
                                     Else
                                         s = s.Replace("%VIDEODURATION%", "0")
@@ -3828,7 +3838,7 @@ Class WebRemocon
     End Sub
 
     'ファイル再生中の動画の長さ（秒）を取得
-    Public Function F_get_duration(ByVal num As Integer) As Integer
+    Public Function F_get_file_duration(ByVal num As Integer) As Integer
         '　本体はProcessManager.vbに
         Return Me._procMan.F_get_file_duration(num)
     End Function
