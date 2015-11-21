@@ -687,6 +687,7 @@ TvRemoteViewer_VB v1.66
 	1.64	html_publish_method=0指定時に一部の環境で文字化けしていた現象に対処
 	1.65	NicoConvAssでchapterのみ作成を選択しているとファイル再生でコメントが流れないバグを修正
 	1.66	iniに動画の長さを取得有無を指定するTOT_get_durationを追加（標準は取得する=1）
+		iniにts以外の動画の長さを取得するためのWhiteBrowserWB_pathを追加
 
 
 
