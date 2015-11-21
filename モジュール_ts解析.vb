@@ -1,4 +1,6 @@
-﻿Module モジュール_ts解析
+﻿Imports System.IO
+
+Module モジュール_ts解析
     Public Structure tot_structure
         Public fullpathfilename As String '録画ファイル名
         Public start_time As DateTime '開始日時
@@ -270,8 +272,16 @@
             r.end_time = tend '一番はじめの記録時間
             r.end_utime = time2unix(tend)
             r.duration = r.end_utime - r.start_utime
-            If r.duration < 150 Or r.duration > (60 * 60 * 10) Then
-                '2分半未満、または10時間以上ならおかしな値なので
+            Dim ext As String = Path.GetExtension(fullpathfilename)
+            If ext.ToLower.IndexOf(".ts") > 0 Then
+                If r.duration < 150 Or r.duration > (60 * 60 * 10) Then
+                    '2分半未満、または10時間以上ならおかしな値なので
+                    r.duration = 0
+                End If
+            Else
+                'ts以外の場合、ファイルの作成日時＆更新日時から推測することはできないため
+                'end_time,end_utimeも同様に不正確だが使用しないのでそのままにしておくか
+                '他の調べ方があるかどうか
                 r.duration = 0
             End If
             r.err = err
