@@ -3376,9 +3376,7 @@ Class WebRemocon
                                     'これらは一括変換できる
 
                                     'ストリーム番号
-                                    If s.IndexOf("%NUM%") >= 0 Then
-                                        s = s.Replace("%NUM%", num.ToString)
-                                    End If
+                                    s = s.Replace("%NUM%", num.ToString)
 
                                     'ストリーム番号セレクト
                                     If s.IndexOf("%SELECTNUM%") >= 0 Then
@@ -3392,12 +3390,10 @@ Class WebRemocon
                                     End If
 
                                     'ユーザー名とパスワード変換
-                                    If s.IndexOf("%IDPASS%") >= 0 Then
-                                        If ALLOW_IDPASS2HTML = 1 And Me._id.Length > 0 And Me._pass.Length > 0 Then
-                                            s = s.Replace("%IDPASS%", Me._id & ":" & Me._pass & "@")
-                                        Else
-                                            s = s.Replace("%IDPASS%", "")
-                                        End If
+                                    If ALLOW_IDPASS2HTML = 1 And Me._id.Length > 0 And Me._pass.Length > 0 Then
+                                        s = s.Replace("%IDPASS%", Me._id & ":" & Me._pass & "@")
+                                    Else
+                                        s = s.Replace("%IDPASS%", "")
                                     End If
 
                                     '%FILEROOT%変換
@@ -3407,14 +3403,12 @@ Class WebRemocon
                                     End If
 
                                     'リダイレクト
-                                    If s.IndexOf("%REDIRECT%") >= 0 Then
-                                        If redirect.Length > 3 Then
-                                            'リダイレクト指定があれば
-                                            s = s.Replace("%REDIRECT%", "<meta http-equiv=""refresh"" content=""0 ; URL=" & redirect & """>")
-                                        Else
-                                            '無ければリダイレクト変数を消す
-                                            s = s.Replace("%REDIRECT%", "")
-                                        End If
+                                    If redirect.Length > 3 Then
+                                        'リダイレクト指定があれば
+                                        s = s.Replace("%REDIRECT%", "<meta http-equiv=""refresh"" content=""0 ; URL=" & redirect & """>")
+                                    Else
+                                        '無ければリダイレクト変数を消す
+                                        s = s.Replace("%REDIRECT%", "")
                                     End If
 
                                     'ファイル選択ページ用
@@ -3428,53 +3422,41 @@ Class WebRemocon
                                         s = s.Replace("%SELECTVIDEO%", shtml)
                                     End If
                                     '%VIDEOFROMDATE%
-                                    If s.IndexOf("%VIDEOFROMDATE%") >= 0 Then
-                                        s = s.Replace("%VIDEOFROMDATE%", VIDEOFROMDATE.ToString("yyyy/MM/dd"))
-                                    End If
+                                    s = s.Replace("%VIDEOFROMDATE%", VIDEOFROMDATE.ToString("yyyy/MM/dd"))
 
                                     '地デジ番組表（通常のネットから取得）
-                                    If s.IndexOf("%TVPROGRAM-D%") >= 0 Then
-                                        If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                                            s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
-                                        Else
-                                            s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
-                                        End If
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                        s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
+                                    Else
+                                        s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
                                     End If
 
                                     'TvRock番組表
-                                    If s.IndexOf("%TVPROGRAM-TVROCK%") >= 0 Then
-                                        If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                                            s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
-                                        Else
-                                            s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
-                                        End If
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                        s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
+                                    Else
+                                        s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
                                     End If
 
                                     'EDCB番組表
-                                    If s.IndexOf("%TVPROGRAM-EDCB%") >= 0 Then
-                                        If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                                            s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
-                                        Else
-                                            s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
-                                        End If
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                        s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
+                                    Else
+                                        s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
                                     End If
 
                                     'ptTimer番組表
-                                    If s.IndexOf("%TVPROGRAM-PTTIMER%") >= 0 Then
-                                        If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                                            s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, Me._NHK_dual_mono_mode))
-                                        Else
-                                            s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, -1))
-                                        End If
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                        s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, Me._NHK_dual_mono_mode))
+                                    Else
+                                        s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, -1))
                                     End If
 
                                     'Tvmaid番組表
-                                    If s.IndexOf("%TVPROGRAM-TVMAID%") >= 0 Then
-                                        If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
-                                            s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, Me._NHK_dual_mono_mode))
-                                        Else
-                                            s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, -1))
-                                        End If
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                        s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, Me._NHK_dual_mono_mode))
+                                    Else
+                                        s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, -1))
                                     End If
 
                                     'ニコニコ実況用jkチャンネル変換
@@ -3512,9 +3494,7 @@ Class WebRemocon
                                     End If
 
                                     'ファイル再生開始シーク秒
-                                    If s.IndexOf("%VIDEOSEEKSECONDS%") >= 0 Then
-                                        s = s.Replace("%VIDEOSEEKSECONDS%", VideoSeekDefault)
-                                    End If
+                                    s = s.Replace("%VIDEOSEEKSECONDS%", VideoSeekDefault)
 
                                     '★表示状態により変換内容変更されるパラメーター
 
@@ -3560,14 +3540,12 @@ Class WebRemocon
                                     End If
 
                                     '動画の長さ
-                                    If s.IndexOf("%VIDEODURATION%") >= 0 Then
-                                        If TOT_get_duration > 0 And num > 0 Then
-                                            'ストリームからファイル名を取得
-                                            Dim duration As Integer = F_get_duration(num)
-                                            s = s.Replace("%VIDEODURATION%", duration)
-                                        Else
-                                            s = s.Replace("%VIDEODURATION%", "0")
-                                        End If
+                                    If TOT_get_duration > 0 And num > 0 Then
+                                        'ストリームからファイル名を取得
+                                        Dim duration As Integer = F_get_duration(num)
+                                        s = s.Replace("%VIDEODURATION%", duration)
+                                    Else
+                                        s = s.Replace("%VIDEODURATION%", "0")
                                     End If
 
                                     'ViewTV.html用
@@ -3660,9 +3638,7 @@ Class WebRemocon
                                         'Else
                                         's = s.Replace("%SUBSTR%", "")
                                         'End If
-                                        If s.IndexOf("%SUBSTR%") >= 0 Then
-                                            s = s.Replace("%SUBSTR%", "")
-                                        End If
+                                        s = s.Replace("%SUBSTR%", "")
                                     End If
 
                                     '配信中簡易リスト
