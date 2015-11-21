@@ -1730,6 +1730,33 @@ Public Class ProcessManager
         Return ichiran
     End Function
 
+    '指定numでファイル再生中の動画の長さ（秒）を返す
+    Public Function F_get_file_duration(ByVal num As Integer) As Integer
+        Dim duration As Integer = 0
+
+        Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
+        If d IsNot Nothing Then
+            For i As Integer = 0 To d.Length - 1
+                If num = Me._list(d(i))._num Then
+                    Dim stream_mode As Integer = Me._list(d(i))._stream_mode
+                    If stream_mode = 1 Or stream_mode = 3 Then
+                        'ファイル再生
+                        Dim fullpathfilename As String = Me._list(d(i))._fullpathfilename
+                        Dim cache_only As Integer = 0
+                        If TOT_get_duration = 2 Then
+                            cache_only = 1
+                        End If
+                        Dim r As tot_structure = TOT_read(fullpathfilename, cache_only)
+                        duration = r.duration
+                    End If
+                    Exit For
+                End If
+            Next
+        End If
+
+        Return duration
+    End Function
+
     '現在配信中のストリーム
     Public Function WI_GET_LIVE_STREAM() As String
         '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE

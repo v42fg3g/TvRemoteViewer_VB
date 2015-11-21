@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.65
+TvRemoteViewer_VB v1.66
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -686,6 +686,7 @@ TvRemoteViewer_VB v1.65
 		HTMLテキスト配信方式を1.59以前を標準とすることにした（iniのhtml_publish_methodで変更可能）
 	1.64	html_publish_method=0指定時に一部の環境で文字化けしていた現象に対処
 	1.65	NicoConvAssでchapterのみ作成を選択しているとファイル再生でコメントが流れないバグを修正
+	1.66	iniに動画の長さを取得有無を指定するTOT_get_durationを追加（標準は取得する=1）
 
 
 

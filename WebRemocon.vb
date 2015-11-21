@@ -1410,6 +1410,8 @@ Class WebRemocon
                                 If IsNumeric(youso(1)) Then
                                     html_publish_method = Val(youso(1).ToString)
                                 End If
+                            Case "TOT_get_duration"
+                                TOT_get_duration = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -1454,6 +1456,7 @@ Class WebRemocon
     '現在のhlsOptをファイル再生用に書き換える
     Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
+        Dim chk_duration As Integer = 0 'TOTで動画の長さを調べた場合は1
 
         filename = filename_escape_recall(filename) ',エスケープを元に戻す
 
@@ -1508,6 +1511,7 @@ Class WebRemocon
                     If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                         '動画の開始日時（微妙な誤差はあるかも）
                         Dim VideoStartTime As DateTime = get_TOT(filename)
+                        chk_duration = 1
                         'txtを探してassに変換してファイル(ass_file)として保存
                         'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
                         Dim txt_file As String = search_NicoJKtxt_file(filename)
@@ -1596,6 +1600,7 @@ Class WebRemocon
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                             '動画の開始日時（微妙な誤差はあるかも）
                             Dim VideoStartTime As DateTime = get_TOT(filename)
+                            chk_duration = 1
                             'txtを探してassに変換してファイル(ass_file)として保存
                             'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
                             Dim txt_file As String = search_NicoJKtxt_file(filename)
@@ -1634,6 +1639,11 @@ Class WebRemocon
             log1write("コメントファイルからchapterファイル作成を試みます")
             'rename_fileが実際のassファイル（フルパス）
             F_make_chapter(filename, rename_file)
+        End If
+
+        '動画の長さを調べていなければ調べる（かつTOT_get_durationが指定されていれば）
+        If chk_duration = 0 And TOT_get_duration > 0 Then
+            Dim vt As DateTime = get_TOT(filename)
         End If
 
         '使用したファイル名を記録
@@ -3549,6 +3559,17 @@ Class WebRemocon
                                         s = s.Replace("%SELECTRESOLUTION%", selectresolution)
                                     End If
 
+                                    '動画の長さ
+                                    If s.IndexOf("%VIDEODURATION%") >= 0 Then
+                                        If TOT_get_duration > 0 And num > 0 Then
+                                            'ストリームからファイル名を取得
+                                            Dim duration As Integer = F_get_duration(num)
+                                            s = s.Replace("%VIDEODURATION%", duration)
+                                        Else
+                                            s = s.Replace("%VIDEODURATION%", "0")
+                                        End If
+                                    End If
+
                                     'ViewTV.html用
                                     If chk_viewtv_ok = 1 And num > 0 Then
                                         '配信中ならば
@@ -3829,6 +3850,12 @@ Class WebRemocon
             log1write(ex.ToString())
         End Try
     End Sub
+
+    'ファイル再生中の動画の長さ（秒）を取得
+    Public Function F_get_duration(ByVal num As Integer) As Integer
+        '　本体はProcessManager.vbに
+        Return Me._procMan.F_get_file_duration(num)
+    End Function
 
     'すでに配信中のストリームでBonDriverが使われていれば該当numを返す。使われていなければそのままのnumを返す
     Public Function GET_num_check_BonDriver(ByVal num As Integer, ByVal bondriver As String) As Integer
