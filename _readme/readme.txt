@@ -195,6 +195,7 @@ TvRemoteViewer_VB v1.66
 	%rc-host%	"127.0.0.1:%UDPPORT%"に変換されます。
 	%NUM%		ストリームナンバー
 	%VIDEOFILE%	ビデオファイルに変換（実際は「-i %VIDEOFILE%」の決め打ちで-iの後ろの文字列がファイル名に変換）
+	%VIDEODURATION%	ビデオの長さ(秒)　不明な場合は0
 
 	・StartTv.html呼び出し時のオプション	
 	hlsOptAdd	配信時のHLSオプションに動的にパラメーターを追加できます
@@ -688,6 +689,7 @@ TvRemoteViewer_VB v1.66
 	1.65	NicoConvAssでchapterのみ作成を選択しているとファイル再生でコメントが流れないバグを修正
 	1.66	iniに動画の長さを取得有無を指定するTOT_get_durationを追加（標準は取得する=1）
 		iniにts以外の動画の長さを取得するためのWhiteBrowserWB_pathを追加
+		HTML内の%VIDEODURATION%を動画の長さ(秒)に変換するようにした。わからない場合は0
 
 
 

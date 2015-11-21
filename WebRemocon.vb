@@ -1421,6 +1421,7 @@ Class WebRemocon
                                     log1write("WhiteBrowserのデータベースとして " & WhiteBrowserWB_path & " をセットしました")
                                 Else
                                     log1write("【エラー】WhiteBrowserのデータベース " & WhiteBrowserWB_path & " が見つかりません")
+                                    WhiteBrowserWB_path = ""
                                 End If
                         End Select
                     End If
