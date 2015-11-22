@@ -1,4 +1,5 @@
 ﻿Imports System.IO
+Imports System.Text
 
 Module モジュール_ts解析
     Public Structure tot_structure
@@ -31,16 +32,16 @@ Module モジュール_ts解析
 
     Public TOT_get_duration As Integer = 1 '動画の長さを調べるか1=必ず調べる　2=キャッシュからのみ調べる
 
-    Public Function get_TOT(ByVal fullpathfilename As String) As DateTime
+    Public Function get_TOT(ByVal fullpathfilename As String, ByVal ffmpeg_path As String) As DateTime
         Dim r As DateTime = C_DAY2038
-        Dim f As tot_structure = TOT_read(fullpathfilename)
+        Dim f As tot_structure = TOT_read(fullpathfilename, ffmpeg_path)
 
         r = f.start_time
 
         Return r
     End Function
 
-    Public Function TOT_read(ByVal fullpathfilename As String) As tot_structure
+    Public Function TOT_read(ByVal fullpathfilename As String, ByVal ffmpeg_path As String) As tot_structure
         Dim r As tot_structure = Nothing
         Dim t2 As DateTime = C_DAY2038
         Dim t2_end As DateTime = CDate("1970/01/02")
@@ -67,7 +68,7 @@ Module モジュール_ts解析
             log1write(fullpathfilename & "の開始時間をキャッシュから取得しました")
         Else
             '新規登録
-            r = F_ts2tot(fullpathfilename, t2, t2_end)
+            r = F_ts2tot(fullpathfilename, t2, t2_end, ffmpeg_path)
             If r.err = 0 Then
                 TOT_cache_index += 1
                 If TOT_cache_index > TOT_cache_max Then
@@ -88,7 +89,7 @@ Module モジュール_ts解析
     End Function
 
     'tsファイルから開始時刻を取得する t2は予備としてファイル作成日を指定
-    Public Function F_ts2tot(ByVal fullpathfilename As String, ByVal t2 As DateTime, ByVal t2_end As DateTime) As tot_structure
+    Public Function F_ts2tot(ByVal fullpathfilename As String, ByVal t2 As DateTime, ByVal t2_end As DateTime, ByVal ffmpeg_path As String) As tot_structure
         Dim r As tot_structure = Nothing
 
         Dim ext As String = Path.GetExtension(fullpathfilename)
@@ -284,14 +285,19 @@ Module モジュール_ts解析
         Else
             'TS以外
             'ts以外の場合、ファイルの作成日時＆更新日時から推測することはできないため
-            'WhiteBrowerのデータベースから長さを取得する
+            'ffprobe.exeから長さを取得する
             If TOT_get_duration > 0 Then
-                Dim duration As Integer = F_get_mp4_length_from_WhiteBrowserDB(fullpathfilename)
+                'Dim duration As Integer = F_get_mp4_length_from_WhiteBrowserDB(fullpathfilename)
+                Dim duration As Integer = F_get_mp4_length_from_ffprobe(fullpathfilename, ffmpeg_path)
                 If duration >= 150 And duration <= (60 * 60 * 10) Then
                     '正常に取得できていれば
                     'その他データと合わせて結果を返す
                     r.fullpathfilename = fullpathfilename
-                    r.start_time = C_DAY2038 'ダミーデータ
+                    Try
+                        r.start_time = System.IO.File.GetCreationTime(fullpathfilename)
+                    Catch ex As Exception
+                        r.start_time = C_DAY2038 'ダミーデータ
+                    End Try
                     r.start_utime = time2unix(r.start_time)
                     r.duration = duration
                     r.err = 0
@@ -309,4 +315,73 @@ Module モジュール_ts解析
         Return r
     End Function
 
+    'mp4等の長さ（秒）ffprobe.exe使用
+    Public Function F_get_mp4_length_from_ffprobe(ByVal fullpathfilename As String, ByVal ffmpeg_path As String) As Integer
+        Dim r As Integer = 0
+
+        If ffmpeg_path.IndexOf("ffmpeg.exe") >= 0 Then
+            Try
+                Dim f_path As String = Path.GetDirectoryName(ffmpeg_path)
+                Dim ffprobe_path As String = f_path & "\ffprobe.exe"
+
+                If file_exist(ffprobe_path) = 1 Then
+                    'カレントディレクトリ変更
+                    Try
+                        Directory.SetCurrentDirectory(f_path) 'カレントディレクトリ変更
+                    Catch ex As Exception
+                        '設定しないうちにスタートしようとすると例外が起こる
+                        Return r
+                        Exit Function
+                    End Try
+
+                    Dim results As String = ""
+                    Dim psi As New System.Diagnostics.ProcessStartInfo()
+
+                    psi.FileName = System.Environment.GetEnvironmentVariable("ComSpec") 'ComSpecのパスを取得する
+                    psi.RedirectStandardInput = False '出力を読み取れるようにする
+                    psi.RedirectStandardError = True
+                    psi.UseShellExecute = False
+                    psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
+                    'psi.StandardOutputEncoding = Encoding.UTF8
+
+                    psi.Arguments = "/c ffprobe.exe """ & fullpathfilename & """"
+
+                    Dim p As System.Diagnostics.Process
+                    Try
+                        p = System.Diagnostics.Process.Start(psi)
+                        '出力を読み取る
+                        results = p.StandardError.ReadToEnd
+                        'WaitForExitはReadToEndの後である必要がある
+                        '(親プロセス、子プロセスでブロック防止のため)
+                        p.WaitForExit(10000)
+                    Catch ex As Exception
+                        log1write("【エラー】pprobe.exeの実行に失敗しました")
+                    End Try
+
+                    If results.IndexOf("Duration:") > 0 Then
+                        Dim jifunbyou As String = Trim(Instr_pickup(results, "Duration:", ".", 0))
+                        Dim d() As String = jifunbyou.Split(":")
+                        If d.Length = 3 Then
+                            r = Val(d(0)) * (60 * 60) + Val(d(1)) * 60 + Val(d(2))
+                        Else
+                            log1write("【エラー】ffprobeによるDuration形式が不正です。" & jifunbyou)
+                        End If
+                    Else
+                        log1write("【エラー】ffprobeによるDuration取得に失敗しました")
+                    End If
+
+                    'カレントディレクトリ変更
+                    F_set_ppath4program()
+                Else
+                    log1write("【エラー】ffmpegフォルダにffprobe.exeが見つかりません")
+                End If
+            Catch ex As Exception
+                log1write("【エラー】fprobe.exe実行中にエラーが発生しました。" & ex.Message)
+            End Try
+        Else
+            log1write("HLSアプリとしてffmpeg以外を使用している場合、動画情報を取得することはできません")
+        End If
+
+        Return r
+    End Function
 End Module

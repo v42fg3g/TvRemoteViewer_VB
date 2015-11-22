@@ -850,7 +850,7 @@ Module モジュール_ニコニコ実況
     End Function
 
     '.tsファイル名からニコニココメントファイル.txtか.xmlを取得
-    Public Function search_NicoJKtxt_file(ByVal fullpathfilename As String) As String
+    Public Function search_NicoJKtxt_file(ByVal fullpathfilename As String, ByVal ffmpeg_path As String) As String
         Dim filepath As String = ""
         Dim filename As String = ""
         Dim fileext As String = ""
@@ -878,7 +878,7 @@ Module モジュール_ニコニコ実況
                                 If fjk.Length > 0 Then
                                     Dim st As Integer = 0 '動画スタート時間
                                     '動画ファイル作成日時
-                                    Dim dt As DateTime = get_TOT(fullpathfilename)
+                                    Dim dt As DateTime = get_TOT(fullpathfilename, ffmpeg_path)
                                     If dt < C_DAY2038 Then
                                         st = time2unix(dt)
                                         st += (60 * 4) 'ファイルの更新日時＋4分にしておくか

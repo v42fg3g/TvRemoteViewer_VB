@@ -1742,7 +1742,7 @@ Public Class ProcessManager
                     If stream_mode = 1 Or stream_mode = 3 Then
                         'ファイル再生
                         Dim fullpathfilename As String = Me._list(d(i))._fullpathfilename
-                        Dim r As tot_structure = TOT_read(fullpathfilename)
+                        Dim r As tot_structure = TOT_read(fullpathfilename, Me._list(d(i))._hlsApp)
                         duration = r.duration
                     End If
                     Exit For

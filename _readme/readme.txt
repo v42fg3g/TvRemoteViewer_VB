@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.66
+TvRemoteViewer_VB v1.67
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -690,6 +690,8 @@ TvRemoteViewer_VB v1.66
 	1.66	iniに動画の長さを取得有無を指定するTOT_get_durationを追加（標準は取得する=1）
 		iniにts以外の動画の長さを取得するためのWhiteBrowserWB_pathを追加
 		HTML内の%VIDEODURATION%を動画の長さ(秒)に変換するようにした。わからない場合は0
+	1.67	iniのWhiteBrowserWB_pathを廃止
+		ts以外の動画の長さ取得にffprobe.exeを使用するようにした(ffmpeg.exeと同じフォルダに既に存在）
 
 
 

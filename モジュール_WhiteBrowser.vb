@@ -1,6 +1,7 @@
 ﻿Imports System.Text
 Imports System.IO
 
+'■未使用
 Module モジュール_WhiteBrowser
     Public WhiteBrowserWB_path As String = ""
 

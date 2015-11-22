@@ -1521,11 +1521,11 @@ Class WebRemocon
                 If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                     If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                         '動画の開始日時（微妙な誤差はあるかも）
-                        Dim VideoStartTime As DateTime = get_TOT(filename)
+                        Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp)
                         chk_duration = 1
                         'txtを探してassに変換してファイル(ass_file)として保存
                         'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
-                        Dim txt_file As String = search_NicoJKtxt_file(filename)
+                        Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
                         If txt_file.Length > 0 Then
                             'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
                             ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
@@ -1610,11 +1610,11 @@ Class WebRemocon
                     If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                             '動画の開始日時（微妙な誤差はあるかも）
-                            Dim VideoStartTime As DateTime = get_TOT(filename)
+                            Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp)
                             chk_duration = 1
                             'txtを探してassに変換してファイル(ass_file)として保存
                             'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
-                            Dim txt_file As String = search_NicoJKtxt_file(filename)
+                            Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
                             If txt_file.Length > 0 Then
                                 'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
                                 ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
@@ -1654,7 +1654,7 @@ Class WebRemocon
 
         '動画の長さを調べていなければ調べる（かつTOT_get_durationが指定されていれば）
         If chk_duration = 0 And TOT_get_duration > 0 Then
-            Dim vt As DateTime = get_TOT(filename)
+            Dim vt As DateTime = get_TOT(filename, Me._hlsApp)
         End If
 
         '使用したファイル名を記録
