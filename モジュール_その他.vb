@@ -1,4 +1,7 @@
 ﻿Module モジュール_その他
+    'Android UCブラウザのようにRefreshの解釈が違うブラウザ対策
+    Public meta_refresh_fix As Integer = 0
+
     'html発行方法 0=OutputStream.Write&BYTE() 1=StreamWriter&flush()←旧方式
     Public html_publish_method As Integer = 1
 

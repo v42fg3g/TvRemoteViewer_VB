@@ -74,7 +74,7 @@ Module モジュール_ts解析
                 If TOT_cache_index > TOT_cache_max Then
                     TOT_cache_index = 0
                 End If
-                TOT_cache(TOT_cache_index).fullpathfilename = r.fullpathfilename
+                TOT_cache(TOT_cache_index).fullpathfilename = fullpathfilename
                 TOT_cache(TOT_cache_index).start_time = r.start_time
                 TOT_cache(TOT_cache_index).start_utime = r.start_utime
                 TOT_cache(TOT_cache_index).err = r.err
@@ -91,6 +91,7 @@ Module モジュール_ts解析
     'tsファイルから開始時刻を取得する t2は予備としてファイル作成日を指定
     Public Function F_ts2tot(ByVal fullpathfilename As String, ByVal t2 As DateTime, ByVal t2_end As DateTime, ByVal ffmpeg_path As String) As tot_structure
         Dim r As tot_structure = Nothing
+        Debug.Print("[" & fullpathfilename & "]")
 
         Dim ext As String = Path.GetExtension(fullpathfilename)
         If ext = ".ts" Then

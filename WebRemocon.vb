@@ -1423,6 +1423,8 @@ Class WebRemocon
                                     log1write("【エラー】WhiteBrowserのデータベース " & WhiteBrowserWB_path & " が見つかりません")
                                     WhiteBrowserWB_path = ""
                                 End If
+                            Case "meta_refresh_fix"
+                                meta_refresh_fix = Val(youso(1).ToString)
                         End Select
                     End If
                 Catch ex As Exception
@@ -3312,6 +3314,22 @@ Class WebRemocon
                                     End If
                                     s = s.Replace("%WAITING%", waitmessage)
                                     s = s.Replace("%NUM%", num.ToString)
+                                    If meta_refresh_fix = 1 Then
+                                        '<head>にrefreshスクリプトを追加
+                                        Dim rsec As Integer = Val(Trim(Instr_pickup(s, "refresh"" content=""", ";", 0)))
+                                        If rsec = 0 Then
+                                            rsec = 1
+                                        End If
+                                        Dim jstr As String = "<script type=""text/javascript"">" & vbCrLf
+                                        jstr &= "function AutoJump(){location.href=""ViewTV" & num.ToString & ".html"";}" & vbCrLf
+                                        jstr &= "</script>" & vbCrLf
+                                        jstr &= "</head"
+                                        s = s.Replace("</head", jstr)
+                                        Dim sp As Integer = s.IndexOf("<meta http-equiv=""refresh""")
+                                        Dim sp2 As Integer = s.IndexOf(">", sp)
+                                        s = s.Substring(0, sp) & "<!--refresh fix--" & s.Substring(sp2)
+                                        s = s.Replace("<body", "<body onLoad=""javascript:setTimeout('AutoJump()'," & (rsec * 1000).ToString & ");"" ")
+                                    End If
                                 Else
                                     '従来通り
                                     'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE & vbcrlf)
@@ -3321,9 +3339,17 @@ Class WebRemocon
                                     s &= "<title>Waiting " & num.ToString & "</title>" & vbCrLf
                                     s &= "<meta http-equiv=""Content-Type"" content=""text/html; charset=" & HTML_OUT_CHARACTER_CODE & """ />" & vbCrLf
                                     's &= "<meta name=""viewport"" content=""width=device-width"">" & vbcrlf
-                                    s &= "<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">" & vbCrLf
-                                    s &= "</head>" & vbCrLf
-                                    s &= "<body>" & vbCrLf
+                                    If meta_refresh_fix = 1 Then
+                                        s &= "<script type=""text/javascript"">" & vbCrLf
+                                        s &= "function AutoJump(){location.href=""ViewTV" & num.ToString & ".html"";}" & vbCrLf
+                                        s &= "</script>" & vbCrLf
+                                        s &= "</head>" & vbCrLf
+                                        s &= "<body onLoad=""javascript:setTimeout('AutoJump()',1000);"">" & vbCrLf
+                                    Else
+                                        s &= "<meta http-equiv=""refresh"" content=""1 ; URL=ViewTV" & num.ToString & ".html"">" & vbCrLf
+                                        s &= "</head>" & vbCrLf
+                                        s &= "<body>" & vbCrLf
+                                    End If
                                     If request_page = 1 Then
                                         s &= "配信準備中です..(" & check_m3u8_ts.ToString & " & vbcrlf" & vbCrLf
                                         log1write(num.ToString & ":配信準備中です")
@@ -3416,7 +3442,16 @@ Class WebRemocon
                                     'リダイレクト
                                     If redirect.Length > 3 Then
                                         'リダイレクト指定があれば
-                                        s = s.Replace("%REDIRECT%", "<meta http-equiv=""refresh"" content=""0 ; URL=" & redirect & """>")
+                                        If meta_refresh_fix = 1 Then
+                                            Dim rsec As Integer = Val(Trim(Instr_pickup(s, "refresh"" content=""", ";", 0)))
+                                            Dim jstr As String = "<script type=""text/javascript"">" & vbCrLf
+                                            jstr &= "function AutoJump(){location.href=""" & redirect & """;}" & vbCrLf
+                                            jstr &= "</script>"
+                                            s = s.Replace("%REDIRECT%", jstr)
+                                            s = s.Replace("<body", "<body onLoad=""javascript:setTimeout('AutoJump()'," & (rsec * 1000).ToString & ");"" ")
+                                        Else
+                                            s = s.Replace("%REDIRECT%", "<meta http-equiv=""refresh"" content=""0 ; URL=" & redirect & """>")
+                                        End If
                                     Else
                                         '無ければリダイレクト変数を消す
                                         s = s.Replace("%REDIRECT%", "")
@@ -3744,7 +3779,7 @@ Class WebRemocon
                             Else
                                 Dim content As Byte() = Nothing
                                 '出力エンコード
-                                Select WI_GET_HTML_output_encstr.ToLower
+                                Select Case WI_GET_HTML_output_encstr.ToLower
                                     Case "shift_jis", "sjis"
                                         'charset=Shift_JISのままだと文字化けする
                                         swdata = swdata.Replace("charset=Shift_JIS", "charset=UTF-8")
