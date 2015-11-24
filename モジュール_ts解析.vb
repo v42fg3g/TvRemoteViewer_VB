@@ -91,7 +91,6 @@ Module モジュール_ts解析
     'tsファイルから開始時刻を取得する t2は予備としてファイル作成日を指定
     Public Function F_ts2tot(ByVal fullpathfilename As String, ByVal t2 As DateTime, ByVal t2_end As DateTime, ByVal ffmpeg_path As String) As tot_structure
         Dim r As tot_structure = Nothing
-        Debug.Print("[" & fullpathfilename & "]")
 
         Dim ext As String = Path.GetExtension(fullpathfilename)
         If ext = ".ts" Then

@@ -208,11 +208,17 @@
                                         End While
                                         If j > 0 Then
                                             '待機時間内に終了した
-                                            If file_exist(stream_folder & filename) = 1 Then
-                                                r &= sep1 & "/" & url_path & filename
-                                                sep1 = ","
-                                            Else
+                                            r &= sep1 & "/" & url_path & filename
+                                            sep1 = ","
+                                            'ファイルができるまで待つ
+                                            Dim k As Integer = 10 * 20 '最大10秒待つ
+                                            System.Threading.Thread.Sleep(10)
+                                            While file_exist(stream_folder & filename) = 0 And k > 0
+                                                System.Threading.Thread.Sleep(50)
+                                            End While
+                                            If k = 0 Then
                                                 'ファイルが作成されていない
+                                                log1write("【エラー】作成されたはずのサムネイルが見つかりません")
                                             End If
                                         Else
                                             '時間内に終了しなかった・・これを回数分繰り返すとやばい
@@ -225,7 +231,7 @@
                                         End If
                                     Catch ex As Exception
                                         '存在しないからエラーが出たOK
-                                        log1write("【エラー】サムネイル作成が時間内に終了しませんでした")
+                                        log1write("【エラー】サムネイル作成中にエラーが発生しました[B]。" & ex.Message)
                                     End Try
                                 Else
                                     '終了を待たない
