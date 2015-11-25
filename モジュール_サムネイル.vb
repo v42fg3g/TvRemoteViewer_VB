@@ -1,6 +1,4 @@
 ﻿Module モジュール_サムネイル
-    Public making_thumbnail(MAX_STREAM_NUMBER) As Integer '作成中なら1
-
     Public stop_per_thumbnail_minutes As Integer = 60 * 30 '一定間隔サムネイル作成を最大何秒待つか 30分
     Public making_per_thumbnail() As making_thumbnail_structure '一定間隔サムネイル作成中かどうか
     Public Structure making_thumbnail_structure
@@ -172,83 +170,71 @@
 
                     Dim sep1 As String = ""
                     For i = 0 To ss2.Length - 1
-                        If making_thumbnail(num) = 0 Then
-                            Try
-                                If num > 0 Then
-                                    making_thumbnail(num) = 1 '作成中
-                                End If
+                        Try
+                            Dim filename As String = ""
+                            If ss.IndexOf(":") >= 0 Then
+                                filename = thumb_filename_noex & "." & ss2(i) & ".jpg"
+                            Else
+                                filename = thumb_filename_noex & ".jpg"
+                            End If
 
-                                Dim filename As String = ""
-                                If ss.IndexOf(":") >= 0 Then
-                                    filename = thumb_filename_noex & "." & ss2(i) & ".jpg"
-                                Else
-                                    filename = thumb_filename_noex & ".jpg"
-                                End If
+                            'ProcessStartInfoオブジェクトを作成する
+                            Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
+                            '起動するファイルのパスを指定する
+                            hlsPsi.FileName = ffmpeg_path
+                            'コマンドライン引数を指定する
+                            hlsPsi.Arguments = "-y -ss " & ss2(i) & " -i """ & video_path & """ -vframes 1 -f image2" & wh & " """ & stream_folder & filename & """"
+                            ' コンソール・ウィンドウを開かない
+                            hlsPsi.CreateNoWindow = True
+                            ' シェル機能を使用しない
+                            hlsPsi.UseShellExecute = False
 
-                                'ProcessStartInfoオブジェクトを作成する
-                                Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
-                                '起動するファイルのパスを指定する
-                                hlsPsi.FileName = ffmpeg_path
-                                'コマンドライン引数を指定する
-                                hlsPsi.Arguments = "-y -ss " & ss2(i) & " -i """ & video_path & """ -vframes 1 -f image2" & wh & " """ & stream_folder & filename & """"
-                                ' コンソール・ウィンドウを開かない
-                                hlsPsi.CreateNoWindow = True
-                                ' シェル機能を使用しない
-                                hlsPsi.UseShellExecute = False
+                            'アプリケーションを起動する
+                            Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
 
-                                'アプリケーションを起動する
-                                Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
-
-                                If thru_wait = 0 Then
-                                    j = 15 * 100 '最大15秒待つ
-                                    Try
-                                        While (hlsProc IsNot Nothing AndAlso Not hlsProc.HasExited) And j > 0
-                                            System.Threading.Thread.Sleep(10)
-                                            j -= 1
+                            If thru_wait = 0 Then
+                                j = 15 * 100 '最大15秒待つ
+                                Try
+                                    While (hlsProc IsNot Nothing AndAlso Not hlsProc.HasExited) And j > 0
+                                        System.Threading.Thread.Sleep(10)
+                                        j -= 1
+                                    End While
+                                    If j > 0 Then
+                                        '待機時間内に終了した
+                                        r &= sep1 & "/" & url_path & filename
+                                        sep1 = ","
+                                        'ファイルができるまで待つ
+                                        Dim k As Integer = 10 * 20 '最大10秒待つ
+                                        System.Threading.Thread.Sleep(10)
+                                        While file_exist(stream_folder & filename) = 0 And k > 0
+                                            System.Threading.Thread.Sleep(50)
                                         End While
-                                        If j > 0 Then
-                                            '待機時間内に終了した
-                                            r &= sep1 & "/" & url_path & filename
-                                            sep1 = ","
-                                            'ファイルができるまで待つ
-                                            Dim k As Integer = 10 * 20 '最大10秒待つ
-                                            System.Threading.Thread.Sleep(10)
-                                            While file_exist(stream_folder & filename) = 0 And k > 0
-                                                System.Threading.Thread.Sleep(50)
-                                            End While
-                                            If k = 0 Then
-                                                'ファイルが作成されていない
-                                                log1write("【エラー】作成されたはずのサムネイルが見つかりません")
-                                            End If
-                                        Else
-                                            '時間内に終了しなかった・・これを回数分繰り返すとやばい
-                                            Try
-                                                hlsProc.Kill()
-                                            Catch ex As Exception
-                                            End Try
-                                            log1write("【エラー】サムネイル作成が時間内に終了しませんでした")
-                                            Exit For
+                                        If k = 0 Then
+                                            'ファイルが作成されていない
+                                            log1write("【エラー】作成されたはずのサムネイルが見つかりません")
                                         End If
-                                    Catch ex As Exception
-                                        '存在しないからエラーが出たOK
-                                        log1write("【エラー】サムネイル作成中にエラーが発生しました[B]。" & ex.Message)
-                                    End Try
-                                Else
-                                    '終了を待たない
-                                    r &= sep1 & "/" & url_path & filename
-                                    sep1 = ","
-                                End If
+                                    Else
+                                        '時間内に終了しなかった・・これを回数分繰り返すとやばい
+                                        Try
+                                            hlsProc.Kill()
+                                        Catch ex As Exception
+                                        End Try
+                                        log1write("【エラー】サムネイル作成が時間内に終了しませんでした")
+                                        Exit For
+                                    End If
+                                Catch ex As Exception
+                                    '存在しないからエラーが出たOK
+                                    log1write("【エラー】サムネイル作成中にエラーが発生しました[B]。" & ex.Message)
+                                End Try
+                            Else
+                                '終了を待たない
+                                r &= sep1 & "/" & url_path & filename
+                                sep1 = ","
+                            End If
 
-                            Catch ex As Exception
-                                log1write("【エラー】サムネイル作成中にエラーが発生しました。" & ex.Message)
-                            Finally
-                                making_thumbnail(num) = 0 '作業終了
-                            End Try
-                        Else
-                            '現在作成中
-                            log1write("【警告】同ストリームでサムネイル作成中です。作成を中止しました。num=" & num.ToString)
-                            r = ""
-                        End If
+                        Catch ex As Exception
+                            log1write("【エラー】サムネイル作成中にエラーが発生しました。" & ex.Message)
+                        End Try
                     Next
 
                     t = Now()
