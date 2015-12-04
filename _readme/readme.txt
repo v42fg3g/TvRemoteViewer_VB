@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.70
+TvRemoteViewer_VB v1.71
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -695,6 +695,7 @@ TvRemoteViewer_VB v1.70
 	1.68	iniにmetaタグRefresh記述を変更するmeta_refresh_fixを追加（Android UCブラウザ対策）
 	1.69	サムネイル作成確認をきちんと行うようにした
 	1.70	短時間に連続でサムネイル作成しようとすると失敗が続いてしまう現象に対処
+	1.71	NicoJKコメントファイル検索ルーチンを修正
 
 
 
