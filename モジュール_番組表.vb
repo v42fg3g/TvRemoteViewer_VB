@@ -1827,7 +1827,12 @@ Module モジュール_番組表
                     Dim adList As System.Net.IPAddress() = iphe.AddressList
 
                     If adList IsNot Nothing Then
-                        r = adList(0).ToString
+                        For i As Integer = 0 To adList.Length - 1
+                            If adList(i).ToString.IndexOf(".") > 0 Then
+                                r = adList(i).ToString
+                                Exit For
+                            End If
+                        Next
                     End If
                 Catch ex As Exception
                     log1write("【エラー】iniのTvProgram_EDCB_urlで指定された" & url & "のIPアドレス変換に失敗しました")
