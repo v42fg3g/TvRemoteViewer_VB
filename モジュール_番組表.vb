@@ -1828,7 +1828,7 @@ Module モジュール_番組表
 
                     If adList IsNot Nothing Then
                         For i As Integer = 0 To adList.Length - 1
-                            If adList(i).ToString.IndexOf(".") > 0 Then
+                            If adList(i).AddressFamily = Sockets.AddressFamily.InterNetwork Then
                                 r = adList(i).ToString
                                 Exit For
                             End If
@@ -1837,18 +1837,6 @@ Module モジュール_番組表
                 Catch ex As Exception
                     log1write("【エラー】iniのTvProgram_EDCB_urlで指定された" & url & "のIPアドレス変換に失敗しました")
                 End Try
-            End If
-
-            '最後にipかどうかチェック
-            Dim d2() As String = r.Split(".")
-            If d2.Length = 4 Then
-                If IsNumeric(d2(0)) And IsNumeric(d2(1)) And IsNumeric(d2(2)) And IsNumeric(d2(3)) Then
-                    'OK
-                Else
-                    r = url
-                End If
-            Else
-                r = url
             End If
         End If
 
