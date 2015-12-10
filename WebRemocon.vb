@@ -4637,6 +4637,11 @@ Class WebRemocon
 
         Return r
     End Function
+
+    '本体はProcessManager.vb
+    Public Sub resume_file_streams()
+        Me._procMan.resume_file_streams()
+    End Sub
 End Class
 
 

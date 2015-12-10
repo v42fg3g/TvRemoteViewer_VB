@@ -741,6 +741,8 @@ Public Class ProcessManager
                     '停止フラグを書き込んでおいたほうがいいかな
                     Me._list(i)._stopping = 1 'checkAllProc()でチェックさせないため・・
 
+                    Dim hold_files As Integer = 0 'HLSファイル再生でnum=-3ならファイルは削除しない
+
                     '★ HLS
                     Try
                         proc = Me._list(i).GetHlsProc()
@@ -813,11 +815,19 @@ Public Class ProcessManager
                         Else
                             'プロセスが無い
                             hls_stop = 1
+                            'HLSファイル再生でnum=-3ならファイルは削除しない
+                            If num = -3 And Me._list(i)._stream_mode = 1 And Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                hold_files = 1
+                            End If
                         End If
                     Catch ex As Exception
                         'Procが存在しない
                         log1write("No.=" & Me._list(i)._num & "のHLSプロセスが見つかりません。" & ex.Message)
                         hls_stop = 1
+                        'HLSファイル再生でnum=-3ならファイルは削除しない
+                        If num = -3 And Me._list(i)._stream_mode = 1 And Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                            hold_files = 1
+                        End If
                     End Try
 
                     If hls_only = 0 Then
@@ -859,28 +869,42 @@ Public Class ProcessManager
                     End If
 
                     '関連するファイルを削除
-                    delete_mystreamnum(Me._list(i)._num)
-                    If NoDeleteAss = 0 Then
-                        '古いsub%num%.assがあれば削除
-                        If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass") = 1 Then
-                            deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass")
+                    If hold_files = 0 Then
+                        delete_mystreamnum(Me._list(i)._num)
+                        If NoDeleteAss = 0 Then
+                            '古いsub%num%.assがあれば削除
+                            If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass") = 1 Then
+                                deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass")
+                            End If
+                            If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass") = 1 Then
+                                deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass")
+                            End If
+                            'If file_exist(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter") = 1 Then
+                            'deletefile(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter")
+                            'End If
                         End If
-                        If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass") = 1 Then
-                            deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass")
-                        End If
-                        'If file_exist(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter") = 1 Then
-                        'deletefile(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter")
-                        'End If
-                    End If
-                    'サムネイル削除
-                    If file_exist(Me._fileroot & "\" & "thumb" & Me._list(i)._num.ToString & ".jpg") = 1 Then
-                        deletefile(Me._fileroot & "\" & "thumb" & Me._list(i)._num.ToString & ".jpg")
+                        'サムネイル削除（mystream～ですでに削除済）
                     End If
 
                     Try
                         '★ リストから取り除く
                         If hls_only = 0 Then
-                            If num = -2 Then
+                            If num = -3 And hold_files = 1 Then
+                                'アプリ終了時全停止　実際に停止されたかどうかかまわず
+                                'Me._listの値を記録してからRemove
+                                Dim list_txt As String = ""
+                                list_txt &= Me._list(i)._num & "<,>"
+                                list_txt &= Me._list(i)._hlsApp & "<,>"
+                                list_txt &= Me._list(i)._hlsOpt & "<,>"
+                                list_txt &= Me._list(i)._stream_mode & "<,>"
+                                list_txt &= Me._list(i)._NHK_dual_mono_mode_select & "<,>"
+                                list_txt &= Me._list(i)._resolution & "<,>"
+                                list_txt &= Me._list(i)._fullpathfilename & "<,>"
+                                list_txt &= Me._list(i)._VideoSeekSeconds
+                                str2file(Me._fileroot & "\" & "mystream" & Me._list(i)._num.ToString & "_listdata.txt", list_txt, "UTF-8")
+                                log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
+                                Me._list.RemoveAt(i)
+                            ElseIf num = -2 Or num = -3 Then
                                 '強制全停止　実際に停止されたかどうかかまわず
                                 log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
                                 Me._list.RemoveAt(i)
@@ -915,7 +939,7 @@ Public Class ProcessManager
         End If
 
         If hls_only = 0 Then
-            If num = -2 Then
+            If num = -2 Or num = -3 Then
                 log1write("関連アプリのプロセスを停止しています")
                 If Stop_vlc_at_StartEnd = 1 Then
                     stopProcName("vlc")
@@ -1872,6 +1896,39 @@ Public Class ProcessManager
         End If
         Return r
     End Function
+
+    'ファイル再生　エンコ済ストリームを復帰させる
+    Public Sub resume_file_streams()
+        log1write("エンコード済みファイル再生ストリームを復帰しています")
+        For Each tempFile As String In System.IO.Directory.GetFiles(Me._fileroot, "mystream*_listdata.txt")
+            Dim str As String = file2str(tempFile, "UTF-8")
+            Dim d() As String = Split(str, "<,>")
+            If d IsNot Nothing Then
+                If d.Length >= 8 Then
+                    '再生ファイルが存在しているかチェック
+                    Dim chk As Integer = 0
+                    For Each tf2 As String In System.IO.Directory.GetFiles(Me._fileroot, "mystream" & Val(d(0)).ToString & "-*")
+                        'If tf2.IndexOf("mystream" & Val(d(0)).ToString & "-") >= 0 Then
+                        chk += 1
+                        If chk >= 5 Then
+                            Exit For
+                        End If
+                        'End If
+                    Next
+                    If chk >= 5 Then
+                        'If file_exist(Me._fileroot & "\mystream" & Val(d(0)).ToString & "-"
+                        'ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
+                        Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)))
+                        Me._list.Add(pb)
+                        log1write("ストリーム" & Val(d(0)).ToString & "が復帰されました")
+                    Else
+                        log1write("ストリーム" & Val(d(0)).ToString & "の復帰に失敗しました。動画ファイルが見つかりません")
+                    End If
+                End If
+            End If
+        Next
+        log1write("エンコード済みファイル再生ストリームの復帰作業が完了しました")
+    End Sub
 End Class
 
 

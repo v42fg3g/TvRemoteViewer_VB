@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.73"
+    Private version As String = "TvRemoteViewer_VB version 1.74"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -477,6 +477,9 @@ Public Class Form1
             pttimer_pt2count = F_get_pt2count()
         End If
 
+        'エンコ済ファイル再生ストリーム復帰作業
+        Me._worker.resume_file_streams()
+
         '無事起動
         TvRemoteViewer_VB_Start = 1
     End Sub
@@ -732,7 +735,8 @@ Public Class Form1
 
         '全プロセスを停止
         Try
-            Me._worker.stopProc(-2)
+            '終了時にはエンコ済みファイルは消さずにおくように指定(-3)
+            Me._worker.stopProc(-3)
         Catch ex As Exception
         End Try
 
