@@ -1921,35 +1921,42 @@ Public Class ProcessManager
     'ファイル再生　エンコ済ストリームを復帰させる
     Public Sub resume_file_streams()
         log1write("エンコード済みファイル再生ストリームを復帰しています")
-        For Each tempFile As String In System.IO.Directory.GetFiles(Me._fileroot, "mystream*_listdata.txt")
-            Dim str As String = file2str(tempFile, "UTF-8")
-            Dim d() As String = Split(str, "<,>")
-            If d IsNot Nothing Then
-                If d.Length >= 8 Then
-                    '再生ファイルが存在しているかチェック
-                    Dim chk As Integer = 0
-                    For Each tf2 As String In System.IO.Directory.GetFiles(Me._fileroot, "mystream" & Val(d(0)).ToString & "-*")
-                        'If tf2.IndexOf("mystream" & Val(d(0)).ToString & "-") >= 0 Then
-                        chk += 1
-                        If chk >= 5 Then
-                            Exit For
+        If Me._fileroot.Length > 0 Then
+            Try
+                For Each tempFile As String In System.IO.Directory.GetFiles(Me._fileroot, "mystream*_listdata.txt")
+                    Dim str As String = file2str(tempFile, "UTF-8")
+                    Dim d() As String = Split(str, "<,>")
+                    If d IsNot Nothing Then
+                        If d.Length >= 8 Then
+                            '再生ファイルが存在しているかチェック
+                            Dim chk As Integer = 0
+                            For Each tf2 As String In System.IO.Directory.GetFiles(Me._fileroot, "mystream" & Val(d(0)).ToString & "-*")
+                                'If tf2.IndexOf("mystream" & Val(d(0)).ToString & "-") >= 0 Then
+                                chk += 1
+                                If chk >= 5 Then
+                                    Exit For
+                                End If
+                                'End If
+                            Next
+                            If chk >= 5 Then
+                                'If file_exist(Me._fileroot & "\mystream" & Val(d(0)).ToString & "-"
+                                'ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
+                                'stream_modeをマイナス値で与えるとファイル再生復帰
+                                Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)))
+                                Me._list.Add(pb)
+                                log1write("ストリーム" & Val(d(0)).ToString & "が復帰されました")
+                            Else
+                                log1write("ストリーム" & Val(d(0)).ToString & "の復帰に失敗しました。動画ファイルが見つかりません")
+                            End If
                         End If
-                        'End If
-                    Next
-                    If chk >= 5 Then
-                        'If file_exist(Me._fileroot & "\mystream" & Val(d(0)).ToString & "-"
-                        'ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
-                        'stream_modeをマイナス値で与えるとファイル再生復帰
-                        Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)))
-                        Me._list.Add(pb)
-                        log1write("ストリーム" & Val(d(0)).ToString & "が復帰されました")
-                    Else
-                        log1write("ストリーム" & Val(d(0)).ToString & "の復帰に失敗しました。動画ファイルが見つかりません")
                     End If
-                End If
-            End If
-        Next
-        log1write("エンコード済みファイル再生ストリームの復帰作業が完了しました")
+                Next
+                log1write("エンコード済みファイル再生ストリームの復帰作業が完了しました")
+            Catch ex As Exception
+                'filerootが不正の場合に起こるエラー
+                log1write("【エラー】%FILEROOT%が不正です")
+            End Try
+        End If
     End Sub
 End Class
 
