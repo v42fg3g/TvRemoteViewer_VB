@@ -683,37 +683,56 @@ Public Class ProcessManager
                         log1write("No.=" & p5 & "のプロセスを再起動しました")
                     End If
                 ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And Me._list(i)._stream_mode = 1 Then
-                    'ファイル再生　エンコードが終わったかどうかチェック
-                    Dim prochls As System.Diagnostics.Process = Me._list(i).GetHlsProc()
-                    If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
-                        'エラーがなければエラーカウンタをリセット
-                        Me._list(i)._chk_proc = 0
-                    Else
-                        'エラー
-                        If Me._list(i)._chk_proc < 100000 Then 'フロー防止
-                            Me._list(i)._chk_proc += 100
+                    If Me._list(i)._FileEncodeFinished = 0 Then
+                        'ファイル再生　エンコードが終わったかどうかチェック
+                        Dim prochls As System.Diagnostics.Process = Me._list(i).GetHlsProc()
+                        If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
+                            'エラーがなければエラーカウンタをリセット
+                            Me._list(i)._chk_proc = 0
+                        Else
+                            'エラー
+                            If Me._list(i)._chk_proc < 100000 Then 'フロー防止
+                                Me._list(i)._chk_proc += 100
+                            End If
+                            'log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
                         End If
-                        'log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
-                    End If
 
-                    If Me._list(i)._chk_proc = 1000 Then 'プロセスが無いか10秒応答がなければ
-                        log1write("No.=" & Me._list(i)._num.ToString & " のエンコードが終了したようです")
-                        'm3u8をチェックして#EXT-X-ENDLISTが無ければ付加
-                        Dim m3u8filename As String = _fileroot & "\mystream" & Me._list(i)._num & ".m3u8"
-                        Dim str As String = ReadAllTexts(m3u8filename) 'file2str(m3u8filename, "UTF-8")
-                        If str.Length > 0 And str.IndexOf("#EXT-X-ENDLIST") < 0 Then
-                            '最後の改行を消す
-                            Try
-                                While str.Substring(str.Length - 2, 2) = vbCrLf
-                                    str = str.Substring(0, str.Length - 2)
-                                End While
-                            Catch ex As Exception
-                            End Try
-                            str &= vbCrLf & "#EXT-X-ENDLIST" & vbCrLf
-                            If str2file(m3u8filename, str, "shift_jis") = 1 Then 'shift_jisのほうが余計なものがつかないかな
-                                log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルに#EXT-X-ENDLISTを追記しました")
-                            Else
-                                log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルへの#EXT-X-ENDLIST追記に失敗しました")
+                        If Me._list(i)._chk_proc >= 1000 Then 'プロセスが無いか10秒応答がなければ
+                            Me._list(i)._FileEncodeFinished = 1 'エンコード終了
+
+                            log1write("No.=" & Me._list(i)._num.ToString & " のエンコードが終了したようです")
+                            'm3u8をチェックして#EXT-X-ENDLISTが無ければ付加
+                            Dim m3u8filename As String = _fileroot & "\mystream" & Me._list(i)._num & ".m3u8"
+                            If file_exist(m3u8filename) = 1 Then
+                                Dim str As String = ReadAllTexts(m3u8filename) 'file2str(m3u8filename, "UTF-8")
+                                If str.Length > 0 And str.IndexOf("#EXT-X-ENDLIST") < 0 Then
+                                    '最後の改行を消す
+                                    Try
+                                        While str.Substring(str.Length - 2, 2) = vbCrLf
+                                            str = str.Substring(0, str.Length - 2)
+                                        End While
+                                    Catch ex As Exception
+                                    End Try
+                                    str &= vbCrLf & "#EXT-X-ENDLIST" & vbCrLf
+                                    If str2file(m3u8filename, str, "shift_jis") = 1 Then 'shift_jisのほうが余計なものがつかないかな
+                                        log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルに#EXT-X-ENDLISTを追記しました")
+                                    Else
+                                        log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルへの#EXT-X-ENDLIST追記に失敗しました")
+                                    End If
+                                End If
+
+                                '復帰用ストリームデータ保存 同じものがStopProcにも有り
+                                Dim list_txt As String = ""
+                                list_txt &= Me._list(i)._num & "<,>"
+                                list_txt &= Me._list(i)._hlsApp & "<,>"
+                                list_txt &= Me._list(i)._hlsOpt & "<,>"
+                                list_txt &= Me._list(i)._stream_mode & "<,>"
+                                list_txt &= Me._list(i)._NHK_dual_mono_mode_select & "<,>"
+                                list_txt &= Me._list(i)._resolution & "<,>"
+                                list_txt &= Me._list(i)._fullpathfilename & "<,>"
+                                list_txt &= Me._list(i)._VideoSeekSeconds
+                                str2file(Me._fileroot & "\" & "mystream" & Me._list(i)._num.ToString & "_listdata.txt", list_txt, "UTF-8")
+                                log1write("No.=" & Me._list(i)._num.ToString & " の復帰用データを記録しました")
                             End If
                         End If
                     End If
@@ -892,6 +911,7 @@ Public Class ProcessManager
                             If num = -3 And hold_files = 1 Then
                                 'アプリ終了時全停止　実際に停止されたかどうかかまわず
                                 'Me._listの値を記録してからRemove
+                                '復帰用ストリームデータ保存 同じものがCheckAllProcにも有り
                                 Dim list_txt As String = ""
                                 list_txt &= Me._list(i)._num & "<,>"
                                 list_txt &= Me._list(i)._hlsApp & "<,>"
@@ -902,6 +922,7 @@ Public Class ProcessManager
                                 list_txt &= Me._list(i)._fullpathfilename & "<,>"
                                 list_txt &= Me._list(i)._VideoSeekSeconds
                                 str2file(Me._fileroot & "\" & "mystream" & Me._list(i)._num.ToString & "_listdata.txt", list_txt, "UTF-8")
+                                log1write("No.=" & Me._list(i)._num.ToString & " の復帰用データを記録しました")
                                 log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
                                 Me._list.RemoveAt(i)
                             ElseIf num = -2 Or num = -3 Then
@@ -1918,7 +1939,8 @@ Public Class ProcessManager
                     If chk >= 5 Then
                         'If file_exist(Me._fileroot & "\mystream" & Val(d(0)).ToString & "-"
                         'ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
-                        Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)))
+                        'stream_modeをマイナス値で与えるとファイル再生復帰
+                        Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)))
                         Me._list.Add(pb)
                         log1write("ストリーム" & Val(d(0)).ToString & "が復帰されました")
                     Else

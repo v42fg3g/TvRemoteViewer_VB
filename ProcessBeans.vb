@@ -26,6 +26,7 @@ Class ProcessBean
     Public _NHK_dual_mono_mode_select As Integer
     Public _fullpathfilename As String = "" 'ファイル再生のファイルネーム
     Public _VideoSeekSeconds As Integer = 0 'ファイル再生シーク秒数
+    Public _FileEncodeFinished As Integer = 0 'ファイル再生　エンコードが終了していれば1
     'ffmpeg HTTPストリーム
     Public _IsStart As Boolean ' = False
     Public _ffmpegBuf As Byte() '= Nothing        'Public opt As String 'VLCオプション文字列
@@ -46,6 +47,12 @@ Class ProcessBean
         Me._stopping = 0
         Me._ShowConsole = ShowConsole
         Me._resolution = resolution
+        Me._FileEncodeFinished = 0
+        If Stream_mode < 0 Then
+            'Stream_modeがマイナス値で来たらファイル再生復帰プロセスである
+            Stream_mode = -Stream_mode
+            Me._FileEncodeFinished = 1
+        End If
         Me._stream_mode = Stream_mode
         'Me._m3u8_update_time = Now()
         Me._NHK_dual_mono_mode_select = NHK_dual_mono_mode_select
