@@ -33,14 +33,14 @@ TvRemoteViewer_VB v1.77
 		http://127.0.0.1:40003/StartTv.html?BonDriver=BonDriver_PT3_s0.dll&ServiceID=101&ChSpace=0
 		http://127.0.0.1:40003/StartTv.html?VideoName=D:\test.ts&VideoSeekSeconds=30
 
-	WatchTV%NUM%.html (HTTP配信開始)
+	WatchTV%NUM%.ts (HTTP配信開始)
 		HTTP配信を開始する方法は2通りあります
 		A：あらかじめStartTv.htmlにパラメーターを指定して配信準備しておき、直後にWatchTV%NUM%.htmlにアクセスする
-		B：GETでStartTv.htmlと同様のパラメーターを与える(numは省略可能）
+		B：WatchTV%NUM%.tsにGETでStartTv.htmlと同様のパラメーターを与える(numは省略可能）
 		　 VideoNameはURLエンコードしておく必要有り
 		　 例：
-		　 http://127.0.0.1:40003/WatchTV1.html?BonDriver=BonDriver_Spinel_s0.dll&ServiceID=101&ChSpace=0
-                   http://127.0.0.1:40003/WatchTV1.html?VideoName=D%3a%5ctest.ts&VideoSeekSeconds=30
+		　 http://127.0.0.1:40003/WatchTV1.ts?BonDriver=BonDriver_Spinel_s0.dll&ServiceID=101&ChSpace=0
+                   http://127.0.0.1:40003/WatchTV1.ts?VideoName=D%3a%5ctest.ts&VideoSeekSeconds=30
 
 
 ■配信停止
