@@ -41,6 +41,7 @@ TvRemoteViewer_VB v1.77
 		　 例：
 		　 http://127.0.0.1:40003/WatchTV1.ts?BonDriver=BonDriver_Spinel_s0.dll&ServiceID=101&ChSpace=0
                    http://127.0.0.1:40003/WatchTV1.ts?VideoName=D%3a%5ctest.ts&VideoSeekSeconds=30
+		 　ちなみに↑のURLをVLCのストリームを開くから参照すると配信が開始されます
 
 
 ■配信停止
