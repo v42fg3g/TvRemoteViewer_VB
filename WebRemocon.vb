@@ -2764,6 +2764,74 @@ Class WebRemocon
                     '★ffmpeg HTTPストリームモード
                     'numが<form>から渡されていなければURLから取得するwatch2.tsなら2
                     Dim ffmpeg_num As Integer = Val(context.Request.RawUrl.Substring(context.Request.RawUrl.IndexOf("WatchTV") + "WatchTV".Length))
+
+                    Dim rUrl As String = context.Request.RawUrl
+                    If rUrl.IndexOf("?") > 0 And rUrl.IndexOf("=") > 0 Then
+                        'パラメーターがGETで渡されていれば直接配信する
+                        '必須
+                        Dim h_num As String = instr_pickup_para(rUrl, "num=", "&", 0)
+                        If IsNumeric(h_num) Then
+                            ffmpeg_num = h_num
+                        End If
+                        Dim h_resolution As String = instr_pickup_para(rUrl, "resolution=", "&", 0)
+                        Dim h_bondriver As String = instr_pickup_para(rUrl, "BonDriver=", "&", 0)
+                        Dim h_sid As String = Val(instr_pickup_para(rUrl, "ServiceID=", "&", 0))
+                        Dim h_chspace As String = Val(instr_pickup_para(rUrl, "ChSpace=", "&", 0))
+                        'ファイル名はurlエンコードされて送られてくる
+                        Dim h_videoname As String = instr_pickup_para(rUrl, "VideoName=", "&", 0)
+                        h_videoname = System.Web.HttpUtility.UrlDecode(h_videoname) 'urlデコード
+                        h_videoname = filename_escape_set(h_videoname) '念のため
+                        Dim h_VideoSeekSeconds As Integer = 0
+                        Dim h_VideoSeekSeconds_str As String = instr_pickup_para(rUrl, "VideoSeekSeconds=", "&", 0)
+                        h_VideoSeekSeconds_str = StrConv(h_VideoSeekSeconds_str, VbStrConv.Narrow) '半角に
+                        If h_VideoSeekSeconds_str.IndexOf(":") > 0 Then
+                            Dim vd() As String = h_VideoSeekSeconds_str.Split(":")
+                            If vd.Length = 3 Then
+                                h_VideoSeekSeconds = (vd(0) * 60 * 60) + (vd(1) * 60) + vd(2)
+                            ElseIf vd.Length = 2 Then
+                                h_VideoSeekSeconds = (vd(0) * 60) + vd(1)
+                            Else
+                                h_VideoSeekSeconds = Val(h_VideoSeekSeconds_str)
+                                log1write(h_VideoSeekSeconds_str & "の秒数への変換に失敗しました" & h_VideoSeekSeconds & "秒にセットしました")
+                            End If
+                        Else
+                            h_VideoSeekSeconds = Val(h_VideoSeekSeconds_str)
+                        End If
+                        'NHKの音声モード
+                        Dim h_NHK_dual_mono_mode_select As Integer = Me._NHK_dual_mono_mode 'iniで指定された形式
+                        Dim h_NHK_dual_mono_mode_select_str As String = instr_pickup_para(rUrl, "NHKMODE=", "&", 0)
+                        If IsNumeric(h_NHK_dual_mono_mode_select_str) Then
+                            'パラメーターとして指定があった場合はパラメーター優先
+                            h_NHK_dual_mono_mode_select = Val(h_NHK_dual_mono_mode_select_str)
+                        End If
+                        Dim h_nohsub As String = Val(instr_pickup_para(rUrl, "nohsub=", "&", 0))
+                        'ファイル再生時NicoJKコメント調整　録画前マージンを知らせる
+                        Dim h_margin1 As Integer = Nico_delay
+                        Dim h_margin1_str As String = instr_pickup_para(rUrl, "nicodelay=", "&", 0)
+                        If Trim(h_margin1_str.Length) > 0 Then
+                            'パラメーターとして指定があった場合はパラメーター優先
+                            h_margin1 = Val(h_margin1_str)
+                        End If
+                        Dim h_baisoku As String = instr_pickup_para(rUrl, "VideoSpeed=", "&", 0)
+                        If h_baisoku.Length = 0 Then
+                            h_baisoku = "1" '等速
+                        End If
+                        Dim h_hlsOptAdd As String = instr_pickup_para(rUrl, "hlsOptAdd=", "&", 0)
+
+                        Dim h_stream_mode As Integer = 2
+                        If h_videoname.Length > 0 Then
+                            h_stream_mode = 3
+                        End If
+
+                        'httpストリーム配信開始
+                        'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
+                        Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1)
+
+                        '配信成功
+                        'http://127.0.0.1:40003/WatchTV1.html?resolution=640x360&BonDriver=BonDriver_Spinel_PT3_s0.dll&ServiceID=101&ChSpace=0
+                        'http://127.0.0.1:40003/WatchTV1.html?resolution=640x360&VideoName=%5c%5cD850A%5cMy+Videos%5c%5b%e3%83%89%e3%83%a9%e3%83%9e%5d+%e3%83%af%e3%82%ab%e3%82%b3%e9%85%92%5c%e3%83%af%e3%82%ab%e3%82%b3%e9%85%92%e3%80%80%233%ef%bc%9c%e5%85%a812%e8%a9%b1%ef%bc%9e.ts&VideoSeekSeconds=30
+                    End If
+
                     'Me._list(ffmpeg_num)._stoppingが100より大きければ接続待機中なので配信スタート
                     Dim ffmpeg_num_stopping As Integer = Me._procMan.get_stopping_status(ffmpeg_num)
                     If ffmpeg_num_stopping > 100 Then
