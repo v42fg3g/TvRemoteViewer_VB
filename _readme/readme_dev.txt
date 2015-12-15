@@ -1,0 +1,184 @@
+TvRemoteViewer_VB v1.77
+
+
+※1　	%NUM%は配信番号を表します
+※2	パラメーターはGET,POSTどちらでも可です（WatchTV.html除く）
+
+■配信開始
+
+	WI_START_STREAM.html ()
+
+	StartTv.html (HLS配信開始　または、HTTP配信準備)
+	WI_START_STREAM.html (HLS配信開始　または、HTTP配信準備)
+		GET、POSTどちらでも可
+		パラメーター	valueの例				説明
+		num		1					ストリームナンバー（WatchTVの場合以外必須）
+		StreamMode	0					0=HLS 1=HLS動画再生 2=HTTP 3=HTTP動画再生（必須）
+		BonDriver	BonDriver_pt2_t0.dll			BonDriverファイル名（テレビ配信時必須）
+		ServiceID	54321					サービスID（テレビ配信時必須）
+		ChSpace		0					チャンネルスペース（テレビ配信時必須）
+		resolution	640x360					解像度（任意）
+		Bon_Sid_Ch	BonDriver_pt2_t0.dll,54321,0		上記３つを同時に設定(HLSのみ)
+		redirect	ViewTV2.html				配信開始後ジャンプするページ(HLSのみ)
+		VideoName	D:\test.ts				動画ファイルのフルパス（ファイル再生時必須）
+									UTF-8でURLエンコード無しで送信かな・・？
+		VideoSeekSeconds					動画ファイル先頭からのシーク秒数（任意）
+		NHKMODE		0					音声選択　0(主副),11(主),12(副),4(音声2)（任意）
+		nohsub		0					ハードサブしない場合は1（任意）
+		VideoSpeed	1.5					何倍速で再生するか（任意）
+		hlsOptAdd						HLSソフトに追加するパラメーター（任意）
+		nicodelay	0					コメントがずれる場合に調整？通常は0（任意）
+
+		例：
+		http://127.0.0.1:40003/StartTv.html?BonDriver=BonDriver_PT3_s0.dll&ServiceID=101&ChSpace=0
+		http://127.0.0.1:40003/StartTv.html?VideoName=D:\test.ts&VideoSeekSeconds=30
+
+	WatchTV%NUM%.html (HTTP配信開始)
+		HTTP配信を開始する方法は2通りあります
+		A：あらかじめStartTv.htmlにパラメーターを指定して配信準備しておき、直後にWatchTV%NUM%.htmlにアクセスする
+		B：GETでStartTv.htmlと同様のパラメーターを与える(numは省略可能）
+		　 VideoNameはURLエンコードしておく必要有り
+		　 例：
+		　 http://127.0.0.1:40003/WatchTV1.html?BonDriver=BonDriver_Spinel_s0.dll&ServiceID=101&ChSpace=0
+                   http://127.0.0.1:40003/WatchTV1.html?VideoName=D%3a%5ctest.ts&VideoSeekSeconds=30
+
+
+■配信停止
+
+	WI_STOP_STREAM.html
+		パラメーター	valueの例	説明
+		num		1		1～　各ストリーム停止
+						-1=全停止（UDP・HLSソフト名前停止無し）
+						-2=全停止（UDP・HLSソフト名前停止。iniでの設定に従う）
+						-3=全停止（-2と同様。エンコ済みファイル削除せず）
+
+
+■情報取得
+	
+	WI_GET_TVRV_STATUS.html			サーバーの各種設定を取得
+
+
+	WI_GET_CHANNELS.html			BonDriverと放送局一覧
+
+
+	WI_GET_LIVE_STREAM.html			配信中リスト取得
+		(内部List番号), ストリーム番号, UDPアプリが仕様するポート, BonDriver名, サービスID, ChSpace, StreamMode, 音声選択, 再起動中なら>0, 放送局名, HLSアプリexe名, シーク秒数, 配信中URL
+
+
+    	WI_GET_PROGRAM_NUM.html			配信中の番組情報取得
+		ストリーム番号,放送局名,ネット放送局名,サービスID,ChSpace,開始時:分,終了時:分,番組タイトル,番組内容または再生ファイルフルパス,シーク秒数
+
+
+	WI_GET_ERROR_STREAM			再起動しているストリーム番号を取得
+		ストリーム番号（複数の場合は半角スペース区切り）
+
+
+	WI_GET_RESOLUTION			解像度一覧取得
+
+
+	WI_GET_TSFILE_COUNT.html?num=%NUM%	できあがったtsファイル数（HTTPストリームでは常に0が返ってきます）
+
+
+	WI_GET_VIDEOFILES.html	ビデオファイル一覧HTML部品を返す
+	WI_GET_VIDEOFILES2.html	ビデオファイル一覧をテキストで返す
+		上記２つのインターフェース用パラメーター：
+		vl_refresh	1=強制ビデオファイル更新
+		vl_startdate	指定日より前のビデオファイルを抽出する
+		vl_volume	何件表示するか（最終日付のファイルを追加するので不正確）
+		上記パラメーターは%SELECTVIDEO%を変換するSelectVideo.htmlにも有効
+
+
+	WI_FILE_OPE.html	ファイル読み書き(UTF-8)
+		パラメーター：
+		fl_cmd		dir, read, write, write_add, delete
+		fl_file		フォルダ名又はファイル名（%WWWROOT%からの相対位置）
+		fl_text		書き込む内容
+		temp		dirの場合のフィルタ(無指定の場合は「*」)　例：「*.jpg」や「mystream*」
+		結果：
+		0,SUCCESS(+改行[結果])　又は　2,[エラー内容]
+
+
+	WI_STREAMFILE_EXIST.html?fl_file=[ファイル名]
+		ストリームフォルダ内にファイルが存在するかどうか
+		例：WI_STREAMFILE_EXIST.html?fl_file=mystream1_thumb.jpg
+　　　　　　　　　　WI_STREAMFILE_EXIST.html?fl_file=file_thumbs/動画ファイル名.jpg
+		返値：　存在すれば1、存在しなければ空白
+
+
+	WI_GET_PROGRAM_[TVROCK,EDCB,PTTIMER,TVMAID].html(?temp=1～3)
+		TVROCK,EDCBから番組表を取得
+		オプション temp=1～3 を指定することにより次番組が存在すれば併せて取得(PTTIMERには未対応）
+		1:返値の各番組情報記述は従来通り
+		2:返値の各番組情報内の次番組名冒頭に「[Next]」を付加
+		3:返値の各番組情報末尾に現番組「,0」か次番組「,1」かを付加
+		4以上:番組終了までtemp分以内しか残っていない場合は現番組の詳細欄に次番組情報を表示（データは無指定と同じ）
+		結果：	放送局名,サービスID,ChSpace,開始時:分,終了時:分,番組タイトル,番組内容(次番組)
+
+
+	WI_GET_CHAPTER.html?temp=録画ファイルフルパス
+		録画ファイルの.chapterファイルの内容を取得（chaptersフォルダの中でも可）
+
+
+	WI_WRITE_CHAPTER.html?temp=num,書き込むチャプター文字列
+
+
+	WI_GET_HTML.html?temp=[HTML取得方法],[エンコード],[UserAgent],http://www.google.co.jp/
+		HTML取得方法	1: webbrowser UserAgent無効。エラーにより現状使用不可
+				2: webclient
+				3: HttpWebRequest
+		例：WI_GET_HTML.html?temp=2,UTF-8,,http://www.google.co.jp/
+
+
+	WI_GET_THUMBNAIL.html?temp=[作成ソース],[秒数指定],[幅],[縦]
+		ファイル再生中動画のサムネイルを作成
+		パラメータ
+			[作成ソース]	配信中のストリームナンバー、もしくは動画フルパスファイル名（ローカルパス）
+					ファイル名指定の場合はストリームフォルダ内のfile_thumbsというフォルダ内に、
+					ファイル名を使用してjpgが作成されます
+					■重要■ファイル名に#(半角)が含まれていた場合＃(全角)に変換されます
+						（URLアクセスができないため）
+			[秒数指定]	単独、「:」区切りで複数、thru[秒数指定]、per[等間隔秒数]
+					等間隔を指定した場合は、結果を待たずに返値が返されます
+					また、thru[秒数指定]で結果を待たずに返値が返されます
+			[幅],[縦]	縦横に0を指定した場合はffmpeg標準の大きさのjpgが作成されます
+		返値
+			単独　 [ストリーム出力フォルダ]/mystream%NUM%_thumb.jpg
+			複数　 [ストリーム出力フォルダ]/mystream%NUM%_thumb.[秒数].jpg（「,」区切りで列挙）
+			等間隔 [ストリーム出力フォルダ]/mystream%NUM%_thumb-%04d.jpg
+				等間隔の場合、時間がかかるので完了前に結果予想が返される（%04dは4桁の連番）
+ 			失敗または同一ストリームを重複して作成しようとした場合は空白
+		例
+			・ストリーム1の60秒目を144x108でサムネイルを作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=1,60,144,108
+		     	　返値：/stream/mystream1_thumb.jpg
+			・ストリーム1の60秒目を秒数込みのファイルネームで作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=1,60:,144,108
+		     	　返値：/stream/mystream1_thumb.60.jpg
+			・ストリーム1の60秒目と120秒目を144x108でサムネイルを作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=1,60:120,144,108
+		     	　返値：/stream/mystream1_thumb.60.jpg,/stream/mystream1_thumb.120.jpg
+			・ストリーム1の60秒目と120秒目を144x108でサムネイルを作成する（結果を待たない）
+			　入力：WI_GET_THUMBNAIL.html?temp=1,thru60:120,144,108
+		     	　返値：/stream/mystream1_thumb.60.jpg,/stream/mystream1_thumb.120.jpg
+			・ストリーム１の60秒間隔のサムネイルを作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=1,per60,144,108
+		     	　返値：/stream/mystream1_thumb-%04d.jpg
+			　※１　等間隔の場合、「-」で連番数値と区切られています
+			　※２　間隔は 1/指定秒数 という計算式で導かれていますので無理数になった場合、
+				微妙なズレが出る可能性があります。60秒とか・・小数点10桁切り捨て
+			・特定動画をファイル名指定でサムネイルを作成する
+			　入力：WI_GET_THUMBNAIL.html?temp=D:\My Videos\テスト #01.ts,60,144,108
+			　返値：/stream/file_thumbs/テスト ♯01.jpg 
+			　作成結果：　/stream/file_thumbs/テスト ♯01.jpg 
+			　	ストリーム時の「mystream%NUM%_thumb」の代わりにファイル名が使用され、
+			　	かつfile_thumbsフォルダに作成されます
+			　	また、入力時の#が出力時には＃に変換されて作成されます
+				複数や等間隔も同じように作成されます
+
+
+	WI_SHOW_MAKING_PER_THUMB.html
+			等間隔サムネイルを作成中の動画フルパスファイル名一覧が返されます
+
+
+	WI_WRITE_LOG.html?temp=[ログに書き込む文字列]
+		ログを出力　返値："OK"

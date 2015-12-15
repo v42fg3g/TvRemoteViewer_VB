@@ -3363,7 +3363,7 @@ Class WebRemocon
                                 Me.stop_movie(num)
                             ElseIf req_Url.ToLower = "/StopAll.html".ToLower Then
                                 'すべてのプロセスと関連アプリを停止する
-                                stop_movie(-2)
+                                stop_movie(num)
                             End If
 
                             '===========================================
