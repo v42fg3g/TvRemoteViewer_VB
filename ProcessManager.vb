@@ -501,7 +501,11 @@ Public Class ProcessManager
                         'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
                         'すでにリストにある場合はリストから取り除いた後に改めて作成
                         If i >= 0 Then
-                            Me._list.RemoveAt(i)
+                            Try
+                                Me._list.RemoveAt(i)
+                            Catch ex As Exception
+                                'httpファイル再生時はストリーム停止時に削除されているのでエラーが発生
+                            End Try
                         End If
                         'ProcessBeans作成
                         '                                  ↓Processはまだ決まっていない

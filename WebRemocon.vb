@@ -1479,12 +1479,17 @@ Class WebRemocon
         End If
 
         '前回のファイル名と違えば字幕ファイルを削除
-        If file_last_filename(num) <> filename Or nohsub <> 3 Then
+        Dim exist_nico_ass As Integer = 0 'タイムシフト前大元のASSファイルが存在するかどうか
+        If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
+            exist_nico_ass = 1
+        End If
+        If file_last_filename(num) <> filename Or filename.Length = 0 Then
             '古いsub%num%.assがあれば削除
             If file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") = 1 Then
                 deletefile(fileroot & "\" & "sub" & num.ToString & ".ass")
             End If
-            If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
+            If exist_nico_ass = 1 Then
+                exist_nico_ass = 0
                 deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
             End If
             'If file_exist(fileroot & "\" & "chapter" & num.ToString & ".chapter") = 1 Then
@@ -1519,23 +1524,29 @@ Class WebRemocon
                 If file_exist(ass_file) <= 0 Then
                     ass_file = ""
                 End If
-                'NicoJKログをassに変換
-                If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
-                    If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
-                        '動画の開始日時（微妙な誤差はあるかも）
-                        Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp)
-                        chk_duration = 1
-                        'txtを探してassに変換してファイル(ass_file)として保存
-                        'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
-                        Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
-                        If txt_file.Length > 0 Then
-                            'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                            ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
-                            If ass_file.Length > 0 Then
+                If exist_nico_ass = 0 Then
+                    'NicoJKログをassに変換
+                    If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
+                        If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
+                            '動画の開始日時（微妙な誤差はあるかも）
+                            Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp)
+                            chk_duration = 1
+                            'txtを探してassに変換してファイル(ass_file)として保存
+                            Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
+                            If txt_file.Length > 0 Then
+                                'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
                                 log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+                                ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
+                                If ass_file.Length > 0 Then
+                                    log1write("字幕ASSファイルへの変換が終了しました")
+                                End If
                             End If
                         End If
                     End If
+                Else
+                    'すでに_nico.assファイルが存在する
+                    log1write("既存の字幕ASSファイル_nico.assを使用します")
+                    ass_file = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
                 End If
                 If ass_file.Length > 0 Then
                     If file_exist(ass_file) = 1 Then
@@ -1600,7 +1611,6 @@ Class WebRemocon
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
                 Dim ass_file As String = filename.Substring(0, dt) & ".ass"
-
                 If file_exist(ass_file) <= 0 Then
                     ass_file = ""
                 End If
@@ -1608,23 +1618,28 @@ Class WebRemocon
                 '前回と違うファイル、または字幕ファイルが存在しなければ作成
                 '前回と同じファイルならすでに存在しているので無駄なことはしない
                 If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") <= 0) Then
-                    'NicoJKログをassに変換
-                    If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
-                        If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
-                            '動画の開始日時（微妙な誤差はあるかも）
-                            Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp)
-                            chk_duration = 1
-                            'txtを探してassに変換してファイル(ass_file)として保存
-                            'txtのファイルネームを取得 ついでにByRefでコメント開始時間とマージンを取得
-                            Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
-                            If txt_file.Length > 0 Then
-                                'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                                ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
-                                If ass_file.Length > 0 Then
-                                    log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+                    If exist_nico_ass = 0 Then
+                        'NicoJKログをassに変換
+                        If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
+                            If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
+                                '動画の開始日時（微妙な誤差はあるかも）
+                                Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp)
+                                chk_duration = 1
+                                'txtを探してassに変換してファイル(ass_file)として保存
+                                Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
+                                If txt_file.Length > 0 Then
+                                    'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
+                                    ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
+                                    If ass_file.Length > 0 Then
+                                        log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+                                    End If
                                 End If
                             End If
                         End If
+                    Else
+                        'すでに_nico.assファイルが存在する
+                        log1write("既存の字幕ASSファイル_nico.assを使用します[CopyOnly]")
+                        ass_file = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
                     End If
 
                     If ass_file.Length > 0 Then
