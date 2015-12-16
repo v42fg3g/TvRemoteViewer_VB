@@ -2759,7 +2759,7 @@ Class WebRemocon
 
             Dim context As HttpListenerContext = listener.EndGetContext(result)
             'D:\TvRemoteViewer\html\WatchTV1.tsが見つかりませんでした
-            If context.Request.RawUrl.IndexOf("/WatchTV") >= 0 And Me._hlsApp.IndexOf("ffmpeg.exe") >= 0 Then
+            If context.Request.RawUrl.IndexOf("/WatchTV") >= 0 And HTTPSTREAM_App = 2 Then
                 Dim auth_ok As Integer = 0
                 If Me._id.Length = 0 Or Me._pass.Length = 0 Then
                     'パスワード未設定は素通り
@@ -2780,9 +2780,10 @@ Class WebRemocon
                     'numが<form>から渡されていなければURLから取得するwatch2.tsなら2
                     Dim ffmpeg_num As Integer = Val(context.Request.RawUrl.Substring(context.Request.RawUrl.IndexOf("WatchTV") + "WatchTV".Length))
 
+                    Dim http_err As Integer = 0
                     Dim rUrl As String = context.Request.RawUrl
                     If rUrl.IndexOf("?") > 0 And rUrl.IndexOf("=") > 0 Then
-                        'パラメーターがGETで渡されていれば直接配信する
+                        'パラメーターがGETで渡されていればここで配信準備し直接配信する
                         '必須
                         Dim h_num As String = instr_pickup_para(rUrl, "num=", "&", 0)
                         If IsNumeric(h_num) Then
@@ -2838,55 +2839,66 @@ Class WebRemocon
                             h_stream_mode = 3
                         End If
 
-                        'httpストリーム配信開始
-                        'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
-                        Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1)
-
-                        '配信成功
-                        'http://127.0.0.1:40003/WatchTV1.html?resolution=640x360&BonDriver=BonDriver_Spinel_PT3_s0.dll&ServiceID=101&ChSpace=0
-                        'http://127.0.0.1:40003/WatchTV1.html?resolution=640x360&VideoName=%5c%5cD850A%5cMy+Videos%5c%5b%e3%83%89%e3%83%a9%e3%83%9e%5d+%e3%83%af%e3%82%ab%e3%82%b3%e9%85%92%5c%e3%83%af%e3%82%ab%e3%82%b3%e9%85%92%e3%80%80%233%ef%bc%9c%e5%85%a812%e8%a9%b1%ef%bc%9e.ts&VideoSeekSeconds=30
-                    End If
-
-                    'Me._list(ffmpeg_num)._stoppingが100より大きければ接続待機中なので配信スタート
-                    Dim ffmpeg_num_stopping As Integer = Me._procMan.get_stopping_status(ffmpeg_num)
-                    If ffmpeg_num_stopping > 100 Then
-                        '配信準備中
-                        If ffmpeg_num > 0 Then
-                            'ffmpeg HTTP ストリーム配信開始
-                            log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
-                            'context.Response.Headers("Content-Type") = "video/mpeg"
-                            context.Response.Headers("Content-Type") = "video/MP2T"
-                            Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
-
-                            '現在稼働中のlist(i)._numをログに表示
-                            Dim js As String = get_live_numbers()
-                            log1write("現在稼働中のNumber：" & js)
+                        If (h_stream_mode = 2 And h_bondriver.Length > 0 And Val(h_sid) > 0) Or (h_stream_mode = 3 And h_videoname.Length > 0) Then
+                            'httpストリーム配信開始
+                            'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
+                            Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1)
                         Else
-                            '不正なURL
+                            'パラメーターが不正
                             context.Response.Headers("Content-Type") = "text/plain"
                             Dim sw = New StreamWriter(context.Response.OutputStream)
                             sw.Write("Bad Request")
                             'Test String
                             sw.Close()
                             context.Response.Close()
-                            log1write(context.Request.RawUrl & "は不正なリクエストです")
+                            log1write("【エラー】ffmpeg HTTP ストリーム配信開始のパラメーターが不正です")
+                            http_err = 1
                         End If
-                    ElseIf ffmpeg_num_stopping > 0 Then
-                        '終了処理中
-                        context.Response.Headers("Content-Type") = "text/plain"
-                        Dim sw = New StreamWriter(context.Response.OutputStream)
-                        sw.Write("Stream" & ffmpeg_num & " is stopping.")
-                        sw.Close()
-                        context.Response.Close()
-                        log1write("ストリーム" & ffmpeg_num & "は終了処理中です。配信は中止されました")
-                    Else
-                        '配信準備がなされていない
-                        context.Response.Headers("Content-Type") = "text/plain"
-                        Dim sw = New StreamWriter(context.Response.OutputStream)
-                        sw.Write("Stream" & ffmpeg_num & " is not ready.")
-                        sw.Close()
-                        context.Response.Close()
-                        log1write("ストリーム" & ffmpeg_num & "は配信準備されていません。配信は中止されました")
+                    End If
+
+                    If http_err = 0 Then
+                        '配信開始
+                        'Me._list(ffmpeg_num)._stoppingが100より大きければ接続待機中なので配信スタート
+                        Dim ffmpeg_num_stopping As Integer = Me._procMan.get_stopping_status(ffmpeg_num)
+                        If ffmpeg_num_stopping > 100 Then
+                            '配信準備中
+                            If ffmpeg_num > 0 Then
+                                'ffmpeg HTTP ストリーム配信開始
+                                log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
+                                'context.Response.Headers("Content-Type") = "video/mpeg"
+                                context.Response.Headers("Content-Type") = "video/MP2T"
+                                Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
+
+                                '現在稼働中のlist(i)._numをログに表示
+                                Dim js As String = get_live_numbers()
+                                log1write("現在稼働中のNumber：" & js)
+                            Else
+                                '不正なURL
+                                context.Response.Headers("Content-Type") = "text/plain"
+                                Dim sw = New StreamWriter(context.Response.OutputStream)
+                                sw.Write("Bad Request")
+                                'Test String
+                                sw.Close()
+                                context.Response.Close()
+                                log1write(context.Request.RawUrl & "は不正なリクエストです")
+                            End If
+                        ElseIf ffmpeg_num_stopping > 0 Then
+                            '終了処理中
+                            context.Response.Headers("Content-Type") = "text/plain"
+                            Dim sw = New StreamWriter(context.Response.OutputStream)
+                            sw.Write("Stream" & ffmpeg_num & " is stopping.")
+                            sw.Close()
+                            context.Response.Close()
+                            log1write("ストリーム" & ffmpeg_num & "は終了処理中です。配信は中止されました")
+                        Else
+                            '配信準備がなされていない
+                            context.Response.Headers("Content-Type") = "text/plain"
+                            Dim sw = New StreamWriter(context.Response.OutputStream)
+                            sw.Write("Stream" & ffmpeg_num & " is not ready.")
+                            sw.Close()
+                            context.Response.Close()
+                            log1write("ストリーム" & ffmpeg_num & "は配信準備されていません。配信は中止されました")
+                        End If
                     End If
                 Else
                     '認証エラー
