@@ -6,11 +6,9 @@ TvRemoteViewer_VB v1.77
 
 ■配信開始
 
-	WI_START_STREAM.html ()
-
 	StartTv.html (HLS配信開始　または、HTTP配信準備)
 	WI_START_STREAM.html (HLS配信開始　または、HTTP配信準備)
-		GET、POSTどちらでも可
+		GET、POSTどちらでも可　　※HTTP配信の場合は録画準備だけで実際の配信はまだされません
 		パラメーター	valueの例				説明
 		num		1					ストリームナンバー（WatchTVの場合以外必須）
 		StreamMode	0					0=HLS 1=HLS動画再生 2=HTTP 3=HTTP動画再生（必須）
@@ -33,15 +31,39 @@ TvRemoteViewer_VB v1.77
 		http://127.0.0.1:40003/StartTv.html?BonDriver=BonDriver_PT3_s0.dll&ServiceID=101&ChSpace=0
 		http://127.0.0.1:40003/StartTv.html?VideoName=D:\test.ts&VideoSeekSeconds=30
 
-	WatchTV%NUM%.ts (HTTP配信開始)
-		HTTP配信を開始する方法は2通りあります
-		A：あらかじめStartTv.htmlにパラメーターを指定して配信準備しておき、直後にWatchTV%NUM%.htmlにアクセスする
-		B：WatchTV%NUM%.tsにGETでStartTv.htmlと同様のパラメーターを与える(numは省略可能）
-		　 VideoNameはURLエンコードしておく必要有り
-		　 例：
-		　 http://127.0.0.1:40003/WatchTV1.ts?BonDriver=BonDriver_Spinel_s0.dll&ServiceID=101&ChSpace=0
-                   http://127.0.0.1:40003/WatchTV1.ts?VideoName=D%3a%5ctest.ts&VideoSeekSeconds=30
-		 　ちなみに↑のURLをVLCのストリームを開くから参照すると配信が開始されます
+
+■HTTP配信
+
+	まず、サーバー側が使用しているHTTP配信アプリ、VLCの配信先頭ポートをWI_GET_TVRV_STATUS.htmlで取得しておきます
+
+	HTTP配信を開始する方法は2通りあります
+
+	A：	【サーバー側のHTTP配信アプリ：VLC, ffmpeg】
+		StartTv.htmlにStreamMode=2or3指定でアクセスし配信パラメーターの設定を行った後、
+		動画再生アプリケーションからHTTPストリームURLにアクセスする
+
+		例えば
+		http://127.0.0.1:40003/StartTv.html?BonDriver=BonDriver_PT3_s0.dll&ServiceID=101&ChSpace=0&StreamMode=2
+		にアクセス後
+
+		・サーバー側のHTTP配信アプリがVLCの場合
+		　（42464+ストリーム番号の分だけポートを空ける必要があるかもしれません）
+		　http://127.0.0.1:42465/mystream1.ts　(ストリーム2の場合はポート42466、以下同様）
+
+		・サーバー側のHTTP配信アプリがffmpegの場合
+		　http://127.0.0.1:40003/WatchTV1.ts　（ストリーム2の場合はWatchTV2.ts、以下同様）
+
+		※　HTTPストリームURLは手計算の他、配信準備完了後にWI_GET_LIVE_STREAM.htmlにアクセスすると取得できます
+
+	B：	【サーバー側のHTTP配信アプリ：ffmpeg】
+		・サーバー側のHTTP配信アプリがffmpegであることが必要です
+		WatchTV%NUM%.tsに直接アクセスして配信開始
+		WatchTV%NUM%.tsにGETでStartTv.htmlと同様のパラメーターを与える(numは省略可能）
+		VideoNameはURLエンコードしておく必要有り
+		例：
+		http://127.0.0.1:40003/WatchTV1.ts?BonDriver=BonDriver_Spinel_s0.dll&ServiceID=101&ChSpace=0
+                http://127.0.0.1:40003/WatchTV1.ts?VideoName=D%3a%5ctest.ts&VideoSeekSeconds=30
+		ちなみに↑のURLをVLCのストリームを開くから参照すると配信が開始されます
 
 
 ■配信停止
