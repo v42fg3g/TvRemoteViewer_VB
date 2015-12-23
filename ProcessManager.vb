@@ -336,7 +336,11 @@ Public Class ProcessManager
                             End If
 
                             If j >= 0 Then
-                                System.Threading.Thread.Sleep(UDP2HLS_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+                                If OPENFIX_WAIT > 0 Then
+                                    System.Threading.Thread.Sleep(OPENFIX_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+                                Else
+                                    udpProc.WaitForInputIdle()
+                                End If
                                 log1write("【openfix】No.=" & num & " サービスID:" & openfix_sid_org & "への切り替えを試みます")
 
                                 '本来の目的サービスＩＤへ
@@ -392,8 +396,11 @@ Public Class ProcessManager
 
                         If j >= 0 Then
                             'チャンネル切り替えに成功したので引き続きHLSアプリ起動
-
-                            System.Threading.Thread.Sleep(UDP2HLS_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+                            If UDP2HLS_WAIT > 0 Then
+                                System.Threading.Thread.Sleep(UDP2HLS_WAIT) '1000からちょっと少なくしてみた　0でもほぼおｋだが極希にHLSエラーが起こった
+                            Else
+                                udpProc.WaitForInputIdle()
+                            End If
 
                             If HTTPSTREAM_App = 2 And hlsApp.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
                                 'ffmpeg HTTPストリーム

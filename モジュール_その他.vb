@@ -27,8 +27,11 @@
     Public UDP_PRIORITY As String = "" 'High
     Public HLS_PRIORITY As String = ""
 
-    'UDPとHLSの間に挟むウェイト(ms)
+    'UDPとHLSの間に挟むウェイト(ms) 0=WaitForInputIdle
     Public UDP2HLS_WAIT As Integer = 500
+
+    'ダミーチャンネルに合わせた後に入れるWAIT 0=WaitForInputIdle
+    Public OPENFIX_WAIT As Integer = 0
 
     'TvRemoteViewer_VBの起動時、終了時、全停止時にRecTaskまたはTSTaskを名前付きで停止するかどうか
     Public Stop_RecTask_at_StartEnd As Integer = 1

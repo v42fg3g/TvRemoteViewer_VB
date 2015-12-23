@@ -894,32 +894,27 @@ Class WebRemocon
 
     '配信準備中の進歩度を返す
     Private Function check_m3u8_ts_status(ByVal num As Integer) As Integer
-        Dim r As Integer = 0 '1=m3u8無,ts無、2=m3u8有、123ts無、3=m3u8有、～ts有
-        'm3u8が存在していればViewTV1_waiting.htmlのrefresh先を書き換える
+        'tsの数を返す。m3u8が存在すれば正の値、存在していなければ負の値
+        Dim r As Integer = 0
         Dim fileroot As String = Me._fileroot
         If fileroot.Length = 0 Then
             fileroot = Me._wwwroot
         End If
         fileroot &= "\"
 
-        ' 必要な変数を宣言する
-        Dim stPrompt As String = String.Empty
-        Dim s As String
-
+        Dim exist_m3u8 As Integer = 1
         If file_exist(fileroot & "mystream" & num.ToString & ".m3u8") <= 0 Then
             'm3u8無し
-            r = 0
-        Else
-            'm3u8有り
-            'tsチェック
-            Dim ts_count As Integer = 0
-            For Each stFilePath As String In System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "-*.ts")
-                s = stFilePath
-                ts_count += 1
-            Next
-
-            r = ts_count
+            exist_m3u8 = -1
         End If
+
+        'tsチェック
+        Dim ts_count As Integer = 0
+        For Each stFilePath As String In System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "-*.ts")
+            ts_count += 1
+        Next
+
+        r = exist_m3u8 * ts_count
 
         Return r
     End Function
@@ -1309,6 +1304,8 @@ Class WebRemocon
                                 HLS_PRIORITY = trim8(youso(1).ToString)
                             Case "UDP2HLS_WAIT"
                                 UDP2HLS_WAIT = Val(youso(1).ToString)
+                            Case "OPENFIX_WAIT"
+                                OPENFIX_WAIT = Val(youso(1).ToString)
                             Case "ALLOW_IDPASS2HTML"
                                 ALLOW_IDPASS2HTML = Val(youso(1).ToString)
                             Case "FFMPEG_HTTP_CUT_SECONDS"
@@ -3201,6 +3198,10 @@ Class WebRemocon
                                         '作られている.tsの数
                                         WI_cmd_reply = Me.WI_GET_TSFILE_COUNT(num)
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_TSFILE_COUNT2"
+                                        '作られている.tsの数 （m3u8が存在すれば正の値　m3u8が存在しなければ負の値）
+                                        WI_cmd_reply = Me.check_m3u8_ts_status(num)
+                                        WI_cmd_reply_force = 1
                                     Case "WI_GET_RESOLUTION"
                                         '解像度
                                         WI_cmd_reply = Me.WI_GET_RESOLUTION()
@@ -3403,7 +3404,7 @@ Class WebRemocon
                                     s = ReadAllTexts(path_waiting)
                                     Dim waitmessage As String = ""
                                     If request_page = 1 Then
-                                        waitmessage = "配信準備中です..(" & check_m3u8_ts.ToString & ")"
+                                        waitmessage = "配信準備中です..(" & System.Math.Abs(check_m3u8_ts).ToString & ")"
                                     ElseIf request_page = 11 Then
                                         waitmessage = "配信されていません"
                                     End If
@@ -3446,7 +3447,7 @@ Class WebRemocon
                                         s &= "<body>" & vbCrLf
                                     End If
                                     If request_page = 1 Then
-                                        s &= "配信準備中です..(" & check_m3u8_ts.ToString & " & vbcrlf" & vbCrLf
+                                        s &= "配信準備中です..(" & System.Math.Abs(check_m3u8_ts).ToString & " & vbcrlf" & vbCrLf
                                         log1write(num.ToString & ":配信準備中です")
                                     ElseIf request_page = 11 Then
                                         s &= "配信されていません" & vbCrLf
@@ -4137,7 +4138,7 @@ Class WebRemocon
 
         'tsチェック
         Dim ts_count As Integer = 0
-        For Each stFilePath As String In System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "*.ts")
+        For Each stFilePath As String In System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "-*.ts")
             s = stFilePath
             ts_count += 1
         Next

@@ -99,7 +99,9 @@ TvRemoteViewer_VB v1.77
 	WI_GET_RESOLUTION			解像度一覧取得
 
 
-	WI_GET_TSFILE_COUNT.html?num=%NUM%	できあがったtsファイル数（HTTPストリームでは常に0が返ってきます）
+	WI_GET_TSFILE_COUNT.html?num=%NUM%	できあがったtsファイル数（m3u8が存在するかどうかは関係無し）
+	WI_GET_TSFILE_COUNT2.html?num=%NUM%	できあがったtsファイル数（m3u8が存在すれば正の値、存在しなければ負の値）
+	※HTTPストリームでは常に0が返ってきます
 
 
 	WI_GET_VIDEOFILES.html	ビデオファイル一覧HTML部品を返す
