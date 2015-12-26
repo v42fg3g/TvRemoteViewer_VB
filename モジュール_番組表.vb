@@ -60,8 +60,13 @@ Module モジュール_番組表
         Public tsid As Integer
         Public nextFlag As Integer '次の番組なら1
         Public Function CompareTo(ByVal obj As Object) As Integer Implements IComparable.CompareTo
-            '並べ替え用
-            Return Me.sid.CompareTo(DirectCast(obj, TVprogramstructure).sid)
+            '並べ替え用 sid,nextFlag
+            Dim compare As Integer = Me.sid.CompareTo(DirectCast(obj, TVprogramstructure).sid)
+            If compare = 0 Then
+                Return Me.nextFlag.CompareTo(DirectCast(obj, TVprogramstructure).nextFlag)
+            Else
+                Return compare
+            End If
         End Function
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
@@ -580,15 +585,15 @@ Module モジュール_番組表
                 For i = 0 To r.Length - 2
                     If r(i).nextFlag = 0 Then
                         Try
-                            Dim tr As DateTime = CDate(r(i).endDateTime)
-                            Dim re As Integer = Hour(tr) * 100 + Minute(tr) '番組終了時間　4桁分秒
-                            If re < ts Then
-                                '日付またぎしていれば
-                                re += 2400
-                            End If
-                            If te >= re Then
-                                '次番組があれば
-                                If r(i + 1).nextFlag = 1 And r(i).sid = r(i + 1).sid Then
+                            If r(i + 1).nextFlag = 1 And r(i).sid = r(i + 1).sid Then
+                                Dim tr As DateTime = CDate(r(i).endDateTime)
+                                Dim re As Integer = Hour(tr) * 100 + Minute(tr) '番組終了時間　4桁分秒
+                                If re < ts Then
+                                    '日付またぎしていれば()
+                                    re += 2400
+                                End If
+                                If te >= re Then
+                                    '次番組があれば
                                     r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & "-" & Trim(r(i + 1).endDateTime.Substring(r(i + 1).endDateTime.IndexOf(" "))) & " " & r(i + 1).programTitle
                                 End If
                             End If
@@ -1412,8 +1417,8 @@ Module モジュール_番組表
                     If line.Length > 0 Then
                         Dim i As Integer = 0
                         Dim j As Integer
-                        Dim last_sid As Integer = 0
-                        Dim skip_sid As Integer = 0
+                        Dim last_sid As String = ":"
+                        Dim skip_sid As String = ":"
                         For j = 0 To line.Length - 1
                             '番組表の数だけ繰り返す
                             Try
@@ -1458,14 +1463,14 @@ Module モジュール_番組表
                                             station = ""
                                         End If
 
-                                        If station.Length > 0 And sid <> skip_sid Then
+                                        If station.Length > 0 And skip_sid.IndexOf(":" & sid.ToString & ":") < 0 Then
                                             '放送局名が見つかっていれば
                                             Dim chk As Integer = -1
                                             If r IsNot Nothing Then
-                                                chk = Array.IndexOf(r, sid)
+                                                chk = Array.IndexOf(r, station)
                                                 If chk >= 0 Then
-                                                    If r(chk).startDateTime = "1970/01/01 " & ystart_time And r(chk).programTitle = title Then
-                                                        '重複（同じ時刻、同じタイトル）
+                                                    If r(chk).startDateTime = "1970/01/01 " & ystart_time Then
+                                                        '重複（同じsid,時刻）
                                                         chk = 1
                                                     Else
                                                         chk = -1
@@ -1490,12 +1495,12 @@ Module モジュール_番組表
                                                 r(i).programTitle = title
                                                 r(i).programContent = texts
                                                 '次番組かどうかチェック
-                                                If sid = last_sid Then
+                                                If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
                                                     '2回目の場合は次番組であろう
                                                     r(i).nextFlag = 1
-                                                    skip_sid = sid '3回目以降はスキップするように
+                                                    skip_sid &= sid.ToString & ":" '3回目以降はスキップするように
                                                 End If
-                                                last_sid = sid
+                                                last_sid &= sid.ToString & ":"
                                             End If
                                         End If
                                     End If
@@ -2069,8 +2074,8 @@ Module モジュール_番組表
                 Dim tr As tvmaidData.TvmaidReserve = jsonRead.ReadObject(ms)
 
                 If tr.Code = 0 Then
-                    Dim last_sid As Integer = 0
-                    Dim skip_sid As Integer = 0
+                    Dim last_sid As String = ":"
+                    Dim skip_sid As String = ":"
                     For i = 0 To tr.Data1.Count - 1
                         'タイトル
                         Dim title As String = Trim(tr.Data1(i)(4))
@@ -2126,14 +2131,14 @@ Module モジュール_番組表
                             Dim station As String
                             station = sid2jigyousha(sid, tsid)
 
-                            If station.Length > 0 And sid <> skip_sid Then
+                            If station.Length > 0 And skip_sid.IndexOf(":" & sid.ToString & ":") < 0 Then
                                 '放送局名が見つかっていれば
                                 Dim chk As Integer = -1
                                 If r IsNot Nothing Then
-                                    chk = Array.IndexOf(r, sid)
+                                    chk = Array.IndexOf(r, station)
                                     If chk >= 0 Then
-                                        If r(chk).startDateTime = "1970/01/01 " & ystart_time And r(chk).programTitle = title Then
-                                            '重複（同じ時刻、同じタイトル）
+                                        If r(chk).startDateTime = "1970/01/01 " & ystart_time Then
+                                            '重複（同じsid,時刻）
                                             chk = 1
                                         Else
                                             chk = -1
@@ -2158,12 +2163,12 @@ Module モジュール_番組表
                                     r(i).programTitle = title
                                     r(i).programContent = texts
                                     '次番組かどうかチェック
-                                    If sid = last_sid Then
+                                    If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
                                         '2回目の場合は次番組であろう
                                         r(i).nextFlag = 1
-                                        skip_sid = sid '3回目以降はスキップするように
+                                        skip_sid &= sid.ToString & ":" '3回目以降はスキップするように
                                     End If
-                                    last_sid = sid
+                                    last_sid &= sid.ToString & ":"
                                 End If
                             End If
                         End If

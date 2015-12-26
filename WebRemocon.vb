@@ -1412,16 +1412,19 @@ Class WebRemocon
                                 If TOT_get_duration > 0 Then
                                     log1write("ファイル再生時に動画の長さを調べるようセットしました")
                                 End If
-                            Case "WhiteBrowserWB_path"
-                                WhiteBrowserWB_path = trim8(youso(1).ToString)
-                                If file_exist(WhiteBrowserWB_path) = 1 Then
-                                    log1write("WhiteBrowserのデータベースとして " & WhiteBrowserWB_path & " をセットしました")
-                                Else
-                                    log1write("【エラー】WhiteBrowserのデータベース " & WhiteBrowserWB_path & " が見つかりません")
-                                    WhiteBrowserWB_path = ""
-                                End If
                             Case "meta_refresh_fix"
                                 meta_refresh_fix = Val(youso(1).ToString)
+
+
+
+                                'Case "WhiteBrowserWB_path"
+                                'WhiteBrowserWB_path = trim8(youso(1).ToString)
+                                'If file_exist(WhiteBrowserWB_path) = 1 Then
+                                'log1write("WhiteBrowserのデータベースとして " & WhiteBrowserWB_path & " をセットしました")
+                                'Else
+                                'log1write("【エラー】WhiteBrowserのデータベース " & WhiteBrowserWB_path & " が見つかりません")
+                                'WhiteBrowserWB_path = ""
+                                'End If
                         End Select
                     End If
                 Catch ex As Exception

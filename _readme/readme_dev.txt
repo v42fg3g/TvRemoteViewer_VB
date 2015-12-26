@@ -131,8 +131,8 @@ TvRemoteViewer_VB v1.77
 
 
 	WI_GET_PROGRAM_[TVROCK,EDCB,PTTIMER,TVMAID].html(?temp=1～3)
-		TVROCK,EDCBから番組表を取得
-		オプション temp=1～3 を指定することにより次番組が存在すれば併せて取得(PTTIMERには未対応）
+		TVROCK,EDCBから現在時刻の番組表を取得
+		オプション temp=1～3 を指定することにより次番組が存在すれば併せて取得
 		1:返値の各番組情報記述は従来通り
 		2:返値の各番組情報内の次番組名冒頭に「[Next]」を付加
 		3:返値の各番組情報末尾に現番組「,0」か次番組「,1」かを付加
