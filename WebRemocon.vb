@@ -1354,7 +1354,15 @@ Class WebRemocon
                             Case "EDCB_GetCh_method"
                                 EDCB_GetCh_method = Val(youso(1).ToString)
                             Case "Tvmaid_url"
-                                Tvmaid_url = youso(1).ToString
+                                If youso(1).Length > 0 Then
+                                    Tvmaid_url = youso(1).ToString
+                                    TvmaidIsEX = 0
+                                End If
+                            Case "TvmaidEX_url"
+                                If youso(1).Length > 0 Then
+                                    Tvmaid_url = youso(1).ToString
+                                    TvmaidIsEX = 1
+                                End If
                             Case "NicoJK_path"
                                 NicoJK_path = youso(1).ToString
                                 If NicoJK_path.Length > 0 Then

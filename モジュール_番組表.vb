@@ -28,6 +28,7 @@ Module モジュール_番組表
     Public pt3Timer_str As String = "" 'ptTimer3ならば"3"が入る
     'Tvmaid
     Public Tvmaid_url As String = "" 'Tvmaidのサーバーurl
+    Public TvmaidIsEX As Integer = 0 'TvmaidEXなら1
     Public TvProgramTvmaid_NGword() As String
 
     Public LIVE_STREAM_STR As String = ""
@@ -443,7 +444,11 @@ Module モジュール_番組表
         Dim r() As TVprogramstructure = Nothing
         If regionID = 996 Then
             'Tvmaid
-            r = get_Tvmaid_program(getnext)
+            If TvmaidIsEX = 1 Then
+                r = get_TvmaidEX_program(getnext)
+            Else
+                r = get_Tvmaid_program(getnext)
+            End If
         ElseIf regionID = 997 Then
             'ptTimer
             r = get_ptTimer_program(getnext)
@@ -2193,6 +2198,170 @@ Module モジュール_番組表
         Return r
     End Function
 
+    'TvmaidEX番組表
+    Public Function get_TvmaidEX_program(ByVal getnext As Integer) As Object
+        Dim r() As TVprogramstructure = Nothing
+
+        Dim nextsec As Integer = 0
+        If getnext >= 4 Then
+            nextsec = getnext * 60
+        ElseIf getnext > 0 Then
+            '1～3のときは3時間にしておく
+            nextsec = 180 * 60
+        End If
+
+        If Tvmaid_url.Length > 0 Then
+            'データベースから番組一覧を取得する
+            Try
+                Dim nowtime As DateTime = Now()
+                Dim nowtime_n As DateTime = DateAdd(DateInterval.Second, nextsec, nowtime)
+                'Dim ut As Integer = time2unix(nowtime) '現在のunixtime
+                'Dim utn As Integer = ut + nextsec
+                Dim ut_b As Long = DateTime.Parse(nowtime).ToBinary
+                Dim utn_b As Long = DateTime.Parse(nowtime_n).ToBinary
+                'Dim url As String = "http://127.0.0.1:20001" & "/webapi?api=GetTable&sql="
+                Dim url As String = Tvmaid_url & "/webapi/GetTable?sql="
+                If nextsec = 0 Then
+                    url &= "SELECT fsid,start,end,duration,title,desc from event WHERE start <= " & ut_b & " AND end > " & ut_b & " ORDER BY fsid"
+                Else
+                    url &= "SELECT fsid,start,end,duration,title,desc from event WHERE (start <= " & ut_b & " AND end > " & ut_b & ") OR (start <= " & utn_b & " AND start > " & ut_b & ") ORDER BY fsid,start"
+                End If
+                url = url.Replace("//webapi/", "/webapi/")
+
+                Dim wc As New WebClient
+                Dim ms As New MemoryStream
+                Dim sw As New StreamWriter(ms)
+                Dim st As Stream = wc.OpenRead(url)
+                Dim sr As New StreamReader(st, Encoding.UTF8)
+                Dim s As String = sr.ReadToEnd
+
+                sw.Write(s)
+                sw.Flush()
+                ms.Position = 0
+
+                Dim jsonRead As New Json.DataContractJsonSerializer(GetType(tvmaidExData.TvmaidExReserve))
+                Dim tr As tvmaidExData.TvmaidExReserve = jsonRead.ReadObject(ms)
+
+                If tr.code = 0 Then
+                    Dim last_sid As String = ":"
+                    Dim skip_sid As String = ":"
+                    For i = 0 To tr.data1.Count - 1
+                        'タイトル
+                        Dim title As String = Trim(tr.data1(i)(4))
+                        'TSID,SIDを算出
+                        Dim tsid_long As String = Hex(tr.data1(i)(0))
+                        Dim tsid_hex As String = ""
+                        Dim tsid As Integer = 0
+                        Dim sid_hex As String = ""
+                        Dim sid As Integer = 0
+                        If tsid_long.Length = 12 Then
+                            '地デジ
+                            tsid_hex = tsid_long.Substring(0, 4) '初めの4文字
+                            tsid = h16_10("0x" & tsid_hex)
+                            sid_hex = tsid_long.Substring(8, 4) '最後の4文字
+                            sid = h16_10("0x" & sid_hex)
+                        ElseIf tsid_long.Length = 9 Then
+                            'BS/CS
+                            tsid_hex = tsid_long.Substring(1, 4) '初めの4文字
+                            tsid = h16_10("0x" & tsid_hex)
+                            sid_hex = tsid_long.Substring(5, 4) '最後の4文字
+                            sid = h16_10("0x" & sid_hex)
+                        Else
+                            '未知の形式
+                        End If
+
+                        '開始時間
+                        Dim ystartDate As DateTime = DateTime.FromBinary(tr.data1(i)(1)) '開始時刻(調整いらず）
+                        Dim ystart As Integer = time2unix(ystartDate)
+                        '録画時間（秒）
+                        Dim duration As Integer = Val(tr.data1(i)(3))
+                        '重複チェック用文字列
+                        Dim indexofstr As String = sid & "_" & ystart & "_" & duration
+
+                        If Array.IndexOf(ch_list, sid) >= 0 And ystart > 0 And duration > 0 And sid > 0 Then
+                            'ch_list()にsidが登録されていれば
+                            '録画開始時間
+                            Dim ystart_day As String = ystartDate.ToShortDateString
+                            Dim ystart_time As String = ystartDate.ToString("HH:mm")
+                            '録画終了時間
+                            Dim yend As Integer = ystart + duration
+                            Dim yendDate As DateTime = unix2time(yend)
+                            Dim yend_time As String = yendDate.ToString("HH:mm")
+                            '録画時間
+                            Dim delta As Integer = duration
+                            Dim deltastr_time As String = Int(delta / (60 * 60)).ToString.PadLeft(2, "0")
+                            Dim deltastr_minute As String = (Int(delta / 60) - (Val(deltastr_time) * 60)).ToString.PadLeft(2, "0")
+                            Dim deltastr_sec As String = Int(delta Mod 60).ToString.PadLeft(2, "0")
+                            Dim deltastr As String = deltastr_time & ":" & deltastr_minute & ":" & deltastr_sec
+                            '内容
+                            Dim texts As String = Trim(tr.data1(i)(5))
+
+                            '放送局名
+                            Dim station As String
+                            station = sid2jigyousha(sid, tsid)
+
+                            If station.Length > 0 And skip_sid.IndexOf(":" & sid.ToString & ":") < 0 Then
+                                '放送局名が見つかっていれば
+                                Dim chk As Integer = -1
+                                If r IsNot Nothing Then
+                                    chk = Array.IndexOf(r, station)
+                                    If chk >= 0 Then
+                                        If r(chk).startDateTime = "1970/01/01 " & ystart_time Then
+                                            '重複（同じsid,時刻）
+                                            chk = 1
+                                        Else
+                                            chk = -1
+                                        End If
+                                    End If
+                                End If
+                                If chk < 0 Then
+                                    '重複がなければ
+                                    If r Is Nothing Then
+                                        ReDim Preserve r(0)
+                                    Else
+                                        i = r.Length
+                                        ReDim Preserve r(i)
+                                    End If
+                                    r(i).sid = sid
+                                    r(i).tsid = 0
+                                    r(i).stationDispName = station
+                                    Dim t1s As String = "1970/01/01 " & ystart_time
+                                    Dim t2s As String = "1970/01/01 " & yend_time
+                                    r(i).startDateTime = t1s
+                                    r(i).endDateTime = t2s
+                                    r(i).programTitle = title
+                                    r(i).programContent = texts
+                                    '次番組かどうかチェック
+                                    If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
+                                        '2回目の場合は次番組であろう
+                                        r(i).nextFlag = 1
+                                        skip_sid &= sid.ToString & ":" '3回目以降はスキップするように
+                                    End If
+                                    last_sid &= sid.ToString & ":"
+                                End If
+                            End If
+                        End If
+                    Next
+                End If
+
+                '後処理
+                sr.Close()
+                st.Close()
+                sw.Close()
+                st.Close()
+
+                If r IsNot Nothing Then
+                    'sidで並び替え
+                    Array.Sort(r)
+                End If
+            Catch ex As Exception
+                log1write("TvmaidEX番組情報取得中にエラーが発生しました。" & ex.Message)
+            End Try
+        End If
+
+        Return r
+    End Function
+
 End Module
 
 Namespace tvmaidData
@@ -2200,5 +2369,13 @@ Namespace tvmaidData
         Public Code As Integer
         Public Message As String
         Public Data1 As List(Of String())
+    End Class
+End Namespace
+
+Namespace tvmaidExData
+    Public Class TvmaidExReserve
+        Public code As Integer
+        Public message As String
+        Public data1 As List(Of String())
     End Class
 End Namespace

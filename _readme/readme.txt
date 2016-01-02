@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.79
+TvRemoteViewer_VB v1.80
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -621,6 +621,7 @@ TvRemoteViewer_VB v1.79
 		iniのUDP2HLS_WAITが0の場合はUDPアプリが準備出来次第HLSアプリを実行することにした
 		配信準備中に表示されるts数を修正（m3u8が作成されていなくともカウントするようにした）
 	1.79	ptTimerとTvmaidの次番組取得不具合を修正
+	1.80	TvmaidEXに対応（iniにTvmaidEX_urlを追加）
 
 
 
