@@ -2219,7 +2219,6 @@ Module モジュール_番組表
                 'Dim utn As Integer = ut + nextsec
                 Dim ut_b As Long = DateTime.Parse(nowtime).ToBinary
                 Dim utn_b As Long = DateTime.Parse(nowtime_n).ToBinary
-                'Dim url As String = "http://127.0.0.1:20001" & "/webapi?api=GetTable&sql="
                 Dim url As String = Tvmaid_url & "/webapi/GetTable?sql="
                 If nextsec = 0 Then
                     url &= "SELECT fsid,start,end,duration,title,desc from event WHERE start <= " & ut_b & " AND end > " & ut_b & " ORDER BY fsid"
@@ -2295,6 +2294,7 @@ Module モジュール_番組表
                             Dim deltastr As String = deltastr_time & ":" & deltastr_minute & ":" & deltastr_sec
                             '内容
                             Dim texts As String = Trim(tr.data1(i)(5))
+                            '改行（\u000d\u000a）が入ることがあるのかな・・
 
                             '放送局名
                             Dim station As String
@@ -2355,7 +2355,7 @@ Module モジュール_番組表
                     Array.Sort(r)
                 End If
             Catch ex As Exception
-                log1write("TvmaidEX番組情報取得中にエラーが発生しました。" & ex.Message)
+                log1write("TvmaidYUI番組情報取得中にエラーが発生しました。" & ex.Message)
             End Try
         End If
 

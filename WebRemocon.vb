@@ -1358,7 +1358,7 @@ Class WebRemocon
                                     Tvmaid_url = youso(1).ToString
                                     TvmaidIsEX = 0
                                 End If
-                            Case "TvmaidEX_url"
+                            Case "TvmaidEX_url", "TvmaidYUI_url"
                                 If youso(1).Length > 0 Then
                                     Tvmaid_url = youso(1).ToString
                                     TvmaidIsEX = 1

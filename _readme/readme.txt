@@ -621,7 +621,7 @@ TvRemoteViewer_VB v1.80
 		iniのUDP2HLS_WAITが0の場合はUDPアプリが準備出来次第HLSアプリを実行することにした
 		配信準備中に表示されるts数を修正（m3u8が作成されていなくともカウントするようにした）
 	1.79	ptTimerとTvmaidの次番組取得不具合を修正
-	1.80	TvmaidEXに対応（iniにTvmaidEX_urlを追加）
+	1.80	Tvmaid YUIに対応（iniにTvmaidYUI_urlを追加）
 
 
 
