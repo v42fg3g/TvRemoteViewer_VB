@@ -1357,11 +1357,13 @@ Class WebRemocon
                                 If youso(1).Length > 0 Then
                                     Tvmaid_url = youso(1).ToString
                                     TvmaidIsEX = 0
+                                    log1write("TvmaidのサーバーURLが指定されました。" & Tvmaid_url)
                                 End If
                             Case "TvmaidEX_url", "TvmaidYUI_url"
                                 If youso(1).Length > 0 Then
                                     Tvmaid_url = youso(1).ToString
                                     TvmaidIsEX = 1
+                                    log1write("TvmaidYUIのサーバーURLが指定されました。" & Tvmaid_url)
                                 End If
                             Case "NicoJK_path"
                                 NicoJK_path = youso(1).ToString
