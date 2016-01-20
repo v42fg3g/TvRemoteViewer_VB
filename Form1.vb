@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.80"
+    Private version As String = "TvRemoteViewer_VB version 1.81"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -479,6 +479,9 @@ Public Class Form1
 
         'エンコ済ファイル再生ストリーム復帰作業
         Me._worker.resume_file_streams()
+
+        'stream_last_StBonSidChの再定義
+        ReDim Preserve stream_last_StBonSidCh(MAX_STREAM_NUMBER + 1)
 
         '無事起動
         TvRemoteViewer_VB_Start = 1

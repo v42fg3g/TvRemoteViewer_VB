@@ -64,6 +64,9 @@ Class ProcessBean
         'Me._ffmpegBuf = New Byte(88 * 20480 - 1) {}       '2048 Packet
         Me._ffmpegBuf = New Byte(1024 * 1024 * HTTPSTREAM_FFMPEG_BUFFER - 1) {}       '1MB*30
         Me._http_udp_changing = 0
+
+        stream_last_StBonSidCh(Me._num).utime = 0 '直前配信履歴簡易記録クリア
+        stream_last_StBonSidCh(Me._num).str = ""
     End Sub
 
     '========================================================================

@@ -1,4 +1,26 @@
 ﻿Module モジュール_その他
+
+    '直前配信履歴簡易記録　各ストリームが最後に使用した識別文字列（短時間での重複配信指令防止）
+    Public stream_last_StBonSidCh(8) As lastStBonSidChstructure
+    Public Structure lastStBonSidChstructure
+        Public utime As String
+        Public str As String '識別文字列
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            'indexof用
+            Dim pF As String = CType(obj, String) '検索内容を取得
+
+            If pF = "" Then '空白である場合
+                Return False '対象外
+            Else
+                If Me.str = pF Then
+                    Return True '一致した
+                Else
+                    Return False '一致しない
+                End If
+            End If
+        End Function
+    End Structure
+
     'Android UCブラウザのようにRefreshの解釈が違うブラウザ対策
     Public meta_refresh_fix As Integer = 0
 

@@ -2850,9 +2850,20 @@ Class WebRemocon
                         End If
 
                         If (h_stream_mode = 2 And h_bondriver.Length > 0 And Val(h_sid) > 0) Or (h_stream_mode = 3 And h_videoname.Length > 0) Then
-                            'httpストリーム配信開始
-                            'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
-                            Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1)
+                            '直前配信履歴簡易チェック＆記録
+                            Dim st As Integer = 2
+                            If h_videoname.Length >= 3 Then
+                                st = 3 'ファイル配信
+                            End If
+                            If check_last_StBonSidCh(h_num, st, h_bondriver, h_sid, h_chspace) = 0 Then
+                                'httpストリーム配信開始
+                                'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
+                                Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1)
+                            Else
+                                '直前に同様の内容を配信
+                                log1write("直前に同一配信指令を受け取りました")
+                                'Exit Sub '無いほうがうまくいったような・・
+                            End If
                         Else
                             'パラメーターが不正
                             context.Response.Headers("Content-Type") = "text/plain"
@@ -3326,6 +3337,31 @@ Class WebRemocon
                             '===========================================
                             'WEBページ表示前処理
                             '===========================================
+                            '直前配信履歴簡易チェック＆記録
+                            If (stream_mode = 0 Or stream_mode = 2) And req_Url.ToLower = ("/StartTv.html").ToLower And bondriver.Length > 0 Then
+                                Dim rn As Integer = 0
+                                If check_last_StBonSidCh(num, stream_mode, bondriver, Val(sid), Val(chspace)) > 0 Then
+                                    '直前に同様の内容を配信
+                                    log1write("直前に同一配信命令を受け取りました")
+                                    rn = 1
+                                Else
+                                    'すでに同じnum,BonDriver,サービスID,chspaceならば再度配信スタートはしない
+                                    Dim num2 As Integer = CHKECK_num_Bon_sid_ch(bondriver, Val(sid), Val(chspace))
+                                    If num2 >= 0 Then
+                                        'すでに同じ放送を放送中
+                                        log1write("すでにストリーム" & num2.ToString & "で同一放送を配信中です")
+                                        num = num2
+                                        rn = 1
+                                    End If
+                                End If
+
+                                If rn = 1 Then
+                                    '配信中のストリームへ誘導
+                                    req_Url = "/ViewTV" & num & ".html"
+                                    path = IO.Path.GetDirectoryName(path) & "\ViewTV" & num & ".html"
+                                End If
+                            End If
+
                             '特別なページ　配信スタート停止などサーバー動作を実行
                             If req_Url.ToLower.IndexOf("/" & HTTPSTREAM_mode2_str.ToLower & "_ViewTV".ToLower) >= 0 Then
                                 'VLC HTTPストリーミング
@@ -3949,7 +3985,11 @@ Class WebRemocon
                         context.Response.StatusCode = 401
                     End If
 
-                    res.Close()
+                    Try
+                        res.Close()
+                    Catch ex As Exception
+                        'たまにエラーになる・・が無害のよう
+                    End Try
 
                     Try
                         context.Response.Close()
@@ -3971,6 +4011,9 @@ Class WebRemocon
                         If res IsNot Nothing Then
                             res.Close()
                         End If
+                        If context IsNot Nothing Then
+                            context.Response.Close()
+                        End If
                     Catch ex As Exception
                         log1write(ex.ToString())
                     End Try
@@ -3986,6 +4029,57 @@ Class WebRemocon
     Public Function F_get_file_duration(ByVal num As Integer) As Integer
         '　本体はProcessManager.vbに
         Return Me._procMan.F_get_file_duration(num)
+    End Function
+
+    '直前配信履歴簡易チェック＆記録　直前に同じ配信指令を受け取っていれば1を返す　同時に配信内容を簡易記録
+    Public Function check_last_StBonSidCh(ByVal num As Integer, ByVal st As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal chspace As Integer) As Integer
+        Dim r As Integer = 0
+
+        Dim ut As Integer = time2unix(Now())
+
+        Dim cs As String = st.ToString & "," & bondriver & "," & sid.ToString & "," & chspace.ToString
+        If st = 0 Or st = 2 Then
+            '最後に配信開始してから何秒経っているか
+            Dim utb As Integer = ut - stream_last_StBonSidCh(num).utime
+            '放送配信
+            If (stream_last_StBonSidCh(num).str = cs And utb <= 60) Or utb <= 3 Then
+                '同一の配信指令で60秒以内(うまく配信がスタートしていれば早めにクリアされている)、もしくは前回の指令から3秒以内なら重複と見なす
+                r = 1
+            Else
+                '新規
+                stream_last_StBonSidCh(num).utime = ut
+                stream_last_StBonSidCh(num).str = cs
+            End If
+        Else
+            'ファイル配信
+            stream_last_StBonSidCh(num).utime = 0
+            stream_last_StBonSidCh(num).str = ""
+        End If
+
+        Return r
+    End Function
+
+    'すでに同じ放送が放送中かどうか(該当無しならば-1、該当があればnumを返す）
+    Public Function CHKECK_num_Bon_sid_ch(ByVal bondriver As String, ByVal sid As Integer, ByVal chspace As Integer) As Integer
+        Dim r As Integer = -1
+
+        If sid > 0 And bondriver.Length > 0 Then
+            Dim str As String = WI_GET_LIVE_STREAM()
+            If str.Length > 10 Then
+                Dim line() As String = Split(str, vbCrLf)
+                For i As Integer = 0 To line.Length - 1
+                    Dim d() As String = line(i).Split(",")
+                    If d.Length >= 6 Then
+                        If Trim(bondriver.ToLower) = Trim(d(3).ToLower) And sid = Val(Trim(d(4))) And chspace = Val(Trim(d(5))) Then
+                            r = Val(Trim(d(1))) '配信中のnum
+                            Exit For
+                        End If
+                    End If
+                Next
+            End If
+        End If
+
+        Return r
     End Function
 
     'すでに配信中のストリームでBonDriverが使われていれば該当numを返す。使われていなければそのままのnumを返す
