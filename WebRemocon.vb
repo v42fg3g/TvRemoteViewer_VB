@@ -1172,6 +1172,16 @@ Class WebRemocon
                                 TvProgramP_BonDriver1st = para_split_str(youso(1).ToString)
                             Case "TvProgram_tvrock_url"
                                 TvProgram_tvrock_url = trim8(youso(1).ToString)
+                                Dim sp As Integer = TvProgram_tvrock_url.IndexOf("?d")
+                                If sp > 0 Then
+                                    Try
+                                        TvProgram_tvrock_tuner = Val(youso(2))
+                                    Catch ex As Exception
+                                        TvProgram_tvrock_tuner = -1
+                                    End Try
+                                    TvProgram_tvrock_url = TvProgram_tvrock_url.Substring(0, sp)
+                                    log1write("TVROCK番組表チューナーに" & TvProgram_tvrock_tuner.ToString & "番を指定しました")
+                                End If
                             Case "TvProgram_EDCB_url"
                                 TvProgram_EDCB_url = trim8(youso(1).ToString)
                             Case "TvProgramD_channels"

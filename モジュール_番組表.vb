@@ -20,6 +20,7 @@ Module モジュール_番組表
     Public TvProgramS_BonDriver1st() As String
     Public TvProgramP_BonDriver1st() As String
     Public TvProgram_tvrock_url As String = ""
+    Public TvProgram_tvrock_tuner As Integer = -1 '事前に合わせるTvrockチューナー番号
     Public TvProgram_EDCB_url As String = ""
     'ptTimer
     Public ptTimer_path As String = "" 'pttimerのパス　末尾\
@@ -459,6 +460,23 @@ Module モジュール_番組表
         ElseIf regionID = 999 Then
             'TvRock
             Try
+                If TvProgram_tvrock_tuner >= 0 Then
+                    'チャンネル取得前にチューナーを指定する
+                    log1write("TVROCKのチューナーを" & TvProgram_tvrock_tuner.ToString & "番にセットしています")
+                    Dim wc As WebClient = New WebClient()
+                    Dim st As Stream = wc.OpenRead(TvProgram_tvrock_url & "?md=2&d=" & TvProgram_tvrock_tuner.ToString)
+                    Dim enc As Encoding = Encoding.GetEncoding("Shift_JIS")
+                    Dim sr As StreamReader = New StreamReader(st, enc)
+                    Dim html As String = sr.ReadToEnd()
+                    If html.IndexOf(")"">チューナー") > 0 And html.IndexOf(">録画<") > 0 Then
+                        log1write("TVROCKのチューナーを" & TvProgram_tvrock_tuner.ToString & "番にセットしました")
+                    Else
+                        log1write("【エラー】TVROCKのチューナーをセット出来ませんでした。チューナー番号を確認してください")
+                    End If
+                    sr.Close()
+                    st.Close()
+                End If
+
                 If TvProgram_tvrock_url.Length > 0 Then
                     Dim wc As WebClient = New WebClient()
                     Dim st As Stream = wc.OpenRead(TvProgram_tvrock_url)
@@ -570,6 +588,9 @@ Module モジュール_番組表
 
                     sp = html.IndexOf("<title>", sp + 1)
                 End While
+
+                sr.Close()
+                st.Close()
             Catch ex As Exception
                 log1write("インターネットからの番組表取得に失敗しました。" & ex.Message)
             End Try
@@ -1280,6 +1301,9 @@ Module モジュール_番組表
                             End If
                         End While
                     End If
+
+                    sr.Close()
+                    st.Close()
                 Catch ex As Exception
                     log1write("【エラー】" & url & " の取得に失敗しました。" & ex.Message)
                 End Try
@@ -1988,9 +2012,6 @@ Module モジュール_番組表
                                 ep = html.IndexOf("</eventinfo>", sp + 1)
                             End While
 
-                            sr.Close()
-                            st.Close()
-
                             If chk = 0 Then
                                 '該当時間帯の番組が無かった場合
                                 Dim j As Integer = 0
@@ -2008,6 +2029,10 @@ Module モジュール_番組表
                                 r(j).sid = ch_list(i).sid
                                 r(j).tsid = ch_list(i).tsid
                             End If
+
+                            sr.Close()
+                            st.Close()
+
                         ElseIf chk_j = 2 Then
                             'ダミー
                             Dim j As Integer = 0
