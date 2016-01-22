@@ -85,7 +85,7 @@ TvRemoteViewer_VB v1.77
 
 
 	WI_GET_LIVE_STREAM.html			配信中リスト取得
-		(内部List番号), ストリーム番号, UDPアプリが仕様するポート, BonDriver名, サービスID, ChSpace, StreamMode, 音声選択, 再起動中なら>0, 放送局名, HLSアプリexe名, シーク秒数, 配信中URL
+		(内部List番号), ストリーム番号, UDPアプリが仕様するポート, BonDriver名, サービスID, ChSpace, StreamMode, 音声選択, 再起動中なら0以上, 放送局名, HLSアプリexe名, シーク秒数, 配信中URL
 
 
     	WI_GET_PROGRAM_NUM.html			配信中の番組情報取得

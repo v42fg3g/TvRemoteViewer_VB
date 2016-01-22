@@ -1910,6 +1910,17 @@ Class WebRemocon
     Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
+        '配信準備中のストリームで配信しようとした場合は破棄する
+        Dim ut As Integer = time2unix(Now())
+        If stream_last_utime(num) = 0 Or ut - stream_last_utime(num) > 600 Then
+            '重複していない または前回の準備開始から10分以上経過している
+            stream_last_utime(num) = ut '最後にスタートした時間を記録 成功したり失敗すれば0になる
+        Else
+            'このストリームは配信準備中
+            log1write("【重複】ストリーム" & num.ToString & "は既に配信準備中です")
+            Exit Sub
+        End If
+
         filename = filename_escape_recall(filename) ',を戻す
 
         'テスト　多重テストを違うexeファイルで行う
@@ -1930,6 +1941,7 @@ Class WebRemocon
 
         If num > MAX_STREAM_NUMBER Or num < 0 Then
             log1write("最大配信ナンバーを超えています")
+            stream_last_utime(num) = 0 '前回配信準備開始時間リセット
             Exit Sub
         End If
 
@@ -1976,6 +1988,7 @@ Class WebRemocon
                     End If
                 Else
                     log1write("エラー：BS1_hlsAppが指定されていません")
+                    stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                     Exit Sub
                 End If
             ElseIf HTTPSTREAM_App = 2 Then
@@ -2097,6 +2110,7 @@ Class WebRemocon
                 Else
                     'その他vlc
                     '今のところ未対応
+                    stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                     Exit Sub
                 End If
             End If
@@ -2204,12 +2218,15 @@ Class WebRemocon
                 Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
             Catch ex As Exception
                 '設定しないうちにスタートしようとすると例外が起こる
+                log1write("【エラー】カレントディレクトリ変更に失敗しました。" & ex.Message)
+                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                 Exit Sub
             End Try
             '★プロセスを起動
             Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, Stream_mode, NHK_dual_mono_mode_select, resolution, VideoSeekSeconds)
         Else
             log1write("【エラー】HLSオプションが指定されていません。解像度を指定するかフォーム上のHLSオプションを記入してください")
+            stream_last_utime(num) = 0 '前回配信準備開始時間リセット
         End If
     End Sub
 
@@ -2860,20 +2877,9 @@ Class WebRemocon
                         End If
 
                         If (h_stream_mode = 2 And h_bondriver.Length > 0 And Val(h_sid) > 0) Or (h_stream_mode = 3 And h_videoname.Length > 0) Then
-                            '直前配信履歴簡易チェック＆記録
-                            Dim st As Integer = 2
-                            If h_videoname.Length >= 3 Then
-                                st = 3 'ファイル配信
-                            End If
-                            If check_last_StBonSidCh(h_num, st, h_bondriver, h_sid, h_chspace) = 0 Then
-                                'httpストリーム配信開始
-                                'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
-                                Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1)
-                            Else
-                                '直前に同様の内容を配信
-                                log1write("直前に同一配信指令を受け取りました")
-                                'Exit Sub '無いほうがうまくいったような・・
-                            End If
+                            'httpストリーム配信開始
+                            'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
+                            Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1)
                         Else
                             'パラメーターが不正
                             context.Response.Headers("Content-Type") = "text/plain"
@@ -2885,308 +2891,311 @@ Class WebRemocon
                             log1write("【エラー】ffmpeg HTTP ストリーム配信開始のパラメーターが不正です")
                             http_err = 1
                         End If
-                    End If
+                End If
 
-                    If http_err = 0 Then
-                        '配信開始
-                        'Me._list(ffmpeg_num)._stoppingが100より大きければ接続待機中なので配信スタート
-                        Dim ffmpeg_num_stopping As Integer = Me._procMan.get_stopping_status(ffmpeg_num)
-                        If ffmpeg_num_stopping > 100 Then
-                            '配信準備中
-                            If ffmpeg_num > 0 Then
-                                'ffmpeg HTTP ストリーム配信開始
-                                log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
-                                'context.Response.Headers("Content-Type") = "video/mpeg"
-                                context.Response.Headers("Content-Type") = "video/MP2T"
-                                Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
+                If http_err = 0 Then
+                    '配信開始
+                    'Me._list(ffmpeg_num)._stoppingが100より大きければ接続待機中なので配信スタート
+                    Dim ffmpeg_num_stopping As Integer = Me._procMan.get_stopping_status(ffmpeg_num)
+                    If ffmpeg_num_stopping > 100 Then
+                        '配信準備中
+                        If ffmpeg_num > 0 Then
+                            'ffmpeg HTTP ストリーム配信開始
+                            log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
+                            'context.Response.Headers("Content-Type") = "video/mpeg"
+                            context.Response.Headers("Content-Type") = "video/MP2T"
+                            Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
 
-                                '現在稼働中のlist(i)._numをログに表示
-                                Dim js As String = get_live_numbers()
-                                log1write("現在稼働中のNumber：" & js)
-                            Else
-                                '不正なURL
-                                context.Response.Headers("Content-Type") = "text/plain"
-                                Dim sw = New StreamWriter(context.Response.OutputStream)
-                                sw.Write("Bad Request")
-                                'Test String
-                                sw.Close()
-                                context.Response.Close()
-                                log1write(context.Request.RawUrl & "は不正なリクエストです")
-                            End If
-                        ElseIf ffmpeg_num_stopping > 0 Then
-                            '終了処理中
-                            context.Response.Headers("Content-Type") = "text/plain"
-                            Dim sw = New StreamWriter(context.Response.OutputStream)
-                            sw.Write("Stream" & ffmpeg_num & " is stopping.")
-                            sw.Close()
-                            context.Response.Close()
-                            log1write("ストリーム" & ffmpeg_num & "は終了処理中です。配信は中止されました")
+                            '現在稼働中のlist(i)._numをログに表示
+                            Dim js As String = get_live_numbers()
+                            log1write("現在稼働中のNumber：" & js)
                         Else
-                            '配信準備がなされていない
+                            '不正なURL
                             context.Response.Headers("Content-Type") = "text/plain"
                             Dim sw = New StreamWriter(context.Response.OutputStream)
-                            sw.Write("Stream" & ffmpeg_num & " is not ready.")
+                            sw.Write("Bad Request")
+                            'Test String
                             sw.Close()
                             context.Response.Close()
-                            log1write("ストリーム" & ffmpeg_num & "は配信準備されていません。配信は中止されました")
+                            log1write(context.Request.RawUrl & "は不正なリクエストです")
                         End If
-                    End If
-                Else
-                    '認証エラー
-                    context.Response.StatusCode = 401
-
-                    Try
+                    ElseIf ffmpeg_num_stopping > 0 Then
+                        '終了処理中
+                        context.Response.Headers("Content-Type") = "text/plain"
+                        Dim sw = New StreamWriter(context.Response.OutputStream)
+                        sw.Write("Stream" & ffmpeg_num & " is stopping.")
+                        sw.Close()
                         context.Response.Close()
-                    Catch ex As Exception
-                        ' client closed connection before the content was sent
-                    End Try
+                        log1write("ストリーム" & ffmpeg_num & "は終了処理中です。配信は中止されました")
+                    Else
+                        '配信準備がなされていない
+                        context.Response.Headers("Content-Type") = "text/plain"
+                        Dim sw = New StreamWriter(context.Response.OutputStream)
+                        sw.Write("Stream" & ffmpeg_num & " is not ready.")
+                        sw.Close()
+                        context.Response.Close()
+                        log1write("ストリーム" & ffmpeg_num & "は配信準備されていません。配信は中止されました")
+                    End If
                 End If
             Else
-
-                Dim req As HttpListenerRequest = Nothing
-                Dim res As HttpListenerResponse = Nothing
-                Dim reader As StreamReader = Nothing
-                Dim writer As StreamWriter = Nothing
-
-                Dim ffmpeg_http_stream_on As Integer = 0
+                '認証エラー
+                context.Response.StatusCode = 401
 
                 Try
-                    req = context.Request
-                    res = context.Response
+                    context.Response.Close()
+                Catch ex As Exception
+                    ' client closed connection before the content was sent
+                End Try
+            End If
+            Else
 
-                    'reader = New StreamReader(req.InputStream)
-                    'Dim received As String = reader.ReadToEnd()
+            Dim req As HttpListenerRequest = Nothing
+            Dim res As HttpListenerResponse = Nothing
+            Dim reader As StreamReader = Nothing
+            Dim writer As StreamWriter = Nothing
 
-                    'MIME TYPE
-                    Dim mimetype As String = get_mimetype(req.Url.LocalPath)
-                    If mimetype.Length > 0 Then
-                        res.ContentType = mimetype
-                    ElseIf Me._MIME_TYPE_DEFAULT.Length > 0 Then
-                        res.ContentType = Me._MIME_TYPE_DEFAULT
-                    End If
+            Dim ffmpeg_http_stream_on As Integer = 0
 
-                    Dim auth_ok As Integer = 0
-                    If Me._id.Length = 0 Or Me._pass.Length = 0 Then
-                        'パスワード未設定は素通り
-                        auth_ok = 1
-                    ElseIf req.IsAuthenticated Then
-                        Dim identity As HttpListenerBasicIdentity = DirectCast(context.User.Identity, HttpListenerBasicIdentity)
-                        '判定
-                        If Me._id = identity.Name And Me._pass = identity.Password Then
-                            '受付
-                            auth_ok = 2
-                        Else
-                            auth_ok = -1
-                        End If
+            Try
+                req = context.Request
+                res = context.Response
+
+                'reader = New StreamReader(req.InputStream)
+                'Dim received As String = reader.ReadToEnd()
+
+                'MIME TYPE
+                Dim mimetype As String = get_mimetype(req.Url.LocalPath)
+                If mimetype.Length > 0 Then
+                    res.ContentType = mimetype
+                ElseIf Me._MIME_TYPE_DEFAULT.Length > 0 Then
+                    res.ContentType = Me._MIME_TYPE_DEFAULT
+                End If
+
+                Dim auth_ok As Integer = 0
+                If Me._id.Length = 0 Or Me._pass.Length = 0 Then
+                    'パスワード未設定は素通り
+                    auth_ok = 1
+                ElseIf req.IsAuthenticated Then
+                    Dim identity As HttpListenerBasicIdentity = DirectCast(context.User.Identity, HttpListenerBasicIdentity)
+                    '判定
+                    If Me._id = identity.Name And Me._pass = identity.Password Then
+                        '受付
+                        auth_ok = 2
                     Else
-                        auth_ok = -2
+                        auth_ok = -1
+                    End If
+                Else
+                    auth_ok = -2
+                End If
+
+                If auth_ok > 0 Then
+                    ' リクエストされたURLからファイルのパスを求める
+                    Dim path As String = Me._wwwroot & req.Url.LocalPath.Replace("/", "\")
+
+                    '%FILEROOT%へのアクセスならパスを変換
+                    If path.IndexOf(Me._fileroot) < 0 Then
+                        Dim sp As Integer = Me._fileroot.LastIndexOf("\")
+                        Dim folder As String = Me._fileroot.Substring(sp) & "\"
+                        sp = path.IndexOf(folder)
+                        If sp >= 0 Then
+                            path = Me._fileroot & "\" & path.Substring(sp + folder.Length)
+                        End If
                     End If
 
-                    If auth_ok > 0 Then
-                        ' リクエストされたURLからファイルのパスを求める
-                        Dim path As String = Me._wwwroot & req.Url.LocalPath.Replace("/", "\")
+                    'ルートにアクセスされた場合、index.htmlを表示する
+                    Dim se1 As Integer = path.LastIndexOf("\")
+                    If se1 >= 0 And (se1 + 1) = path.Length Then
+                        path = path & "index.html"
+                    End If
 
-                        '%FILEROOT%へのアクセスならパスを変換
-                        If path.IndexOf(Me._fileroot) < 0 Then
-                            Dim sp As Integer = Me._fileroot.LastIndexOf("\")
-                            Dim folder As String = Me._fileroot.Substring(sp) & "\"
-                            sp = path.IndexOf(folder)
-                            If sp >= 0 Then
-                                path = Me._fileroot & "\" & path.Substring(sp + folder.Length)
-                            End If
+                    log1write(req.Url.LocalPath & "へのリクエストがありました。")
+                    If res.ContentType IsNot Nothing Then
+                        If res.ContentType.Length > 0 Then
+                            log1write("MIME TYPE : " & res.ContentType)
                         End If
+                    End If
 
-                        'ルートにアクセスされた場合、index.htmlを表示する
-                        Dim se1 As Integer = path.LastIndexOf("\")
-                        If se1 >= 0 And (se1 + 1) = path.Length Then
-                            path = path & "index.html"
+                    'リクエストされたURL
+                    Dim req_Url As String = req.Url.LocalPath
+
+                    'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
+                    If path.IndexOf(".htm") > 0 Then
+                        'HTMLなら
+
+                        '最後に.htmlにアクセスがあった日時を記録
+                        STOP_IDLEMINUTES_LAST = Now()
+
+                        'ページが表示されないことがあるので
+                        res.ContentType = "text/html"
+
+                        'ToLower小文字で比較
+                        Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
+                        Dim request_page As Integer = 0 '特別なリクエストかどうか
+                        Dim chk_viewtv_ok As Integer = 0 'ViewTV.htmlへのリクエストなら1になる
+
+                        '===========================================
+                        '★リクエストパラメーターを取得
+                        '===========================================
+                        'スレッドナンバー
+                        Dim num As Integer = 0
+                        num = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num") & "")
+                        'Int32.TryParse(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num"), num)
+                        'BonDriver指定
+                        Dim bondriver As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("BonDriver") & ""
+                        'サービスＩＤ指定
+                        Dim sid As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ServiceID") & ""
+                        'chspace指定
+                        Dim chspace As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ChSpace") & ""
+                        'Bon_Sid_Ch一括指定があった場合（JavaScript等でBon_Sid_Ch="BonDriver_t0.dll,12345,0"というように指定された場合）
+                        Dim bon_sid_ch_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("Bon_Sid_Ch") & ""
+                        Dim bon_sid_ch() As String = bon_sid_ch_str.Split(",")
+                        If bon_sid_ch.Length = 3 Then
+                            '個別に値が決まっていなければセット
+                            If bondriver.Length = 0 Then bondriver = Trim(bon_sid_ch(0))
+                            If sid.Length = 0 Then sid = Trim(bon_sid_ch(1))
+                            If chspace.Length = 0 Then chspace = Trim(bon_sid_ch(2))
                         End If
-
-                        log1write(req.Url.LocalPath & "へのリクエストがありました。")
-                        If res.ContentType IsNot Nothing Then
-                            If res.ContentType.Length > 0 Then
-                                log1write("MIME TYPE : " & res.ContentType)
+                        '解像度指定 "640x360"等
+                        Dim resolution As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("resolution") & ""
+                        'redirect指定
+                        Dim redirect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("redirect") & ""
+                        'm3u8,tsの準備状況
+                        Dim check_m3u8_ts As Integer = 0
+                        'ストリームモード 0=UDP 1=ファイル再生 2=http配信 3=http配信ファイル再生
+                        Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
+                        'ファイル名
+                        Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
+                        Dim vname() As String = videoname.Split(",")
+                        If vname.Length = 1 Then
+                            If vname(0).Length > 0 Then
+                                '日付が入ってない場合も受け入れる
+                                videoname = vname(0)
                             End If
+                        ElseIf vname.Length >= 2 Then
+                            '1番目が数値かどうか調べて対応
+                            Dim sep2 As String = ""
+                            Dim fl2 As Integer = 0
+                            videoname = ""
+                            If IsNumeric(vname(0)) Then
+                                fl2 = 1
+                            End If
+                            For ii2 As Integer = fl2 To vname.Length - 1
+                                videoname &= sep2 & vname(ii2)
+                                sep2 = ","
+                            Next
                         End If
-
-                        'リクエストされたURL
-                        Dim req_Url As String = req.Url.LocalPath
-
-                        'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
-                        If path.IndexOf(".htm") > 0 Then
-                            'HTMLなら
-
-                            '最後に.htmlにアクセスがあった日時を記録
-                            STOP_IDLEMINUTES_LAST = Now()
-
-                            'ページが表示されないことがあるので
-                            res.ContentType = "text/html"
-
-                            'ToLower小文字で比較
-                            Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
-                            Dim request_page As Integer = 0 '特別なリクエストかどうか
-                            Dim chk_viewtv_ok As Integer = 0 'ViewTV.htmlへのリクエストなら1になる
-
-                            '===========================================
-                            '★リクエストパラメーターを取得
-                            '===========================================
-                            'スレッドナンバー
-                            Dim num As Integer = 0
-                            num = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num") & "")
-                            'Int32.TryParse(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num"), num)
-                            'BonDriver指定
-                            Dim bondriver As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("BonDriver") & ""
-                            'サービスＩＤ指定
-                            Dim sid As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ServiceID") & ""
-                            'chspace指定
-                            Dim chspace As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ChSpace") & ""
-                            'Bon_Sid_Ch一括指定があった場合（JavaScript等でBon_Sid_Ch="BonDriver_t0.dll,12345,0"というように指定された場合）
-                            Dim bon_sid_ch_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("Bon_Sid_Ch") & ""
-                            Dim bon_sid_ch() As String = bon_sid_ch_str.Split(",")
-                            If bon_sid_ch.Length = 3 Then
-                                '個別に値が決まっていなければセット
-                                If bondriver.Length = 0 Then bondriver = Trim(bon_sid_ch(0))
-                                If sid.Length = 0 Then sid = Trim(bon_sid_ch(1))
-                                If chspace.Length = 0 Then chspace = Trim(bon_sid_ch(2))
-                            End If
-                            '解像度指定 "640x360"等
-                            Dim resolution As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("resolution") & ""
-                            'redirect指定
-                            Dim redirect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("redirect") & ""
-                            'm3u8,tsの準備状況
-                            Dim check_m3u8_ts As Integer = 0
-                            'ストリームモード 0=UDP 1=ファイル再生 2=http配信 3=http配信ファイル再生
-                            Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
-                            'ファイル名
-                            Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
-                            Dim vname() As String = videoname.Split(",")
-                            If vname.Length = 1 Then
-                                If vname(0).Length > 0 Then
-                                    '日付が入ってない場合も受け入れる
-                                    videoname = vname(0)
-                                End If
-                            ElseIf vname.Length >= 2 Then
-                                '1番目が数値かどうか調べて対応
-                                Dim sep2 As String = ""
-                                Dim fl2 As Integer = 0
-                                videoname = ""
-                                If IsNumeric(vname(0)) Then
-                                    fl2 = 1
-                                End If
-                                For ii2 As Integer = fl2 To vname.Length - 1
-                                    videoname &= sep2 & vname(ii2)
-                                    sep2 = ","
-                                Next
-                            End If
-                            'ファイル再生シーク秒数
-                            Dim VideoSeekSeconds As Integer = 0
-                            Dim VideoSeekSeconds_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSeekSeconds") & ""
-                            VideoSeekSeconds_str = StrConv(VideoSeekSeconds_str, VbStrConv.Narrow) '半角に
-                            If VideoSeekSeconds_str.IndexOf(":") > 0 Then
-                                Dim vd() As String = VideoSeekSeconds_str.Split(":")
-                                If vd.Length = 3 Then
-                                    VideoSeekSeconds = (vd(0) * 60 * 60) + (vd(1) * 60) + vd(2)
-                                ElseIf vd.Length = 2 Then
-                                    VideoSeekSeconds = (vd(0) * 60) + vd(1)
-                                Else
-                                    VideoSeekSeconds = Val(VideoSeekSeconds_str)
-                                    log1write(VideoSeekSeconds_str & "の秒数への変換に失敗しました" & VideoSeekSeconds & "秒にセットしました")
-                                End If
+                        'ファイル再生シーク秒数
+                        Dim VideoSeekSeconds As Integer = 0
+                        Dim VideoSeekSeconds_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSeekSeconds") & ""
+                        VideoSeekSeconds_str = StrConv(VideoSeekSeconds_str, VbStrConv.Narrow) '半角に
+                        If VideoSeekSeconds_str.IndexOf(":") > 0 Then
+                            Dim vd() As String = VideoSeekSeconds_str.Split(":")
+                            If vd.Length = 3 Then
+                                VideoSeekSeconds = (vd(0) * 60 * 60) + (vd(1) * 60) + vd(2)
+                            ElseIf vd.Length = 2 Then
+                                VideoSeekSeconds = (vd(0) * 60) + vd(1)
                             Else
                                 VideoSeekSeconds = Val(VideoSeekSeconds_str)
+                                log1write(VideoSeekSeconds_str & "の秒数への変換に失敗しました" & VideoSeekSeconds & "秒にセットしました")
                             End If
-                            '倍速ファイル再生
-                            Dim baisoku As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSpeed") & ""
-                            If baisoku.Length = 0 Then
-                                baisoku = "1" '等速
-                            End If
-                            'URLエンコードしておいたフルパスを文字列に変換
-                            'UTF-8化で解決
-                            'videoname = System.Web.HttpUtility.UrlDecode(videoname)
-                            'ビデオファイル名抽出
-                            Dim videoexword As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
-                            'If req.QueryString.Count > 0 Then
-                            ''クエリから1つずつチェック
-                            'For ii As Integer = 0 To req.QueryString.Count - 1
-                            'If req.QueryString.Keys(ii) = "VideoExWord" Then
-                            'videoexword = req.QueryString.Item(ii)
-                            'Exit For
-                            'End If
-                            'Next
-                            'End If
-                            'ビデオリスト　更新する=1
-                            Dim vl_refresh As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_refresh") & "")
-                            'ビデオリスト　何件返すか
-                            Dim vl_volume As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_volume") & "")
-                            If vl_volume = 0 Then
-                                vl_volume = C_INTMAX '制限無し
-                            End If
-                            'ビデオリスト　指定日以前のファイルをリストアップする
-                            Dim vl_startdate As DateTime
-                            Dim vl_startdate_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_startdate") & ""
-                            If vl_startdate_str.Length = 0 Then
-                                '未指定
-                                vl_startdate = C_DAY2038 '制限無し
-                            Else
-                                Try
-                                    vl_startdate = CDate(vl_startdate_str)
-                                Catch ex As Exception
-                                    '不正な値
-                                    vl_volume = -99
-                                    vl_startdate = CDate("1980/01/01")
-                                End Try
-                            End If
+                        Else
+                            VideoSeekSeconds = Val(VideoSeekSeconds_str)
+                        End If
+                        '倍速ファイル再生
+                        Dim baisoku As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSpeed") & ""
+                        If baisoku.Length = 0 Then
+                            baisoku = "1" '等速
+                        End If
+                        'URLエンコードしておいたフルパスを文字列に変換
+                        'UTF-8化で解決
+                        'videoname = System.Web.HttpUtility.UrlDecode(videoname)
+                        'ビデオファイル名抽出
+                        Dim videoexword As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
+                        'If req.QueryString.Count > 0 Then
+                        ''クエリから1つずつチェック
+                        'For ii As Integer = 0 To req.QueryString.Count - 1
+                        'If req.QueryString.Keys(ii) = "VideoExWord" Then
+                        'videoexword = req.QueryString.Item(ii)
+                        'Exit For
+                        'End If
+                        'Next
+                        'End If
+                        'ビデオリスト　更新する=1
+                        Dim vl_refresh As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_refresh") & "")
+                        'ビデオリスト　何件返すか
+                        Dim vl_volume As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_volume") & "")
+                        If vl_volume = 0 Then
+                            vl_volume = C_INTMAX '制限無し
+                        End If
+                        'ビデオリスト　指定日以前のファイルをリストアップする
+                        Dim vl_startdate As DateTime
+                        Dim vl_startdate_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_startdate") & ""
+                        If vl_startdate_str.Length = 0 Then
+                            '未指定
+                            vl_startdate = C_DAY2038 '制限無し
+                        Else
+                            Try
+                                vl_startdate = CDate(vl_startdate_str)
+                            Catch ex As Exception
+                                '不正な値
+                                vl_volume = -99
+                                vl_startdate = CDate("1980/01/01")
+                            End Try
+                        End If
 
-                            'ハードサブ不許可
-                            Dim nohsub As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nohsub") & "")
-                            'ファイル再生時NicoJKコメント調整　録画前マージンを知らせる
-                            Dim margin1 As Integer = Nico_delay
-                            Dim margin1_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nicodelay") & ""
-                            If Trim(margin1_str.Length) > 0 Then
-                                'パラメーターとして指定があった場合はパラメーター優先
-                                margin1 = Val(margin1_str)
-                            End If
+                        'ハードサブ不許可
+                        Dim nohsub As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nohsub") & "")
+                        'ファイル再生時NicoJKコメント調整　録画前マージンを知らせる
+                        Dim margin1 As Integer = Nico_delay
+                        Dim margin1_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nicodelay") & ""
+                        If Trim(margin1_str.Length) > 0 Then
+                            'パラメーターとして指定があった場合はパラメーター優先
+                            margin1 = Val(margin1_str)
+                        End If
 
-                            'ファイル書き込みコマンド
-                            Dim fl_cmd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_cmd") & ""
-                            Dim fl_file As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_file") & ""
-                            Dim fl_text As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_text") & ""
+                        'ファイル書き込みコマンド
+                        Dim fl_cmd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_cmd") & ""
+                        Dim fl_file As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_file") & ""
+                        Dim fl_text As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_text") & ""
 
-                            'NHKの音声モード
-                            Dim NHK_dual_mono_mode_select As Integer = Me._NHK_dual_mono_mode 'iniで指定された形式
-                            Dim NHK_dual_mono_mode_select_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & ""
-                            If IsNumeric(NHK_dual_mono_mode_select_str) Then
-                                'パラメーターとして指定があった場合はパラメーター優先
-                                NHK_dual_mono_mode_select = Val(NHK_dual_mono_mode_select_str)
-                            End If
+                        'NHKの音声モード
+                        Dim NHK_dual_mono_mode_select As Integer = Me._NHK_dual_mono_mode 'iniで指定された形式
+                        Dim NHK_dual_mono_mode_select_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & ""
+                        If IsNumeric(NHK_dual_mono_mode_select_str) Then
+                            'パラメーターとして指定があった場合はパラメーター優先
+                            NHK_dual_mono_mode_select = Val(NHK_dual_mono_mode_select_str)
+                        End If
 
-                            'hlsOptに追加するべき文字列
-                            Dim hlsOptAdd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("hlsOptAdd") & ""
+                        'hlsOptに追加するべき文字列
+                        Dim hlsOptAdd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("hlsOptAdd") & ""
 
-                            '汎用文字列
-                            Dim temp As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("temp") & ""
+                        '汎用文字列
+                        Dim temp As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("temp") & ""
 
-                            '===========================================
-                            'WEBインターフェース
-                            '===========================================
-                            Dim WI_cmd As String = ""
-                            Dim WI_cmd_reply As String = "" '返事
-                            Dim WI_cmd_reply_force As Integer = 0 '1ならwebページ処理へ向かわない
-                            Dim WI_skip_html As Integer = 0
-                            If req_Url.IndexOf("/WI_") >= 0 Then
-                                WI_cmd = "WI_" & instr_pickup_para(req_Url, "/WI_", ".html", 0)
-                                Select Case WI_cmd
-                                    Case "WI_GET_CHANNELS"
-                                        'BonDriver, ServiceID, ch_space, チャンネル名
-                                        WI_cmd_reply = Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp, Me._BonDriver_NGword)
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_START_STREAM"
-                                        '配信スタート
-                                        'Sub_stream_Start(num, bondriver, sid, chspace, bon_sid_ch_str, resolution, stream_mode, videoname, nohsub)
-                                        req_Url = "/StartTv.html"
-                                        path = path.Replace("WI_START_STREAM.html", "StartTv.html")
+                        '===========================================
+                        'WEBインターフェース
+                        '===========================================
+                        Dim WI_cmd As String = ""
+                        Dim WI_cmd_reply As String = "" '返事
+                        Dim WI_cmd_reply_force As Integer = 0 '1ならwebページ処理へ向かわない
+                        Dim WI_skip_html As Integer = 0
+                        If req_Url.IndexOf("/WI_") >= 0 Then
+                            WI_cmd = "WI_" & instr_pickup_para(req_Url, "/WI_", ".html", 0)
+                            Select Case WI_cmd
+                                Case "WI_GET_CHANNELS"
+                                    'BonDriver, ServiceID, ch_space, チャンネル名
+                                    WI_cmd_reply = Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp, Me._BonDriver_NGword)
+                                    WI_cmd_reply_force = 1
+                                Case "WI_START_STREAM"
+                                    '配信スタート
+                                    'Sub_stream_Start(num, bondriver, sid, chspace, bon_sid_ch_str, resolution, stream_mode, videoname, nohsub)
+                                    req_Url = "/StartTv.html"
+                                    path = path.Replace("WI_START_STREAM.html", "StartTv.html")
                                     Case "WI_STOP_STREAM"
                                         '配信ストップ
+                                        If num = 0 Then
+                                            num = -2
+                                        End If
                                         If num > 0 Then
                                             req_Url = "/CloseTv.html"
                                             path = path.Replace("WI_STOP_STREAM.html", "CloseTv.html")
@@ -3194,178 +3203,167 @@ Class WebRemocon
                                             req_Url = "/StopAll.html"
                                             path = path.Replace("WI_STOP_STREAM.html", "StopAll.html")
                                         End If
-                                    Case "WI_GET_PROGRAM_D"
-                                        '地デジ番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_D()
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_PROGRAM_TVMAID"
-                                        'Tvmaid番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_TVMAID(Val(temp))
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_PROGRAM_PTTIMER"
-                                        'EDCB番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_PTTIMER(Val(temp))
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_PROGRAM_EDCB"
-                                        'EDCB番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_EDCB(Val(temp))
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_PROGRAM_TVROCK"
-                                        'TVROCK番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_TVROCK(Val(temp))
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_PROGRAM_NUM"
-                                        '放送中の番組
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_NUM(num)
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_LIVE_STREAM"
-                                        '現在配信中のストリーム
-                                        '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
-                                        'stopping, チャンネル名, hlsApp, シーク秒, URL
-                                        WI_cmd_reply = Me.WI_GET_LIVE_STREAM()
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_TVRV_STATUS"
-                                        'サーバー設定
-                                        WI_cmd_reply = Me.WI_GET_TVRV_STATUS()
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_TSFILE_COUNT"
-                                        '作られている.tsの数
-                                        WI_cmd_reply = Me.WI_GET_TSFILE_COUNT(num)
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_TSFILE_COUNT2"
-                                        '作られている.tsの数 （m3u8が存在すれば正の値　m3u8が存在しなければ負の値）
-                                        WI_cmd_reply = Me.check_m3u8_ts_status(num)
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_RESOLUTION"
-                                        '解像度
-                                        WI_cmd_reply = Me.WI_GET_RESOLUTION()
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_VIDEOFILES"
-                                        'ビデオファイル
+                                Case "WI_GET_PROGRAM_D"
+                                    '地デジ番組表取得
+                                    WI_cmd_reply = Me.WI_GET_PROGRAM_D()
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_PROGRAM_TVMAID"
+                                    'Tvmaid番組表取得
+                                    WI_cmd_reply = Me.WI_GET_PROGRAM_TVMAID(Val(temp))
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_PROGRAM_PTTIMER"
+                                    'EDCB番組表取得
+                                    WI_cmd_reply = Me.WI_GET_PROGRAM_PTTIMER(Val(temp))
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_PROGRAM_EDCB"
+                                    'EDCB番組表取得
+                                    WI_cmd_reply = Me.WI_GET_PROGRAM_EDCB(Val(temp))
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_PROGRAM_TVROCK"
+                                    'TVROCK番組表取得
+                                    WI_cmd_reply = Me.WI_GET_PROGRAM_TVROCK(Val(temp))
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_PROGRAM_NUM"
+                                    '放送中の番組
+                                    WI_cmd_reply = Me.WI_GET_PROGRAM_NUM(num)
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_LIVE_STREAM"
+                                    '現在配信中のストリーム
+                                    '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
+                                    'stopping, チャンネル名, hlsApp, シーク秒, URL
+                                    WI_cmd_reply = Me.WI_GET_LIVE_STREAM()
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_TVRV_STATUS"
+                                    'サーバー設定
+                                    WI_cmd_reply = Me.WI_GET_TVRV_STATUS()
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_TSFILE_COUNT"
+                                    '作られている.tsの数
+                                    WI_cmd_reply = Me.WI_GET_TSFILE_COUNT(num)
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_TSFILE_COUNT2"
+                                    '作られている.tsの数 （m3u8が存在すれば正の値　m3u8が存在しなければ負の値）
+                                    WI_cmd_reply = Me.check_m3u8_ts_status(num)
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_RESOLUTION"
+                                    '解像度
+                                    WI_cmd_reply = Me.WI_GET_RESOLUTION()
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_VIDEOFILES"
+                                    'ビデオファイル
+                                    If videolist_firstview = 0 Then
+                                        '閲覧最初の1回目は強制リフレッシュ
+                                        videolist_firstview = 1
+                                        vl_refresh = 1
+                                    End If
+                                    WI_cmd_reply = Me.WI_GET_VIDEOFILES(videoexword, vl_refresh, vl_startdate, vl_volume)
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_VIDEOFILES2"
+                                    'ビデオファイル
+                                    If vl_volume = -99 Then
+                                        '不正な日付だったときにはvl_volume=-99になっている
+                                        WI_cmd_reply = "99,," & vbCrLf
+                                    Else
                                         If videolist_firstview = 0 Then
                                             '閲覧最初の1回目は強制リフレッシュ
                                             videolist_firstview = 1
                                             vl_refresh = 1
                                         End If
-                                        WI_cmd_reply = Me.WI_GET_VIDEOFILES(videoexword, vl_refresh, vl_startdate, vl_volume)
+                                        WI_cmd_reply = Me.WI_GET_VIDEOFILES2(videoexword, vl_refresh, vl_startdate, vl_volume)
+                                    End If
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_ERROR_STREAM"
+                                    '再起動中のストリームを返す
+                                    WI_cmd_reply = Me.WI_GET_ERROR_STREAM()
+                                    WI_cmd_reply_force = 1
+                                Case "WI_SET_HTTPSTREAM_App"
+                                    'http配信アプリを切り替える　手抜き・・numを一時代用
+                                    'tempで指定されてもokにした
+                                    Dim n As Integer = num
+                                    If Val(temp) > 0 Then
+                                        n = Val(temp)
+                                    End If
+                                    WI_cmd_reply = Me.WI_SET_HTTPSTREAM_App(n)
+                                    WI_cmd_reply_force = 1
+                                Case "WI_FILE_OPE"
+                                    'ファイル書き込み dirのフィルタをtempで追加
+                                    WI_cmd_reply = Me.WI_FILE_OPE(fl_cmd, fl_file, fl_text, temp)
+                                    WI_cmd_reply_force = 1
+                                Case "WI_STREAMFILE_EXIST"
+                                    'ストリームフォルダにファイルが存在するかどうか
+                                    WI_cmd_reply = Me.WI_STREAMFILE_EXIST(fl_file)
+                                    WI_cmd_reply_force = 1
+                                Case "WI_SHOW_LOG"
+                                    'ログ出力
+                                    WI_cmd_reply = Me.WI_SHOW_LOG()
+                                    WI_cmd_reply_force = 1
+                                Case "WI_GET_CHAPTER"
+                                    '録画ファイルのチャプター取得
+                                    If temp.Length > 0 Then
+                                        WI_cmd_reply = Me.WI_GET_CHAPTER(temp)
                                         WI_cmd_reply_force = 1
-                                    Case "WI_GET_VIDEOFILES2"
-                                        'ビデオファイル
-                                        If vl_volume = -99 Then
-                                            '不正な日付だったときにはvl_volume=-99になっている
-                                            WI_cmd_reply = "99,," & vbCrLf
-                                        Else
-                                            If videolist_firstview = 0 Then
-                                                '閲覧最初の1回目は強制リフレッシュ
-                                                videolist_firstview = 1
-                                                vl_refresh = 1
-                                            End If
-                                            WI_cmd_reply = Me.WI_GET_VIDEOFILES2(videoexword, vl_refresh, vl_startdate, vl_volume)
-                                        End If
+                                    End If
+                                Case "WI_WRITE_CHAPTER"
+                                    'チャプターファイルへ書き込み
+                                    If temp.Length > 0 Then
+                                        WI_cmd_reply = Me.WI_WRITE_CHAPTER(temp)
                                         WI_cmd_reply_force = 1
-                                    Case "WI_GET_ERROR_STREAM"
-                                        '再起動中のストリームを返す
-                                        WI_cmd_reply = Me.WI_GET_ERROR_STREAM()
+                                    End If
+                                Case "WI_GET_HTML"
+                                    'HTML取得
+                                    If temp.Length > 0 Then
+                                        WI_cmd_reply = Me.WI_GET_HTML(temp, WI_GET_HTML_output_encstr)
                                         WI_cmd_reply_force = 1
-                                    Case "WI_SET_HTTPSTREAM_App"
-                                        'http配信アプリを切り替える　手抜き・・numを一時代用
-                                        'tempで指定されてもokにした
-                                        Dim n As Integer = num
-                                        If Val(temp) > 0 Then
-                                            n = Val(temp)
-                                        End If
-                                        WI_cmd_reply = Me.WI_SET_HTTPSTREAM_App(n)
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_FILE_OPE"
-                                        'ファイル書き込み dirのフィルタをtempで追加
-                                        WI_cmd_reply = Me.WI_FILE_OPE(fl_cmd, fl_file, fl_text, temp)
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_STREAMFILE_EXIST"
-                                        'ストリームフォルダにファイルが存在するかどうか
-                                        WI_cmd_reply = Me.WI_STREAMFILE_EXIST(fl_file)
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_SHOW_LOG"
-                                        'ログ出力
-                                        WI_cmd_reply = Me.WI_SHOW_LOG()
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_CHAPTER"
-                                        '録画ファイルのチャプター取得
-                                        If temp.Length > 0 Then
-                                            WI_cmd_reply = Me.WI_GET_CHAPTER(temp)
-                                            WI_cmd_reply_force = 1
-                                        End If
-                                    Case "WI_WRITE_CHAPTER"
-                                        'チャプターファイルへ書き込み
-                                        If temp.Length > 0 Then
-                                            WI_cmd_reply = Me.WI_WRITE_CHAPTER(temp)
-                                            WI_cmd_reply_force = 1
-                                        End If
-                                    Case "WI_GET_HTML"
-                                        'HTML取得
-                                        If temp.Length > 0 Then
-                                            WI_cmd_reply = Me.WI_GET_HTML(temp, WI_GET_HTML_output_encstr)
-                                            WI_cmd_reply_force = 1
-                                        End If
-                                    Case "WI_GET_THUMBNAIL"
-                                        'サムネイル作成
-                                        If temp.Length > 0 Then
-                                            Dim d() As String = temp.Split(",")
-                                            If d.Length > 4 Then
-                                                'ファイル名に,が混じっている可能性有り
-                                                Dim fname1 As String = ""
-                                                For ii2 = 1 To d.Length - 4
-                                                    d(0) &= "," & d(ii2)
-                                                Next
-                                                For ii2 = d.Length - 4 To d.Length - 2
-                                                    d(ii2) = d(ii2 + 1)
-                                                Next
-                                            End If
-                                            If d.Length >= 4 Then
-                                                WI_cmd_reply = Me.WI_GET_THUMBNAIL(d(0), d(1), Val(d(2)), Val(d(3)))
-                                                WI_cmd_reply_force = 1
-                                            End If
-                                        End If
-                                    Case "WI_SHOW_MAKING_PER_THUMB"
-                                        If making_per_thumbnail IsNot Nothing Then
-                                            For ii2 = 0 To making_per_thumbnail.Length - 1
-                                                If making_per_thumbnail(ii2).indexofstr.Length > 0 Then
-                                                    WI_cmd_reply &= making_per_thumbnail(ii2).fullpathfilename & vbCrLf
-                                                End If
+                                    End If
+                                Case "WI_GET_THUMBNAIL"
+                                    'サムネイル作成
+                                    If temp.Length > 0 Then
+                                        Dim d() As String = temp.Split(",")
+                                        If d.Length > 4 Then
+                                            'ファイル名に,が混じっている可能性有り
+                                            Dim fname1 As String = ""
+                                            For ii2 = 1 To d.Length - 4
+                                                d(0) &= "," & d(ii2)
+                                            Next
+                                            For ii2 = d.Length - 4 To d.Length - 2
+                                                d(ii2) = d(ii2 + 1)
                                             Next
                                         End If
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_WRITE_LOG"
-                                        'ログに出力
-                                        If Trim(temp).Length > 0 Then
-                                            log1write(temp)
-                                            WI_cmd_reply = "OK"
+                                        If d.Length >= 4 Then
+                                            WI_cmd_reply = Me.WI_GET_THUMBNAIL(d(0), d(1), Val(d(2)), Val(d(3)))
                                             WI_cmd_reply_force = 1
                                         End If
-                                End Select
-                            End If
-
-                            '===========================================
-                            'WEBページ表示前処理
-                            '===========================================
-                            '直前配信履歴簡易チェック＆記録
-                            If (stream_mode = 0 Or stream_mode = 2) And req_Url.ToLower = ("/StartTv.html").ToLower And bondriver.Length > 0 Then
-                                Dim rn As Integer = 0
-                                If check_last_StBonSidCh(num, stream_mode, bondriver, Val(sid), Val(chspace)) > 0 Then
-                                    '直前に同様の内容を配信
-                                    log1write("直前に同一配信命令を受け取りました")
-                                    rn = 1
-                                Else
-                                    'すでに同じnum,BonDriver,サービスID,chspaceならば再度配信スタートはしない
-                                    Dim num2 As Integer = CHKECK_num_Bon_sid_ch(bondriver, Val(sid), Val(chspace))
-                                    If num2 >= 0 Then
-                                        'すでに同じ放送を放送中
-                                        log1write("すでにストリーム" & num2.ToString & "で同一放送を配信中です")
-                                        num = num2
-                                        rn = 1
                                     End If
-                                End If
+                                Case "WI_SHOW_MAKING_PER_THUMB"
+                                    If making_per_thumbnail IsNot Nothing Then
+                                        For ii2 = 0 To making_per_thumbnail.Length - 1
+                                            If making_per_thumbnail(ii2).indexofstr.Length > 0 Then
+                                                WI_cmd_reply &= making_per_thumbnail(ii2).fullpathfilename & vbCrLf
+                                            End If
+                                        Next
+                                    End If
+                                    WI_cmd_reply_force = 1
+                                Case "WI_WRITE_LOG"
+                                    'ログに出力
+                                    If Trim(temp).Length > 0 Then
+                                        log1write(temp)
+                                        WI_cmd_reply = "OK"
+                                        WI_cmd_reply_force = 1
+                                    End If
+                            End Select
+                        End If
 
-                                If rn = 1 Then
+                        '===========================================
+                        'WEBページ表示前処理
+                        '===========================================
+                        '直前配信履歴簡易チェック＆記録
+                        If (stream_mode = 0 Or stream_mode = 2) And req_Url.ToLower = ("/StartTv.html").ToLower And bondriver.Length > 0 Then
+                                'すでに同じnum,BonDriver,サービスID,chspaceならば再度配信スタートはしない
+                                Dim num2 As Integer = CHKECK_num_Bon_sid_ch(bondriver, Val(sid), Val(chspace))
+                                If num2 >= 0 Then
+                                    'すでに同じ放送を放送中
+                                    log1write("すでにストリーム" & num2.ToString & "で同一放送を配信中です")
+                                    num = num2
                                     '配信中のストリームへ誘導
                                     req_Url = "/ViewTV" & num & ".html"
                                     path = IO.Path.GetDirectoryName(path) & "\ViewTV" & num & ".html"
@@ -3389,20 +3387,25 @@ Class WebRemocon
                                     End If
                                 End If
 
-                                Dim gln As String = Me._procMan.get_live_numbers()
-                                gln = gln.Replace("x", "")
-                                If gln.IndexOf(" " & num.ToString & " ") >= 0 Then
-                                    check_m3u8_ts = check_m3u8_ts_status(num)
-                                    If check_m3u8_ts < Me._tsfile_wait Then
-                                        '準備ができていない
-                                        request_page = 1 'waiting表示
-                                    Else
-                                        'ViewTV.html用
-                                        chk_viewtv_ok = 1
-                                    End If
+                                If stream_last_utime(num) > 0 Then
+                                    '配信準備中
+                                    request_page = 14
                                 Else
-                                    '配信されていない
-                                    request_page = 11
+                                    Dim gln As String = Me._procMan.get_live_numbers()
+                                    gln = gln.Replace("x", "")
+                                    If gln.IndexOf(" " & num.ToString & " ") >= 0 Then
+                                        check_m3u8_ts = check_m3u8_ts_status(num)
+                                        If check_m3u8_ts < Me._tsfile_wait Then
+                                            '準備ができていない
+                                            request_page = 1 'waiting表示
+                                        Else
+                                            'ViewTV.html用
+                                            chk_viewtv_ok = 1
+                                        End If
+                                    Else
+                                        '配信されていない
+                                        request_page = 11
+                                    End If
                                 End If
                             ElseIf req_Url.ToLower = ("/StartTv.html").ToLower Then
                                 '配信スタート
@@ -3432,9 +3435,15 @@ Class WebRemocon
                                 End If
                             ElseIf req_Url.ToLower = "/CloseTv.html".ToLower Then
                                 '配信停止
+                                If num = 0 Then
+                                    num = -2 '指定が無ければ全停止
+                                End If
                                 Me.stop_movie(num)
                             ElseIf req_Url.ToLower = "/StopAll.html".ToLower Then
                                 'すべてのプロセスと関連アプリを停止する
+                                If num = 0 Then
+                                    num = -2 '指定が無ければ全停止
+                                End If
                                 stop_movie(num)
                             End If
 
@@ -3455,7 +3464,7 @@ Class WebRemocon
                                 'ＷＥＢインターフェース　コマンドの返事を返す
                                 'sw.WriteLine(WI_cmd_reply)
                                 swdata = WI_cmd_reply
-                            ElseIf request_page = 1 Or request_page = 11 Then
+                            ElseIf request_page = 1 Or request_page = 11 Or request_page = 14 Then
                                 'waitingページを表示する
                                 Dim s As String = ""
                                 Dim path_waiting As String = path.Replace("ViewTV" & num.ToString & ".html", "Waiting.html")
@@ -3466,6 +3475,8 @@ Class WebRemocon
                                         waitmessage = "配信準備中です..(" & System.Math.Abs(check_m3u8_ts).ToString & ")"
                                     ElseIf request_page = 11 Then
                                         waitmessage = "配信されていません"
+                                    ElseIf request_page = 14 Then
+                                        waitmessage = "配信準備中のストリームです"
                                     End If
                                     s = s.Replace("%WAITING%", waitmessage)
                                     s = s.Replace("%NUM%", num.ToString)
@@ -3511,6 +3522,9 @@ Class WebRemocon
                                     ElseIf request_page = 11 Then
                                         s &= "配信されていません" & vbCrLf
                                         log1write(num.ToString & ":配信されていません")
+                                    ElseIf request_page = 14 Then
+                                        s &= "配信準備中のストリームです" & vbCrLf
+                                        log1write(num.ToString & ":配信準備中のストリームです")
                                     End If
                                     s &= "<br><br>" & vbCrLf
                                     s &= "<input type=""button"" class=""c_btn_topmenu"" value=""トップメニュー"" onClick=""location.href='/index.html'"">" & vbCrLf
@@ -3995,39 +4009,39 @@ Class WebRemocon
                         context.Response.StatusCode = 401
                     End If
 
-                    Try
-                        res.Close()
-                    Catch ex As Exception
-                        'たまにエラーになる・・が無害のよう
-                    End Try
-
-                    Try
-                        context.Response.Close()
-                    Catch ex As Exception
-                        ' client closed connection before the content was sent
-                    End Try
-
-                Catch httpEx As HttpListenerException
-                    log1write(httpEx.Message)
-                    log1write(httpEx.StackTrace)
-                Finally
-                    Try
-                        If writer IsNot Nothing Then
-                            writer.Close()
-                        End If
-                        If reader IsNot Nothing Then
-                            reader.Close()
-                        End If
-                        If res IsNot Nothing Then
-                            res.Close()
-                        End If
-                        If context IsNot Nothing Then
-                            context.Response.Close()
-                        End If
-                    Catch ex As Exception
-                        log1write(ex.ToString())
-                    End Try
+                Try
+                    res.Close()
+                Catch ex As Exception
+                    'たまにエラーになる・・が無害のよう
                 End Try
+
+                Try
+                    context.Response.Close()
+                Catch ex As Exception
+                    ' client closed connection before the content was sent
+                End Try
+
+            Catch httpEx As HttpListenerException
+                log1write(httpEx.Message)
+                log1write(httpEx.StackTrace)
+            Finally
+                Try
+                    If writer IsNot Nothing Then
+                        writer.Close()
+                    End If
+                    If reader IsNot Nothing Then
+                        reader.Close()
+                    End If
+                    If res IsNot Nothing Then
+                        res.Close()
+                    End If
+                    If context IsNot Nothing Then
+                        context.Response.Close()
+                    End If
+                Catch ex As Exception
+                    log1write(ex.ToString())
+                End Try
+            End Try
             End If
 
         Catch ex As Exception
@@ -4039,34 +4053,6 @@ Class WebRemocon
     Public Function F_get_file_duration(ByVal num As Integer) As Integer
         '　本体はProcessManager.vbに
         Return Me._procMan.F_get_file_duration(num)
-    End Function
-
-    '直前配信履歴簡易チェック＆記録　直前に同じ配信指令を受け取っていれば1を返す　同時に配信内容を簡易記録
-    Public Function check_last_StBonSidCh(ByVal num As Integer, ByVal st As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal chspace As Integer) As Integer
-        Dim r As Integer = 0
-
-        Dim ut As Integer = time2unix(Now())
-
-        Dim cs As String = st.ToString & "," & bondriver & "," & sid.ToString & "," & chspace.ToString
-        If st = 0 Or st = 2 Then
-            '最後に配信開始してから何秒経っているか
-            Dim utb As Integer = ut - stream_last_StBonSidCh(num).utime
-            '放送配信
-            If (stream_last_StBonSidCh(num).str = cs And utb <= 60) Or utb <= 3 Then
-                '同一の配信指令で60秒以内(うまく配信がスタートしていれば早めにクリアされている)、もしくは前回の指令から3秒以内なら重複と見なす
-                r = 1
-            Else
-                '新規
-                stream_last_StBonSidCh(num).utime = ut
-                stream_last_StBonSidCh(num).str = cs
-            End If
-        Else
-            'ファイル配信
-            stream_last_StBonSidCh(num).utime = 0
-            stream_last_StBonSidCh(num).str = ""
-        End If
-
-        Return r
     End Function
 
     'すでに同じ放送が放送中かどうか(該当無しならば-1、該当があればnumを返す）

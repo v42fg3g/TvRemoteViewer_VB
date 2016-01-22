@@ -168,6 +168,7 @@ Public Class ProcessManager
                                 log1write("No.=" & num & "のプロセスは使用できません。UDPアプリの停止に失敗したようです")
                                 '現在稼働中のlist(i)._numをログに表示
                                 log1write("現在稼働中のNumber：" & get_live_numbers())
+                                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                                 Exit Sub
                             End If
                         End If
@@ -245,6 +246,7 @@ Public Class ProcessManager
                         Else
                             '何をやってもエラー
                             log1write("No.=" & num & "のUDPアプリ実行前パイプ一覧取得に失敗しました")
+                            stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                             Exit Sub
                         End If
 
@@ -293,6 +295,7 @@ Public Class ProcessManager
                                 Catch ex As Exception
                                 End Try
                                 log1write("No.=" & num & "のUDPアプリを強制終了しました[F]")
+                                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                                 Exit Sub
                             End If
 
@@ -551,11 +554,13 @@ Public Class ProcessManager
                     End If
                 End If
                 'End If
+            Else
+                '停止処理中なのでスルー
             End If
         ElseIf stopping = 1 Then
             log1write("No." & num.ToString & "は配信停止処理中です")
         ElseIf stopping = 2 Then
-            log1write("No." & num.ToString & "はUDPサービスID変更処理宙です")
+            log1write("No." & num.ToString & "はUDPサービスID変更処理中です")
         ElseIf stopping >= 100 Then
             log1write("No." & num.ToString & "はffmpegHTTPストリーム配信待機中です")
         End If
@@ -935,14 +940,17 @@ Public Class ProcessManager
                                 str2file(Me._fileroot & "\" & "mystream" & Me._list(i)._num.ToString & "_listdata.txt", list_txt, "UTF-8")
                                 log1write("No.=" & Me._list(i)._num.ToString & " の復帰用データを記録しました")
                                 log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
+                                stream_last_utime(Me._list(i)._num) = 0 '前回配信準備開始時間リセット
                                 Me._list.RemoveAt(i)
                             ElseIf num = -2 Or num = -3 Then
                                 '強制全停止　実際に停止されたかどうかかまわず
                                 log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
+                                stream_last_utime(Me._list(i)._num) = 0 '前回配信準備開始時間リセット
                                 Me._list.RemoveAt(i)
                                 'delete_mystreamnum(num) 'm3u8,tsを削除
                             ElseIf hls_stop = 1 And udp_stop = 1 Then
                                 log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
+                                stream_last_utime(Me._list(i)._num) = 0 '前回配信準備開始時間リセット
                                 Me._list.RemoveAt(i)
                                 'delete_mystreamnum(num) 'm3u8,tsを削除
                             Else
@@ -1580,38 +1588,26 @@ Public Class ProcessManager
                 Dim program_sid As String = ""
 
                 If Me._list(i)._num = num Or num = 0 Then
-                    Dim stream_mode As Integer = Me._list(i)._stream_mode
-                    If stream_mode = 0 Or stream_mode = 2 Then
-                        Dim chk As Integer = 0
-                        'テレビ配信
-                        program_sid = Val(Instr_pickup(Me._list(i)._udpOpt, "/sid ", " ", 0))
-                        Dim str As String = ""
-                        'まずはBS・CSで番組を探す
-                        If TvProgram_tvrock_url.Length > 0 Then
-                            str = program_translate4WI(999)
-                        ElseIf TvProgram_EDCB_url.Length > 0 Then
-                            str = program_translate4WI(998)
-                        ElseIf ptTimer_path.Length > 0 Then
-                            str = program_translate4WI(997)
-                        ElseIf Tvmaid_url.Length > 0 Then
-                            str = program_translate4WI(996)
-                        End If
-                        If str.Length > 0 Then
-                            Dim d() As String = Split(str, vbCrLf)
-                            For j As Integer = 0 To d.Length - 1
-                                Dim e() As String = d(j).Split(",")
-                                If e.Length >= 8 Then
-                                    If Val(e(2)) = program_sid Then
-                                        r &= Me._list(i)._num.ToString & "," & d(j) & ",0" & vbCrLf
-                                        chk = 1
-                                        Exit For
-                                    End If
-                                End If
-                            Next
-                        End If
-                        If chk = 0 Then
-                            'ネット番組表
-                            str = program_translate4WI(0)
+                    If stream_last_utime(Me._list(i)._num) > 0 Then
+                        '配信準備中
+                        r &= Me._list(i)._num.ToString & "," & "再生準備中,再生準備中,0,0,00:00,00:00,再生準備中,,0" & vbCrLf
+                    Else
+                        Dim stream_mode As Integer = Me._list(i)._stream_mode
+                        If stream_mode = 0 Or stream_mode = 2 Then
+                            Dim chk As Integer = 0
+                            'テレビ配信
+                            program_sid = Val(Instr_pickup(Me._list(i)._udpOpt, "/sid ", " ", 0))
+                            Dim str As String = ""
+                            'まずはBS・CSで番組を探す
+                            If TvProgram_tvrock_url.Length > 0 Then
+                                str = program_translate4WI(999)
+                            ElseIf TvProgram_EDCB_url.Length > 0 Then
+                                str = program_translate4WI(998)
+                            ElseIf ptTimer_path.Length > 0 Then
+                                str = program_translate4WI(997)
+                            ElseIf Tvmaid_url.Length > 0 Then
+                                str = program_translate4WI(996)
+                            End If
                             If str.Length > 0 Then
                                 Dim d() As String = Split(str, vbCrLf)
                                 For j As Integer = 0 To d.Length - 1
@@ -1619,20 +1615,37 @@ Public Class ProcessManager
                                     If e.Length >= 8 Then
                                         If Val(e(2)) = program_sid Then
                                             r &= Me._list(i)._num.ToString & "," & d(j) & ",0" & vbCrLf
+                                            chk = 1
                                             Exit For
                                         End If
                                     End If
                                 Next
                             End If
+                            If chk = 0 Then
+                                'ネット番組表
+                                str = program_translate4WI(0)
+                                If str.Length > 0 Then
+                                    Dim d() As String = Split(str, vbCrLf)
+                                    For j As Integer = 0 To d.Length - 1
+                                        Dim e() As String = d(j).Split(",")
+                                        If e.Length >= 8 Then
+                                            If Val(e(2)) = program_sid Then
+                                                r &= Me._list(i)._num.ToString & "," & d(j) & ",0" & vbCrLf
+                                                Exit For
+                                            End If
+                                        End If
+                                    Next
+                                End If
+                            End If
+                        ElseIf stream_mode = 1 Or stream_mode = 3 Then
+                            'ファイル再生
+                            '_VideoSeekSeconds
+                            Dim VideoSeekSeconds As Integer = Me._list(i)._VideoSeekSeconds
+                            Dim videoSeekSeconds_str As String = seconds2jifun(VideoSeekSeconds)
+                            Dim hms As String = ""
+                            fullpathfilename = Me._list(i)._fullpathfilename
+                            r &= Me._list(i)._num.ToString & "," & "ファイル再生,ファイル再生,0,0," & videoSeekSeconds_str & ",00:00," & fullpathfilename & ",," & VideoSeekSeconds.ToString & vbCrLf
                         End If
-                    ElseIf stream_mode = 1 Or stream_mode = 3 Then
-                        'ファイル再生
-                        '_VideoSeekSeconds
-                        Dim VideoSeekSeconds As Integer = Me._list(i)._VideoSeekSeconds
-                        Dim videoSeekSeconds_str As String = seconds2jifun(VideoSeekSeconds)
-                        Dim hms As String = ""
-                        fullpathfilename = Me._list(i)._fullpathfilename
-                        r &= Me._list(i)._num.ToString & "," & "ファイル再生,ファイル再生,0,0," & videoSeekSeconds_str & ",00:00," & fullpathfilename & ",," & VideoSeekSeconds.ToString & vbCrLf
                     End If
                 End If
             Next
@@ -1855,6 +1868,10 @@ Public Class ProcessManager
                     End Try
                 Else
                     hlsApp_name = hlsApp
+                End If
+                '配信準備中
+                If stream_last_utime(num) > 0 Then
+                    BonDriver = "配信準備中"
                 End If
                 '最後に文字列に追加
                 Dim sep As String = ", "
