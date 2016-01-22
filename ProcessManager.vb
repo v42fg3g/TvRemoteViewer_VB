@@ -1837,57 +1837,99 @@ Public Class ProcessManager
         Dim r As String = ""
 
         Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
-        If d IsNot Nothing Then
-            For i As Integer = 0 To d.Length - 1
-                Dim ListNo As Integer = d(i)
-                Dim num As Integer = Me._list(d(i))._num
-                Dim udpOpt As String = Me._list(d(i))._udpOpt
-                Dim BonDriver As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0))
-                Dim ServiceID As String = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
-                Dim ch_space As String = Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
-                Dim udpPort As String = Trim(instr_pickup_para(udpOpt, "/port ", " ", 0))
-                Dim stream_mode As Integer = Me._list(d(i))._stream_mode
-                Dim NHKMODE As Integer = Me._list(d(i))._NHK_dual_mono_mode_select
-                Dim stopping As Integer = Me._list(d(i))._stopping
-                Dim channel_name As String = F_sid2channelname(Val(ServiceID), Val(ch_space))
-                Dim hlsApp As String = Me._list(d(i))._hlsApp
-                Dim hlsApp_name As String = ""
-                Dim fullpathfilename As String = Me._list(d(i))._fullpathfilename
-                Dim VideoSeekSeconds As Integer = Me._list(d(i))._VideoSeekSeconds
-                If channel_name.Length = 0 And (stream_mode = 1 Or stream_mode = 3) Then
-                    'ファイル再生ならばファイル名をBonDriverとして表示するようにする
-                    BonDriver = fullpathfilename
-                    BonDriver = filename_escape_set(BonDriver) ',をエスケープ
+
+        '配信準備中のものを追加してソート
+        Try
+            For k As Integer = 1 To MAX_STREAM_NUMBER
+                If stream_last_utime(k) > 0 Then
+                    If d Is Nothing Then
+                        ReDim Preserve d(0)
+                        d(0) = k
+                    Else
+                        If Array.IndexOf(d, k) < 0 Then
+                            Dim dl As Integer = d.Length
+                            ReDim Preserve d(dl)
+                            d(dl) = k
+                        End If
+                    End If
                 End If
-                Dim sp As Integer = hlsApp.LastIndexOf("\")
-                If sp >= 0 Then
-                    'ファイル名だけを抜き出す()
+            Next
+        Catch ex As Exception
+        End Try
+
+        If d IsNot Nothing Then
+            Array.Sort(d)
+            For i As Integer = 0 To d.Length - 1
+                If stream_last_utime(d(i)) > 0 Then
+                    '配信準備中
+                    Dim sep As String = ", "
+                    r &= "-1".ToString _
+                        & sep & d(i).ToString _
+                        & sep & "0" _
+                        & sep & "配信準備中" _
+                        & sep & "0" _
+                        & sep & "0" _
+                        & sep & "0" _
+                        & sep & "0" _
+                        & sep & "0" _
+                        & sep & "配信準備中" _
+                        & sep & "" _
+                        & sep & "0" _
+                        & vbCrLf
+                Else
                     Try
-                        hlsApp_name = hlsApp.Substring(sp + 1)
+                        Dim ListNo As Integer = d(i)
+                        Dim num As Integer = Me._list(d(i))._num
+                        Dim udpOpt As String = Me._list(d(i))._udpOpt
+                        Dim BonDriver As String = Trim(instr_pickup_para(udpOpt, "/d ", " ", 0))
+                        Dim ServiceID As String = Trim(instr_pickup_para(udpOpt, "/sid ", " ", 0))
+                        Dim ch_space As String = Trim(instr_pickup_para(udpOpt, "/chspace ", " ", 0))
+                        Dim udpPort As String = Trim(instr_pickup_para(udpOpt, "/port ", " ", 0))
+                        Dim stream_mode As Integer = Me._list(d(i))._stream_mode
+                        Dim NHKMODE As Integer = Me._list(d(i))._NHK_dual_mono_mode_select
+                        Dim stopping As Integer = Me._list(d(i))._stopping
+                        Dim channel_name As String = F_sid2channelname(Val(ServiceID), Val(ch_space))
+                        Dim hlsApp As String = Me._list(d(i))._hlsApp
+                        Dim hlsApp_name As String = ""
+                        Dim fullpathfilename As String = Me._list(d(i))._fullpathfilename
+                        Dim VideoSeekSeconds As Integer = Me._list(d(i))._VideoSeekSeconds
+                        If channel_name.Length = 0 And (stream_mode = 1 Or stream_mode = 3) Then
+                            'ファイル再生ならばファイル名をBonDriverとして表示するようにする
+                            BonDriver = fullpathfilename
+                            BonDriver = filename_escape_set(BonDriver) ',をエスケープ
+                        End If
+                        Dim sp As Integer = hlsApp.LastIndexOf("\")
+                        If sp >= 0 Then
+                            'ファイル名だけを抜き出す()
+                            Try
+                                hlsApp_name = hlsApp.Substring(sp + 1)
+                            Catch ex As Exception
+                            End Try
+                        Else
+                            hlsApp_name = hlsApp
+                        End If
+                        '配信準備中
+                        If stream_last_utime(num) > 0 Then
+                            BonDriver = "配信準備中"
+                        End If
+                        '最後に文字列に追加
+                        Dim sep As String = ", "
+                        r &= ListNo.ToString _
+                            & sep & num.ToString _
+                            & sep & udpPort _
+                            & sep & BonDriver _
+                            & sep & ServiceID _
+                            & sep & ch_space _
+                            & sep & stream_mode _
+                            & sep & NHKMODE _
+                            & sep & stopping _
+                            & sep & channel_name _
+                            & sep & hlsApp_name _
+                            & sep & VideoSeekSeconds _
+                            & vbCrLf
                     Catch ex As Exception
                     End Try
-                Else
-                    hlsApp_name = hlsApp
                 End If
-                '配信準備中
-                If stream_last_utime(num) > 0 Then
-                    BonDriver = "配信準備中"
-                End If
-                '最後に文字列に追加
-                Dim sep As String = ", "
-                r &= ListNo.ToString _
-                    & sep & num.ToString _
-                    & sep & udpPort _
-                    & sep & BonDriver _
-                    & sep & ServiceID _
-                    & sep & ch_space _
-                    & sep & stream_mode _
-                    & sep & NHKMODE _
-                    & sep & stopping _
-                    & sep & channel_name _
-                    & sep & hlsApp_name _
-                    & sep & VideoSeekSeconds _
-                    & vbCrLf
             Next
         End If
 
