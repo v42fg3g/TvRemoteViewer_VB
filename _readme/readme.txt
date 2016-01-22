@@ -627,6 +627,7 @@ TvRemoteViewer_VB v1.83
 	1.82	TVROCK番組表でチューナーを指定できるようにした(iniのTvProgram_tvrock_urlを拡張）
 	1.83	num指定がされていない場合の全配信停止が動作していなかったバグを修正
 		1.81の重複回避が不十分だったので修正した
+		WI_GET_LIVE_STREAM.htmlで、配信準備中のものを記載するようにした
 
 
 
