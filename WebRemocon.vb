@@ -4542,43 +4542,47 @@ Class WebRemocon
 
                 Dim d() As String = list(i).Split(",")
                 If d.Length >= 12 Then
-                    Dim smode As Integer = Val(d(6)) 'stream_mode
-                    Dim HApp As String = d(10) 'HLS exe
-                    Dim n As String = Val(Trim(d(1))) '配信ナンバー
-                    If smode <= 1 Then
-                        'HLS配信
-                        'パスを求める
-                        If Me._fileroot.IndexOf(Me._wwwroot) = 0 Then
-                            '相対パス
-                            path1 = Me._fileroot.Replace(Me._wwwroot, "").Replace("\", "/") '/stream
+                    If Val(d(0)) >= 0 Then
+                        Dim smode As Integer = Val(d(6)) 'stream_mode
+                        Dim HApp As String = d(10) 'HLS exe
+                        Dim n As String = Val(Trim(d(1))) '配信ナンバー
+                        If smode <= 1 Then
+                            'HLS配信
+                            'パスを求める
+                            If Me._fileroot.IndexOf(Me._wwwroot) = 0 Then
+                                '相対パス
+                                path1 = Me._fileroot.Replace(Me._wwwroot, "").Replace("\", "/") '/stream
+                            Else
+                                '別フォルダ
+                                Dim sp As Integer = Me._fileroot.LastIndexOf("\")
+                                If sp > 0 Then
+                                    Try
+                                        path1 = "/" & Me._fileroot.Substring(sp + 1)
+                                    Catch ex As Exception
+                                    End Try
+                                End If
+                            End If
+                            'ファイル名
+                            fname = "/" & "mystream" & n & ".m3u8"
                         Else
-                            '別フォルダ
-                            Dim sp As Integer = Me._fileroot.LastIndexOf("\")
-                            If sp > 0 Then
-                                Try
-                                    path1 = "/" & Me._fileroot.Substring(sp + 1)
-                                Catch ex As Exception
-                                End Try
+                            'HTTP配信
+                            If HApp.ToLower.IndexOf("vlc") >= 0 Then
+                                'VLC配信
+                                fname = "mystream" & n & ".ts"
+                                port = HTTPSTREAM_VLC_port + n - 1
+                            ElseIf HApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                                'ffmpeg配信
+                                fname = "WatchTV" & n & ".ts"
+                            Else
+                                'その他　いまのところありえない　とりあえずffmpegと同じにしておくか
+                                fname = "WatchTV" & n & ".ts"
                             End If
                         End If
-                        'ファイル名
-                        fname = "/" & "mystream" & n & ".m3u8"
-                    Else
-                        'HTTP配信
-                        If HApp.ToLower.IndexOf("vlc") >= 0 Then
-                            'VLC配信
-                            fname = "mystream" & n & ".ts"
-                            port = HTTPSTREAM_VLC_port + n - 1
-                        ElseIf HApp.ToLower.IndexOf("ffmpeg") >= 0 Then
-                            'ffmpeg配信
-                            fname = "WatchTV" & n & ".ts"
-                        Else
-                            'その他　いまのところありえない　とりあえずffmpegと同じにしておくか
-                            fname = "WatchTV" & n & ".ts"
-                        End If
-                    End If
 
-                    list(i) &= ", " & url & ":" & port.ToString & path1 & fname
+                        list(i) &= ", " & url & ":" & port.ToString & path1 & fname
+                    Else
+                        list(i) &= ", "
+                    End If
                 End If
             Next
             '最後にひとつの文字列にする
