@@ -899,7 +899,7 @@ Module モジュール_ニコニコ実況
                 If filestamp_duration < 60 Or filestamp_duration > (60 * 60 * 24) Then
                     '長さが取得できていない場合は開始時間+4分に設定
                     filestamp_end = filestamp_start + (60 * 4)
-                    filestamp_duration = filestamp_start + (60 * 4)
+                    filestamp_duration = 60 * 4
                     log1write(fullpathfilename & "の終了時間が取得出来ませんでした")
                 End If
 
