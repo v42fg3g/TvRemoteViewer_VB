@@ -1134,38 +1134,33 @@ Public Class ProcessManager
         Return r
     End Function
 
+    'get_live_index_sort並べ替え用
+    Public Structure livesortstructure
+        Implements IComparable
+        Public r As Integer
+        Public s As Integer
+        Public Function CompareTo(ByVal obj As Object) As Integer Implements IComparable.CompareTo
+            Return Me.r.CompareTo(DirectCast(obj, livesortstructure).r)
+        End Function
+    End Structure
+
     '現在稼働中のlistナンバーをnumでソートして返す
     Public Function get_live_index_sort() As Object
-        Dim r() As Integer = Nothing
+        Dim ls() As livesortstructure = Nothing
         Dim s() As Integer = Nothing
-        Dim i As Integer = 0
         Dim j As Integer = 0
         If Me._list.Count > 0 Then
+            ReDim Preserve ls(Me._list.Count - 1)
+            ReDim Preserve s(Me._list.Count - 1)
             For j = 0 To Me._list.Count - 1
-                ReDim Preserve r(j)
-                r(j) = Me._list(j)._num
-                ReDim Preserve s(j)
-                s(j) = j
+                ls(j).r = Me._list(j)._num
+                ls(j).s = j
             Next
-
-            '並び替え
-            If r.Length > 1 Then
-                Dim temp As Integer = -1
-                For j = 0 To Me._list.Count - 2
-                    For i = 0 To Me._list.Count - 2
-                        If r(i + 1) < r(i) Then
-                            temp = r(i)
-                            r(i) = r(i + 1)
-                            r(i + 1) = temp
-                            temp = s(i)
-                            s(i) = s(i + 1)
-                            s(i + 1) = temp
-                        End If
-                    Next
-                Next
-            End If
+            Array.Sort(ls)
+            For j = 0 To Me._list.Count - 1
+                s(j) = ls(j).s
+            Next
         End If
-
         Return s
     End Function
 

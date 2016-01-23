@@ -1397,6 +1397,11 @@ Class WebRemocon
                                         log1write("NicoConvAss：" & NicoConvAss_path & " が指定されました")
                                     End If
                                 End If
+                            Case "NicoConvAss_copy2NicoJK"
+                                NicoConvAss_copy2NicoJK = Val(youso(1).ToString)
+                                If NicoConvAss_copy2NicoJK = 1 Then
+                                    log1write("NicoConvAss使用時にNicoJKフォルダにもassファイルをコピーするよう設定しました")
+                                End If
                             Case "Nico_delay"
                                 Nico_delay = Val(youso(1).ToString)
                             Case "RecTask_CH_MaxWait"
@@ -1554,11 +1559,26 @@ Class WebRemocon
                             'txtを探してassに変換してファイル(ass_file)として保存
                             Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
                             If txt_file.Length > 0 Then
-                                'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                                log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
-                                ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
-                                If ass_file.Length > 0 Then
-                                    log1write("字幕ASSファイルへの変換が終了しました")
+                                Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".txt")
+                                If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
+                                    'すでに同フォルダにassが存在していれば
+                                    log1write("字幕ファイルとして " & txt_file_ass & " を使用します")
+                                    'コピー
+                                    Dim tfn As String = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
+                                    My.Computer.FileSystem.CopyFile(txt_file_ass, tfn, True)
+                                    ass_file = tfn
+                                Else
+                                    'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
+                                    log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+                                    ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
+                                    If ass_file.Length > 0 Then
+                                        log1write("字幕ASSファイルへの変換が終了しました")
+                                        If NicoConvAss_copy2NicoJK = 1 And txt_file.IndexOf(".txt") > 0 And txt_file.IndexOf(NicoJK_path) >= 0 Then
+                                            Dim tfn As String = txt_file.Replace(".txt", ".ass")
+                                            My.Computer.FileSystem.CopyFile(ass_file, tfn, True)
+                                            log1write(tfn & "を作成しました")
+                                        End If
+                                    End If
                                 End If
                             End If
                         End If
@@ -1648,10 +1668,26 @@ Class WebRemocon
                                 'txtを探してassに変換してファイル(ass_file)として保存
                                 Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
                                 If txt_file.Length > 0 Then
-                                    'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                                    ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
-                                    If ass_file.Length > 0 Then
+                                    Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".txt")
+                                    If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
+                                        'すでに同フォルダにassが存在していれば
+                                        log1write("字幕ファイルとして " & txt_file_ass & " を使用します")
+                                        'コピー
+                                        Dim tfn As String = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
+                                        My.Computer.FileSystem.CopyFile(txt_file_ass, tfn, True)
+                                        ass_file = tfn
+                                    Else
+                                        'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
                                         log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+                                        ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
+                                        If ass_file.Length > 0 Then
+                                            log1write("字幕ASSファイルへの変換が終了しました")
+                                            If NicoConvAss_copy2NicoJK = 1 And txt_file.IndexOf(".txt") > 0 And txt_file.IndexOf(NicoJK_path) >= 0 Then
+                                                Dim tfn As String = txt_file.Replace(".txt", ".ass")
+                                                My.Computer.FileSystem.CopyFile(ass_file, tfn, True)
+                                                log1write(tfn & "を作成しました")
+                                            End If
+                                        End If
                                     End If
                                 End If
                             End If

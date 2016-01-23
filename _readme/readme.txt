@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.83
+TvRemoteViewer_VB v1.84
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -628,6 +628,8 @@ TvRemoteViewer_VB v1.83
 	1.83	num指定がされていない場合の全配信停止が動作していなかったバグを修正
 		1.81の重複回避が不十分だったので修正した
 		WI_GET_LIVE_STREAM.htmlで、配信準備中のものを記載するようにした
+	1.84	最大配信数を大きくしたときにWI_GET_LIVE_STREAMが微妙に遅くなっていた不具合を修正
+		iniに作成したassをNicoJKフォルダ\jk～にコピーするオプションを追加(NicoConvAss_copy2NicoJK)
 
 
 

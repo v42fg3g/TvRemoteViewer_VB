@@ -12,6 +12,9 @@ Module モジュール_ニコニコ実況
     'NicoConvAss_path
     Public NicoConvAss_path As String = ""
 
+    'NicoJKフォルダにassを作成
+    Public NicoConvAss_copy2NicoJK As Integer = 1
+
     'fonts.confの存在を確認
     Public fonts_conf_ok As Integer = 0
 
