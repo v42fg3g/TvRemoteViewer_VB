@@ -478,29 +478,39 @@ Public Class ProcessManager
                             End If
                         Else
                             'チャンネル切り替え失敗したのでUDPアプリを終了させる
+                            log1write("チャンネル切り替えに失敗したのでUDPアプリを終了します")
+
+                            'RecTaskを終了させる（まだlistが作られていない場合）
+                            Dim rr As Integer = stroUdpProc_by_pipeindex_str(num, pipeIndex_str, udpProc)
+
+                            'ストリームが存在していれば削除
                             If num2i(num) >= 0 Then
-                                'RecTaskを終了させる
+                                log1write("ストリーム" & num.ToString & "を削除します")
                                 stopProc(num)
-                                log1write("No.=" & num & "　チャンネル変更に失敗したので配信を中止しました")
-                            Else
-                                'RecTaskを終了させる（まだlistが作られていない場合）
-                                Dim rr As Integer = stroUdpProc_by_pipeindex_str(num, pipeIndex_str, udpProc)
                             End If
+                            stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                         End If
                     Else
+                        log1write("名前付きパイプ名の取得に失敗したのでUDPアプリを終了します")
                         Try
                             'UDPアプリ終了　pipeindexがわからないので強制終了
                             udpProc.Kill()
                             If wait_stop_proc(udpProc) = 1 Then
-                                log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリを終了しました")
+                                log1write("No.=" & num & "　名前付きパイプ名取得に失敗したのでUDPアプリを終了しました")
                             Else
-                                log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリ終了を試みましたが失敗しました")
+                                log1write("No.=" & num & "　名前付きパイプ名取得に失敗したのでUDPアプリ終了を試みましたが失敗しました")
                             End If
                             udpProc.Dispose()
                             udpProc.Close()
                         Catch ex As Exception
-                            log1write("No.=" & num & "　名前付きパイプ一覧取得に失敗したのでUDPアプリを終了しました[B]")
+                            log1write("No.=" & num & "　のUDPアプリ終了作業中にエラーが発生しました。" & ex.Message)
                         End Try
+                        'ストリームが存在していれば削除
+                        If num2i(num) >= 0 Then
+                            log1write("ストリーム" & num.ToString & "を削除します")
+                            stopProc(num)
+                        End If
+                        stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                     End If
                 ElseIf stream_mode = 1 Or stream_mode = 3 Then
                     'ファイル再生
@@ -1062,7 +1072,7 @@ Public Class ProcessManager
                 log1write("No.=" & num & "のUDPアプリを終了しました。")
             Else
                 log1write("No.=" & num & "のUDPアプリの名前付きパイプによる終了が行われたはずにもかかわらず[C]")
-                log1write("No.=" & num & "のUDPアプリのプロセスが残っています。")
+                log1write("No.=" & num & "のUDPアプリのプロセスが残っている可能性があります。")
                 r = 0
             End If
         Else
@@ -1076,7 +1086,7 @@ Public Class ProcessManager
                 log1write("No.=" & num & "のudpアプリを強制終了しました[E]")
             Else
                 log1write("No.=" & num & "のUDPアプリの強制終了に失敗しました")
-                log1write("No.=" & num & "のUDPアプリのプロセスが残っています")
+                log1write("No.=" & num & "のUDPアプリのプロセスが残っている可能性があります")
                 r = 0
             End If
         End If
