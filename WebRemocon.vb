@@ -3386,25 +3386,12 @@ Class WebRemocon
                                         WI_cmd_reply = "OK"
                                         WI_cmd_reply_force = 1
                                     End If
-                            End Select
-                        End If
-
-                        '===========================================
-                        'WEBページ表示前処理
-                        '===========================================
-                        '直前配信履歴簡易チェック＆記録
-                        If (stream_mode = 0 Or stream_mode = 2) And req_Url.ToLower = ("/StartTv.html").ToLower And bondriver.Length > 0 Then
-                                'すでに同じnum,BonDriver,サービスID,chspaceならば再度配信スタートはしない
-                                Dim num2 As Integer = CHKECK_num_Bon_sid_ch(bondriver, Val(sid), Val(chspace))
-                                If num2 >= 0 Then
-                                    'すでに同じ放送を放送中
-                                    log1write("すでにストリーム" & num2.ToString & "で同一放送を配信中です")
-                                    num = num2
-                                    '配信中のストリームへ誘導
-                                    req_Url = "/ViewTV" & num & ".html"
-                                    path = IO.Path.GetDirectoryName(path) & "\ViewTV" & num & ".html"
-                                End If
+                                End Select
                             End If
+
+                            '===========================================
+                            'WEBページ表示前処理
+                            '===========================================
 
                             '特別なページ　配信スタート停止などサーバー動作を実行
                             If req_Url.ToLower.IndexOf("/" & HTTPSTREAM_mode2_str.ToLower & "_ViewTV".ToLower) >= 0 Then
@@ -4089,29 +4076,6 @@ Class WebRemocon
     Public Function F_get_file_duration(ByVal num As Integer) As Integer
         '　本体はProcessManager.vbに
         Return Me._procMan.F_get_file_duration(num)
-    End Function
-
-    'すでに同じ放送が放送中かどうか(該当無しならば-1、該当があればnumを返す）
-    Public Function CHKECK_num_Bon_sid_ch(ByVal bondriver As String, ByVal sid As Integer, ByVal chspace As Integer) As Integer
-        Dim r As Integer = -1
-
-        If sid > 0 And bondriver.Length > 0 Then
-            Dim str As String = WI_GET_LIVE_STREAM()
-            If str.Length > 10 Then
-                Dim line() As String = Split(str, vbCrLf)
-                For i As Integer = 0 To line.Length - 1
-                    Dim d() As String = line(i).Split(",")
-                    If d.Length >= 6 Then
-                        If Trim(bondriver.ToLower) = Trim(d(3).ToLower) And sid = Val(Trim(d(4))) And chspace = Val(Trim(d(5))) Then
-                            r = Val(Trim(d(1))) '配信中のnum
-                            Exit For
-                        End If
-                    End If
-                Next
-            End If
-        End If
-
-        Return r
     End Function
 
     'すでに配信中のストリームでBonDriverが使われていれば該当numを返す。使われていなければそのままのnumを返す
