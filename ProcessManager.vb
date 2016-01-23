@@ -723,7 +723,7 @@ Public Class ProcessManager
                             'log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
                         End If
 
-                        If Me._list(i)._chk_proc >= 1000 Then 'プロセスが無いか10秒応答がなければ
+                        If Me._list(i)._chk_proc >= 1000 And stream_last_utime(Me._list(i)._num) = 0 Then 'プロセスが無いか10秒応答がなければ
                             Me._list(i)._FileEncodeFinished = 1 'エンコード終了
 
                             log1write("No.=" & Me._list(i)._num.ToString & " のエンコードが終了したようです")
