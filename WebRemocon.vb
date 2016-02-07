@@ -1439,6 +1439,15 @@ Class WebRemocon
                                 End If
                             Case "meta_refresh_fix"
                                 meta_refresh_fix = Val(youso(1).ToString)
+                            Case "thumbnail_ffmpeg"
+                                thumbnail_ffmpeg = youso(1).ToString
+                                If thumbnail_ffmpeg.Length > 0 Then
+                                    If file_exist(thumbnail_ffmpeg) = 1 Then
+                                        log1write("サムネイル作成用ffmpegとして" & thumbnail_ffmpeg & "が指定されました")
+                                    Else
+                                        log1write("【エラー】サムネイル作成用ffmpegが見つかりませんでした。" & thumbnail_ffmpeg)
+                                    End If
+                                End If
 
 
 

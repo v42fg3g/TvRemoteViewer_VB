@@ -1,4 +1,6 @@
 ﻿Module モジュール_サムネイル
+    Public thumbnail_ffmpeg As String = "" 'サムネイル作成用ffmpegパス
+
     Public stop_per_thumbnail_minutes As Integer = 60 * 30 '一定間隔サムネイル作成を最大何秒待つか 30分
     Public making_per_thumbnail() As making_thumbnail_structure '一定間隔サムネイル作成中かどうか
     Public Structure making_thumbnail_structure
@@ -34,6 +36,11 @@
         Dim thru_wait As Integer = 0
 
         video_path = filename_escape_recall(video_path) ',エスケープを戻す
+
+        'サムネイル用ffmpegが指定されていればそちらを使用
+        If thumbnail_ffmpeg.Length > 0 Then
+            ffmpeg_path = thumbnail_ffmpeg
+        End If
 
         If ffmpeg_path.IndexOf("ffmpeg") >= 0 Then
             'サムネイル作成終了を待たない場合
