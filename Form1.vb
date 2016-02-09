@@ -1281,7 +1281,7 @@ Public Class Form1
             ElseIf hls1.IndexOf(" -acodec ") >= 0 Or hls1.IndexOf(" -vcodec ") >= 0 Then
                 hls1num = 2
                 hlsAppNameFile = "ffmpeg"
-            ElseIf hls1.IndexOf("--avqsv-analyze") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
+            ElseIf hls1.IndexOf("hls_segment_filename") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
                 hls1num = 3
                 hlsAppNameFile = "QSVEnc"
             End If

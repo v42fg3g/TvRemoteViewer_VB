@@ -2106,13 +2106,19 @@ Class WebRemocon
                 '_listから取得resolutionを取得
                 Dim rez As String = ""
                 Dim sp1, sp2 As Integer
-                Try
-                    sp1 = hlsOpt.IndexOf("-s ")
-                    sp2 = hlsOpt.IndexOf(" ", sp1 + 3)
-                    rez = hlsOpt.Substring(sp1 + "-s ".Length, sp2 - sp1 - "-s ".Length)
-                Catch ex As Exception
-                    rez = ""
-                End Try
+                If hlsOpt.IndexOf("--output-res ") >= 0 Then
+                    'QSVEnc
+                    rez = Trim(instr_pickup_para(hlsOpt, "--output-res ", " ", 0))
+                ElseIf hlsOpt.IndexOf("-s ") > 0 Then
+                    'ffmpeg
+                    Try
+                        sp1 = hlsOpt.IndexOf("-s ")
+                        sp2 = hlsOpt.IndexOf(" ", sp1 + 3)
+                        rez = hlsOpt.Substring(sp1 + "-s ".Length, sp2 - sp1 - "-s ".Length)
+                    Catch ex As Exception
+                        rez = ""
+                    End Try
+                End If
                 'チェック
                 Dim d() As String = rez.Split("x")
                 If d.Length = 2 Then
@@ -2491,7 +2497,7 @@ Class WebRemocon
                     ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
                         If BS1_hlsApp.Length > 0 Then
                             'hlsAppとhlsOptをVLCに置き換える
-                            Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode)
+                            Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode) 'QSVEnc対応済
                             If hlsOpt_temp.Length > 0 Then
                                 hlsOpt = hlsOpt_temp
                                 hlsApp = BS1_hlsApp
