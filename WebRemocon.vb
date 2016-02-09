@@ -52,6 +52,7 @@ Class WebRemocon
     Private _wwwport As Integer = Nothing
     Private _BonDriver_NGword As String() = Nothing
     Public _videopath() As String
+    Public _videopath_ini() As String 'サブフォルダ監視修正
     Public _AddSubFolder As Integer
     'NHK音声モード
     '0=主副ステレオ 1=主モノラル固定 2=副モノラル固定 3=選択式 9=VLC使用
@@ -67,6 +68,8 @@ Class WebRemocon
     Public ffmpeg_option() As HLSoptionstructure
     Public ffmpeg_file_option() As HLSoptionstructure
     Public ffmpeg_http_option() As HLSoptionstructure
+    Public QSVEnc_option() As HLSoptionstructure
+    Public QSVEnc_file_option() As HLSoptionstructure
     Public Structure HLSoptionstructure
         Public resolution As String '解像度　"640x360"
         Public opt As String 'VLCオプション文字列
@@ -215,7 +218,7 @@ Class WebRemocon
             'NHKかどうか調べる
             'If Me._procMan.check_isNHK(num) = 1 Then
             'NHKなら
-            If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+            If Me._hlsApp.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                 If NHKMODE = 3 Then
                     Dim atag2(3) As String
                     vhtml &= "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(atag2, num) & "</span>"
@@ -408,11 +411,66 @@ Class WebRemocon
         Return video2
     End Function
 
+    'サブフォルダを取得
+    Public Sub GetSubfolders(ByVal folderName As String, ByRef subFolders As ArrayList, ByRef errFolders As ArrayList)
+        Dim folder As String
+        Try
+            For Each folder In System.IO.Directory.GetDirectories(folderName)
+                'リストに追加
+                subFolders.Add(folder)
+                '再帰的にサブフォルダを取得する
+                GetSubfolders(folder, subFolders, errFolders)
+            Next folder
+        Catch ex As Exception
+            errFolders.Add(folderName)
+            Exit Sub
+        End Try
+    End Sub
+
+    '_videopath_ini下のサブフォルダを加えて_videopathとして記録
+    Public Sub add_subfolder()
+        Me._videopath = Me._videopath_ini '元フォルダをコピー
+
+        If Me._AddSubFolder = 1 Then
+            If Me._videopath IsNot Nothing Then
+                'サブフォルダを含める
+                Dim sf As New ArrayList
+                Dim errf As New ArrayList
+                For j = 0 To Me._videopath.Length - 1
+                    GetSubfolders(Me._videopath(j), sf, errf)
+                    errf.Add("RECYCLER") '"RECYCLER"を除外する
+                    errf.Add("chapters") 'chaptersを除外する
+                Next
+                'ここまでで、sf.arrayにフォルダ、errf.arrayにエラーフォルダ
+                Dim folder As String
+                For Each folder In sf
+                    Dim chk As Integer = 0
+                    Dim errfolder As String
+                    For Each errfolder In errf
+                        If folder.IndexOf(errfolder) >= 0 Then
+                            chk = 1
+                            Exit For
+                        End If
+                    Next
+                    If chk = 0 Then
+                        'video_path()に追加
+                        Dim b As Integer = Me._videopath.Length
+                        ReDim Preserve Me._videopath(b)
+                        Me._videopath(b) = folder
+                    End If
+                Next folder
+            End If
+        End If
+    End Sub
+
     'video()にビデオファイルリストを作成
     Public Function RefreshVideoList(ByVal videoexword As String) As Object
         Dim video2() As videostructure = Nothing
         Dim cnt As Integer = 0
         Dim i As Integer
+
+        add_subfolder() 'サブフォルダを加える
+
         If Me._videopath IsNot Nothing Then
             If Me._videopath.Length > 0 Then
 
@@ -948,6 +1006,8 @@ Class WebRemocon
         ffmpeg_option = set_hls_option("HLS_option_ffmpeg.txt")
         ffmpeg_file_option = set_hls_option("HLS_option_ffmpeg_file.txt")
         ffmpeg_http_option = set_hls_option("HLS_option_ffmpeg_http.txt")
+        QSVEnc_option = set_hls_option("HLS_option_QSVEnc.txt")
+        QSVEnc_file_option = set_hls_option("HLS_option_QSVEnc_file.txt")
     End Sub
 
     Public Function set_hls_option(ByVal filename As String) As Object
@@ -1079,14 +1139,15 @@ Class WebRemocon
                         Next
                         Select Case youso(0)
                             Case "VideoPath"
+                                'サブフォルダ監視修正
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "")
                                 If trim8(youso(1)).Length > 0 Then
                                     Dim clset() As String = youso(1).Split(",")
                                     If clset Is Nothing Then
                                     ElseIf clset.Length > 0 Then
-                                        ReDim Preserve Me._videopath(clset.Length - 1)
+                                        ReDim Preserve Me._videopath_ini(clset.Length - 1)
                                         For j = 0 To clset.Length - 1
-                                            Me._videopath(j) = trim8(clset(j))
+                                            Me._videopath_ini(j) = trim8(clset(j))
                                         Next
                                     End If
                                 End If
@@ -1276,6 +1337,8 @@ Class WebRemocon
                                 Stop_ffmpeg_at_StartEnd = Val(youso(1).ToString)
                             Case "Stop_vlc_at_StartEnd"
                                 Stop_vlc_at_StartEnd = Val(youso(1).ToString)
+                            Case "Stop_QSVEnc_at_StartEnd"
+                                Stop_QSVEnc_at_StartEnd = Val(youso(1).ToString)
                             Case "NHK_dual_mono_mode"
                                 Me._NHK_dual_mono_mode = Val(youso(1).ToString)
                             Case "tsfile_wait"
@@ -1448,6 +1511,11 @@ Class WebRemocon
                                         log1write("【エラー】サムネイル作成用ffmpegが見つかりませんでした。" & thumbnail_ffmpeg)
                                     End If
                                 End If
+                            Case "video_force_ffmpeg"
+                                video_force_ffmpeg = Val(youso(1).ToString)
+                                If video_force_ffmpeg = 1 Then
+                                    log1write("ファイル再生にffmpegを使用するようセットしました")
+                                End If
 
 
 
@@ -1500,7 +1568,7 @@ Class WebRemocon
     End Function
 
     'ファイル再生
-    '現在のhlsOptをファイル再生用に書き換える
+    '現在のhlsOptをffmpegファイル再生用に書き換える
     Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
         Dim chk_duration As Integer = 0 'TOTで動画の長さを調べた場合は1
@@ -1861,6 +1929,155 @@ Class WebRemocon
     End Function
 
     'ファイル再生
+    '現在のhlsOptをQSVEncファイル再生用に書き換える
+    Private Function hlsopt_udp2file_QSVEnc(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
+        'ffmpeg時のみ字幕ファイルがあれば挿入
+        Dim chk_duration As Integer = 0 'TOTで動画の長さを調べた場合は1
+        Dim video_fps As Double = 0 '動画のfps
+
+        filename = filename_escape_recall(filename) ',エスケープを元に戻す
+
+        'エラー防止
+        If file_last_filename(num) Is Nothing Then
+            file_last_filename(num) = ""
+        End If
+
+        '前回のファイル名と違えば字幕ファイルを削除
+        Dim exist_nico_ass As Integer = 0 'タイムシフト前大元のASSファイルが存在するかどうか
+        If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
+            exist_nico_ass = 1
+        End If
+        If file_last_filename(num) <> filename Or filename.Length = 0 Then
+            '古いsub%num%.assがあれば削除
+            If file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") = 1 Then
+                deletefile(fileroot & "\" & "sub" & num.ToString & ".ass")
+            End If
+            If exist_nico_ass = 1 Then
+                exist_nico_ass = 0
+                deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
+            End If
+            'If file_exist(fileroot & "\" & "chapter" & num.ToString & ".chapter") = 1 Then
+            'deletefile(fileroot & "\" & "chapter" & num.ToString & ".chapter")
+            'End If
+        End If
+
+        Dim rename_file As String = "" 'assフルパス
+        If (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0) Or nohsub = 2 Then
+            'QSVEncではハードサブに未対応
+            log1write("【警告】QSVEncはハードサブに未対応です")
+        ElseIf nohsub = 3 Then
+            'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
+            Dim dt As Integer = filename.LastIndexOf(".")
+            If dt > 0 Then
+                Dim ass_file As String = filename.Substring(0, dt) & ".ass"
+                If file_exist(ass_file) <= 0 Then
+                    ass_file = ""
+                End If
+
+                '前回と違うファイル、または字幕ファイルが存在しなければ作成
+                '前回と同じファイルならすでに存在しているので無駄なことはしない
+                If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") <= 0) Then
+                    If exist_nico_ass = 0 Then
+                        'NicoJKログをassに変換
+                        If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
+                            If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
+                                '動画の開始日時（微妙な誤差はあるかも）
+                                Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp, video_fps)
+                                chk_duration = 1
+                                'txtを探してassに変換してファイル(ass_file)として保存
+                                Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
+                                If txt_file.Length > 0 Then
+                                    Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".txt")
+                                    If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
+                                        'すでに同フォルダにassが存在していれば
+                                        log1write("字幕ファイルとして " & txt_file_ass & " を使用します")
+                                        'コピー
+                                        Dim tfn As String = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
+                                        My.Computer.FileSystem.CopyFile(txt_file_ass, tfn, True)
+                                        ass_file = tfn
+                                    Else
+                                        'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
+                                        log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
+                                        ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
+                                        If ass_file.Length > 0 Then
+                                            log1write("字幕ASSファイルへの変換が終了しました")
+                                            If NicoConvAss_copy2NicoJK = 1 And txt_file.IndexOf(".txt") > 0 And txt_file.IndexOf(NicoJK_path) >= 0 Then
+                                                Dim tfn As String = txt_file.Replace(".txt", ".ass")
+                                                My.Computer.FileSystem.CopyFile(ass_file, tfn, True)
+                                                log1write(tfn & "を作成しました")
+                                            End If
+                                        End If
+                                    End If
+                                End If
+                            End If
+                        End If
+                    Else
+                        'すでに_nico.assファイルが存在する
+                        log1write("既存の字幕ASSファイル_nico.assを使用します[CopyOnly]")
+                        ass_file = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
+                    End If
+
+                    If ass_file.Length > 0 Then
+                        log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
+                        '存在していればstreamフォルダに名前を変えてコピー
+                        '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                        rename_file = fileroot & "\" & "sub" & num.ToString & ".ass"
+                        'シークが指定されていなければそのままコピー
+                        'リネーム
+                        My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                        'ファイルが出来るまで待機
+                        Dim i As Integer = 0
+                        While i < 100 And file_exist(rename_file) < 1
+                            System.Threading.Thread.Sleep(50)
+                            i += 1
+                        End While
+                        log1write("字幕ASSファイルとして" & rename_file & "をセットしました[CopyOnly]")
+                    End If
+                End If
+            End If
+        End If
+
+        '字幕があればチャプターを打てるかどうかチェック
+        If rename_file.Length > 0 And make_chapter = 1 Then
+            log1write("コメントファイルからchapterファイル作成を試みます")
+            'rename_fileが実際のassファイル（フルパス）
+            F_make_chapter(filename, rename_file)
+        End If
+
+        '動画の長さを調べていなければ調べる（かつTOT_get_durationが指定されていれば）
+        If chk_duration = 0 And TOT_get_duration > 0 Then
+            Dim vt As DateTime = get_TOT(filename, Me._hlsApp, video_fps)
+        End If
+
+        '使用したファイル名を記録
+        file_last_filename(num) = filename
+
+        filename = """" & filename & """"
+
+        Dim sp As Integer = hlsOpt.IndexOf("-i ")
+        If sp >= 0 Then
+            Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
+            If sp >= 0 And se > sp Then
+                hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
+            End If
+
+            'シーク秒数が指定されていれば「--trim フレーム数」を挿入
+            If VideoSeekSeconds > 0 Then
+                If video_fps = 0 Then
+                    video_fps = 29.97 'フレームレートが判明していなければ
+                End If
+                Dim frame As Integer = Int(VideoSeekSeconds * video_fps) '秒をフレームに変換
+                sp = hlsOpt.IndexOf("-i ")
+                hlsOpt = hlsOpt.Substring(0, sp) & "--trim " & frame.ToString & ":0 " & hlsOpt.Substring(sp)
+            End If
+        Else
+            log1write("【エラー】HlsOptが指定されていません")
+        End If
+
+        Return hlsOpt
+    End Function
+
+    'ファイル再生
     '現在のhlsOptをファイル再生用に書き換える
     Private Function hlsopt_udp2file_vlc(ByVal hlsOpt As String, ByVal filename As String) As String
         Dim sp As Integer = hlsOpt.IndexOf("udp://@:")
@@ -2042,6 +2259,8 @@ Class WebRemocon
                     'vlcからffmpegへの変換は未対応
                     log1write("VLCからffmpegへの変更は対応していません。VLCのまま続行します")
                 End If
+            Else
+                log1write("【エラー】その他のHLSアプリケーションには対応していません")
             End If
 
             'hlsOptをHTTPストリーム用のものに入れ替える
@@ -2075,29 +2294,67 @@ Class WebRemocon
                 End If
             End If
         ElseIf Stream_mode = 0 Or Stream_mode = 1 Then
-            If resolution.Length = 0 And hlsApp.IndexOf("ffmpeg") >= 0 And hlsOpt2.Length > 0 And filename.Length > 0 And ffmpeg_file_option IsNot Nothing And (Stream_mode = 0 Or Stream_mode = 1) Then
-                '解像度が無指定でHLS配信でHLS_option_ffmpeg_file.txt指定のファイル再生ならば
-                'フォーム上のオプションから解像度を算出して解像度をセット
-                resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
+            If resolution.Length = 0 And hlsOpt2.Length > 0 And filename.Length > 0 And (Stream_mode = 0 Or Stream_mode = 1) Then
+                If hlsApp.IndexOf("ffmpeg") >= 0 Then
+                    '解像度が無指定でHLS配信でHLS_option_ffmpeg_file.txt指定のファイル再生ならば
+                    'フォーム上のオプションから解像度を算出して解像度をセット
+                    resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
+                ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                    'QSVEnc
+                    resolution = trim8(instr_pickup_para(hlsOpt2, "--output-res ", " ", 0))
+                ElseIf hlsApp.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And thumbnail_ffmpeg.Length > 0 Then
+                    'vlc 再生にはffmpeg使用
+                    Dim vlc_w As Integer = Val(Trim(Instr_pickup(hlsOpt2, "width=", ",", 0)))
+                    Dim vlc_h As Integer = Val(Trim(Instr_pickup(hlsOpt2, "height=", ",", 0)))
+                    If vlc_w > 0 And vlc_h > 0 Then
+                        resolution = vlc_w.ToString & "x" & vlc_h.ToString
+                    End If
+                End If
             End If
             If resolution.Length > 0 Then
                 '解像度指定があれば
                 Dim chk As Integer = 0
-                If filename.Length > 0 And ffmpeg_file_option IsNot Nothing And (Stream_mode = 0 Or Stream_mode = 1) Then
-                    'HLS配信でHLS_option_ffmpeg_file.txt指定のファイル再生ならば
-                    If hls_option IsNot Nothing Then
-                        For i As Integer = 0 To ffmpeg_file_option.Length - 1
-                            If ffmpeg_file_option(i).resolution = resolution Then
-                                hlsOpt = ffmpeg_file_option(i).opt
-                                chk = 1
-                                log1write("HLS_option_ffmpeg_file.txt内の解像度指定がありました。" & resolution)
+                If filename.Length > 0 And (Stream_mode = 0 Or Stream_mode = 1) Then
+                    'ファイル再生
+                    If (hlsApp.IndexOf("ffmpeg") >= 0 Or (video_force_ffmpeg = 1 And thumbnail_ffmpeg.Length > 0)) And ffmpeg_file_option IsNot Nothing Then
+                        'ffmpeg HLS配信でHLS_option_ffmpeg_file.txt指定のファイル再生ならば
+                        If ffmpeg_file_option IsNot Nothing Then
+                            For i As Integer = 0 To ffmpeg_file_option.Length - 1
+                                If ffmpeg_file_option(i).resolution = resolution Then
+                                    hlsOpt = ffmpeg_file_option(i).opt
+                                    chk = 1
+                                    log1write("HLS_option_ffmpeg_file.txt内の解像度指定がありました。" & resolution)
+                                End If
+                            Next
+                        End If
+                        If hlsApp.ToLower.IndexOf("ffmpeg") < 0 Then
+                            If video_force_ffmpeg = 1 And chk = 1 And thumbnail_ffmpeg.Length > 0 Then
+                                hlsApp = thumbnail_ffmpeg
+                                log1write("ファイル再生には" & hlsApp & "を使用します")
+                                hlsroot = Path.GetDirectoryName(thumbnail_ffmpeg)
+                            Else
+                                chk = 0
+                                log1write("ファイル再生にffmpegを使用するにあたり不備が見つかりました")
                             End If
-                        Next
+                        End If
+                    End If
+                    If chk = 0 And hlsApp.ToLower.IndexOf("qsvencc") >= 0 And QSVEnc_file_option IsNot Nothing Then
+                        'QSVEnc
+                        'QSVEnc HLS配信でHLS_option_QSVEnc_file.txt指定のファイル再生ならば
+                        If QSVEnc_file_option IsNot Nothing Then
+                            For i As Integer = 0 To QSVEnc_file_option.Length - 1
+                                If QSVEnc_file_option(i).resolution = resolution Then
+                                    hlsOpt = QSVEnc_file_option(i).opt
+                                    chk = 1
+                                    log1write("HLS_option_QSVEnc_file.txt内の解像度指定がありました。" & resolution)
+                                End If
+                            Next
+                        End If
                     End If
                 End If
 
                 If chk = 0 And hls_option IsNot Nothing Then
-                    '標準
+                    '標準 HLS_option.txt
                     For i As Integer = 0 To hls_option.Length - 1
                         If hls_option(i).resolution = resolution Then
                             hlsOpt = hls_option(i).opt
@@ -2107,7 +2364,7 @@ Class WebRemocon
                     Next
                 End If
 
-                If chk = 0 And (Stream_mode = 0 Or Stream_mode = 1) Then
+                If chk = 0 Then
                     '該当がなければフォーム上のVLCオプション文字列を使用する
                     hlsOpt = hlsOpt2
                     resolution = ""
@@ -2118,40 +2375,17 @@ Class WebRemocon
             End If
 
             'ファイル再生か？
-            If filename.Length > 0 Then
+            If filename.Length > 0 And hlsOpt.Length > 0 Then
                 Stream_mode = 1
                 'hlsオプションを書き換える
-                If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                If hlsApp.IndexOf("ffmpeg") >= 0 Then
                     'ffmpegのとき
-                    If ffmpeg_file_option IsNot Nothing Then
-                        'HLS_option_ffmpeg_file.txtでオプションが指定されていれば
-                        'resolution=空白、640x380等
-                        If resolution.Length = 0 Then
-                            'フォーム上のhlsoptから解像度を取得
-                            resolution = instr_pickup_para(hlsOpt, " -s ", " ", 0)
-                            log1write("フォーム上のHLSオプションから解像度を取得しました。resolution=" & resolution)
-                        End If
-                        If resolution.Length > 0 Then
-                            Dim chk As Integer = 0
-                            For i = 0 To ffmpeg_file_option.Length - 1
-                                If ffmpeg_file_option(i).resolution = resolution Then
-                                    'hlsOpt入れ替え
-                                    hlsOpt = ffmpeg_file_option(i).opt
-                                    '%VIDEOFILE%変換
-                                    'hlsOpt = hlsOpt.Replace("%VIDEOFILE%", "DUMMYFILE")
-                                    chk = 1
-                                    log1write("HLS_option_ffmpeg_file.txtに記述されているHLSオプションを使用します")
-                                    Exit For
-                                End If
-                            Next
-                            If chk = 0 Then
-                                log1write("HLS_option_ffmpeg_file.txtに該当する解像度のオプションがありませんでした。resolution=" & resolution)
-                            End If
-                        End If
-                    End If
                     hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
                     'chapterをコピー
                     'copy_chapter_to_fileroot(num, filename, fileroot)
+                ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                    'QSVEncのとき
+                    hlsOpt = hlsopt_udp2file_QSVEnc(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
                 Else
                     'その他vlc
                     '今のところ未対応
@@ -2229,6 +2463,51 @@ Class WebRemocon
                             hlsOpt = insert_str_in_hlsOpt(hlsOpt, str, ba, force)
                         End If
                     Next
+                End If
+            ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                If hlsOpt.IndexOf("--audio-stream") < 0 Then
+                    Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
+                    '1=NHKなら主　それ以外はステレオ
+                    '2=NHKなら主　それ以外はステレオ
+                    '11=全部主
+                    '12=N全部副
+                    '4=メイン
+                    '5=サブ
+                    If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 11) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                        '主モノラル固定 1or11
+                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FL -i ")
+                    ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 12) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                        '副モノラル固定 2or12
+                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FR -i ")
+                    ElseIf NHK_dual_mono_mode_select = 4 Then
+                        '第二音声
+                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
+                    ElseIf NHK_dual_mono_mode_select = 5 Then
+                        '動画主音声
+                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 1?:streo -i ")
+                    ElseIf NHK_dual_mono_mode_select = 6 Then
+                        '動画副音声
+                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
+                    ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
+                        If BS1_hlsApp.Length > 0 Then
+                            'hlsAppとhlsOptをVLCに置き換える
+                            Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode)
+                            If hlsOpt_temp.Length > 0 Then
+                                hlsOpt = hlsOpt_temp
+                                hlsApp = BS1_hlsApp
+                            End If
+                        Else
+                            NHK_dual_mono_mode_select = 0
+                            log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
+                        End If
+                    Else
+                        'それ以外は書き換えない　→主・副
+                    End If
+
+                    'hlsOptに追加で文字列
+                    If hlsOptAdd.Length > 0 Then
+                        log1write("QSVEncへのパラメーター追加は無視されました。" & hlsOptAdd.Replace("_-_", "  "))
+                    End If
                 End If
             End If
 
@@ -2936,306 +3215,306 @@ Class WebRemocon
                             log1write("【エラー】ffmpeg HTTP ストリーム配信開始のパラメーターが不正です")
                             http_err = 1
                         End If
-                End If
+                    End If
 
-                If http_err = 0 Then
-                    '配信開始
-                    'Me._list(ffmpeg_num)._stoppingが100より大きければ接続待機中なので配信スタート
-                    Dim ffmpeg_num_stopping As Integer = Me._procMan.get_stopping_status(ffmpeg_num)
-                    If ffmpeg_num_stopping > 100 Then
-                        '配信準備中
-                        If ffmpeg_num > 0 Then
-                            'ffmpeg HTTP ストリーム配信開始
-                            log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
-                            'context.Response.Headers("Content-Type") = "video/mpeg"
-                            context.Response.Headers("Content-Type") = "video/MP2T"
-                            Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
+                    If http_err = 0 Then
+                        '配信開始
+                        'Me._list(ffmpeg_num)._stoppingが100より大きければ接続待機中なので配信スタート
+                        Dim ffmpeg_num_stopping As Integer = Me._procMan.get_stopping_status(ffmpeg_num)
+                        If ffmpeg_num_stopping > 100 Then
+                            '配信準備中
+                            If ffmpeg_num > 0 Then
+                                'ffmpeg HTTP ストリーム配信開始
+                                log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
+                                'context.Response.Headers("Content-Type") = "video/mpeg"
+                                context.Response.Headers("Content-Type") = "video/MP2T"
+                                Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
 
-                            '現在稼働中のlist(i)._numをログに表示
-                            Dim js As String = get_live_numbers()
-                            log1write("現在稼働中のNumber：" & js)
-                        Else
-                            '不正なURL
+                                '現在稼働中のlist(i)._numをログに表示
+                                Dim js As String = get_live_numbers()
+                                log1write("現在稼働中のNumber：" & js)
+                            Else
+                                '不正なURL
+                                context.Response.Headers("Content-Type") = "text/plain"
+                                Dim sw = New StreamWriter(context.Response.OutputStream)
+                                sw.Write("Bad Request")
+                                'Test String
+                                sw.Close()
+                                context.Response.Close()
+                                log1write(context.Request.RawUrl & "は不正なリクエストです")
+                            End If
+                        ElseIf ffmpeg_num_stopping > 0 Then
+                            '終了処理中
                             context.Response.Headers("Content-Type") = "text/plain"
                             Dim sw = New StreamWriter(context.Response.OutputStream)
-                            sw.Write("Bad Request")
-                            'Test String
+                            sw.Write("Stream" & ffmpeg_num & " is stopping.")
                             sw.Close()
                             context.Response.Close()
-                            log1write(context.Request.RawUrl & "は不正なリクエストです")
+                            log1write("ストリーム" & ffmpeg_num & "は終了処理中です。配信は中止されました")
+                        Else
+                            '配信準備がなされていない
+                            context.Response.Headers("Content-Type") = "text/plain"
+                            Dim sw = New StreamWriter(context.Response.OutputStream)
+                            sw.Write("Stream" & ffmpeg_num & " is not ready.")
+                            sw.Close()
+                            context.Response.Close()
+                            log1write("ストリーム" & ffmpeg_num & "は配信準備されていません。配信は中止されました")
                         End If
-                    ElseIf ffmpeg_num_stopping > 0 Then
-                        '終了処理中
-                        context.Response.Headers("Content-Type") = "text/plain"
-                        Dim sw = New StreamWriter(context.Response.OutputStream)
-                        sw.Write("Stream" & ffmpeg_num & " is stopping.")
-                        sw.Close()
-                        context.Response.Close()
-                        log1write("ストリーム" & ffmpeg_num & "は終了処理中です。配信は中止されました")
-                    Else
-                        '配信準備がなされていない
-                        context.Response.Headers("Content-Type") = "text/plain"
-                        Dim sw = New StreamWriter(context.Response.OutputStream)
-                        sw.Write("Stream" & ffmpeg_num & " is not ready.")
-                        sw.Close()
-                        context.Response.Close()
-                        log1write("ストリーム" & ffmpeg_num & "は配信準備されていません。配信は中止されました")
-                    End If
-                End If
-            Else
-                '認証エラー
-                context.Response.StatusCode = 401
-
-                Try
-                    context.Response.Close()
-                Catch ex As Exception
-                    ' client closed connection before the content was sent
-                End Try
-            End If
-            Else
-
-            Dim req As HttpListenerRequest = Nothing
-            Dim res As HttpListenerResponse = Nothing
-            Dim reader As StreamReader = Nothing
-            Dim writer As StreamWriter = Nothing
-
-            Dim ffmpeg_http_stream_on As Integer = 0
-
-            Try
-                req = context.Request
-                res = context.Response
-
-                'reader = New StreamReader(req.InputStream)
-                'Dim received As String = reader.ReadToEnd()
-
-                'MIME TYPE
-                Dim mimetype As String = get_mimetype(req.Url.LocalPath)
-                If mimetype.Length > 0 Then
-                    res.ContentType = mimetype
-                ElseIf Me._MIME_TYPE_DEFAULT.Length > 0 Then
-                    res.ContentType = Me._MIME_TYPE_DEFAULT
-                End If
-
-                Dim auth_ok As Integer = 0
-                If Me._id.Length = 0 Or Me._pass.Length = 0 Then
-                    'パスワード未設定は素通り
-                    auth_ok = 1
-                ElseIf req.IsAuthenticated Then
-                    Dim identity As HttpListenerBasicIdentity = DirectCast(context.User.Identity, HttpListenerBasicIdentity)
-                    '判定
-                    If Me._id = identity.Name And Me._pass = identity.Password Then
-                        '受付
-                        auth_ok = 2
-                    Else
-                        auth_ok = -1
                     End If
                 Else
-                    auth_ok = -2
+                    '認証エラー
+                    context.Response.StatusCode = 401
+
+                    Try
+                        context.Response.Close()
+                    Catch ex As Exception
+                        ' client closed connection before the content was sent
+                    End Try
                 End If
+            Else
 
-                If auth_ok > 0 Then
-                    ' リクエストされたURLからファイルのパスを求める
-                    Dim path As String = Me._wwwroot & req.Url.LocalPath.Replace("/", "\")
+                Dim req As HttpListenerRequest = Nothing
+                Dim res As HttpListenerResponse = Nothing
+                Dim reader As StreamReader = Nothing
+                Dim writer As StreamWriter = Nothing
 
-                    '%FILEROOT%へのアクセスならパスを変換
-                    If path.IndexOf(Me._fileroot) < 0 Then
-                        Dim sp As Integer = Me._fileroot.LastIndexOf("\")
-                        Dim folder As String = Me._fileroot.Substring(sp) & "\"
-                        sp = path.IndexOf(folder)
-                        If sp >= 0 Then
-                            path = Me._fileroot & "\" & path.Substring(sp + folder.Length)
-                        End If
+                Dim ffmpeg_http_stream_on As Integer = 0
+
+                Try
+                    req = context.Request
+                    res = context.Response
+
+                    'reader = New StreamReader(req.InputStream)
+                    'Dim received As String = reader.ReadToEnd()
+
+                    'MIME TYPE
+                    Dim mimetype As String = get_mimetype(req.Url.LocalPath)
+                    If mimetype.Length > 0 Then
+                        res.ContentType = mimetype
+                    ElseIf Me._MIME_TYPE_DEFAULT.Length > 0 Then
+                        res.ContentType = Me._MIME_TYPE_DEFAULT
                     End If
 
-                    'ルートにアクセスされた場合、index.htmlを表示する
-                    Dim se1 As Integer = path.LastIndexOf("\")
-                    If se1 >= 0 And (se1 + 1) = path.Length Then
-                        path = path & "index.html"
+                    Dim auth_ok As Integer = 0
+                    If Me._id.Length = 0 Or Me._pass.Length = 0 Then
+                        'パスワード未設定は素通り
+                        auth_ok = 1
+                    ElseIf req.IsAuthenticated Then
+                        Dim identity As HttpListenerBasicIdentity = DirectCast(context.User.Identity, HttpListenerBasicIdentity)
+                        '判定
+                        If Me._id = identity.Name And Me._pass = identity.Password Then
+                            '受付
+                            auth_ok = 2
+                        Else
+                            auth_ok = -1
+                        End If
+                    Else
+                        auth_ok = -2
                     End If
 
-                    log1write(req.Url.LocalPath & "へのリクエストがありました。")
-                    If res.ContentType IsNot Nothing Then
-                        If res.ContentType.Length > 0 Then
-                            log1write("MIME TYPE : " & res.ContentType)
-                        End If
-                    End If
+                    If auth_ok > 0 Then
+                        ' リクエストされたURLからファイルのパスを求める
+                        Dim path As String = Me._wwwroot & req.Url.LocalPath.Replace("/", "\")
 
-                    'リクエストされたURL
-                    Dim req_Url As String = req.Url.LocalPath
-
-                    'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
-                    If path.IndexOf(".htm") > 0 Then
-                        'HTMLなら
-
-                        '最後に.htmlにアクセスがあった日時を記録
-                        STOP_IDLEMINUTES_LAST = Now()
-
-                        'ページが表示されないことがあるので
-                        res.ContentType = "text/html"
-
-                        'ToLower小文字で比較
-                        Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
-                        Dim request_page As Integer = 0 '特別なリクエストかどうか
-                        Dim chk_viewtv_ok As Integer = 0 'ViewTV.htmlへのリクエストなら1になる
-
-                        '===========================================
-                        '★リクエストパラメーターを取得
-                        '===========================================
-                        'スレッドナンバー
-                        Dim num As Integer = 0
-                        num = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num") & "")
-                        'Int32.TryParse(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num"), num)
-                        'BonDriver指定
-                        Dim bondriver As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("BonDriver") & ""
-                        'サービスＩＤ指定
-                        Dim sid As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ServiceID") & ""
-                        'chspace指定
-                        Dim chspace As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ChSpace") & ""
-                        'Bon_Sid_Ch一括指定があった場合（JavaScript等でBon_Sid_Ch="BonDriver_t0.dll,12345,0"というように指定された場合）
-                        Dim bon_sid_ch_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("Bon_Sid_Ch") & ""
-                        Dim bon_sid_ch() As String = bon_sid_ch_str.Split(",")
-                        If bon_sid_ch.Length = 3 Then
-                            '個別に値が決まっていなければセット
-                            If bondriver.Length = 0 Then bondriver = Trim(bon_sid_ch(0))
-                            If sid.Length = 0 Then sid = Trim(bon_sid_ch(1))
-                            If chspace.Length = 0 Then chspace = Trim(bon_sid_ch(2))
-                        End If
-                        '解像度指定 "640x360"等
-                        Dim resolution As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("resolution") & ""
-                        'redirect指定
-                        Dim redirect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("redirect") & ""
-                        'm3u8,tsの準備状況
-                        Dim check_m3u8_ts As Integer = 0
-                        'ストリームモード 0=UDP 1=ファイル再生 2=http配信 3=http配信ファイル再生
-                        Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
-                        'ファイル名
-                        Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
-                        Dim vname() As String = videoname.Split(",")
-                        If vname.Length = 1 Then
-                            If vname(0).Length > 0 Then
-                                '日付が入ってない場合も受け入れる
-                                videoname = vname(0)
+                        '%FILEROOT%へのアクセスならパスを変換
+                        If path.IndexOf(Me._fileroot) < 0 Then
+                            Dim sp As Integer = Me._fileroot.LastIndexOf("\")
+                            Dim folder As String = Me._fileroot.Substring(sp) & "\"
+                            sp = path.IndexOf(folder)
+                            If sp >= 0 Then
+                                path = Me._fileroot & "\" & path.Substring(sp + folder.Length)
                             End If
-                        ElseIf vname.Length >= 2 Then
-                            '1番目が数値かどうか調べて対応
-                            Dim sep2 As String = ""
-                            Dim fl2 As Integer = 0
-                            videoname = ""
-                            If IsNumeric(vname(0)) Then
-                                fl2 = 1
-                            End If
-                            For ii2 As Integer = fl2 To vname.Length - 1
-                                videoname &= sep2 & vname(ii2)
-                                sep2 = ","
-                            Next
                         End If
-                        'ファイル再生シーク秒数
-                        Dim VideoSeekSeconds As Integer = 0
-                        Dim VideoSeekSeconds_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSeekSeconds") & ""
-                        VideoSeekSeconds_str = StrConv(VideoSeekSeconds_str, VbStrConv.Narrow) '半角に
-                        If VideoSeekSeconds_str.IndexOf(":") > 0 Then
-                            Dim vd() As String = VideoSeekSeconds_str.Split(":")
-                            If vd.Length = 3 Then
-                                VideoSeekSeconds = (vd(0) * 60 * 60) + (vd(1) * 60) + vd(2)
-                            ElseIf vd.Length = 2 Then
-                                VideoSeekSeconds = (vd(0) * 60) + vd(1)
+
+                        'ルートにアクセスされた場合、index.htmlを表示する
+                        Dim se1 As Integer = path.LastIndexOf("\")
+                        If se1 >= 0 And (se1 + 1) = path.Length Then
+                            path = path & "index.html"
+                        End If
+
+                        log1write(req.Url.LocalPath & "へのリクエストがありました。")
+                        If res.ContentType IsNot Nothing Then
+                            If res.ContentType.Length > 0 Then
+                                log1write("MIME TYPE : " & res.ContentType)
+                            End If
+                        End If
+
+                        'リクエストされたURL
+                        Dim req_Url As String = req.Url.LocalPath
+
+                        'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
+                        If path.IndexOf(".htm") > 0 Then
+                            'HTMLなら
+
+                            '最後に.htmlにアクセスがあった日時を記録
+                            STOP_IDLEMINUTES_LAST = Now()
+
+                            'ページが表示されないことがあるので
+                            res.ContentType = "text/html"
+
+                            'ToLower小文字で比較
+                            Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
+                            Dim request_page As Integer = 0 '特別なリクエストかどうか
+                            Dim chk_viewtv_ok As Integer = 0 'ViewTV.htmlへのリクエストなら1になる
+
+                            '===========================================
+                            '★リクエストパラメーターを取得
+                            '===========================================
+                            'スレッドナンバー
+                            Dim num As Integer = 0
+                            num = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num") & "")
+                            'Int32.TryParse(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("num"), num)
+                            'BonDriver指定
+                            Dim bondriver As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("BonDriver") & ""
+                            'サービスＩＤ指定
+                            Dim sid As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ServiceID") & ""
+                            'chspace指定
+                            Dim chspace As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("ChSpace") & ""
+                            'Bon_Sid_Ch一括指定があった場合（JavaScript等でBon_Sid_Ch="BonDriver_t0.dll,12345,0"というように指定された場合）
+                            Dim bon_sid_ch_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("Bon_Sid_Ch") & ""
+                            Dim bon_sid_ch() As String = bon_sid_ch_str.Split(",")
+                            If bon_sid_ch.Length = 3 Then
+                                '個別に値が決まっていなければセット
+                                If bondriver.Length = 0 Then bondriver = Trim(bon_sid_ch(0))
+                                If sid.Length = 0 Then sid = Trim(bon_sid_ch(1))
+                                If chspace.Length = 0 Then chspace = Trim(bon_sid_ch(2))
+                            End If
+                            '解像度指定 "640x360"等
+                            Dim resolution As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("resolution") & ""
+                            'redirect指定
+                            Dim redirect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("redirect") & ""
+                            'm3u8,tsの準備状況
+                            Dim check_m3u8_ts As Integer = 0
+                            'ストリームモード 0=UDP 1=ファイル再生 2=http配信 3=http配信ファイル再生
+                            Dim stream_mode As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("StreamMode") & "")
+                            'ファイル名
+                            Dim videoname As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoName") & ""
+                            Dim vname() As String = videoname.Split(",")
+                            If vname.Length = 1 Then
+                                If vname(0).Length > 0 Then
+                                    '日付が入ってない場合も受け入れる
+                                    videoname = vname(0)
+                                End If
+                            ElseIf vname.Length >= 2 Then
+                                '1番目が数値かどうか調べて対応
+                                Dim sep2 As String = ""
+                                Dim fl2 As Integer = 0
+                                videoname = ""
+                                If IsNumeric(vname(0)) Then
+                                    fl2 = 1
+                                End If
+                                For ii2 As Integer = fl2 To vname.Length - 1
+                                    videoname &= sep2 & vname(ii2)
+                                    sep2 = ","
+                                Next
+                            End If
+                            'ファイル再生シーク秒数
+                            Dim VideoSeekSeconds As Integer = 0
+                            Dim VideoSeekSeconds_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSeekSeconds") & ""
+                            VideoSeekSeconds_str = StrConv(VideoSeekSeconds_str, VbStrConv.Narrow) '半角に
+                            If VideoSeekSeconds_str.IndexOf(":") > 0 Then
+                                Dim vd() As String = VideoSeekSeconds_str.Split(":")
+                                If vd.Length = 3 Then
+                                    VideoSeekSeconds = (vd(0) * 60 * 60) + (vd(1) * 60) + vd(2)
+                                ElseIf vd.Length = 2 Then
+                                    VideoSeekSeconds = (vd(0) * 60) + vd(1)
+                                Else
+                                    VideoSeekSeconds = Val(VideoSeekSeconds_str)
+                                    log1write(VideoSeekSeconds_str & "の秒数への変換に失敗しました" & VideoSeekSeconds & "秒にセットしました")
+                                End If
                             Else
                                 VideoSeekSeconds = Val(VideoSeekSeconds_str)
-                                log1write(VideoSeekSeconds_str & "の秒数への変換に失敗しました" & VideoSeekSeconds & "秒にセットしました")
                             End If
-                        Else
-                            VideoSeekSeconds = Val(VideoSeekSeconds_str)
-                        End If
-                        '倍速ファイル再生
-                        Dim baisoku As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSpeed") & ""
-                        If baisoku.Length = 0 Then
-                            baisoku = "1" '等速
-                        End If
-                        'URLエンコードしておいたフルパスを文字列に変換
-                        'UTF-8化で解決
-                        'videoname = System.Web.HttpUtility.UrlDecode(videoname)
-                        'ビデオファイル名抽出
-                        Dim videoexword As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
-                        'If req.QueryString.Count > 0 Then
-                        ''クエリから1つずつチェック
-                        'For ii As Integer = 0 To req.QueryString.Count - 1
-                        'If req.QueryString.Keys(ii) = "VideoExWord" Then
-                        'videoexword = req.QueryString.Item(ii)
-                        'Exit For
-                        'End If
-                        'Next
-                        'End If
-                        'ビデオリスト　更新する=1
-                        Dim vl_refresh As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_refresh") & "")
-                        'ビデオリスト　何件返すか
-                        Dim vl_volume As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_volume") & "")
-                        If vl_volume = 0 Then
-                            vl_volume = C_INTMAX '制限無し
-                        End If
-                        'ビデオリスト　指定日以前のファイルをリストアップする
-                        Dim vl_startdate As DateTime
-                        Dim vl_startdate_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_startdate") & ""
-                        If vl_startdate_str.Length = 0 Then
-                            '未指定
-                            vl_startdate = C_DAY2038 '制限無し
-                        Else
-                            Try
-                                vl_startdate = CDate(vl_startdate_str)
-                            Catch ex As Exception
-                                '不正な値
-                                vl_volume = -99
-                                vl_startdate = CDate("1980/01/01")
-                            End Try
-                        End If
+                            '倍速ファイル再生
+                            Dim baisoku As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoSpeed") & ""
+                            If baisoku.Length = 0 Then
+                                baisoku = "1" '等速
+                            End If
+                            'URLエンコードしておいたフルパスを文字列に変換
+                            'UTF-8化で解決
+                            'videoname = System.Web.HttpUtility.UrlDecode(videoname)
+                            'ビデオファイル名抽出
+                            Dim videoexword As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("VideoExWord") & ""
+                            'If req.QueryString.Count > 0 Then
+                            ''クエリから1つずつチェック
+                            'For ii As Integer = 0 To req.QueryString.Count - 1
+                            'If req.QueryString.Keys(ii) = "VideoExWord" Then
+                            'videoexword = req.QueryString.Item(ii)
+                            'Exit For
+                            'End If
+                            'Next
+                            'End If
+                            'ビデオリスト　更新する=1
+                            Dim vl_refresh As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_refresh") & "")
+                            'ビデオリスト　何件返すか
+                            Dim vl_volume As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_volume") & "")
+                            If vl_volume = 0 Then
+                                vl_volume = C_INTMAX '制限無し
+                            End If
+                            'ビデオリスト　指定日以前のファイルをリストアップする
+                            Dim vl_startdate As DateTime
+                            Dim vl_startdate_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_startdate") & ""
+                            If vl_startdate_str.Length = 0 Then
+                                '未指定
+                                vl_startdate = C_DAY2038 '制限無し
+                            Else
+                                Try
+                                    vl_startdate = CDate(vl_startdate_str)
+                                Catch ex As Exception
+                                    '不正な値
+                                    vl_volume = -99
+                                    vl_startdate = CDate("1980/01/01")
+                                End Try
+                            End If
 
-                        'ハードサブ不許可
-                        Dim nohsub As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nohsub") & "")
-                        'ファイル再生時NicoJKコメント調整　録画前マージンを知らせる
-                        Dim margin1 As Integer = Nico_delay
-                        Dim margin1_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nicodelay") & ""
-                        If Trim(margin1_str.Length) > 0 Then
-                            'パラメーターとして指定があった場合はパラメーター優先
-                            margin1 = Val(margin1_str)
-                        End If
+                            'ハードサブ不許可
+                            Dim nohsub As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nohsub") & "")
+                            'ファイル再生時NicoJKコメント調整　録画前マージンを知らせる
+                            Dim margin1 As Integer = Nico_delay
+                            Dim margin1_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nicodelay") & ""
+                            If Trim(margin1_str.Length) > 0 Then
+                                'パラメーターとして指定があった場合はパラメーター優先
+                                margin1 = Val(margin1_str)
+                            End If
 
-                        'ファイル書き込みコマンド
-                        Dim fl_cmd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_cmd") & ""
-                        Dim fl_file As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_file") & ""
-                        Dim fl_text As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_text") & ""
+                            'ファイル書き込みコマンド
+                            Dim fl_cmd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_cmd") & ""
+                            Dim fl_file As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_file") & ""
+                            Dim fl_text As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("fl_text") & ""
 
-                        'NHKの音声モード
-                        Dim NHK_dual_mono_mode_select As Integer = Me._NHK_dual_mono_mode 'iniで指定された形式
-                        Dim NHK_dual_mono_mode_select_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & ""
-                        If IsNumeric(NHK_dual_mono_mode_select_str) Then
-                            'パラメーターとして指定があった場合はパラメーター優先
-                            NHK_dual_mono_mode_select = Val(NHK_dual_mono_mode_select_str)
-                        End If
+                            'NHKの音声モード
+                            Dim NHK_dual_mono_mode_select As Integer = Me._NHK_dual_mono_mode 'iniで指定された形式
+                            Dim NHK_dual_mono_mode_select_str As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("NHKMODE") & ""
+                            If IsNumeric(NHK_dual_mono_mode_select_str) Then
+                                'パラメーターとして指定があった場合はパラメーター優先
+                                NHK_dual_mono_mode_select = Val(NHK_dual_mono_mode_select_str)
+                            End If
 
-                        'hlsOptに追加するべき文字列
-                        Dim hlsOptAdd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("hlsOptAdd") & ""
+                            'hlsOptに追加するべき文字列
+                            Dim hlsOptAdd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("hlsOptAdd") & ""
 
-                        '汎用文字列
-                        Dim temp As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("temp") & ""
+                            '汎用文字列
+                            Dim temp As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("temp") & ""
 
-                        '===========================================
-                        'WEBインターフェース
-                        '===========================================
-                        Dim WI_cmd As String = ""
-                        Dim WI_cmd_reply As String = "" '返事
-                        Dim WI_cmd_reply_force As Integer = 0 '1ならwebページ処理へ向かわない
-                        Dim WI_skip_html As Integer = 0
-                        If req_Url.IndexOf("/WI_") >= 0 Then
-                            WI_cmd = "WI_" & instr_pickup_para(req_Url, "/WI_", ".html", 0)
-                            Select Case WI_cmd
-                                Case "WI_GET_CHANNELS"
-                                    'BonDriver, ServiceID, ch_space, チャンネル名
-                                    WI_cmd_reply = Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp, Me._BonDriver_NGword)
-                                    WI_cmd_reply_force = 1
-                                Case "WI_START_STREAM"
-                                    '配信スタート
-                                    'Sub_stream_Start(num, bondriver, sid, chspace, bon_sid_ch_str, resolution, stream_mode, videoname, nohsub)
-                                    req_Url = "/StartTv.html"
-                                    path = path.Replace("WI_START_STREAM.html", "StartTv.html")
+                            '===========================================
+                            'WEBインターフェース
+                            '===========================================
+                            Dim WI_cmd As String = ""
+                            Dim WI_cmd_reply As String = "" '返事
+                            Dim WI_cmd_reply_force As Integer = 0 '1ならwebページ処理へ向かわない
+                            Dim WI_skip_html As Integer = 0
+                            If req_Url.IndexOf("/WI_") >= 0 Then
+                                WI_cmd = "WI_" & instr_pickup_para(req_Url, "/WI_", ".html", 0)
+                                Select Case WI_cmd
+                                    Case "WI_GET_CHANNELS"
+                                        'BonDriver, ServiceID, ch_space, チャンネル名
+                                        WI_cmd_reply = Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp, Me._BonDriver_NGword)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_START_STREAM"
+                                        '配信スタート
+                                        'Sub_stream_Start(num, bondriver, sid, chspace, bon_sid_ch_str, resolution, stream_mode, videoname, nohsub)
+                                        req_Url = "/StartTv.html"
+                                        path = path.Replace("WI_START_STREAM.html", "StartTv.html")
                                     Case "WI_STOP_STREAM"
                                         '配信ストップ
                                         If num = 0 Then
@@ -3248,153 +3527,153 @@ Class WebRemocon
                                             req_Url = "/StopAll.html"
                                             path = path.Replace("WI_STOP_STREAM.html", "StopAll.html")
                                         End If
-                                Case "WI_GET_PROGRAM_D"
-                                    '地デジ番組表取得
-                                    WI_cmd_reply = Me.WI_GET_PROGRAM_D()
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_PROGRAM_TVMAID"
-                                    'Tvmaid番組表取得
-                                    WI_cmd_reply = Me.WI_GET_PROGRAM_TVMAID(Val(temp))
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_PROGRAM_PTTIMER"
-                                    'EDCB番組表取得
-                                    WI_cmd_reply = Me.WI_GET_PROGRAM_PTTIMER(Val(temp))
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_PROGRAM_EDCB"
-                                    'EDCB番組表取得
-                                    WI_cmd_reply = Me.WI_GET_PROGRAM_EDCB(Val(temp))
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_PROGRAM_TVROCK"
-                                    'TVROCK番組表取得
-                                    WI_cmd_reply = Me.WI_GET_PROGRAM_TVROCK(Val(temp))
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_PROGRAM_NUM"
-                                    '放送中の番組
-                                    WI_cmd_reply = Me.WI_GET_PROGRAM_NUM(num)
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_LIVE_STREAM"
-                                    '現在配信中のストリーム
-                                    '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
-                                    'stopping, チャンネル名, hlsApp, シーク秒, URL
-                                    WI_cmd_reply = Me.WI_GET_LIVE_STREAM()
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_TVRV_STATUS"
-                                    'サーバー設定
-                                    WI_cmd_reply = Me.WI_GET_TVRV_STATUS()
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_TSFILE_COUNT"
-                                    '作られている.tsの数
-                                    WI_cmd_reply = Me.WI_GET_TSFILE_COUNT(num)
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_TSFILE_COUNT2"
-                                    '作られている.tsの数 （m3u8が存在すれば正の値　m3u8が存在しなければ負の値）
-                                    WI_cmd_reply = Me.check_m3u8_ts_status(num)
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_RESOLUTION"
-                                    '解像度
-                                    WI_cmd_reply = Me.WI_GET_RESOLUTION()
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_VIDEOFILES"
-                                    'ビデオファイル
-                                    If videolist_firstview = 0 Then
-                                        '閲覧最初の1回目は強制リフレッシュ
-                                        videolist_firstview = 1
-                                        vl_refresh = 1
-                                    End If
-                                    WI_cmd_reply = Me.WI_GET_VIDEOFILES(videoexword, vl_refresh, vl_startdate, vl_volume)
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_VIDEOFILES2"
-                                    'ビデオファイル
-                                    If vl_volume = -99 Then
-                                        '不正な日付だったときにはvl_volume=-99になっている
-                                        WI_cmd_reply = "99,," & vbCrLf
-                                    Else
+                                    Case "WI_GET_PROGRAM_D"
+                                        '地デジ番組表取得
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_D()
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_PROGRAM_TVMAID"
+                                        'Tvmaid番組表取得
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_TVMAID(Val(temp))
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_PROGRAM_PTTIMER"
+                                        'EDCB番組表取得
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_PTTIMER(Val(temp))
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_PROGRAM_EDCB"
+                                        'EDCB番組表取得
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_EDCB(Val(temp))
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_PROGRAM_TVROCK"
+                                        'TVROCK番組表取得
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_TVROCK(Val(temp))
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_PROGRAM_NUM"
+                                        '放送中の番組
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_NUM(num)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_LIVE_STREAM"
+                                        '現在配信中のストリーム
+                                        '_listNo.,num, udpPort, BonDriver, ServiceID, ch_space, stream_mode, NHKMODE
+                                        'stopping, チャンネル名, hlsApp, シーク秒, URL
+                                        WI_cmd_reply = Me.WI_GET_LIVE_STREAM()
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_TVRV_STATUS"
+                                        'サーバー設定
+                                        WI_cmd_reply = Me.WI_GET_TVRV_STATUS()
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_TSFILE_COUNT"
+                                        '作られている.tsの数
+                                        WI_cmd_reply = Me.WI_GET_TSFILE_COUNT(num)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_TSFILE_COUNT2"
+                                        '作られている.tsの数 （m3u8が存在すれば正の値　m3u8が存在しなければ負の値）
+                                        WI_cmd_reply = Me.check_m3u8_ts_status(num)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_RESOLUTION"
+                                        '解像度
+                                        WI_cmd_reply = Me.WI_GET_RESOLUTION()
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_VIDEOFILES"
+                                        'ビデオファイル
                                         If videolist_firstview = 0 Then
                                             '閲覧最初の1回目は強制リフレッシュ
                                             videolist_firstview = 1
                                             vl_refresh = 1
                                         End If
-                                        WI_cmd_reply = Me.WI_GET_VIDEOFILES2(videoexword, vl_refresh, vl_startdate, vl_volume)
-                                    End If
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_ERROR_STREAM"
-                                    '再起動中のストリームを返す
-                                    WI_cmd_reply = Me.WI_GET_ERROR_STREAM()
-                                    WI_cmd_reply_force = 1
-                                Case "WI_SET_HTTPSTREAM_App"
-                                    'http配信アプリを切り替える　手抜き・・numを一時代用
-                                    'tempで指定されてもokにした
-                                    Dim n As Integer = num
-                                    If Val(temp) > 0 Then
-                                        n = Val(temp)
-                                    End If
-                                    WI_cmd_reply = Me.WI_SET_HTTPSTREAM_App(n)
-                                    WI_cmd_reply_force = 1
-                                Case "WI_FILE_OPE"
-                                    'ファイル書き込み dirのフィルタをtempで追加
-                                    WI_cmd_reply = Me.WI_FILE_OPE(fl_cmd, fl_file, fl_text, temp)
-                                    WI_cmd_reply_force = 1
-                                Case "WI_STREAMFILE_EXIST"
-                                    'ストリームフォルダにファイルが存在するかどうか
-                                    WI_cmd_reply = Me.WI_STREAMFILE_EXIST(fl_file)
-                                    WI_cmd_reply_force = 1
-                                Case "WI_SHOW_LOG"
-                                    'ログ出力
-                                    WI_cmd_reply = Me.WI_SHOW_LOG()
-                                    WI_cmd_reply_force = 1
-                                Case "WI_GET_CHAPTER"
-                                    '録画ファイルのチャプター取得
-                                    If temp.Length > 0 Then
-                                        WI_cmd_reply = Me.WI_GET_CHAPTER(temp)
+                                        WI_cmd_reply = Me.WI_GET_VIDEOFILES(videoexword, vl_refresh, vl_startdate, vl_volume)
                                         WI_cmd_reply_force = 1
-                                    End If
-                                Case "WI_WRITE_CHAPTER"
-                                    'チャプターファイルへ書き込み
-                                    If temp.Length > 0 Then
-                                        WI_cmd_reply = Me.WI_WRITE_CHAPTER(temp)
-                                        WI_cmd_reply_force = 1
-                                    End If
-                                Case "WI_GET_HTML"
-                                    'HTML取得
-                                    If temp.Length > 0 Then
-                                        WI_cmd_reply = Me.WI_GET_HTML(temp, WI_GET_HTML_output_encstr)
-                                        WI_cmd_reply_force = 1
-                                    End If
-                                Case "WI_GET_THUMBNAIL"
-                                    'サムネイル作成
-                                    If temp.Length > 0 Then
-                                        Dim d() As String = temp.Split(",")
-                                        If d.Length > 4 Then
-                                            'ファイル名に,が混じっている可能性有り
-                                            Dim fname1 As String = ""
-                                            For ii2 = 1 To d.Length - 4
-                                                d(0) &= "," & d(ii2)
-                                            Next
-                                            For ii2 = d.Length - 4 To d.Length - 2
-                                                d(ii2) = d(ii2 + 1)
-                                            Next
+                                    Case "WI_GET_VIDEOFILES2"
+                                        'ビデオファイル
+                                        If vl_volume = -99 Then
+                                            '不正な日付だったときにはvl_volume=-99になっている
+                                            WI_cmd_reply = "99,," & vbCrLf
+                                        Else
+                                            If videolist_firstview = 0 Then
+                                                '閲覧最初の1回目は強制リフレッシュ
+                                                videolist_firstview = 1
+                                                vl_refresh = 1
+                                            End If
+                                            WI_cmd_reply = Me.WI_GET_VIDEOFILES2(videoexword, vl_refresh, vl_startdate, vl_volume)
                                         End If
-                                        If d.Length >= 4 Then
-                                            WI_cmd_reply = Me.WI_GET_THUMBNAIL(d(0), d(1), Val(d(2)), Val(d(3)))
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_ERROR_STREAM"
+                                        '再起動中のストリームを返す
+                                        WI_cmd_reply = Me.WI_GET_ERROR_STREAM()
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_SET_HTTPSTREAM_App"
+                                        'http配信アプリを切り替える　手抜き・・numを一時代用
+                                        'tempで指定されてもokにした
+                                        Dim n As Integer = num
+                                        If Val(temp) > 0 Then
+                                            n = Val(temp)
+                                        End If
+                                        WI_cmd_reply = Me.WI_SET_HTTPSTREAM_App(n)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_FILE_OPE"
+                                        'ファイル書き込み dirのフィルタをtempで追加
+                                        WI_cmd_reply = Me.WI_FILE_OPE(fl_cmd, fl_file, fl_text, temp)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_STREAMFILE_EXIST"
+                                        'ストリームフォルダにファイルが存在するかどうか
+                                        WI_cmd_reply = Me.WI_STREAMFILE_EXIST(fl_file)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_SHOW_LOG"
+                                        'ログ出力
+                                        WI_cmd_reply = Me.WI_SHOW_LOG()
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_CHAPTER"
+                                        '録画ファイルのチャプター取得
+                                        If temp.Length > 0 Then
+                                            WI_cmd_reply = Me.WI_GET_CHAPTER(temp)
                                             WI_cmd_reply_force = 1
                                         End If
-                                    End If
-                                Case "WI_SHOW_MAKING_PER_THUMB"
-                                    If making_per_thumbnail IsNot Nothing Then
-                                        For ii2 = 0 To making_per_thumbnail.Length - 1
-                                            If making_per_thumbnail(ii2).indexofstr.Length > 0 Then
-                                                WI_cmd_reply &= making_per_thumbnail(ii2).fullpathfilename & vbCrLf
+                                    Case "WI_WRITE_CHAPTER"
+                                        'チャプターファイルへ書き込み
+                                        If temp.Length > 0 Then
+                                            WI_cmd_reply = Me.WI_WRITE_CHAPTER(temp)
+                                            WI_cmd_reply_force = 1
+                                        End If
+                                    Case "WI_GET_HTML"
+                                        'HTML取得
+                                        If temp.Length > 0 Then
+                                            WI_cmd_reply = Me.WI_GET_HTML(temp, WI_GET_HTML_output_encstr)
+                                            WI_cmd_reply_force = 1
+                                        End If
+                                    Case "WI_GET_THUMBNAIL"
+                                        'サムネイル作成
+                                        If temp.Length > 0 Then
+                                            Dim d() As String = temp.Split(",")
+                                            If d.Length > 4 Then
+                                                'ファイル名に,が混じっている可能性有り
+                                                Dim fname1 As String = ""
+                                                For ii2 = 1 To d.Length - 4
+                                                    d(0) &= "," & d(ii2)
+                                                Next
+                                                For ii2 = d.Length - 4 To d.Length - 2
+                                                    d(ii2) = d(ii2 + 1)
+                                                Next
                                             End If
-                                        Next
-                                    End If
-                                    WI_cmd_reply_force = 1
-                                Case "WI_WRITE_LOG"
-                                    'ログに出力
-                                    If Trim(temp).Length > 0 Then
-                                        log1write(temp)
-                                        WI_cmd_reply = "OK"
+                                            If d.Length >= 4 Then
+                                                WI_cmd_reply = Me.WI_GET_THUMBNAIL(d(0), d(1), Val(d(2)), Val(d(3)))
+                                                WI_cmd_reply_force = 1
+                                            End If
+                                        End If
+                                    Case "WI_SHOW_MAKING_PER_THUMB"
+                                        If making_per_thumbnail IsNot Nothing Then
+                                            For ii2 = 0 To making_per_thumbnail.Length - 1
+                                                If making_per_thumbnail(ii2).indexofstr.Length > 0 Then
+                                                    WI_cmd_reply &= making_per_thumbnail(ii2).fullpathfilename & vbCrLf
+                                                End If
+                                            Next
+                                        End If
                                         WI_cmd_reply_force = 1
-                                    End If
+                                    Case "WI_WRITE_LOG"
+                                        'ログに出力
+                                        If Trim(temp).Length > 0 Then
+                                            log1write(temp)
+                                            WI_cmd_reply = "OK"
+                                            WI_cmd_reply_force = 1
+                                        End If
                                 End Select
                             End If
 
@@ -3453,7 +3732,7 @@ Class WebRemocon
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
-                                    If Me._hlsApp.IndexOf("ffmpeg") > 0 Then
+                                    If Me._hlsApp.IndexOf("ffmpeg") > 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") > 0 Or (video_force_ffmpeg = 1 And thumbnail_ffmpeg.Length > 0) Then
                                         'ffmpegなら
                                         Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1)
                                     Else
@@ -3672,35 +3951,35 @@ Class WebRemocon
                                     s = s.Replace("%VIDEOFROMDATE%", VIDEOFROMDATE.ToString("yyyy/MM/dd"))
 
                                     '地デジ番組表（通常のネットから取得）
-                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                                         s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
                                     End If
 
                                     'TvRock番組表
-                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                                         s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
                                     End If
 
                                     'EDCB番組表
-                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                                         s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
                                     End If
 
                                     'ptTimer番組表
-                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                                         s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, -1))
                                     End If
 
                                     'Tvmaid番組表
-                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                    If Me._hlsApp.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                                         s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, -1))
@@ -3748,7 +4027,7 @@ Class WebRemocon
                                     'NHK音声モード
                                     While s.IndexOf("%SELECTNHKMODE") >= 0
                                         Dim gt() As String = get_atags("%SELECTNHKMODE", s)
-                                        If Me._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                        If Me._hlsApp.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                                             If Me._NHK_dual_mono_mode = 3 Then
                                                 Dim viewbutton_html As String = "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(gt, num) & "</span>"
                                                 s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", viewbutton_html)
@@ -3830,6 +4109,14 @@ Class WebRemocon
                                                     Else
                                                         rez = ""
                                                     End If
+                                                Catch ex As Exception
+                                                    rez = ""
+                                                End Try
+                                            ElseIf Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                                                Try
+                                                    sp1 = ho.IndexOf("--output-res ")
+                                                    sp2 = ho.IndexOf(" ", sp1 + 3)
+                                                    rez = ho.Substring(sp1 + "--output-res ".Length, sp2 - sp1 - "--output-res ".Length)
                                                 Catch ex As Exception
                                                     rez = ""
                                                 End Try
@@ -4041,39 +4328,39 @@ Class WebRemocon
                         context.Response.StatusCode = 401
                     End If
 
-                Try
-                    res.Close()
-                Catch ex As Exception
-                    'たまにエラーになる・・が無害のよう
-                End Try
-
-                Try
-                    context.Response.Close()
-                Catch ex As Exception
-                    ' client closed connection before the content was sent
-                End Try
-
-            Catch httpEx As HttpListenerException
-                log1write(httpEx.Message)
-                log1write(httpEx.StackTrace)
-            Finally
-                Try
-                    If writer IsNot Nothing Then
-                        writer.Close()
-                    End If
-                    If reader IsNot Nothing Then
-                        reader.Close()
-                    End If
-                    If res IsNot Nothing Then
+                    Try
                         res.Close()
-                    End If
-                    If context IsNot Nothing Then
+                    Catch ex As Exception
+                        'たまにエラーになる・・が無害のよう
+                    End Try
+
+                    Try
                         context.Response.Close()
-                    End If
-                Catch ex As Exception
-                    log1write(ex.ToString())
+                    Catch ex As Exception
+                        ' client closed connection before the content was sent
+                    End Try
+
+                Catch httpEx As HttpListenerException
+                    log1write(httpEx.Message)
+                    log1write(httpEx.StackTrace)
+                Finally
+                    Try
+                        If writer IsNot Nothing Then
+                            writer.Close()
+                        End If
+                        If reader IsNot Nothing Then
+                            reader.Close()
+                        End If
+                        If res IsNot Nothing Then
+                            res.Close()
+                        End If
+                        If context IsNot Nothing Then
+                            context.Response.Close()
+                        End If
+                    Catch ex As Exception
+                        log1write(ex.ToString())
+                    End Try
                 End Try
-            End Try
             End If
 
         Catch ex As Exception
@@ -4141,6 +4428,7 @@ Class WebRemocon
         r &= "Stop_RecTask_at_StartEnd=" & Stop_RecTask_at_StartEnd & vbCrLf
         r &= "Stop_ffmpeg_at_StartEnd=" & Stop_ffmpeg_at_StartEnd & vbCrLf
         r &= "Stop_vlc_at_StartEnd=" & Stop_vlc_at_StartEnd & vbCrLf
+        r &= "Stop_QSVEnc_at_StartEnd=" & Stop_QSVEnc_at_StartEnd & vbCrLf
         r &= "MAX_STREAM_NUMBER=" & MAX_STREAM_NUMBER & vbCrLf
         r &= "STOP_IDLEMINUTES=" & STOP_IDLEMINUTES & vbCrLf
         r &= vbCrLf
@@ -4221,6 +4509,8 @@ Class WebRemocon
         r &= "_AddSubFolder=" & Me._AddSubFolder & vbCrLf
         r &= "VideoSeekDefault=" & VideoSeekDefault & vbCrLf
         r &= "VideoSizeCheck=" & VideoSizeCheck & vbCrLf
+        r &= "thumbnail_ffmpeg=" & thumbnail_ffmpeg & vbCrLf
+        r &= "video_force_ffmpeg=" & video_force_ffmpeg & vbCrLf
         r &= vbCrLf
         r &= "【HTTPストリーム再生】" & vbCrLf
         'HTTPストリーム再生にどのhlsアプリを使用するか 0=フォーム 1=vlc 2=ffmpeg
@@ -4583,8 +4873,8 @@ Class WebRemocon
                                 'ffmpeg配信
                                 fname = "WatchTV" & n & ".ts"
                             Else
-                                'その他　いまのところありえない　とりあえずffmpegと同じにしておくか
-                                fname = "WatchTV" & n & ".ts"
+                                'その他　いまのところありえない
+                                fname = ""
                             End If
                         End If
 

@@ -841,6 +841,17 @@ Public Class ProcessManager
                                 End If
                                 proc.Close()
                                 proc.Dispose()
+                            ElseIf Me._list(i)._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                                'QSVEnc
+                                proc.Kill()
+                                If wait_stop_proc(proc) = 1 Then
+                                    log1write("No.=" & Me._list(i)._num & "のQSVEncを強制終了しました")
+                                    hls_stop = 1
+                                Else
+                                    log1write("No.=" & Me._list(i)._num & "のQSVEnc強制終了に失敗しました")
+                                End If
+                                proc.Close()
+                                proc.Dispose()
                             Else
                                 '強制的に終了
                                 'proc.CloseMainWindow()
@@ -861,7 +872,7 @@ Public Class ProcessManager
                             'プロセスが無い
                             hls_stop = 1
                             'HLSファイル再生でnum=-3ならファイルは削除しない
-                            If num = -3 And Me._list(i)._stream_mode = 1 And Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                            If num = -3 And Me._list(i)._stream_mode = 1 And (Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Or Me._list(i)._hlsApp.ToLower.IndexOf("qsvencc") >= 0) Then
                                 hold_files = 1
                             End If
                         End If
@@ -870,7 +881,7 @@ Public Class ProcessManager
                         log1write("No.=" & Me._list(i)._num & "のHLSプロセスが見つかりません。" & ex.Message)
                         hls_stop = 1
                         'HLSファイル再生でnum=-3ならファイルは削除しない
-                        If num = -3 And Me._list(i)._stream_mode = 1 And Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Then
+                        If num = -3 And Me._list(i)._stream_mode = 1 And (Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Or Me._list(i)._hlsApp.ToLower.IndexOf("qsvencc") >= 0) Then
                             hold_files = 1
                         End If
                     End Try
@@ -998,6 +1009,10 @@ Public Class ProcessManager
                 If Stop_ffmpeg_at_StartEnd = 1 Then
                     stopProcName("ffmpeg")
                     log1write("名前指定で全てのffmpegのプロセスを停止しました")
+                End If
+                If Stop_QSVEnc_at_StartEnd = 1 Then
+                    stopProcName("QSVEncC")
+                    log1write("名前指定で全てのQSVEncのプロセスを停止しました")
                 End If
                 If Stop_RecTask_at_StartEnd = 1 Then
                     If StopUdpAppName.ToLower.IndexOf("rectask.exe") >= 0 Then
@@ -1203,7 +1218,7 @@ Public Class ProcessManager
         Return r
     End Function
 
-    '現在稼働中のlist(i)._hlsAppの種類を取得 vlc=1 ffmpeg=2
+    '現在稼働中のlist(i)._hlsAppの種類を取得 vlc=1 ffmpeg=2 QSVEnc=3
     Public Function get_live_hlsApp() As Object
         Dim r() As Integer = Nothing
         Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
@@ -1214,6 +1229,8 @@ Public Class ProcessManager
                     r(j) = 1
                 ElseIf Me._list(j)._hlsApp.IndexOf("ffmpeg") >= 0 Then
                     r(j) = 2
+                ElseIf Me._list(j)._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                    r(j) = 3
                 End If
             Next
         End If

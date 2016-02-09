@@ -10,6 +10,7 @@ Module モジュール_ts解析
         Public errstr As String 'エラーメッセージ
         Public searchstr As String 'indexof用　fullpathfilename & ":" & start_utime
         Public duration As Integer '動画の長さ
+        Public video_fps As Double 'ts以外の場合のフレームレート
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
             Dim pF As String = CType(obj, String) '検索内容を取得
@@ -32,11 +33,13 @@ Module モジュール_ts解析
 
     Public TOT_get_duration As Integer = 1 '動画の長さを調べるか1=必ず調べる　2=キャッシュからのみ調べる
 
-    Public Function get_TOT(ByVal fullpathfilename As String, ByVal ffmpeg_path As String) As DateTime
+    Public Function get_TOT(ByVal fullpathfilename As String, ByVal ffmpeg_path As String, Optional ByRef video_fps As Double = 0) As DateTime
+        'オプションとしてByRefでフレームレートも返す
         Dim r As DateTime = C_DAY2038
         Dim f As tot_structure = TOT_read(fullpathfilename, ffmpeg_path)
 
         r = f.start_time
+        video_fps = f.video_fps
 
         Return r
     End Function
@@ -65,6 +68,7 @@ Module モジュール_ts解析
             r.errstr = TOT_cache(i).errstr
             r.searchstr = TOT_cache(i).searchstr
             r.duration = TOT_cache(i).duration
+            r.video_fps = TOT_cache(i).video_fps
             log1write(fullpathfilename & "の開始時間をキャッシュから取得しました")
         Else
             '新規登録
@@ -81,6 +85,7 @@ Module モジュール_ts解析
                 TOT_cache(TOT_cache_index).errstr = r.errstr
                 TOT_cache(TOT_cache_index).searchstr = searchstr
                 TOT_cache(TOT_cache_index).duration = r.duration
+                TOT_cache(TOT_cache_index).video_fps = r.video_fps
                 log1write(fullpathfilename & "の開始時間をTOTと作成日時から取得しました")
             End If
         End If
@@ -288,7 +293,8 @@ Module モジュール_ts解析
             'ffprobe.exeから長さを取得する
             If TOT_get_duration > 0 Then
                 'Dim duration As Integer = F_get_mp4_length_from_WhiteBrowserDB(fullpathfilename)
-                Dim duration As Integer = F_get_mp4_length_from_ffprobe(fullpathfilename, ffmpeg_path)
+                Dim fps As Double = 0 '↓からByRefで取得
+                Dim duration As Integer = F_get_mp4_length_from_ffprobe(fullpathfilename, ffmpeg_path, fps)
                 If duration >= 150 And duration <= (60 * 60 * 10) Then
                     '正常に取得できていれば
                     'その他データと合わせて結果を返す
@@ -300,6 +306,7 @@ Module モジュール_ts解析
                     End Try
                     r.start_utime = time2unix(r.start_time)
                     r.duration = duration
+                    r.video_fps = fps
                     r.err = 0
                     r.errstr = ""
                 Else
@@ -315,9 +322,14 @@ Module モジュール_ts解析
         Return r
     End Function
 
-    'mp4等の長さ（秒）ffprobe.exe使用
-    Public Function F_get_mp4_length_from_ffprobe(ByVal fullpathfilename As String, ByVal ffmpeg_path As String) As Integer
+    'mp4等の長さ（秒）ffprobe.exe使用 ついでにフレームレートをByRefで返す
+    Public Function F_get_mp4_length_from_ffprobe(ByVal fullpathfilename As String, ByVal ffmpeg_path As String, ByRef fps As Double) As Integer
         Dim r As Integer = 0
+
+        'thumbnail_ffmpegが指定されていれば（QSVEnc使用時）
+        If thumbnail_ffmpeg.Length > 0 Then
+            ffmpeg_path = thumbnail_ffmpeg
+        End If
 
         If ffmpeg_path.IndexOf("ffmpeg.exe") >= 0 Then
             Try
@@ -366,6 +378,11 @@ Module モジュール_ts解析
                         Else
                             log1write("【エラー】ffprobeによるDuration形式が不正です。" & jifunbyou)
                         End If
+                        'フレームレート ByRefで返す
+                        Try
+                            fps = Double.Parse(Instr_pickup(results, " kb/s, ", " fps,", 0))
+                        Catch ex As Exception
+                        End Try
                     Else
                         log1write("【エラー】ffprobeによるDuration取得に失敗しました")
                     End If

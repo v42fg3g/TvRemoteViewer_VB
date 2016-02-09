@@ -37,7 +37,7 @@
 
         video_path = filename_escape_recall(video_path) ',エスケープを戻す
 
-        'サムネイル用ffmpegが指定されていればそちらを使用
+        'サムネイル用ffmpegが指定されていればそちらを使用（QSVEnc使用時）
         If thumbnail_ffmpeg.Length > 0 Then
             ffmpeg_path = thumbnail_ffmpeg
         End If

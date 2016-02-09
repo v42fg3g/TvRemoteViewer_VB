@@ -71,6 +71,7 @@ Partial Class Form1
         Me.Label1 = New System.Windows.Forms.Label()
         Me.NotifyIcon1 = New System.Windows.Forms.NotifyIcon(Me.components)
         Me.ContextMenuStrip1 = New System.Windows.Forms.ContextMenuStrip(Me.components)
+        Me.SeekMethodList = New System.Windows.Forms.ToolStripMenuItem()
         Me.quit = New System.Windows.Forms.ToolStripMenuItem()
         Me.CheckBoxShowConsole = New System.Windows.Forms.CheckBox()
         Me.LabelStream = New System.Windows.Forms.Label()
@@ -85,8 +86,7 @@ Partial Class Form1
         Me.Label15 = New System.Windows.Forms.Label()
         Me.ComboBoxHLSorHTTP = New System.Windows.Forms.ComboBox()
         Me.ButtonCopy2Clipboard = New System.Windows.Forms.Button()
-        Me.SeekMethodList = New System.Windows.Forms.ToolStripMenuItem()
-        Me.Button4 = New System.Windows.Forms.Button()
+        Me.Button7 = New System.Windows.Forms.Button()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -409,7 +409,7 @@ Partial Class Form1
         'ComboBoxResolution
         '
         Me.ComboBoxResolution.FormattingEnabled = True
-        Me.ComboBoxResolution.Location = New System.Drawing.Point(322, 403)
+        Me.ComboBoxResolution.Location = New System.Drawing.Point(258, 403)
         Me.ComboBoxResolution.Name = "ComboBoxResolution"
         Me.ComboBoxResolution.Size = New System.Drawing.Size(87, 20)
         Me.ComboBoxResolution.TabIndex = 75
@@ -427,7 +427,7 @@ Partial Class Form1
         '
         'ButtonHLSoption
         '
-        Me.ButtonHLSoption.Location = New System.Drawing.Point(416, 400)
+        Me.ButtonHLSoption.Location = New System.Drawing.Point(355, 400)
         Me.ButtonHLSoption.Name = "ButtonHLSoption"
         Me.ButtonHLSoption.Size = New System.Drawing.Size(102, 25)
         Me.ButtonHLSoption.TabIndex = 77
@@ -504,6 +504,12 @@ Partial Class Form1
         Me.ContextMenuStrip1.Name = "ContextMenuStrip1"
         Me.ContextMenuStrip1.ShowImageMargin = False
         Me.ContextMenuStrip1.Size = New System.Drawing.Size(265, 48)
+        '
+        'SeekMethodList
+        '
+        Me.SeekMethodList.Name = "SeekMethodList"
+        Me.SeekMethodList.Size = New System.Drawing.Size(264, 22)
+        Me.SeekMethodList.Text = "ffmpeg シーク方法変更ファイルリスト"
         '
         'quit
         '
@@ -633,28 +639,22 @@ Partial Class Form1
         Me.ButtonCopy2Clipboard.Text = "クリップボードにコピー"
         Me.ButtonCopy2Clipboard.UseVisualStyleBackColor = True
         '
-        'SeekMethodList
+        'Button7
         '
-        Me.SeekMethodList.Name = "SeekMethodList"
-        Me.SeekMethodList.Size = New System.Drawing.Size(264, 22)
-        Me.SeekMethodList.Text = "ffmpeg シーク方法変更ファイルリスト"
-        '
-        'Button4
-        '
-        Me.Button4.Location = New System.Drawing.Point(102, 400)
-        Me.Button4.Name = "Button4"
-        Me.Button4.Size = New System.Drawing.Size(171, 25)
-        Me.Button4.TabIndex = 100
-        Me.Button4.TabStop = False
-        Me.Button4.Text = "ffmpegシーク方法変更ファイル"
-        Me.Button4.UseVisualStyleBackColor = True
+        Me.Button7.Location = New System.Drawing.Point(458, 400)
+        Me.Button7.Name = "Button7"
+        Me.Button7.Size = New System.Drawing.Size(59, 25)
+        Me.Button7.TabIndex = 101
+        Me.Button7.TabStop = False
+        Me.Button7.Text = "再読込"
+        Me.Button7.UseVisualStyleBackColor = True
         '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(530, 685)
-        Me.Controls.Add(Me.Button4)
+        Me.Controls.Add(Me.Button7)
         Me.Controls.Add(Me.ButtonCopy2Clipboard)
         Me.Controls.Add(Me.Label15)
         Me.Controls.Add(Me.ComboBoxHLSorHTTP)
@@ -783,6 +783,6 @@ Partial Class Form1
     Friend WithEvents ComboBoxHLSorHTTP As System.Windows.Forms.ComboBox
     Friend WithEvents ButtonCopy2Clipboard As System.Windows.Forms.Button
     Friend WithEvents SeekMethodList As System.Windows.Forms.ToolStripMenuItem
-    Friend WithEvents Button4 As System.Windows.Forms.Button
+    Friend WithEvents Button7 As System.Windows.Forms.Button
 
 End Class

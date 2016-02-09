@@ -1,4 +1,6 @@
 ﻿Module モジュール_その他
+    'ファイル再生はffmpegを使用する場合は1
+    Public video_force_ffmpeg As Integer = 0
 
     '直前配信履歴簡易記録　各ストリームが最後に使用した識別文字列（短時間での重複配信指令防止）
     Public stream_last_utime(8) As Integer
@@ -45,6 +47,9 @@
 
     'TvRemoteViewer_VBの起動時、終了時、全停止時にvlcを名前付きで停止するかどうか
     Public Stop_vlc_at_StartEnd As Integer = 1
+
+    'TvRemoteViewer_VBの起動時、終了時、全停止時にQSVEncを名前付きで停止するかどうか
+    Public Stop_QSVEnc_at_StartEnd As Integer = 1
 
     'HTMLにID:PASS@を変換してもよいかどうか
     Public ALLOW_IDPASS2HTML As Integer = 0

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.87
+TvRemoteViewer_VB v1.88
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -636,6 +636,14 @@ TvRemoteViewer_VB v1.87
 	1.86	RecTaskが配信失敗した場合の終了処理を見直した
 		1.83の重複回避の副作用でRecTaskエラー時にダミーの準備中ストリームが残ってしまうバグを修正
 	1.87	iniにサムネイル作成用ffmpegを指定できるようにするオプションを追加（thumbnail_ffmpeg）
+	1.88	QSVEncCに対応（実験段階）
+		iniにQSVEncCを名前指定で終了させるオプションを追加(Stop_QSVEnc_at_StartEnd)
+		iniにファイル再生にffmpeg(thumbnail_ffmpeg)を使用するオプションを追加(video_force_ffmpeg)
+		HLSアプリとHLS_option.txtの内容が一致しない場合、再読込を促すダイアログを表示
+		フォーム上にHLS_option*.txt群を再読み込みするボタンを設置
+		VideoPathに指定されたフォルダ内でのサブフォルダ作成・削除を自動認識するようにした
+		ffmpegのHLSオプションファイル内のlibvo_aacencの記述をaacに変更
+		HLS_option_QSVEnc.txtとHLS_option_QSVEnc_file.txtを追加（コピーしてください）
 
 
 

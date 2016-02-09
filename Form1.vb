@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.87"
+    Private version As String = "TvRemoteViewer_VB version 1.88"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -93,7 +93,7 @@ Public Class Form1
 
             'ffmpeg.exeを使用している場合は、1分間に1回古いTSを削除する
             If OLDTS_NODELETE = 0 Then
-                If chk_timer1_deleteTS >= 60 And textBoxHlsApp.Text.IndexOf("ffmpeg.exe") >= 0 Then
+                If chk_timer1_deleteTS >= 60 And (textBoxHlsApp.Text.IndexOf("ffmpeg.exe") >= 0 Or textBoxHlsApp.Text.ToLower.IndexOf("qsvencc") >= 0) Then
                     delete_old_TS()
                     chk_timer1_deleteTS = 0
                 End If
@@ -408,41 +408,9 @@ Public Class Form1
         End If
         STOP_IDLEMINUTES_LAST = Now()
 
-        If Me._worker._AddSubFolder = 1 Then
-            If Me._worker._videopath IsNot Nothing Then
-                'サブフォルダを含める
-                Dim sf As New ArrayList
-                Dim errf As New ArrayList
-                For j = 0 To Me._worker._videopath.Length - 1
-                    GetSubfolders(Me._worker._videopath(j), sf, errf)
-                    errf.Add("RECYCLER") '"RECYCLER"を除外する
-                    errf.Add("chapters") 'chaptersを除外する
-                Next
-                'ここまでで、sf.arrayにフォルダ、errf.arrayにエラーフォルダ
-                Dim folder As String
-                For Each folder In sf
-                    Dim chk As Integer = 0
-                    Dim errfolder As String
-                    For Each errfolder In errf
-                        If folder.IndexOf(errfolder) >= 0 Then
-                            chk = 1
-                            Exit For
-                        End If
-                    Next
-                    If chk = 0 Then
-                        'video_path()に追加
-                        Dim b As Integer = Me._worker._videopath.Length
-                        ReDim Preserve Me._worker._videopath(b)
-                        Me._worker._videopath(b) = folder
-                    End If
-                Next folder
-            End If
-        End If
-        If Me._worker._videopath IsNot Nothing Then
-            For j = 0 To Me._worker._videopath.Length - 1
-                log1write("ファイルフォルダ " & Me._worker._videopath(j))
-            Next
-        End If
+        'サブフォルダ監視修正
+        'サブフォルダをファイル一覧作成のために追加
+        Me._worker.add_subfolder()
 
         '起動時にビデオファイル一覧を作成
         Me._worker.WI_GET_VIDEOFILES2("", 1, C_DAY2038, 0)
@@ -483,6 +451,9 @@ Public Class Form1
         'stream_last_utimeの再定義
         ReDim Preserve stream_last_utime(MAX_STREAM_NUMBER + 1)
 
+        'HLS_option.txtの内容との整合性チェック
+        check_hls_option_txt()
+
         '無事起動
         TvRemoteViewer_VB_Start = 1
     End Sub
@@ -516,7 +487,7 @@ Public Class Form1
                     If file_exist(f_fpre_str) = 1 Then
                         log1write("起動チェック　ffmpeg presetsファイル：OK")
                     Else
-                        log1write("【エラー】ffmpegプリセット " & f_fpre_str & " が見つかりません")
+                        log1write("【警告】ffmpegプリセット " & f_fpre_str & " が見つかりません")
                     End If
                 End If
             Else
@@ -639,22 +610,6 @@ Public Class Form1
             End If
         End If
 
-    End Sub
-
-    'サブフォルダを取得
-    Public Sub GetSubfolders(ByVal folderName As String, ByRef subFolders As ArrayList, ByRef errFolders As ArrayList)
-        Dim folder As String
-        Try
-            For Each folder In System.IO.Directory.GetDirectories(folderName)
-                'リストに追加
-                subFolders.Add(folder)
-                '再帰的にサブフォルダを取得する
-                GetSubfolders(folder, subFolders, errFolders)
-            Next folder
-        Catch ex As Exception
-            errFolders.Add(folderName)
-            Exit Sub
-        End Try
     End Sub
 
     'ウィンドウの位置を復元
@@ -1040,6 +995,9 @@ Public Class Form1
         Try
             If s.Length > 0 Then
                 textBoxHlsApp.Text = s
+
+                'HLS_option.txtの内容との整合性チェック
+                check_hls_option_txt()
             End If
         Catch ex As Exception
         End Try
@@ -1190,21 +1148,21 @@ Public Class Form1
 
     'ビデオフォルダ　監視開始
     Public Sub start_watch_folders()
-        If Me._worker._videopath Is Nothing Then
+        If Me._worker._videopath_ini Is Nothing Then
             Exit Sub
         End If
 
         'watcher = New System.IO.FileSystemWatcher
-        watcher = New System.IO.FileSystemWatcher(UBound(Me._worker._videopath)) {}
+        watcher = New System.IO.FileSystemWatcher(UBound(Me._worker._videopath_ini)) {}
         Dim j As Integer
-        For j = 0 To UBound(Me._worker._videopath)
+        For j = 0 To UBound(Me._worker._videopath_ini)
             watcher(j) = New System.IO.FileSystemWatcher
         Next
 
-        For i = 0 To Me._worker._videopath.Length - 1
+        For i = 0 To Me._worker._videopath_ini.Length - 1
             Try
                 '監視するディレクトリを指定
-                watcher(i).Path = trim8(Me._worker._videopath(i))
+                watcher(i).Path = trim8(Me._worker._videopath_ini(i))
                 If watcher(i).Path.Length > 0 Then
                     '最終アクセス日時、最終更新日時、ファイル、フォルダ名の変更を監視する
                     watcher(i).NotifyFilter = System.IO.NotifyFilters.LastAccess Or _
@@ -1213,8 +1171,8 @@ Public Class Form1
                     System.IO.NotifyFilters.DirectoryName
                     'すべてのファイルを監視
                     watcher(i).Filter = ""
-                    'サブディレクトリは監視しない
-                    watcher(i).IncludeSubdirectories = False
+                    'サブディレクトリを監視する
+                    watcher(i).IncludeSubdirectories = True
                     'UIのスレッドにマーシャリングする
                     'コンソールアプリケーションでの使用では必要ない
                     'watcher.SynchronizingObject = Me
@@ -1227,9 +1185,11 @@ Public Class Form1
 
                     '監視を開始する
                     watcher(i).EnableRaisingEvents = True
+
+                    log1write("ファイルフォルダ " & Me._worker._videopath(i))
                 End If
             Catch ex As Exception
-                log1write("ビデオフォルダ " & Me._worker._videopath(i) & " の監視開始においてエラーが発生しました。" & ex.Message)
+                log1write("ビデオフォルダ " & Me._worker._videopath_ini(i) & " の監視開始においてエラーが発生しました。" & ex.Message)
             End Try
         Next
         log1write("ビデオフォルダの監視を開始しました。")
@@ -1287,7 +1247,81 @@ Public Class Form1
         End Try
     End Sub
 
-    Private Sub Button4_Click(sender As System.Object, e As System.EventArgs) Handles Button4.Click
-        Form2.Show()
+    '現在のHLS_option.txtがHLSアプリにマッチしているかチェックして適切なものをコピー
+    Private Sub check_hls_option_txt()
+        'カレントディレクトリ変更
+        F_set_ppath4program()
+
+        Dim hlsAppNameForm As String = ""
+        Dim hlsAppNameFile As String = ""
+        Dim hlsOptFile As String = ""
+
+        Dim hlsAppFilename As String = Path.GetFileName(textBoxHlsApp.Text.ToString)
+        Dim hlsAppNum As Integer = 0
+        If hlsAppFilename.IndexOf("vlc") >= 0 Then
+            hlsAppNum = 1
+            hlsAppNameForm = "vlc"
+            hlsOptFile = "HLS_option_VLC.txt"
+        ElseIf hlsAppFilename.IndexOf("ffmpeg") >= 0 Then
+            hlsAppNum = 2
+            hlsAppNameForm = "ffmpeg"
+            hlsOptFile = "HLS_option_ffmpeg.txt"
+        ElseIf hlsAppFilename.ToLower.IndexOf("qsvencc") >= 0 Then
+            hlsAppNum = 3
+            hlsAppNameForm = "QSVEnc"
+            hlsOptFile = "HLS_option_QSVEnc.txt"
+        End If
+
+        If hlsAppNum > 0 Then
+            Dim hls1 As String = file2str("HLS_option.txt")
+            Dim hls1num As Integer = 0
+            If hls1.IndexOf(" --sout ") >= 0 Or hls1.IndexOf("vlc:") >= 0 Then
+                hls1num = 1
+                hlsAppNameFile = "vlc"
+            ElseIf hls1.IndexOf(" -acodec ") >= 0 Or hls1.IndexOf(" -vcodec ") >= 0 Then
+                hls1num = 2
+                hlsAppNameFile = "ffmpeg"
+            ElseIf hls1.IndexOf("--avqsv-analyze") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
+                hls1num = 3
+                hlsAppNameFile = "QSVEnc"
+            End If
+
+            If hls1num > 0 And hlsAppNum <> hls1num Then
+                'メッセージボックスを表示する 
+                Dim result As DialogResult = MessageBox.Show("HLS_option.txtの内容が" & hlsAppNameForm & "と一致しません。" & vbCrLf & hlsOptFile & "の内容をHLS_option.txtへコピーしますか？" & vbCrLf & "※フォーム上のHLSオプション欄は保持されますので必要ならば手動で変更してください", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+                If result = DialogResult.Yes Then
+                    Try
+                        System.IO.File.Copy("HLS_option.txt", "HLS_option.txt.bak", True)
+                        System.IO.File.Copy(hlsOptFile, "HLS_option.txt", True)
+                        log1write(hlsOptFile & "の内容をHLS_option.txtにコピーしました")
+                        'HLSオプション変数更新
+                        Me._worker.read_hls_option()
+                        Dim hlsopt2temp As String = textBoxHlsOpt2.Text.ToString
+                        'コンボボックス更新
+                        search_ComboBoxResolution()
+                        textBoxHlsOpt2.Text = hlsopt2temp
+                    Catch ex As Exception
+                        log1write("【エラー】ファイルコピーに失敗しました。" & ex.Message)
+                    End Try
+                End If
+            End If
+        End If
+    End Sub
+
+    Private Sub textBoxHlsApp_Leave(sender As System.Object, e As System.EventArgs) Handles textBoxHlsApp.Leave
+        'HLS_option.txtの内容との整合性チェック
+        check_hls_option_txt()
+    End Sub
+
+    Private Sub Button7_Click(sender As System.Object, e As System.EventArgs) Handles Button7.Click
+        'HLSオプション変数更新
+        Me._worker.read_hls_option()
+        Dim hlsopt2temp As String = textBoxHlsOpt2.Text.ToString
+        'コンボボックス更新
+        search_ComboBoxResolution()
+        textBoxHlsOpt2.Text = hlsopt2temp
+
+        log1write("HLS_option*.txtを再読み込みしました")
+        log1write("フォーム上のHLSオプションは保持されていますので必要ならば手動で更新してください")
     End Sub
 End Class
