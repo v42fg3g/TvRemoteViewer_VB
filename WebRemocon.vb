@@ -2367,6 +2367,7 @@ Class WebRemocon
                         If exepath_VLC.Length > 0 Then
                             hlsAppSelect = "VLC"
                             hlsApp = exepath_VLC
+                            hlsroot = Path.GetDirectoryName(hlsApp)
                             log1write("HLSアプリにVLCが指定されました")
                         Else
                             log1write("【エラー】ini内のexepath_VLCが指定されていません")
@@ -2375,6 +2376,7 @@ Class WebRemocon
                         If exepath_ffmpeg.Length > 0 Then
                             hlsAppSelect = "ffmpeg"
                             hlsApp = exepath_ffmpeg
+                            hlsroot = Path.GetDirectoryName(hlsApp)
                             log1write("HLSアプリにffmpegが指定されました")
                         Else
                             log1write("【エラー】ini内のexepath_ffmpegが指定されていません")
@@ -2383,6 +2385,7 @@ Class WebRemocon
                         If exepath_QSVEnc.Length > 0 Then
                             hlsAppSelect = "QSVEnc"
                             hlsApp = exepath_QSVEnc
+                            hlsroot = Path.GetDirectoryName(hlsApp)
                             log1write("HLSアプリにQSVEncが指定されました")
                         Else
                             log1write("【エラー】ini内のexepath_QSVEncが指定されていません")
@@ -2505,6 +2508,7 @@ Class WebRemocon
                         If exepath_VLC.Length > 0 Then
                             hlsAppSelect = "VLC"
                             hlsApp = exepath_VLC
+                            hlsroot = Path.GetDirectoryName(hlsApp)
                             log1write("HLSオプション内の指定によりHLSアプリにVLCが指定されました")
                             chk = 1
                         Else
@@ -2514,6 +2518,7 @@ Class WebRemocon
                         If exepath_ffmpeg.Length > 0 Then
                             hlsAppSelect = "ffmpeg"
                             hlsApp = exepath_ffmpeg
+                            hlsroot = Path.GetDirectoryName(hlsApp)
                             log1write("HLSオプション内の指定によりHLSアプリにffmpegが指定されました")
                             chk = 1
                         Else
@@ -2523,6 +2528,7 @@ Class WebRemocon
                         If exepath_QSVEnc.Length > 0 Then
                             hlsAppSelect = "QSVEnc"
                             hlsApp = exepath_QSVEnc
+                            hlsroot = Path.GetDirectoryName(hlsApp)
                             log1write("HLSオプション内の指定によりHLSアプリにQSVEncが指定されました")
                             chk = 1
                         Else
@@ -2539,7 +2545,7 @@ Class WebRemocon
                     AppOptChk = 1
                 ElseIf haf.ToLower.IndexOf("ffmpeg") >= 0 And (hlsOpt.IndexOf(" -acodec ") >= 0 Or hlsOpt.IndexOf(" -vcodec ") >= 0) Then
                     AppOptChk = 1
-                ElseIf haf.ToLower.IndexOf("qsvenc") >= 0 And (hlsOpt.IndexOf("hls_segment_filename") >= 0 Or hlsOpt.IndexOf(" --audio-codec ") >= 0) Then
+                ElseIf haf.ToLower.IndexOf("qsvenc") >= 0 And (hlsOpt.IndexOf("hls_segment_filename:") >= 0 Or hlsOpt.IndexOf(" --audio-codec ") >= 0) Then
                     AppOptChk = 1
                 End If
                 If AppOptChk = 0 Then

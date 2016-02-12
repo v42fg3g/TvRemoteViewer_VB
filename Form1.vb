@@ -1285,7 +1285,7 @@ Public Class Form1
                 hls1str &= ":2:"
                 hlsAppNameFile = "ffmpeg"
             End If
-            If hls1.IndexOf("hls_segment_filename") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
+            If hls1.IndexOf("hls_segment_filename:") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
                 hls1str &= ":3:"
                 hlsAppNameFile = "QSVEnc"
             End If
