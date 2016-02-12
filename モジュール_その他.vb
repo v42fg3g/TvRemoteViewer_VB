@@ -2,6 +2,14 @@
     'ファイル再生はffmpegを使用する場合は1
     Public video_force_ffmpeg As Integer = 0
 
+    '明示的にHLSアプリを指定する場合の各アプリ実行ファイルパス
+    Public exepath_ffmpeg As String = "" 'thumbnail_ffmpegと置き換え
+    Public exepath_VLC As String = ""
+    Public exepath_QSVEnc As String = ""
+
+    'フォーム上の解像度コンボボックス.text
+    Public form1_resolution As String = ""
+
     '直前配信履歴簡易記録　各ストリームが最後に使用した識別文字列（短時間での重複配信指令防止）
     Public stream_last_utime(8) As Integer
 

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.77
+TvRemoteViewer_VB v1.89
 
 
 ※1　	%NUM%は配信番号を表します
@@ -26,9 +26,11 @@ TvRemoteViewer_VB v1.77
 		VideoSpeed	1.5					何倍速で再生するか（任意）
 		hlsOptAdd						HLSソフトに追加するパラメーター（任意）
 		nicodelay	0					コメントがずれる場合に調整？通常は0（任意）
+		hlsAppSelect	ffmpeg					HLSアプリ名を指定(VLC,V,ffmpeg,F,QSVEnc,Q,QSV)
+
 
 		例：
-		http://127.0.0.1:40003/StartTv.html?BonDriver=BonDriver_PT3_s0.dll&ServiceID=101&ChSpace=0
+		http://127.0.0.1:40003/StartTv.html?BonDriver=BonDriver_PT3_s0.dll&ServiceID=101&ChSpace=0&hlsAppSelect=QSVEnc
 		http://127.0.0.1:40003/StartTv.html?VideoName=D:\test.ts&VideoSeekSeconds=30
 
 

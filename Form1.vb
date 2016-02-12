@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.88"
+    Private version As String = "TvRemoteViewer_VB version 1.89"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -50,7 +50,7 @@ Public Class Form1
                         If s.Length = 3 Then
                             sid = Val(s(1))
                             Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
-                            Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP, "", 0, 0, "1", "", 0)
+                            Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP, "", 0, 0, "1", "", 0, "")
                         Else
                             MsgBox("サービスIDを指定してください")
                         End If
@@ -417,6 +417,7 @@ Public Class Form1
 
         '解像度コンボボックスをセット httpサーバースタート後にhls_option()がセットされている
         search_ComboBoxResolution()
+        form1_resolution = ComboBoxResolution.Text.ToString
 
         'フォーム上の項目が正常かどうかチェック
         check_form_youso()
@@ -776,6 +777,7 @@ Public Class Form1
                 textBoxHlsOpt2.Text = Me._worker.hls_option(i).opt
             End If
         Next
+        form1_resolution = textBoxHlsOpt2.Text.ToString
     End Sub
 
     'BonDriverを探してコンボボックスに追加
@@ -1274,19 +1276,21 @@ Public Class Form1
 
         If hlsAppNum > 0 Then
             Dim hls1 As String = file2str("HLS_option.txt")
-            Dim hls1num As Integer = 0
+            Dim hls1str As String = ""
             If hls1.IndexOf(" --sout ") >= 0 Or hls1.IndexOf("vlc:") >= 0 Then
-                hls1num = 1
+                hls1str &= ":1:"
                 hlsAppNameFile = "vlc"
-            ElseIf hls1.IndexOf(" -acodec ") >= 0 Or hls1.IndexOf(" -vcodec ") >= 0 Then
-                hls1num = 2
+            End If
+            If hls1.IndexOf(" -acodec ") >= 0 Or hls1.IndexOf(" -vcodec ") >= 0 Then
+                hls1str &= ":2:"
                 hlsAppNameFile = "ffmpeg"
-            ElseIf hls1.IndexOf("hls_segment_filename") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
-                hls1num = 3
+            End If
+            If hls1.IndexOf("hls_segment_filename") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
+                hls1str &= ":3:"
                 hlsAppNameFile = "QSVEnc"
             End If
 
-            If hls1num > 0 And hlsAppNum <> hls1num Then
+            If hls1str.Length > 0 And hls1str.IndexOf(":" & hlsAppNum.ToString & ":") < 0 Then
                 'メッセージボックスを表示する 
                 Dim result As DialogResult = MessageBox.Show("HLS_option.txtの内容が" & hlsAppNameForm & "と一致しません。" & vbCrLf & hlsOptFile & "の内容をHLS_option.txtへコピーしますか？" & vbCrLf & "※フォーム上のHLSオプション欄は保持されますので必要ならば手動で変更してください", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
                 If result = DialogResult.Yes Then

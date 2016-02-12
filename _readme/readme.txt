@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.88
+TvRemoteViewer_VB v1.89
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -223,6 +223,42 @@ TvRemoteViewer_VB v1.88
 		'9=NHKならばVLCで再生
                 '11=全ての放送局で主
                 '12=全ての放送局で副
+
+
+
+■HLSアプリの個別指定についきまして
+	○指定方法
+	・HLS_option*.txtへの記述（インデックスまたはHLSオプション本文）
+	・StartTv.htmlへhlsAppSelect引数によりHLSアプリ名を指定(hlsAppSelect=VLC,V,ffmpeg,F,QSVEnc,Q,QSV)
+
+	○どのHLSオプションが使用されるのか？
+	・明示的にHLSアプリが個別指定された場合は、各アプリに対応したHLS_option_[HLSアプリ]*.txtからHLSオプションが優先的に使用されます
+	・HLSアプリが指定されていない＆ファイル再生の場合はHLS_option_[HLSアプリ]_file.txtが優先的に使用されます
+	・HLSアプリが指定されていない＆解像度指定があればHLS_option.txtからHLSオプションが使用されます
+	・HLSアプリが指定されていない＆解像度指定が無い場合はフォーム上のHLSオプションが使用されます（例 フォーム上のStartボタン）
+
+	○HLSアプリの個別指定方法
+	・HLSアプリ指定文字列（大文字・小文字どちらでもOK）
+	VLC: VLC, V
+	ffmpeg: ffmpeg, F
+	QSVEnc: QSVEnc, QSVEncC, Q, QSV 
+
+	○HLS_option*.txtの記述
+	以下はどれもexepath_QSVEncで指定されたQSVEncC.exeが使用されます
+	・StartTv.html?hlsAppSelect=QSVEnc
+	・StartTv.html?hlsAppSelect=Q
+	・[QSVEnc_640x360]～
+	・[Q_640x360]～
+	・[640x360_QSVEnc]～
+	・[640x360_Q]～
+	・[(QSVEnc)640x360]～
+	・[(Q)640x360]～
+	・[640x360(QSVEnc)]～
+	・[640x360(Q)]～
+	・[640x360]QSVEnc_～
+	・[640x360]Q_～
+	・[640x360](QSVEnc)～
+	・[640x360](Q)～
 
 
 
@@ -644,6 +680,10 @@ TvRemoteViewer_VB v1.88
 		VideoPathに指定されたフォルダ内でのサブフォルダ作成・削除を自動認識するようにした
 		ffmpegのHLSオプションファイル内のlibvo_aacencの記述をaacに変更
 		HLS_option_QSVEnc.txtとHLS_option_QSVEnc_file.txtを追加（コピーしてください）
+	1.89	HLSアプリの個別指定に対応（HLS_option*.txt内の記述＆StartTv.html引数。上述）
+		StartTv.htmlへの引数hlsAppSelectを追加（readme_dev.txt参照）
+		iniに個別指定用のexepath_VLC、exepath_ffmpeg、exepath_QSCEncを追加
+		thumbnail_ffmpegをexepath_ffmpegに名前変更（そのままでも使用可）
 
 
 

@@ -326,9 +326,9 @@ Module モジュール_ts解析
     Public Function F_get_mp4_length_from_ffprobe(ByVal fullpathfilename As String, ByVal ffmpeg_path As String, ByRef fps As Double) As Integer
         Dim r As Integer = 0
 
-        'thumbnail_ffmpegが指定されていれば（QSVEnc使用時）
-        If thumbnail_ffmpeg.Length > 0 Then
-            ffmpeg_path = thumbnail_ffmpeg
+        'exepath_ffmpegが指定されていれば（QSVEnc使用時）
+        If exepath_ffmpeg.Length > 0 Then
+            ffmpeg_path = exepath_ffmpeg
         End If
 
         If ffmpeg_path.IndexOf("ffmpeg.exe") >= 0 Then

@@ -1,5 +1,5 @@
 ﻿Module モジュール_サムネイル
-    Public thumbnail_ffmpeg As String = "" 'サムネイル作成用ffmpegパス
+    'Public thumbnail_ffmpeg As String = "" 'サムネイル作成用ffmpegパス →exepath_ffmpegに統合
 
     Public stop_per_thumbnail_minutes As Integer = 60 * 30 '一定間隔サムネイル作成を最大何秒待つか 30分
     Public making_per_thumbnail() As making_thumbnail_structure '一定間隔サムネイル作成中かどうか
@@ -38,8 +38,8 @@
         video_path = filename_escape_recall(video_path) ',エスケープを戻す
 
         'サムネイル用ffmpegが指定されていればそちらを使用（QSVEnc使用時）
-        If thumbnail_ffmpeg.Length > 0 Then
-            ffmpeg_path = thumbnail_ffmpeg
+        If exepath_ffmpeg.Length > 0 Then
+            ffmpeg_path = exepath_ffmpeg
         End If
 
         If ffmpeg_path.IndexOf("ffmpeg") >= 0 Then

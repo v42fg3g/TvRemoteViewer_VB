@@ -1021,7 +1021,7 @@ Class WebRemocon
             Try
                 Dim line() As String = file2line(filename)
                 If line Is Nothing Then
-                    log1write("[HlsOpt] " & filename & "内にオプション記述がありませんでした[A]")
+                    log1write("【エラー】[HlsOpt] " & filename & "内にオプション記述がありませんでした[A]")
                 Else
                     Dim chk As Integer = 0
                     For i = 0 To line.Length - 1
@@ -1039,14 +1039,14 @@ Class WebRemocon
                     If chk = 1 Then
                         log1write("[HlsOpt] " & filename & "からHLSオプションを取得しました")
                     Else
-                        log1write("[HlsOpt] " & filename & "内にオプション記述がありませんでした")
+                        log1write("【エラー】[HlsOpt] " & filename & "内にオプション記述がありませんでした")
                     End If
                 End If
             Catch ex As Exception
-                log1write("[HlsOpt] " & filename & "からHLSオプションを取得できませんでした。" & ex.Message)
+                log1write("【エラー】[HlsOpt] " & filename & "からHLSオプションを取得できませんでした。" & ex.Message)
             End Try
         Else
-            log1write("[HlsOpt] " & filename & "が存在しませんでした")
+            log1write("【エラー】[HlsOpt] " & filename & "が存在しませんでした")
         End If
 
         Return r
@@ -1502,19 +1502,37 @@ Class WebRemocon
                                 End If
                             Case "meta_refresh_fix"
                                 meta_refresh_fix = Val(youso(1).ToString)
-                            Case "thumbnail_ffmpeg"
-                                thumbnail_ffmpeg = youso(1).ToString
-                                If thumbnail_ffmpeg.Length > 0 Then
-                                    If file_exist(thumbnail_ffmpeg) = 1 Then
-                                        log1write("サムネイル作成用ffmpegとして" & thumbnail_ffmpeg & "が指定されました")
+                            Case "exepath_VLC", "exepath_vlc"
+                                exepath_VLC = youso(1).ToString
+                                If exepath_VLC.Length > 0 Then
+                                    If file_exist(exepath_VLC) = 1 Then
+                                        log1write("個別実行用vlcとして" & exepath_VLC & "が指定されました")
                                     Else
-                                        log1write("【エラー】サムネイル作成用ffmpegが見つかりませんでした。" & thumbnail_ffmpeg)
+                                        log1write("【エラー】個別実行用vlcが見つかりませんでした。" & exepath_VLC)
+                                    End If
+                                End If
+                            Case "exepath_ffmpeg", "thumbnail_ffmpeg"
+                                exepath_ffmpeg = youso(1).ToString
+                                If exepath_ffmpeg.Length > 0 Then
+                                    If file_exist(exepath_ffmpeg) = 1 Then
+                                        log1write("個別実行用ffmpegとして" & exepath_ffmpeg & "が指定されました")
+                                    Else
+                                        log1write("【エラー】個別実行用ffmpegが見つかりませんでした。" & exepath_ffmpeg)
+                                    End If
+                                End If
+                            Case "exepath_QSVEnc"
+                                exepath_QSVEnc = youso(1).ToString
+                                If exepath_QSVEnc.Length > 0 Then
+                                    If file_exist(exepath_QSVEnc) = 1 Then
+                                        log1write("個別実行用QSVEncとして" & exepath_QSVEnc & "が指定されました")
+                                    Else
+                                        log1write("【エラー】個別実行用QSVEncが見つかりませんでした。" & exepath_QSVEnc)
                                     End If
                                 End If
                             Case "video_force_ffmpeg"
                                 video_force_ffmpeg = Val(youso(1).ToString)
                                 If video_force_ffmpeg = 1 Then
-                                    log1write("ファイル再生にffmpegを使用するようセットしました")
+                                    log1write("ファイル再生に個別実行用ffmpegを使用するようセットしました")
                                 End If
 
 
@@ -2175,7 +2193,7 @@ Class WebRemocon
     End Function
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         '配信準備中のストリームで配信しようとした場合は破棄する
@@ -2300,7 +2318,22 @@ Class WebRemocon
                 End If
             End If
         ElseIf Stream_mode = 0 Or Stream_mode = 1 Then
-            If resolution.Length = 0 And hlsOpt2.Length > 0 And filename.Length > 0 And (Stream_mode = 0 Or Stream_mode = 1) Then
+            'stream_modeが指定されていなかった場合に備えて
+            If filename.Length > 0 Then
+                Stream_mode = 1
+            End If
+
+            Dim hlschkstr As String = ":vlc:v:ffmpeg:f:qsvenc:qsvencc:q:qsv:"
+
+            'パラメータ内にHLSアプリ指定が埋め込まれている場合
+            Dim resolution_org As String = Trim(resolution)
+            Dim rez() As String = get_resolution_and_hlsApp(Trim(resolution)) 'resolutionから解像度とhlsAppを取得
+            Dim resolution_value As String = rez(0) '純粋な解像度文字列
+            If rez(1).Length > 0 Then
+                hlsAppSelect = rez(1) 'hlsApp
+            End If
+            'resolution指定がなければフォーム上のHLSオプションから解像度文字列を取得
+            If resolution.Length = 0 Then
                 If hlsApp.IndexOf("ffmpeg") >= 0 Then
                     '解像度が無指定でHLS配信でHLS_option_ffmpeg_file.txt指定のファイル再生ならば
                     'フォーム上のオプションから解像度を算出して解像度をセット
@@ -2308,7 +2341,7 @@ Class WebRemocon
                 ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                     'QSVEnc
                     resolution = trim8(instr_pickup_para(hlsOpt2, "--output-res ", " ", 0))
-                ElseIf hlsApp.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And thumbnail_ffmpeg.Length > 0 Then
+                ElseIf hlsApp.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0 Then
                     'vlc 再生にはffmpeg使用
                     Dim vlc_w As Integer = Val(Trim(Instr_pickup(hlsOpt2, "width=", ",", 0)))
                     Dim vlc_h As Integer = Val(Trim(Instr_pickup(hlsOpt2, "height=", ",", 0)))
@@ -2316,73 +2349,209 @@ Class WebRemocon
                         resolution = vlc_w.ToString & "x" & vlc_h.ToString
                     End If
                 End If
+                If resolution.Length = 0 Then
+                    '見つからなければフォーム上の解像度コンボボックスの値から取得
+                    resolution = Trim(form1_resolution)
+                End If
             End If
-            If resolution.Length > 0 Then
-                '解像度指定があれば
-                Dim chk As Integer = 0
-                If filename.Length > 0 And (Stream_mode = 0 Or Stream_mode = 1) Then
-                    'ファイル再生
-                    If (hlsApp.IndexOf("ffmpeg") >= 0 Or (video_force_ffmpeg = 1 And thumbnail_ffmpeg.Length > 0)) And ffmpeg_file_option IsNot Nothing Then
-                        'ffmpeg HLS配信でHLS_option_ffmpeg_file.txt指定のファイル再生ならば
-                        If ffmpeg_file_option IsNot Nothing Then
-                            For i As Integer = 0 To ffmpeg_file_option.Length - 1
-                                If ffmpeg_file_option(i).resolution = resolution Then
-                                    hlsOpt = ffmpeg_file_option(i).opt
-                                    chk = 1
-                                    log1write("HLS_option_ffmpeg_file.txt内の解像度指定がありました。" & resolution)
-                                End If
-                            Next
+            'video_force_ffmpegが指定されている場合
+            If video_force_ffmpeg = 1 And Stream_mode = 1 Then
+                hlsAppSelect = "ffmpeg"
+                log1write("video_force_ffmpegによりHLSアプリにVLCが指定されました")
+            End If
+
+            If hlsAppSelect.Length > 0 Then
+                '明示的にHLSアプリ指定があれば
+                Select Case hlsAppSelect.ToLower
+                    Case "vlc", "v"
+                        If exepath_VLC.Length > 0 Then
+                            hlsAppSelect = "VLC"
+                            hlsApp = exepath_VLC
+                            log1write("HLSアプリにVLCが指定されました")
+                        Else
+                            log1write("【エラー】ini内のexepath_VLCが指定されていません")
                         End If
-                        If hlsApp.ToLower.IndexOf("ffmpeg") < 0 Then
-                            If video_force_ffmpeg = 1 And chk = 1 And thumbnail_ffmpeg.Length > 0 Then
-                                hlsApp = thumbnail_ffmpeg
-                                log1write("ファイル再生には" & hlsApp & "を使用します")
-                                hlsroot = Path.GetDirectoryName(thumbnail_ffmpeg)
-                            Else
-                                chk = 0
-                                log1write("ファイル再生にffmpegを使用するにあたり不備が見つかりました")
-                            End If
+                    Case "ffmpeg", "f"
+                        If exepath_ffmpeg.Length > 0 Then
+                            hlsAppSelect = "ffmpeg"
+                            hlsApp = exepath_ffmpeg
+                            log1write("HLSアプリにffmpegが指定されました")
+                        Else
+                            log1write("【エラー】ini内のexepath_ffmpegが指定されていません")
                         End If
+                    Case "qsvenc", "qsvencc", "q", "qsv"
+                        If exepath_QSVEnc.Length > 0 Then
+                            hlsAppSelect = "QSVEnc"
+                            hlsApp = exepath_QSVEnc
+                            log1write("HLSアプリにQSVEncが指定されました")
+                        Else
+                            log1write("【エラー】ini内のexepath_QSVEncが指定されていません")
+                        End If
+                End Select
+                '目的のHLS_optionファイルを探索
+                Dim h_file As String = ""
+                Dim h_option() As HLSoptionstructure = Nothing
+                Select Case hlsAppSelect.ToLower & ":" & Stream_mode.ToString
+                    Case "vlc:0"
+                        h_option = vlc_option
+                        h_file = "HLS_option_VLC.txt"
+                    Case "vlc:1"
+                        '未対応
+                    Case "ffmpeg:0"
+                        h_option = ffmpeg_option
+                        h_file = "HLS_option_ffmpeg.txt"
+                    Case "ffmpeg:1"
+                        h_option = ffmpeg_file_option
+                        h_file = "HLS_option_ffmpeg_file.txt"
+                    Case "qsvenc:0"
+                        h_option = QSVEnc_option
+                        h_file = "HLS_option_QSVEnc.txt"
+                    Case "qsvenc:1"
+                        h_option = QSVEnc_file_option
+                        h_file = "HLS_option_QSVEnc_file.txt"
+                End Select
+                'hlsオプションを取得
+                If h_file.Length > 0 Then
+                    hlsOpt = search_hlsOption(resolution, h_option, h_file)
+                    If hlsOpt.Length = 0 Then
+                        log1write("【エラー】" & hlsAppSelect & "に該当するHLSオプションが" & h_file & "内に見つかりませんでした。")
                     End If
-                    If chk = 0 And hlsApp.ToLower.IndexOf("qsvencc") >= 0 And QSVEnc_file_option IsNot Nothing Then
-                        'QSVEnc
-                        'QSVEnc HLS配信でHLS_option_QSVEnc_file.txt指定のファイル再生ならば
-                        If QSVEnc_file_option IsNot Nothing Then
-                            For i As Integer = 0 To QSVEnc_file_option.Length - 1
-                                If QSVEnc_file_option(i).resolution = resolution Then
-                                    hlsOpt = QSVEnc_file_option(i).opt
-                                    chk = 1
-                                    log1write("HLS_option_QSVEnc_file.txt内の解像度指定がありました。" & resolution)
-                                End If
-                            Next
-                        End If
-                    End If
+                Else
+                    log1write("【エラー】HLSアプリ" & hlsAppSelect & "に該当するHLSオプションファイルが見つかりませんでした。stream_mode=" & Stream_mode.ToString)
                 End If
 
-                If chk = 0 And hls_option IsNot Nothing Then
-                    '標準 HLS_option.txt
-                    For i As Integer = 0 To hls_option.Length - 1
-                        If hls_option(i).resolution = resolution Then
-                            hlsOpt = hls_option(i).opt
-                            chk = 1
-                            log1write("解像度指定がありました。" & resolution)
-                        End If
-                    Next
-                End If
-
-                If chk = 0 Then
-                    '該当がなければフォーム上のVLCオプション文字列を使用する
+                If hlsOpt.Length = 0 And resolution_org.Length = 0 Then
                     hlsOpt = hlsOpt2
-                    resolution = ""
+                    log1write("解像度指定が無かったのでフォーム上のHLSオプションが使用されます")
                 End If
             Else
-                '解像度指定がなければフォーム上のVLCオプション文字列を使用する
+                '明示的にHLSアプリの指定が無かった場合
+                If Stream_mode = 1 Then
+                    'ファイル再生
+                    Dim h_file As String = ""
+                    Dim h_option() As HLSoptionstructure = Nothing
+                    If hlsApp.IndexOf("ffmpeg") >= 0 Then
+                        h_option = ffmpeg_file_option
+                        h_file = "HLS_option_ffmpeg_file.txt"
+                    ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                        h_option = QSVEnc_file_option
+                        h_file = "HLS_option_QSVEnc_file.txt"
+                    End If
+                    'hlsオプションを取得
+                    If h_file.Length > 0 Then
+                        hlsOpt = search_hlsOption(resolution, h_option, h_file)
+                        If hlsOpt.Length = 0 Then
+                            log1write("【エラー】ファイル再生：" & hlsAppSelect & "に該当するHLSオプションが" & h_file & "内に見つかりませんでした")
+                        End If
+                    Else
+                        log1write("【エラー】ファイル再生：HLSアプリ" & hlsAppSelect & "に該当するファイル再生用HLSオプションファイルが見つかりませんでした。stream_mode=" & Stream_mode.ToString)
+                    End If
+                End If
+            End If
+
+            If hlsOpt.Length = 0 Then
+                If resolution_org.Length = 0 Then
+                    hlsOpt = hlsOpt2
+                    log1write("解像度指定が無かったのでフォーム上のHLSオプションが使用されます")
+                Else
+                    'HLSアプリが明示的に指定されていない場合、もしくは見つからなかった場合はhls_optionから探す
+                    hlsOpt = search_hlsOption(resolution, hls_option, "HLS_option.txt")
+                    If hlsOpt.Length = 0 Then
+                        log1write("【エラー】" & hlsAppSelect & "に該当するHLSオプションが" & "HLS_option.txt" & "内に見つかりませんでした。")
+                    End If
+                End If
+            End If
+            If hlsOpt.Length = 0 Then
+                'それでも見つからなかった場合はフォーム上のHLSオプションを使用
                 hlsOpt = hlsOpt2
+                log1write("フォーム上のHLSオプションが使用されます")
+            End If
+
+            'ここまででhlsAppとhlsOptが準備完了
+
+            'もしもhlsOptの冒頭でアプリ指定があるならば更にHLSアプリ変更
+            If hlsOpt.Length > 3 Then
+                Dim has As String = ""
+                Dim sp As Integer = hlsOpt.IndexOf("_")
+                If sp > 0 Then
+                    has = hlsOpt.Substring(0, sp)
+                    If hlschkstr.IndexOf(":" & has.ToLower & ":") < 0 Then
+                        sp = -1
+                    End If
+                End If
+                Select Case hlsOpt.Substring(0, 3).ToLower
+                    Case "(v)", "(vl"
+                        has = "VLC"
+                        sp = hlsOpt.IndexOf(")")
+                    Case "(f)", "(ff"
+                        has = "ffmpeg"
+                        sp = hlsOpt.IndexOf(")")
+                    Case "(q)", "(qs"
+                        has = "QSVEnc"
+                        sp = hlsOpt.IndexOf(")")
+                End Select
+                'hlsOptから余計なHLSアプリ指定文字列を除去
+                If sp >= 0 Then
+                    Try
+                        hlsOpt = hlsOpt.Substring(sp + 1)
+                    Catch ex As Exception
+                        log1write("【エラー】HLSオプションが不正です" & vbCrLf & hlsOpt)
+                        hlsOpt = ""
+                    End Try
+                End If
+                Dim chk As Integer = 0
+                Select Case Trim(has).ToLower
+                    Case "vlc", "v"
+                        If exepath_VLC.Length > 0 Then
+                            hlsAppSelect = "VLC"
+                            hlsApp = exepath_VLC
+                            log1write("HLSオプション内の指定によりHLSアプリにVLCが指定されました")
+                            chk = 1
+                        Else
+                            log1write("【エラー】ini内のexepath_VLCが指定されていません")
+                        End If
+                    Case "ffmpeg", "f"
+                        If exepath_ffmpeg.Length > 0 Then
+                            hlsAppSelect = "ffmpeg"
+                            hlsApp = exepath_ffmpeg
+                            log1write("HLSオプション内の指定によりHLSアプリにffmpegが指定されました")
+                            chk = 1
+                        Else
+                            log1write("【エラー】ini内のexepath_ffmpegが指定されていません")
+                        End If
+                    Case "qsvenc", "qsvencc", "q", "qsv"
+                        If exepath_QSVEnc.Length > 0 Then
+                            hlsAppSelect = "QSVEnc"
+                            hlsApp = exepath_QSVEnc
+                            log1write("HLSオプション内の指定によりHLSアプリにQSVEncが指定されました")
+                            chk = 1
+                        Else
+                            log1write("【エラー】ini内のexepath_QSVEncが指定されていません")
+                        End If
+                End Select
+            End If
+
+            'hlsAppとhlsOptの整合性をチェック
+            If hlsApp.Length > 0 And hlsOpt.Length > 0 Then
+                Dim AppOptChk As Integer = 0
+                Dim haf As String = Path.GetFileNameWithoutExtension(hlsApp)
+                If haf.ToLower.IndexOf("vlc") >= 0 And (hlsOpt.IndexOf(" --sout ") >= 0 Or hlsOpt.IndexOf("vlc:") >= 0) Then
+                    AppOptChk = 1
+                ElseIf haf.ToLower.IndexOf("ffmpeg") >= 0 And (hlsOpt.IndexOf(" -acodec ") >= 0 Or hlsOpt.IndexOf(" -vcodec ") >= 0) Then
+                    AppOptChk = 1
+                ElseIf haf.ToLower.IndexOf("qsvenc") >= 0 And (hlsOpt.IndexOf("hls_segment_filename") >= 0 Or hlsOpt.IndexOf(" --audio-codec ") >= 0) Then
+                    AppOptChk = 1
+                End If
+                If AppOptChk = 0 Then
+                    'エラー
+                    stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                    log1write("【エラー】以下のHLSオプションは" & haf & "[" & resolution & "]のものでは無いようです。配信を中止します。" & vbCrLf & hlsOpt)
+                    Exit Sub
+                End If
             End If
 
             'ファイル再生か？
-            If filename.Length > 0 And hlsOpt.Length > 0 Then
-                Stream_mode = 1
+            If Stream_mode = 1 And hlsOpt.Length > 0 Then
                 'hlsオプションを書き換える
                 If hlsApp.IndexOf("ffmpeg") >= 0 Then
                     'ffmpegのとき
@@ -2402,7 +2571,7 @@ Class WebRemocon
         End If
 
         If hlsOpt.Length > 0 Then
-            'NHK BS1、BSプレミアム対策
+            '音声切り替え　NHK BS1、BSプレミアム対策
             If hlsApp.IndexOf("ffmpeg") >= 0 Then
                 Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
                 '1=NHKなら主　それ以外はステレオ
@@ -2471,49 +2640,52 @@ Class WebRemocon
                     Next
                 End If
             ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
-                If hlsOpt.IndexOf("--audio-stream") < 0 Then
-                    Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
-                    '1=NHKなら主　それ以外はステレオ
-                    '2=NHKなら主　それ以外はステレオ
-                    '11=全部主
-                    '12=N全部副
-                    '4=メイン
-                    '5=サブ
-                    If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 11) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                        '主モノラル固定 1or11
-                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FL -i ")
-                    ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 12) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                        '副モノラル固定 2or12
-                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FR -i ")
-                    ElseIf NHK_dual_mono_mode_select = 4 Then
-                        '第二音声
-                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
-                    ElseIf NHK_dual_mono_mode_select = 5 Then
-                        '動画主音声
-                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 1?:streo -i ")
-                    ElseIf NHK_dual_mono_mode_select = 6 Then
-                        '動画副音声
-                        hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
-                    ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
-                        If BS1_hlsApp.Length > 0 Then
-                            'hlsAppとhlsOptをVLCに置き換える
-                            Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode) 'QSVEnc対応済
-                            If hlsOpt_temp.Length > 0 Then
-                                hlsOpt = hlsOpt_temp
-                                hlsApp = BS1_hlsApp
-                            End If
-                        Else
-                            NHK_dual_mono_mode_select = 0
-                            log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
+                Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
+                '1=NHKなら主　それ以外はステレオ
+                '2=NHKなら主　それ以外はステレオ
+                '11=全部主
+                '12=N全部副
+                '4=メイン
+                '5=サブ
+                If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 11) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                    '主モノラル固定 1or11
+                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
+                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FL -i ")
+                ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 12) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                    '副モノラル固定 2or12
+                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
+                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FR -i ")
+                ElseIf NHK_dual_mono_mode_select = 4 Then
+                    '第二音声
+                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
+                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
+                ElseIf NHK_dual_mono_mode_select = 5 Then
+                    '動画主音声
+                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
+                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 1?:streo -i ")
+                ElseIf NHK_dual_mono_mode_select = 6 Then
+                    '動画副音声
+                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
+                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
+                ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
+                    If BS1_hlsApp.Length > 0 Then
+                        'hlsAppとhlsOptをVLCに置き換える
+                        Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode) 'QSVEnc対応済
+                        If hlsOpt_temp.Length > 0 Then
+                            hlsOpt = hlsOpt_temp
+                            hlsApp = BS1_hlsApp
                         End If
                     Else
-                        'それ以外は書き換えない　→主・副
+                        NHK_dual_mono_mode_select = 0
+                        log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
                     End If
+                Else
+                    'それ以外は書き換えない　→主・副
+                End If
 
-                    'hlsOptに追加で文字列
-                    If hlsOptAdd.Length > 0 Then
-                        log1write("QSVEncへのパラメーター追加は無視されました。" & hlsOptAdd.Replace("_-_", "  "))
-                    End If
+                'hlsOptに追加で文字列
+                If hlsOptAdd.Length > 0 Then
+                    log1write("QSVEncへのパラメーター追加は無視されました。" & hlsOptAdd.Replace("_-_", "  "))
                 End If
             End If
 
@@ -2559,6 +2731,109 @@ Class WebRemocon
             stream_last_utime(num) = 0 '前回配信準備開始時間リセット
         End If
     End Sub
+
+    Public Function get_resolution_and_hlsApp(ByVal resolution As String) As String()
+        Dim r(1) As String
+        Dim i As Integer = 0
+
+        Dim hlschkstr As String = ":vlc:v:ffmpeg:f:qsvenc:qsvencc:q:qsv:"
+
+        r(0) = "" '640x360
+        r(1) = "" 'hlsApp
+
+        resolution = Trim(resolution).ToLower
+
+        Dim hlsAppSelect As String = ""
+        Dim resolution_value As String = Trim(resolution)
+
+        If resolution.IndexOf("_") > 0 Then
+            Dim sp As Integer = resolution.IndexOf("_")
+            hlsAppSelect = Trim(resolution.Substring(0, sp))
+            Try
+                resolution_value = Trim(resolution.Substring(sp + 1))
+            Catch ex As Exception
+            End Try
+            If hlschkstr.IndexOf(":" & hlsAppSelect & ":") < 0 Then
+                '後ろに指定があった場合
+                sp = resolution.LastIndexOf("_")
+                resolution_value = resolution.Substring(0, sp)
+                Try
+                    hlsAppSelect = Trim(resolution.Substring(sp + 1))
+                Catch ex As Exception
+                End Try
+                If hlschkstr.IndexOf(":" & hlsAppSelect & ":") < 0 Then
+                    'HLSアプリ指定は含まれていない
+                    hlsAppSelect = ""
+                    resolution_value = resolution
+                End If
+            End If
+        End If
+        If resolution.ToLower.IndexOf("(v)") >= 0 Or resolution.ToLower.IndexOf("(vlc)") >= 0 Then
+            hlsAppSelect = "VLC"
+            resolution_value = resolution.ToLower.Replace("(v)", "").Replace("(vlc)", "")
+        ElseIf resolution.ToLower.IndexOf("(f)") >= 0 Or resolution.ToLower.IndexOf("(ffmpeg)") >= 0 Then
+            hlsAppSelect = "ffmpeg"
+            resolution_value = resolution.ToLower.Replace("(f)", "").Replace("(ffmpeg)", "")
+        ElseIf resolution.ToLower.IndexOf("(q)") >= 0 Or resolution.ToLower.IndexOf("(qsv)") >= 0 Or resolution.ToLower.IndexOf("(qsvenc)") >= 0 Or resolution.ToLower.IndexOf("(qsvencc)") >= 0 Then
+            hlsAppSelect = "QSVEnc"
+            resolution_value = resolution.ToLower.Replace("(q)", "").Replace("(qsv)", "").Replace("(qsvenc)", "").Replace("(qsvencc)", "")
+        End If
+
+        r(0) = Trim(resolution_value)
+        r(1) = Trim(hlsAppSelect)
+
+        Return r
+    End Function
+
+    'hls_option()から該当するHLSオプションを見つけ出して返す
+    Public Function search_hlsOption(ByVal resolution As String, ByVal ho() As HLSoptionstructure, ByVal ho_name As String) As String
+        Dim hlsOpt As String = ""
+
+        resolution = Trim(resolution)
+        Dim resolution_org As String = Trim(resolution)
+        Dim rez() As String = get_resolution_and_hlsApp(resolution)
+        Dim resolution_value As String = rez(0)
+        Dim hlsApp As String = rez(1)
+
+        If ho IsNot Nothing Then
+            If resolution.Length > 0 Then
+                'まずはそのまま検索
+                For i As Integer = 0 To ho.Length - 1
+                    If ho(i).resolution.Length > 0 And Trim(ho(i).resolution).ToLower = resolution.ToLower Then
+                        hlsOpt = ho(i).opt
+                        log1write(ho_name & "内に[" & resolution & "]に該当するHLSオプションが見つかりました。")
+                        Exit For
+                    End If
+                Next
+                If hlsOpt.Length = 0 And resolution_value.Length > 0 And resolution <> resolution_value Then
+                    '一巡して見つからない場合は純粋な解像度（resolution_value)でもう一度調べる
+                    For i As Integer = 0 To ho.Length - 1
+                        If ho(i).resolution.Length > 0 And Trim(ho(i).resolution).ToLower = resolution_value.ToLower Then
+                            hlsOpt = ho(i).opt
+                            log1write(ho_name & "内に" & resolution & "で指定された解像度[" & resolution_value & "]に該当するHLSオプションが見つかりました。")
+                            Exit For
+                        End If
+                    Next
+                End If
+            End If
+        Else
+            log1write("【エラー】" & ho_name & "が見つかりませんでした")
+        End If
+
+        Return hlsOpt
+    End Function
+
+    'QSVEncのhlsOptから--audio-streamを削除
+    Public Function QSVEnc_audiostr_delete(ByVal hlsOpt As String) As String
+        If hlsOpt.IndexOf("--audio-stream ") >= 0 Then
+            '--audio-streamが存在するならば削除
+            Dim asts As String = instr_pickup_para(hlsOpt, "--audio-stream ", " ", 0)
+            If asts.Length > 0 Then
+                hlsOpt = hlsOpt.Replace("--audio-stream " & asts & " ", "")
+            End If
+        End If
+        Return hlsOpt
+    End Function
 
     '.chapterがあればストリームフォルダにコピー ■未使用
     Public Sub copy_chapter_to_fileroot(ByVal num As Integer, ByVal fullpathfilename As String, ByVal fileroot1 As String)
@@ -3038,34 +3313,6 @@ Class WebRemocon
         Return r
     End Function
 
-    '手動　ストリーム開始　■未使用
-    Public Sub Sub_stream_Start(ByVal num As Integer, ByVal bondriver As String, ByVal sid As String, ByVal chspace As String, ByVal bon_sid_ch_str As String, ByVal resolution As String, ByVal stream_mode As Integer, ByVal videoname As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer)
-        'num        'bondriver        'sid        'chspace'        'bon_sid_ch_str        'resolution
-        'stream_mode 'ストリームモード 0=UDP 1=ファイル再生 2=VLChttp 3=VLChttpファイル再生
-        'videoname
-
-        '★リクエストパラメーターを取得
-        'Bon_Sid_Ch一括指定があった場合（JavaScript等でBon_Sid_Ch="BonDriver_t0.dll,12345,0"というように指定された場合）
-        Dim bon_sid_ch() As String = bon_sid_ch_str.Split(",")
-        If bon_sid_ch.Length = 3 Then
-            '個別に値が決まっていなければセット
-            If bondriver.Length = 0 Then bondriver = Trim(bon_sid_ch(0))
-            If sid.Length = 0 Then sid = Trim(bon_sid_ch(1))
-            If chspace.Length = 0 Then chspace = Trim(bon_sid_ch(2))
-        End If
-
-        '配信スタート
-        'パラメーターが正しいかチェック
-        If num > 0 And bondriver.Length > 0 And Val(sid) > 0 And Val(chspace) >= 0 Then
-            '正しければ配信スタート
-            Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, 0, stream_mode, resolution, 0, 0, "1", "", 0)
-        ElseIf num > 0 And videoname.Length > 0 Then
-            'ファイル再生
-            Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, 0, stream_mode, resolution, VideoSeekSeconds, nohsub, "1", "", 0)
-        End If
-
-    End Sub
-
     'HTTPサーバー開始
     Public Sub Web_Start()
         If Me._wwwport = 0 Then
@@ -3209,7 +3456,7 @@ Class WebRemocon
                         If (h_stream_mode = 2 And h_bondriver.Length > 0 And Val(h_sid) > 0) Or (h_stream_mode = 3 And h_videoname.Length > 0) Then
                             'httpストリーム配信開始
                             'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
-                            Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1)
+                            Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1, "")
                         Else
                             'パラメーターが不正
                             context.Response.Headers("Content-Type") = "text/plain"
@@ -3499,6 +3746,9 @@ Class WebRemocon
                             'hlsOptに追加するべき文字列
                             Dim hlsOptAdd As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("hlsOptAdd") & ""
 
+                            'HLSアプリ個別指定
+                            Dim hlsAppSelect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("hlsAppSelect") & ""
+
                             '汎用文字列
                             Dim temp As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("temp") & ""
 
@@ -3733,14 +3983,14 @@ Class WebRemocon
                                         num = GET_num_check_BonDriver(num, bondriver)
                                     End If
                                     '正しければ配信スタート
-                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0)
+                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0, hlsAppSelect)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
-                                    If Me._hlsApp.IndexOf("ffmpeg") > 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") > 0 Or (video_force_ffmpeg = 1 And thumbnail_ffmpeg.Length > 0) Then
+                                    If Me._hlsApp.IndexOf("ffmpeg") > 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") > 0 Or (video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0) Then
                                         'ffmpegなら
-                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1)
+                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect)
                                     Else
                                         '今のところVLCには未対応
                                         request_page = 12
@@ -4515,7 +4765,9 @@ Class WebRemocon
         r &= "_AddSubFolder=" & Me._AddSubFolder & vbCrLf
         r &= "VideoSeekDefault=" & VideoSeekDefault & vbCrLf
         r &= "VideoSizeCheck=" & VideoSizeCheck & vbCrLf
-        r &= "thumbnail_ffmpeg=" & thumbnail_ffmpeg & vbCrLf
+        r &= "exepath_VLC=" & exepath_vlc & vbCrLf
+        r &= "exepath_ffmpeg=" & exepath_ffmpeg & vbCrLf
+        r &= "exepath_QSVEnc=" & exepath_QSVEnc & vbCrLf
         r &= "video_force_ffmpeg=" & video_force_ffmpeg & vbCrLf
         r &= vbCrLf
         r &= "【HTTPストリーム再生】" & vbCrLf
