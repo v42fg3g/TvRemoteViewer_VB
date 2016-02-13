@@ -2086,7 +2086,9 @@ Class WebRemocon
                 End If
                 Dim frame As Integer = Int(VideoSeekSeconds * video_fps) '秒をフレームに変換
                 sp = hlsOpt.IndexOf("-i ")
-                hlsOpt = hlsOpt.Substring(0, sp) & "--trim " & frame.ToString & ":0 " & hlsOpt.Substring(sp)
+                If sp >= 0 Then
+                    hlsOpt = hlsOpt.Substring(0, sp) & "--trim " & frame.ToString & ":0 " & hlsOpt.Substring(sp)
+                End If
             End If
         Else
             log1write("【エラー】HlsOptが指定されていません")
@@ -2106,7 +2108,7 @@ Class WebRemocon
         Return hlsOpt
     End Function
 
-    'BS1用にffmpeg用オプションからvlcオプションに書き換え
+    'BS1用にffmpeg用オプションからvlcオプションに書き換え QSVEncにも対応
     Public Function translate_ffmpeg2vlc(hlsOpt As String, ByVal stream_mode As Integer) As String
         Dim r As String = ""
 
