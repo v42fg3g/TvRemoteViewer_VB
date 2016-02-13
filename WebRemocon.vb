@@ -2394,30 +2394,34 @@ Class WebRemocon
                         End If
                 End Select
                 '目的のHLS_optionファイルを探索
+                Dim hls_option_first As Integer = 0 'hls_option内を先に検索するなら1 ファイル再生は必ず0
                 Dim h_file As String = ""
                 Dim h_option() As HLSoptionstructure = Nothing
                 Select Case hlsAppSelect.ToLower & ":" & Stream_mode.ToString
                     Case "vlc:0"
                         h_option = vlc_option
                         h_file = "HLS_option_VLC.txt"
+                        hls_option_first = 1
                     Case "vlc:1"
                         '未対応
                     Case "ffmpeg:0"
                         h_option = ffmpeg_option
                         h_file = "HLS_option_ffmpeg.txt"
+                        hls_option_first = 1
                     Case "ffmpeg:1"
                         h_option = ffmpeg_file_option
                         h_file = "HLS_option_ffmpeg_file.txt"
                     Case "qsvenc:0"
                         h_option = QSVEnc_option
                         h_file = "HLS_option_QSVEnc.txt"
+                        hls_option_first = 1
                     Case "qsvenc:1"
                         h_option = QSVEnc_file_option
                         h_file = "HLS_option_QSVEnc_file.txt"
                 End Select
                 'hlsオプションを取得
                 If h_file.Length > 0 Then
-                    hlsOpt = search_hlsOption(resolution, h_option, h_file)
+                    hlsOpt = search_hlsOption(resolution, h_option, h_file, hls_option_first)
                     If hlsOpt.Length = 0 Then
                         log1write("【エラー】" & hlsAppSelect & "に該当するHLSオプションが" & h_file & "内に見つかりませんでした。")
                     End If
@@ -2444,7 +2448,7 @@ Class WebRemocon
                     End If
                     'hlsオプションを取得
                     If h_file.Length > 0 Then
-                        hlsOpt = search_hlsOption(resolution, h_option, h_file)
+                        hlsOpt = search_hlsOption(resolution, h_option, h_file, 0)
                         If hlsOpt.Length = 0 Then
                             log1write("【エラー】ファイル再生：" & hlsAppSelect & "に該当するHLSオプションが" & h_file & "内に見つかりませんでした")
                         End If
@@ -2460,7 +2464,7 @@ Class WebRemocon
                     log1write("解像度指定が無かったのでフォーム上のHLSオプションが使用されます")
                 Else
                     'HLSアプリが明示的に指定されていない場合、もしくは見つからなかった場合はhls_optionから探す
-                    hlsOpt = search_hlsOption(resolution, hls_option, "HLS_option.txt")
+                    hlsOpt = search_hlsOption(resolution, hls_option, "HLS_option.txt", 0)
                     If hlsOpt.Length = 0 Then
                         log1write("【エラー】" & hlsAppSelect & "に該当するHLSオプションが" & "HLS_option.txt" & "内に見つかりませんでした。")
                     End If
@@ -2794,7 +2798,7 @@ Class WebRemocon
     End Function
 
     'hls_option()から該当するHLSオプションを見つけ出して返す
-    Public Function search_hlsOption(ByVal resolution As String, ByVal ho() As HLSoptionstructure, ByVal ho_name As String) As String
+    Public Function search_hlsOption(ByVal resolution As String, ByVal ho() As HLSoptionstructure, ByVal ho_name As String, ByVal hls_option_first As Integer) As String
         Dim hlsOpt As String = ""
 
         resolution = Trim(resolution)
@@ -2803,29 +2807,46 @@ Class WebRemocon
         Dim resolution_value As String = rez(0)
         Dim hlsApp As String = rez(1)
 
-        If ho IsNot Nothing Then
-            If resolution.Length > 0 Then
-                'まずはそのまま検索
-                For i As Integer = 0 To ho.Length - 1
-                    If ho(i).resolution.Length > 0 And Trim(ho(i).resolution).ToLower = resolution.ToLower Then
-                        hlsOpt = ho(i).opt
-                        log1write(ho_name & "内に[" & resolution & "]に該当するHLSオプションが見つかりました。")
+        If hls_option_first = 1 And hlsApp.Length > 0 Then
+            '解像度インデックス内でHLSアプリが明示的に指定されている場合（V_640x360等）、HLS_option.txtを優先的に調べる
+            If hls_option IsNot Nothing Then
+                For i As Integer = 0 To hls_option.Length - 1
+                    If hls_option(i).resolution.Length > 0 And Trim(hls_option(i).resolution).ToLower = resolution_org.ToLower Then
+                        hlsOpt = hls_option(i).opt
+                        log1write("HLS_option.txt内に[" & resolution & "]に該当するHLSオプションが見つかりました（優先)")
                         Exit For
                     End If
                 Next
-                If hlsOpt.Length = 0 And resolution_value.Length > 0 And resolution <> resolution_value Then
-                    '一巡して見つからない場合は純粋な解像度（resolution_value)でもう一度調べる
+            Else
+                log1write("【エラー】HLS_option.txtが見つかりませんでした")
+            End If
+        End If
+
+        If hlsOpt.Length = 0 Then
+            If ho IsNot Nothing Then
+                If resolution.Length > 0 Then
+                    'まずはそのまま検索
                     For i As Integer = 0 To ho.Length - 1
-                        If ho(i).resolution.Length > 0 And Trim(ho(i).resolution).ToLower = resolution_value.ToLower Then
+                        If ho(i).resolution.Length > 0 And Trim(ho(i).resolution).ToLower = resolution_org.ToLower Then
                             hlsOpt = ho(i).opt
-                            log1write(ho_name & "内に" & resolution & "で指定された解像度[" & resolution_value & "]に該当するHLSオプションが見つかりました。")
+                            log1write(ho_name & "内に[" & resolution & "]に該当するHLSオプションが見つかりました。")
                             Exit For
                         End If
                     Next
+                    If hlsOpt.Length = 0 And resolution_value.Length > 0 And resolution <> resolution_value Then
+                        '一巡して見つからない場合は純粋な解像度（resolution_value)でもう一度調べる
+                        For i As Integer = 0 To ho.Length - 1
+                            If ho(i).resolution.Length > 0 And Trim(ho(i).resolution).ToLower = resolution_value.ToLower Then
+                                hlsOpt = ho(i).opt
+                                log1write(ho_name & "内に" & resolution & "で指定された解像度[" & resolution_value & "]に該当するHLSオプションが見つかりました。")
+                                Exit For
+                            End If
+                        Next
+                    End If
                 End If
+            Else
+                log1write("【エラー】" & ho_name & "が見つかりませんでした")
             End If
-        Else
-            log1write("【エラー】" & ho_name & "が見つかりませんでした")
         End If
 
         Return hlsOpt

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.89
+TvRemoteViewer_VB v1.90
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -233,6 +233,7 @@ TvRemoteViewer_VB v1.89
 
 	○どのHLSオプションが使用されるのか？
 	・明示的にHLSアプリが個別指定された場合は、各アプリに対応したHLS_option_[HLSアプリ]*.txtからHLSオプションが優先的に使用されます
+	　v1.90～　ライブ放送＆解像度インデックス内でHLSアプリが指定されている場合は↑の前にHLS_option.txt内を検索します
 	・HLSアプリが指定されていない＆ファイル再生の場合はHLS_option_[HLSアプリ]_file.txtが優先的に使用されます
 	・HLSアプリが指定されていない＆解像度指定があればHLS_option.txtからHLSオプションが使用されます
 	・HLSアプリが指定されていない＆解像度指定が無い場合はフォーム上のHLSオプションが使用されます（例 フォーム上のStartボタン）
@@ -689,6 +690,7 @@ TvRemoteViewer_VB v1.89
 		StartTv.htmlへの引数hlsAppSelectを追加（readme_dev.txt参照）
 		iniに個別指定用のexepath_VLC、exepath_ffmpeg、exepath_QSCEncを追加
 		thumbnail_ffmpegをexepath_ffmpegに名前変更（そのままでも使用可）
+	1.90	解像度インデックス内でHLSアプリが指定されている場合はHLS_option.txt内を優先的に検索するようにした
 
 
 
