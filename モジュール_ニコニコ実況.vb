@@ -924,6 +924,13 @@ Module モジュール_ニコニコ実況
                             End If
                         End If
                     End If
+                    '運良くsidが見つかっていた場合
+                    If file_tot.sid > 0 Then
+                        fjk = sid2jk(file_tot.sid, 0)
+                        If fjk.Length > 0 Then
+                            targetfile = search_commentfile_in_folder(NicoJK_path & "\" & fjk, filestamp_mid)
+                        End If
+                    End If
 
                     If targetfile.Length = 0 Then
                         'ファイル名と同名でtxtまたはxmlがあるか
@@ -942,6 +949,7 @@ Module モジュール_ニコニコ実況
                         Else
                             'NicoJKフォルダを探す
                             If folder_exist(NicoJK_path) = 1 Then
+                                Dim fwoe As String = Path.GetFileNameWithoutExtension(filename)
                                 Dim jklfilename As String = ""
                                 'NicoJK_pathにあるjklファイルをチェックする
                                 Dim files As String() = System.IO.Directory.GetFiles(NicoJK_path, "*")
@@ -974,6 +982,9 @@ Module モジュール_ニコニコ実況
                                             Dim chk As Integer = 0
                                             If z.Length > 0 And (filename.IndexOf(z) >= 0 Or filename.IndexOf(zh) >= 0) Then
                                                 '文字列が含まれている場合
+                                                chk = 1
+                                            ElseIf fwoe.Length > 0 And files(i).IndexOf(fwoe) >= 0 Then
+                                                '動画ファイル名がすべてjklに含まれる場合
                                                 chk = 1
                                             ElseIf cnt = 0 And z2.Length > 0 And (filename.IndexOf(z2) >= 0 Or filename.IndexOf(z2h) >= 0) Then
                                                 'タイトル最初の3文字が含まれている場合 完全とは言えないので全jklをチェックしてから結論を出す
@@ -1020,7 +1031,13 @@ Module モジュール_ニコニコ実況
                                                     cnt += 1
                                                 ElseIf System.Math.Abs((jklstamp_end) - filestamp_end) < (60 * 20) Then
                                                     '更新時間が前後20分以内ならキープ
+                                                    jklfilename = Path.GetFileName(files(i))
                                                     cnt += 1
+
+                                                    If chk = 1 Then
+                                                        '確定の場合は終了
+                                                        Exit For
+                                                    End If
                                                 End If
                                             End If
                                         End If

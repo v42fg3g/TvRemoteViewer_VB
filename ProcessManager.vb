@@ -538,26 +538,12 @@ Public Class ProcessManager
                         Me._list(num2i(num))._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
                     Else
                         '★HLSソフトを実行
-                        'ProcessStartInfoオブジェクトを作成する
-                        Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
-                        '起動するファイルのパスを指定する
-                        hlsPsi.FileName = hlsApp
-                        'コマンドライン引数を指定する
-                        hlsPsi.Arguments = hlsOpt
-                        If ShowConsole = False Then
-                            ' コンソール・ウィンドウを開かない
-                            hlsPsi.CreateNoWindow = True
-                            ' シェル機能を使用しない
-                            hlsPsi.UseShellExecute = False
-                        End If
                         'ログ表示
                         log1write("No.=" & num & "HLS アプリ=" & hlsApp)
                         log1write("No.=" & num & "HLS option=" & hlsOpt)
 
                         Dim hlsProc As System.Diagnostics.Process = Nothing
-                        Dim hlsProc2(1) As System.Diagnostics.Process
-                        hlsProc2(0) = Nothing
-                        hlsProc2(1) = Nothing
+                        Dim hlsProc2 As System.Diagnostics.Process = Nothing
 
                         If hlsApp.IndexOf("PipeRun") >= 0 Then
                             '先に現在実行中のffmpegとQSVEncの全プロセスを記録
@@ -573,7 +559,7 @@ Public Class ProcessManager
                             Next p2
 
                             'アプリケーションを起動する
-                            hlsProc2(1) = System.Diagnostics.Process.Start(hlsPsi)
+                            PipeRUN_exe(hlsOpt)
 
                             'バッチ実行後に増加したプロセスからプロセスを推定
                             Dim chk As Integer = 30 * 10 '30秒
@@ -584,7 +570,7 @@ Public Class ProcessManager
                                     Dim ps1b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName("ffmpeg")
                                     For Each p11 As Process In ps1b
                                         If pstr1.IndexOf(":" & p11.Id.ToString & ":") < 0 Then
-                                            hlsProc2(0) = p11
+                                            hlsProc2 = p11
                                             chk_ffmpeg = 1
                                             log1write("PipeRun内のバッチ処理でffmpegが起動されました。プロセスID=" & p11.Id.ToString)
                                             Exit For
@@ -620,16 +606,23 @@ Public Class ProcessManager
                             Catch ex As Exception
                             End Try
                             Try
-                                log1write("ffmpegプロセス=" & hlsProc2(0).Id.ToString)
+                                log1write("ffmpegプロセス=" & hlsProc2.Id.ToString)
                             Catch ex As Exception
-                            End Try
-                            Try
-                                log1write("PipeRunプロセス=" & hlsProc2(1).Id.ToString)
-                            Catch ex As Exception
-                                log1write("PipeRunプロセスはすでに終了したようです")
                             End Try
                         Else
                             '通常
+                            'ProcessStartInfoオブジェクトを作成する
+                            Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
+                            '起動するファイルのパスを指定する
+                            hlsPsi.FileName = hlsApp
+                            'コマンドライン引数を指定する
+                            hlsPsi.Arguments = hlsOpt
+                            If ShowConsole = False Then
+                                ' コンソール・ウィンドウを開かない
+                                hlsPsi.CreateNoWindow = True
+                                ' シェル機能を使用しない
+                                hlsPsi.UseShellExecute = False
+                            End If
                             'アプリケーションを起動する
                             hlsProc = System.Diagnostics.Process.Start(hlsPsi)
                         End If
@@ -904,7 +897,7 @@ Public Class ProcessManager
                             ElseIf Me._list(i)._hlsApp.ToLower.IndexOf("piperun") >= 0 Then
                                 'PipeRun QSVEncとffmpegも終了させる
                                 Dim stopchk As Integer = 0
-                                Try '■テスト
+                                Try 'テスト
                                     log1write("proc=" & proc.Id.ToString)
                                 Catch ex As Exception
 
@@ -912,43 +905,41 @@ Public Class ProcessManager
                                 If proc IsNot Nothing AndAlso Not proc.HasExited Then
                                     proc.Kill()
                                     If wait_stop_proc(proc) = 1 Then
-                                        log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ1を強制終了しました")
+                                        log1write("No.=" & Me._list(i)._num & "のPipeRun経由アプリQSVEncCを強制終了しました")
                                         stopchk += 1
                                     Else
-                                        log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ1強制終了に失敗しました")
+                                        log1write("No.=" & Me._list(i)._num & "のPipeRun経由アプリQSVEncCの強制終了に失敗しました")
                                     End If
                                     proc.Close()
                                     proc.Dispose()
                                 Else
-                                    log1write("No.=" & Me._list(i)._num & "のPipeRunアプリは起動していないようです")
+                                    log1write("No.=" & Me._list(i)._num & "のPipeRun経由アプリQSVEncCは起動していないようです")
                                     stopchk += 1
                                 End If
-                                Dim proc2() As System.Diagnostics.Process = Me._list(i).GetHlsProc2()
+                                Dim proc2 As System.Diagnostics.Process = Me._list(i).GetHlsProc2
                                 If proc2 IsNot Nothing Then
-                                    For ij As Integer = 0 To proc2.Length - 1
-                                        Try '■テスト
-                                            log1write("proc2(" & ij.ToString & ")=" & proc2(ij).Id.ToString)
-                                        Catch ex As Exception
-                                        End Try
-                                        If proc2(ij) IsNot Nothing AndAlso Not proc2(ij).HasExited Then
-                                            proc2(ij).Kill()
-                                            If wait_stop_proc(proc2(ij)) = 1 Then
-                                                log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ(" & ij.ToString & ")を強制終了しました")
-                                                stopchk += 1
-                                            Else
-                                                log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ(" & ij.ToString & ")の強制終了に失敗しました")
-                                            End If
-                                            proc2(ij).Close()
-                                            proc2(ij).Dispose()
-                                        Else
-                                            log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ(" & ij.ToString & ")は起動していないようです")
+                                    Try 'テスト
+                                        log1write("proc2=" & proc2.Id.ToString)
+                                    Catch ex As Exception
+                                    End Try
+                                    If proc2 IsNot Nothing AndAlso Not proc2.HasExited Then
+                                        proc2.Kill()
+                                        If wait_stop_proc(proc2) = 1 Then
+                                            log1write("No.=" & Me._list(i)._num & "のPipeRun経由アプリffmpegを強制終了しました")
                                             stopchk += 1
+                                        Else
+                                            log1write("No.=" & Me._list(i)._num & "のPipeRun経由アプリffmpegの強制終了に失敗しました")
                                         End If
-                                    Next
+                                        proc2.Close()
+                                        proc2.Dispose()
+                                    Else
+                                        log1write("No.=" & Me._list(i)._num & "のPipeRun経由アプリffmpegは起動していないようです")
+                                        stopchk += 1
+                                    End If
                                 Else
-                                    stopchk += 2
+                                    stopchk += 1
                                 End If
-                                If stopchk >= 3 Then
+                                If stopchk >= 2 Then
                                     hls_stop = 1
                                 End If
                             ElseIf Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Then
@@ -1157,8 +1148,6 @@ Public Class ProcessManager
                         log1write("名前指定で全てのTSTaskのプロセスを停止しました")
                     End If
                 End If
-                'PipeRunバッチファイル
-                stopProcName(Path.GetFileNameWithoutExtension(exepath_PipeRun))
 
                 Me._list.Clear() 'リストクリア
             End If
@@ -2212,6 +2201,51 @@ Public Class ProcessManager
         Return r
     End Function
 
+    'PipeRun.exeの代わりに実行
+    Public Sub PipeRUN_exe(ByVal cmd_str As String)
+        Dim pipeexestr As String = ""
+
+        Dim d() As String = cmd_str.Split("|")
+        If d.Length = 2 Then
+            Dim hlsOpt_ffmpeg As String = Trim(d(0))
+            Dim hlsOpt_QSVEnc As String = Trim(d(1))
+
+            If file_exist(exepath_ffmpeg) = 1 And file_exist(exepath_QSVEnc) = 1 Then
+                '「"」で囲まれたが２箇所以上あるとcmd実行できない
+                'pipeexestr = """" & exepath_ffmpeg & """ " & hlsOpt_ffmpeg & " | " & """" & exepath_QSVEnc & """ " & hlsOpt_QSVEnc
+                pipeexestr = exepath_ffmpeg & " " & hlsOpt_ffmpeg & " | " & exepath_QSVEnc & " " & hlsOpt_QSVEnc
+                'pipeexestr &= " --log qsvenc.txt" 'ログ表示
+
+                Dim results As String = ""
+                Dim psi As New System.Diagnostics.ProcessStartInfo()
+
+                psi.FileName = System.Environment.GetEnvironmentVariable("ComSpec") 'ComSpecのパスを取得する
+                psi.RedirectStandardInput = True '出力を読み取れるようにする
+                psi.RedirectStandardError = False
+                psi.UseShellExecute = False
+                psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
+                'psi.StandardOutputEncoding = Encoding.UTF8
+
+                psi.Arguments = "/c " & pipeexestr
+
+                Dim p As System.Diagnostics.Process
+                Try
+                    p = System.Diagnostics.Process.Start(psi)
+                    log1write("実行しました")
+                    '出力を読み取る
+                    'results = p.StandardError.ReadToEnd
+                    'WaitForExitはReadToEndの後である必要がある
+                    '(親プロセス、子プロセスでブロック防止のため)
+                    'p.WaitForExit(10000)
+                Catch ex As Exception
+                    log1write("【エラー】PipeRun実行中にエラーが発生しました。" & ex.Message)
+                End Try
+            End If
+        Else
+            log1write("パイプパラメータが不正です。" & cmd_str)
+        End If
+
+    End Sub
 End Class
 
 

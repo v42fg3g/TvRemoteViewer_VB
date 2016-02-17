@@ -11,6 +11,7 @@ Module モジュール_ts解析
         Public searchstr As String 'indexof用　fullpathfilename & ":" & start_utime
         Public duration As Integer '動画の長さ
         Public video_fps As Double 'ts以外の場合のフレームレート
+        Public sid As Integer 'サービスID
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
             Dim pF As String = CType(obj, String) '検索内容を取得
@@ -69,6 +70,7 @@ Module モジュール_ts解析
             r.searchstr = TOT_cache(i).searchstr
             r.duration = TOT_cache(i).duration
             r.video_fps = TOT_cache(i).video_fps
+            r.sid = TOT_cache(i).sid
             log1write(fullpathfilename & "の開始時間をキャッシュから取得しました")
         Else
             '新規登録
@@ -86,6 +88,7 @@ Module モジュール_ts解析
                 TOT_cache(TOT_cache_index).searchstr = searchstr
                 TOT_cache(TOT_cache_index).duration = r.duration
                 TOT_cache(TOT_cache_index).video_fps = r.video_fps
+                TOT_cache(TOT_cache_index).sid = r.sid
                 log1write(fullpathfilename & "の開始時間をTOTと作成日時から取得しました")
             End If
         End If
@@ -115,6 +118,9 @@ Module モジュール_ts解析
 
                 Dim err As Integer = 0
                 Dim errstr As String = ""
+
+                Dim sid As Integer = 0
+                Dim sid_count As Integer = 0
 
                 'ファイルを読み込む 
                 Dim chk As Integer = 0
@@ -153,6 +159,16 @@ Module モジュール_ts解析
                             If tdate < tstart Then
                                 tstart = tdate
                                 t_chk += 1
+                            End If
+                        Case "00"
+                            'PAT
+                            If bs(4) = 0 And payload_unit_start_indicator = 1 Then
+                                Dim stemp As String = (bs(17) * 256 + bs(18)).ToString
+                                If Val(stemp) > 0 And (Val(stemp) < sid Or sid = 0) Then
+                                    '一番小さいsidを記録
+                                    sid = Val(stemp)
+                                    sid_count += 1
+                                End If
                             End If
                     End Select
 
@@ -280,6 +296,7 @@ Module モジュール_ts解析
                 Else
                     r.duration = 0
                 End If
+                r.sid = sid
                 r.err = err
                 r.errstr = errstr
             Catch ex As Exception

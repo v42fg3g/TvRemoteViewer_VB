@@ -3,9 +3,6 @@
     'ファイル再生はffmpegを使用する場合は1
     Public video_force_ffmpeg As Integer = 0
 
-    'PipeRunフルパスファイル名 PiprRun_QF.bat
-    Public exepath_PipeRun As String = ""
-
     '明示的にHLSアプリを指定する場合の各アプリ実行ファイルパス
     Public exepath_ffmpeg As String = "" 'thumbnail_ffmpegと置き換え
     Public exepath_VLC As String = ""

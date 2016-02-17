@@ -1530,15 +1530,6 @@ Class WebRemocon
                                         log1write("【エラー】個別実行用QSVEncが見つかりませんでした。" & exepath_QSVEnc)
                                     End If
                                 End If
-                            Case "exepath_PipeRun"
-                                exepath_PipeRun = youso(1).ToString
-                                If exepath_PipeRun.Length > 0 Then
-                                    If file_exist(exepath_PipeRun) = 1 Then
-                                        log1write("個別実行用PipeRunとして" & exepath_PipeRun & "が指定されました")
-                                    Else
-                                        log1write("【エラー】個別実行用PipeRunが見つかりませんでした。" & exepath_PipeRun)
-                                    End If
-                                End If
                             Case "video_force_ffmpeg"
                                 video_force_ffmpeg = Val(youso(1).ToString)
                                 If video_force_ffmpeg = 1 Then
@@ -2475,7 +2466,7 @@ Class WebRemocon
                             log1write("【エラー】ini内のexepath_QSVEncが指定されていません")
                         End If
                     Case "piperun", "p"
-                        If exepath_PipeRun.Length > 0 And exepath_ffmpeg.Length > 0 And exepath_QSVEnc.Length > 0 Then
+                        If exepath_ffmpeg.Length > 0 And exepath_QSVEnc.Length > 0 Then
                             hlsAppSelect = "QSVEnc"
                             hlsApp = exepath_QSVEnc
                             hlsroot = Path.GetDirectoryName(hlsApp)
@@ -2637,7 +2628,7 @@ Class WebRemocon
                             log1write("【エラー】ini内のexepath_QSVEncが指定されていません")
                         End If
                     Case "piperun", "p"
-                        If exepath_PipeRun.Length > 0 And exepath_ffmpeg.Length > 0 And exepath_QSVEnc.Length > 0 Then
+                        If exepath_ffmpeg.Length > 0 And exepath_QSVEnc.Length > 0 Then
                             hlsAppSelect = "QSVEnc"
                             hlsApp = exepath_QSVEnc
                             hlsroot = Path.GetDirectoryName(hlsApp)
@@ -2811,9 +2802,9 @@ Class WebRemocon
             End If
 
             'QSVEnc パイプ使用指定があった場合
-            If hlsApp.ToLower.IndexOf("qsvenc") >= 0 And video_force_ffmpeg_temp = 2 And exepath_PipeRun.Length > 0 And Stream_mode = 1 Then
+            If hlsApp.ToLower.IndexOf("qsvenc") >= 0 And video_force_ffmpeg_temp = 2 And Stream_mode = 1 Then
                 hlsAppSelect = "PipeRun"
-                hlsApp = exepath_PipeRun
+                hlsApp = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\PipeRun.exe" 'ダミー
                 hlsroot = Path.GetDirectoryName(hlsApp)
                 log1write("PipeRun用にパラメータを修正します")
                 'ファイル再生はプロセスチェックをせず再起動しないのでhlsAppが変わっても問題ない
@@ -4882,7 +4873,6 @@ Class WebRemocon
         r &= "exepath_VLC=" & exepath_VLC & vbCrLf
         r &= "exepath_ffmpeg=" & exepath_ffmpeg & vbCrLf
         r &= "exepath_QSVEnc=" & exepath_QSVEnc & vbCrLf
-        r &= "exepath_PipeRun=" & exepath_PipeRun & vbCrLf
         r &= vbCrLf
         r &= "【HTTPサーバー】" & vbCrLf
         r &= "_wwwroot=" & Me._wwwroot & vbCrLf

@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 1.91"
+    Private version As String = "TvRemoteViewer_VB 1.92"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -382,13 +382,6 @@ Public Class Form1
 
         'チャンネル情報を取得　今までは表示要求があった時点で１つ１つ取得していた
         Me._worker.WI_GET_CHANNELS()
-
-        'PipeRun.exe
-        exepath_PipeRun = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\PipeRun.exe"
-        If file_exist(exepath_PipeRun) <= 0 Then
-            log1write("【警告】PipeRun.exeが見つかりません")
-            exepath_PipeRun = ""
-        End If
 
         'iniからパラ－メータを読み込む
         Me._worker.read_videopath()
