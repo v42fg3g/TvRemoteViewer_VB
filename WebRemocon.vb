@@ -1883,72 +1883,7 @@ Class WebRemocon
             End If
 
             '倍速指定があれば
-            If baisoku <> "1" And baisoku.Length > 0 Then
-                Dim bunsuu As String = get_bunsuu_R(baisoku) 'おかしな数値の場合は1で返ってくる
-                If bunsuu <> "1/1" Then
-                    '2倍速より上の場合はatempoを分割しないといけない
-                    Dim atempo As String = ""
-                    Dim dbl As Double
-                    Try
-                        dbl = Decimal.Parse(baisoku)
-                        If dbl > 2 Then
-                            Dim sep As String = ""
-                            While dbl > 2
-                                atempo &= sep & "atempo=2"
-                                dbl = dbl / 2
-                                sep = ","
-                            End While
-                            If dbl <> 1 Then
-                                '小数点3桁までにしておく　→ 廃止。よく考えたら2で割って無理数にはならないわな
-                                'dbl = Math.Round(dbl, 3, MidpointRounding.AwayFromZero)
-                                atempo &= sep & "atempo=" & dbl
-                            End If
-                        Else
-                            atempo = "atempo=" & baisoku
-                        End If
-                    Catch ex As Exception
-                        dbl = 0
-                        log1write("【エラー】倍速指定が不正です")
-                    End Try
-
-                    If dbl > 0 Then
-                        Dim bchk As Integer = 0
-                        If hlsOpt.IndexOf(" -vf ") < 0 Then
-                            sp = hlsOpt.IndexOf(" -f ")
-                            If sp >= 0 Then
-                                '-fの前に付ける
-                                If sp > 0 Then
-                                    hlsOpt = hlsOpt.Substring(0, sp) & " -vf setpts=" & bunsuu & "*PTS" & hlsOpt.Substring(sp)
-                                    bchk = 1
-                                End If
-                            End If
-                        Else
-                            '-vfが存在している場合は前部に追加
-                            hlsOpt = hlsOpt.Replace(" -vf ", " -vf setpts=" & bunsuu & "*PTS,")
-                            bchk = 1
-                        End If
-                        If bchk = 1 Then
-                            If hlsOpt.IndexOf(" -af ") < 0 Then
-                                sp = hlsOpt.IndexOf(" -f ")
-                                If sp >= 0 Then
-                                    '-fの前に付ける
-                                    If sp > 0 Then
-                                        hlsOpt = hlsOpt.Substring(0, sp) & " -af " & atempo & hlsOpt.Substring(sp)
-                                        bchk = 2
-                                    End If
-                                End If
-                            Else
-                                '-afが存在している場合は前部に追加
-                                hlsOpt = hlsOpt.Replace(" -af ", " -af " & atempo & ",")
-                                bchk = 2
-                            End If
-                        End If
-                        If bchk <> 2 Then
-                            log1write("HLSオプションへの倍速指定に失敗しました")
-                        End If
-                    End If
-                End If
-            End If
+            hlsOpt = modify_baisoku(hlsOpt, baisoku)
         Else
             log1write("【エラー】HlsOptが指定されていません")
         End If
@@ -2132,7 +2067,7 @@ Class WebRemocon
             hlsOpt = hlsOpt.Replace("""" & filename & """", "-")
             'ffmpegシークを追加
             If videoseekseconds > 0 Then
-                hlsopt_result = "-ss " & videoseekseconds.ToString & " "
+                hlsOpt_result = "-ss " & videoseekseconds.ToString & " "
             End If
             hlsOpt_result &= "-i """ & filename & """" & " -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1"
             'パイプ記号
@@ -2146,6 +2081,79 @@ Class WebRemocon
         End If
 
         Return hlsOpt_result
+    End Function
+
+    Public Function modify_baisoku(ByVal hlsOpt As String, ByVal baisoku As String) As String
+        '倍速指定があれば
+        Dim sp As Integer = 0
+        If baisoku <> "1" And baisoku.Length > 0 Then
+            Dim bunsuu As String = get_bunsuu_R(baisoku) 'おかしな数値の場合は1で返ってくる
+            If bunsuu <> "1/1" Then
+                '2倍速より上の場合はatempoを分割しないといけない
+                Dim atempo As String = ""
+                Dim dbl As Double
+                Try
+                    dbl = Decimal.Parse(baisoku)
+                    If dbl > 2 Then
+                        Dim sep As String = ""
+                        While dbl > 2
+                            atempo &= sep & "atempo=2"
+                            dbl = dbl / 2
+                            sep = ","
+                        End While
+                        If dbl <> 1 Then
+                            '小数点3桁までにしておく　→ 廃止。よく考えたら2で割って無理数にはならないわな
+                            'dbl = Math.Round(dbl, 3, MidpointRounding.AwayFromZero)
+                            atempo &= sep & "atempo=" & dbl
+                        End If
+                    Else
+                        atempo = "atempo=" & baisoku
+                    End If
+                Catch ex As Exception
+                    dbl = 0
+                    log1write("【エラー】倍速指定が不正です")
+                End Try
+
+                If dbl > 0 Then
+                    Dim bchk As Integer = 0
+                    If hlsOpt.IndexOf(" -vf ") < 0 Then
+                        sp = hlsOpt.IndexOf(" -f ")
+                        If sp >= 0 Then
+                            '-fの前に付ける
+                            If sp > 0 Then
+                                hlsOpt = hlsOpt.Substring(0, sp) & " -vf setpts=" & bunsuu & "*PTS" & hlsOpt.Substring(sp)
+                                bchk = 1
+                            End If
+                        End If
+                    Else
+                        '-vfが存在している場合は前部に追加
+                        hlsOpt = hlsOpt.Replace(" -vf ", " -vf setpts=" & bunsuu & "*PTS,")
+                        bchk = 1
+                    End If
+                    If bchk = 1 Then
+                        If hlsOpt.IndexOf(" -af ") < 0 Then
+                            sp = hlsOpt.IndexOf(" -f ")
+                            If sp >= 0 Then
+                                '-fの前に付ける
+                                If sp > 0 Then
+                                    hlsOpt = hlsOpt.Substring(0, sp) & " -af " & atempo & hlsOpt.Substring(sp)
+                                    bchk = 2
+                                End If
+                            End If
+                        Else
+                            '-afが存在している場合は前部に追加
+                            hlsOpt = hlsOpt.Replace(" -af ", " -af " & atempo & ",")
+                            bchk = 2
+                        End If
+                    End If
+                    If bchk <> 2 Then
+                        log1write("HLSオプションへの倍速指定に失敗しました")
+                    End If
+                End If
+            End If
+        End If
+
+        Return hlsOpt
     End Function
 
     'ファイル再生
@@ -2248,6 +2256,11 @@ Class WebRemocon
     '映像配信開始
     Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
+
+        '解像度指定が「---」だった場合
+        If Trim(resolution.Replace("-", "")).Length = 0 Then
+            resolution = ""
+        End If
 
         '配信準備中のストリームで配信しようとした場合は破棄する
         Dim ut As Integer = time2unix(Now())
@@ -2382,9 +2395,11 @@ Class WebRemocon
 
             'パラメータ内にHLSアプリ指定が埋め込まれている場合
             Dim resolution_org As String = Trim(resolution)
+            'アプリと解像度に分離し、アプリ指定があればhlsAppSelectにセット
             Dim rez() As String = get_resolution_and_hlsApp(Trim(resolution)) 'resolutionから解像度とhlsAppを取得
             Dim resolution_value As String = rez(0) '純粋な解像度文字列
             If rez(1).Length > 0 Then
+                '解像度インデックスにアプリが指定されていればStartTv.htmlより優先
                 hlsAppSelect = rez(1) 'hlsApp
             End If
             'resolution指定がなければフォーム上のHLSオプションから解像度文字列を取得
