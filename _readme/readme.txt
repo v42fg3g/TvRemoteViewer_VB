@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.90
+TvRemoteViewer_VB v1.91
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -196,6 +196,9 @@ TvRemoteViewer_VB v1.90
 	%NUM%		ストリームナンバー
 	%VIDEOFILE%	ビデオファイルに変換（実際は「-i %VIDEOFILE%」の決め打ちで-iの後ろの文字列がファイル名に変換）
 	%VIDEODURATION%	ビデオの長さ(秒)　不明な場合は0
+	%RESOLUTION%	解像度インデックス文字列
+	%SERVICEID%	サービスID
+	%PIPERUN-AUDIO%　PipeRun時の音声　normal, main, sub, audio1, audio2
 
 	・StartTv.html呼び出し時のオプション	
 	hlsOptAdd	配信時のHLSオプションに動的にパラメーターを追加できます
@@ -229,7 +232,7 @@ TvRemoteViewer_VB v1.90
 ■HLSアプリの個別指定についきまして
 	○指定方法
 	・HLS_option*.txtへの記述（インデックスまたはHLSオプション本文）
-	・StartTv.htmlへhlsAppSelect引数によりHLSアプリ名を指定(hlsAppSelect=VLC,V,ffmpeg,F,QSVEnc,Q,QSV)
+	・StartTv.htmlへhlsAppSelect引数によりHLSアプリ名を指定(hlsAppSelect=VLC,V,ffmpeg,F,QSVEnc,Q,QSV,PiprRun,P)
 
 	○どのHLSオプションが使用されるのか？
 	・明示的にHLSアプリが個別指定された場合は、各アプリに対応したHLS_option_[HLSアプリ]*.txtからHLSオプションが優先的に使用されます
@@ -243,6 +246,7 @@ TvRemoteViewer_VB v1.90
 	VLC: VLC, V
 	ffmpeg: ffmpeg, F
 	QSVEnc: QSVEnc, QSVEncC, Q, QSV 
+	PipeRun: PipeRun, P
 
 	○HLS_option*.txtの記述
 	以下はどれもexepath_QSVEncで指定されたQSVEncC.exeが使用されます
@@ -691,7 +695,13 @@ TvRemoteViewer_VB v1.90
 		iniに個別指定用のexepath_VLC、exepath_ffmpeg、exepath_QSCEncを追加
 		thumbnail_ffmpegをexepath_ffmpegに名前変更（そのままでも使用可）
 	1.90	解像度インデックス内でHLSアプリが指定されている場合はHLS_option.txt内を優先的に検索するようにした
-
+	1.91	HLSアプリ個別選択に伴う細かい修正
+		iniのBS1_hlsAppをexepath_VLCに統合（そのままでも使用可）
+		タスクトレイアイコンにカーソルを合わせるとバージョンを表示するようにした
+		個別指定にPipeRunを追加（Pipe経由QSVEnc）readme参照
+		Pipe経由QSVEncファイル再生に対応（同梱のPipeRun.exeをTvRemoteViewer.exeと同じフォルダにコピーしてください）
+		Pipe経由再生のためには、iniのvideo_force_ffmpeg=2,exepath_ffmpeg, exepath_QSVEncを指定してください
+		video_force_ffmpegの値に3を追加（2に加え再生ファイルがts以外の場合はffmpegで再生する）
 
 
 ※ConnectedSelect.jsはhttp://d.hatena.ne.jp/Mars/20071109のスクリプトを使用させていただきました。

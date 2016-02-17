@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB version 1.90"
+    Private version As String = "TvRemoteViewer_VB 1.91"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -84,7 +84,7 @@ Public Class Form1
             chk_timer1 = 1
 
             'VLCのcrashダイアログが出ていたら消す
-            If textBoxHlsApp.Text.IndexOf("vlc.exe") >= 0 Or BS1_hlsApp.IndexOf("vlc.exe") >= 0 Then
+            If Diagnostics.Process.GetProcessesByName("vlc").Length > 0 Then
                 Me._worker.check_crash_dialog()
             End If
 
@@ -93,7 +93,7 @@ Public Class Form1
 
             'ffmpeg.exeを使用している場合は、1分間に1回古いTSを削除する
             If OLDTS_NODELETE = 0 Then
-                If chk_timer1_deleteTS >= 60 And (textBoxHlsApp.Text.IndexOf("ffmpeg.exe") >= 0 Or textBoxHlsApp.Text.ToLower.IndexOf("qsvencc") >= 0) Then
+                If chk_timer1_deleteTS >= 60 And Me._worker.check_hlsApp_in_stream("ffmpeg,QSVEnc") = 1 Then
                     delete_old_TS()
                     chk_timer1_deleteTS = 0
                 End If
@@ -108,7 +108,7 @@ Public Class Form1
                 s = "TvRemoteViewer_VB" & vbCrLf & "配信中：" & Trim(s)
             Else
                 LabelStream.Text = " " 'ついでにフォーム上にも表示
-                s = "TvRemoteViewer_VB"
+                s = version '"TvRemoteViewer_VB"
             End If
             If s.Length > 60 Then
                 '64文字を超えるとエラーになる
@@ -117,7 +117,7 @@ Public Class Form1
             Try
                 NotifyIcon1.Text = s
             Catch ex As Exception
-                NotifyIcon1.Text = "TvRemoteViewer_VB"
+                NotifyIcon1.Text = version '"TvRemoteViewer_VB"
             End Try
 
             'アイドル時間が指定分に達した場合は全て切断する
@@ -131,37 +131,39 @@ Public Class Form1
 
             'サムネイル作成が終了したかどうかチェック
             If making_per_thumbnail IsNot Nothing Then
-                Dim ut As Integer = time2unix(Now())
-                For i = 0 To making_per_thumbnail.Length - 1
-                    If making_per_thumbnail(i).indexofstr.Length > 0 Then
-                        Try
-                            If making_per_thumbnail(i).process.HasExited = True Then
-                                '終了している
-                                log1write(making_per_thumbnail(i).fullpathfilename & "の一定間隔サムネイル作成が終了しました")
-                                making_per_thumbnail(i).indexofstr = ""
-                            ElseIf making_per_thumbnail(i).indexofstr.Length > 0 Then
-                                If (ut - making_per_thumbnail(i).unixtime) > stop_per_thumbnail_minutes Then
-                                    '開始して指定秒数以上経過した案件がある場合プロセスを終了させる
-                                    Try
-                                        'プロセスを終了させる
+                If making_per_thumbnail.Length > 0 Then
+                    Dim ut As Integer = time2unix(Now())
+                    For i = 0 To making_per_thumbnail.Length - 1
+                        If making_per_thumbnail(i).indexofstr.Length > 0 Then
+                            Try
+                                If making_per_thumbnail(i).process.HasExited = True Then
+                                    '終了している
+                                    log1write(making_per_thumbnail(i).fullpathfilename & "の一定間隔サムネイル作成が終了しました")
+                                    making_per_thumbnail(i).indexofstr = ""
+                                ElseIf making_per_thumbnail(i).indexofstr.Length > 0 Then
+                                    If (ut - making_per_thumbnail(i).unixtime) > stop_per_thumbnail_minutes Then
+                                        '開始して指定秒数以上経過した案件がある場合プロセスを終了させる
                                         Try
-                                            making_per_thumbnail(i).process.Kill()
+                                            'プロセスを終了させる
+                                            Try
+                                                making_per_thumbnail(i).process.Kill()
+                                            Catch ex As Exception
+                                            End Try
                                         Catch ex As Exception
                                         End Try
-                                    Catch ex As Exception
-                                    End Try
-                                    log1write(making_per_thumbnail(i).fullpathfilename & "は等間隔サムネイル作成開始から" & stop_per_thumbnail_minutes.ToString & "秒経過していたので作成プロセスを破棄しました")
-                                    making_per_thumbnail(i).indexofstr = ""
-                                    Exit For
+                                        log1write(making_per_thumbnail(i).fullpathfilename & "は等間隔サムネイル作成開始から" & stop_per_thumbnail_minutes.ToString & "秒経過していたので作成プロセスを破棄しました")
+                                        making_per_thumbnail(i).indexofstr = ""
+                                        Exit For
+                                    End If
                                 End If
-                            End If
-                        Catch ex As Exception
-                            '存在していない
-                            log1write(making_per_thumbnail(i).fullpathfilename & "の一定間隔サムネイルプロセスが見つかりません")
-                            making_per_thumbnail(i).indexofstr = ""
-                        End Try
-                    End If
-                Next
+                            Catch ex As Exception
+                                '存在していない
+                                log1write(making_per_thumbnail(i).fullpathfilename & "の一定間隔サムネイルプロセスが見つかりません")
+                                making_per_thumbnail(i).indexofstr = ""
+                            End Try
+                        End If
+                    Next
+                End If
             End If
 
             chk_timer1 = 0
@@ -380,6 +382,13 @@ Public Class Form1
 
         'チャンネル情報を取得　今までは表示要求があった時点で１つ１つ取得していた
         Me._worker.WI_GET_CHANNELS()
+
+        'PipeRun.exe
+        exepath_PipeRun = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\PipeRun.exe"
+        If file_exist(exepath_PipeRun) <= 0 Then
+            log1write("【警告】PipeRun.exeが見つかりません")
+            exepath_PipeRun = ""
+        End If
 
         'iniからパラ－メータを読み込む
         Me._worker.read_videopath()

@@ -28,6 +28,9 @@ Imports System.Net
 'http://looooooooop.blog35.fc2.com/blog-entry-1014.html
 
 Class WebRemocon
+    'HLSアプリ　解像度インデックス　チェック用文字列
+    Public hlschkstr As String = ":vlc:v:ffmpeg:f:qsvenc:qsvencc:q:qsv:piperun:p:"
+
     Public _isWebStart As [Boolean] = False
     Private _listener As HttpListener = Nothing
     Private _procMan As ProcessManager = Nothing
@@ -605,7 +608,7 @@ Class WebRemocon
         html &= "<option value=""4"">第二音声</option>" & vbCrLf
         html &= "<option value=""5"">動画主音声</option>" & vbCrLf
         html &= "<option value=""6"">動画副音声</option>" & vbCrLf
-        If BS1_hlsApp.Length > 0 Then
+        If exepath_VLC.Length > 0 Then
             html &= "<option value=""9"">VLCで再生</option>" & vbCrLf
         End If
         html &= "</select>" & vbCrLf
@@ -1153,8 +1156,6 @@ Class WebRemocon
                                 End If
                             Case "AddSubFolder"
                                 Me._AddSubFolder = Val(youso(1).ToString)
-                            Case "BS1_hlsApp"
-                                BS1_hlsApp = trim8(youso(1).ToString)
                             Case "TvProgramD"
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                 Dim clset() As String = youso(1).Split(",")
@@ -1502,7 +1503,7 @@ Class WebRemocon
                                 End If
                             Case "meta_refresh_fix"
                                 meta_refresh_fix = Val(youso(1).ToString)
-                            Case "exepath_VLC", "exepath_vlc"
+                            Case "exepath_VLC", "exepath_vlc", "BS1_hlsApp"
                                 exepath_VLC = youso(1).ToString
                                 If exepath_VLC.Length > 0 Then
                                     If file_exist(exepath_VLC) = 1 Then
@@ -1527,6 +1528,15 @@ Class WebRemocon
                                         log1write("個別実行用QSVEncとして" & exepath_QSVEnc & "が指定されました")
                                     Else
                                         log1write("【エラー】個別実行用QSVEncが見つかりませんでした。" & exepath_QSVEnc)
+                                    End If
+                                End If
+                            Case "exepath_PipeRun"
+                                exepath_PipeRun = youso(1).ToString
+                                If exepath_PipeRun.Length > 0 Then
+                                    If file_exist(exepath_PipeRun) = 1 Then
+                                        log1write("個別実行用PipeRunとして" & exepath_PipeRun & "が指定されました")
+                                    Else
+                                        log1write("【エラー】個別実行用PipeRunが見つかりませんでした。" & exepath_PipeRun)
                                     End If
                                 End If
                             Case "video_force_ffmpeg"
@@ -2098,6 +2108,47 @@ Class WebRemocon
     End Function
 
     'ファイル再生
+    '現在のhlsOptをPipeRunファイル再生用に書き換える
+    Private Function hlsopt_udp2file_PipeRun(ByVal hlsOpt_QSVEnc As String, ByVal videoseekseconds As Integer) As String
+        Dim hlsOpt As String = hlsOpt_QSVEnc
+        Dim hlsOpt_result As String = ""
+        'QSVEnc用のhlsOptが与えられる
+        '--trimを削除
+        Dim sp As Integer = hlsOpt.IndexOf("--trim ")
+        If sp >= 0 Then
+            Dim ep As Integer = hlsOpt.IndexOf(" ", sp + "--trim ".Length)
+            If ep > 0 Then
+                Try
+                    hlsOpt = hlsOpt.Substring(0, sp) + hlsOpt.Substring(ep + 1)
+                Catch ex As Exception
+                    hlsOpt = Trim(hlsOpt.Substring(0, sp))
+                End Try
+            End If
+        End If
+        'ファイルネーム抽出
+        Dim filename = Instr_pickup(hlsOpt, """", """", 0)
+        If filename.length > 0 Then
+            'QSVEncのソースをパイプに変更
+            hlsOpt = hlsOpt.Replace("""" & filename & """", "-")
+            'ffmpegシークを追加
+            If videoseekseconds > 0 Then
+                hlsopt_result = "-ss " & videoseekseconds.ToString & " "
+            End If
+            hlsOpt_result &= "-i """ & filename & """" & " -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1"
+            'パイプ記号
+            hlsOpt_result &= " | "
+            'QSVEnc
+            hlsOpt_result &= hlsOpt
+        Else
+            '元のhlsOptを返す
+            hlsOpt_result = hlsOpt_QSVEnc
+            log1write("【エラー】動画ファイルが指定されていません")
+        End If
+
+        Return hlsOpt_result
+    End Function
+
+    'ファイル再生
     '現在のhlsOptをファイル再生用に書き換える
     Private Function hlsopt_udp2file_vlc(ByVal hlsOpt As String, ByVal filename As String) As String
         Dim sp As Integer = hlsOpt.IndexOf("udp://@:")
@@ -2265,17 +2316,21 @@ Class WebRemocon
         '★HLSオプションの生成
         Dim hlsOpt As String = ""
 
+        'video_force_ffmpeg
+        Dim video_force_ffmpeg_temp As Integer = video_force_ffmpeg
+
         'VLC http ストリーム用にhlsAppとhlsOptを入れ替える
         If Stream_mode = 2 Or Stream_mode = 3 Then
             'httpストリームアプリが指定されていれば
             If HTTPSTREAM_App = 1 Then
                 'vlc指定
-                If BS1_hlsApp.Length > 0 Then
+                If exepath_VLC.Length > 0 Then
                     If hlsApp.IndexOf("ffmpeg") >= 0 Then
-                        hlsApp = BS1_hlsApp
+                        hlsApp = exepath_VLC
+                        hlsroot = Path.GetDirectoryName(hlsApp)
                     End If
                 Else
-                    log1write("エラー：BS1_hlsAppが指定されていません")
+                    log1write("エラー：exepath_VLCが指定されていません")
                     stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                     Exit Sub
                 End If
@@ -2325,8 +2380,6 @@ Class WebRemocon
                 Stream_mode = 1
             End If
 
-            Dim hlschkstr As String = ":vlc:v:ffmpeg:f:qsvenc:qsvencc:q:qsv:"
-
             'パラメータ内にHLSアプリ指定が埋め込まれている場合
             Dim resolution_org As String = Trim(resolution)
             Dim rez() As String = get_resolution_and_hlsApp(Trim(resolution)) 'resolutionから解像度とhlsAppを取得
@@ -2359,7 +2412,21 @@ Class WebRemocon
             'video_force_ffmpegが指定されている場合
             If video_force_ffmpeg = 1 And Stream_mode = 1 Then
                 hlsAppSelect = "ffmpeg"
-                log1write("video_force_ffmpegによりHLSアプリにVLCが指定されました")
+                log1write("video_force_ffmpeg=1によりHLSアプリにffmpegが指定されました")
+            ElseIf video_force_ffmpeg = 2 And Stream_mode = 1 Then
+                hlsAppSelect = "QSVEnc"
+                log1write("video_force_ffmpeg=2によりHLSアプリにPipeRunが指定されました") '後で書き換え
+                video_force_ffmpeg_temp = 2
+            ElseIf video_force_ffmpeg = 3 And Stream_mode = 1 And filename.Length > 0 Then
+                Dim ext As String = Path.GetExtension(filename).ToLower
+                If ext = ".ts" Then
+                    hlsAppSelect = "QSVEnc"
+                    log1write("video_force_ffmpeg=3によりHLSアプリにPipeRunが指定されました") '後で書き換え
+                    video_force_ffmpeg_temp = 2
+                Else
+                    hlsAppSelect = "ffmpeg"
+                    log1write("video_force_ffmpeg=3によりHLSアプリにffmpegが指定されました")
+                End If
             End If
 
             If hlsAppSelect.Length > 0 Then
@@ -2391,6 +2458,17 @@ Class WebRemocon
                             log1write("HLSアプリにQSVEncが指定されました")
                         Else
                             log1write("【エラー】ini内のexepath_QSVEncが指定されていません")
+                        End If
+                    Case "piperun", "p"
+                        If exepath_PipeRun.Length > 0 And exepath_ffmpeg.Length > 0 And exepath_QSVEnc.Length > 0 Then
+                            hlsAppSelect = "QSVEnc"
+                            hlsApp = exepath_QSVEnc
+                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            log1write("HLSアプリにPipeRunが指定されました")
+                            video_force_ffmpeg_temp = 2
+                            'パラメータはQSVEncで作っておいて後でPipeRunに直す
+                        Else
+                            log1write("【エラー】ini内のexepath_～の指定が不足しています")
                         End If
                 End Select
                 '目的のHLS_optionファイルを探索
@@ -2498,6 +2576,9 @@ Class WebRemocon
                     Case "(q)", "(qs"
                         has = "QSVEnc"
                         sp = hlsOpt.IndexOf(")")
+                    Case "(p)", "(pi"
+                        has = "QSVEnc"
+                        sp = hlsOpt.IndexOf(")")
                 End Select
                 'hlsOptから余計なHLSアプリ指定文字列を除去
                 If sp >= 0 Then
@@ -2539,6 +2620,17 @@ Class WebRemocon
                             chk = 1
                         Else
                             log1write("【エラー】ini内のexepath_QSVEncが指定されていません")
+                        End If
+                    Case "piperun", "p"
+                        If exepath_PipeRun.Length > 0 And exepath_ffmpeg.Length > 0 And exepath_QSVEnc.Length > 0 Then
+                            hlsAppSelect = "QSVEnc"
+                            hlsApp = exepath_QSVEnc
+                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            log1write("HLSオプション内の指定によりHLSアプリにPipeRunが指定されました")
+                            chk = 1
+                            video_force_ffmpeg_temp = 2
+                        Else
+                            log1write("【エラー】ini内のexepath_～の指定が不足しています")
                         End If
                 End Select
             End If
@@ -2608,12 +2700,13 @@ Class WebRemocon
                     '動画副音声
                     hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-af pan=stereo|c0=c1|c1=c1")
                 ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
-                    If BS1_hlsApp.Length > 0 Then
+                    If exepath_VLC.Length > 0 Then
                         'hlsAppとhlsOptをVLCに置き換える
                         Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode)
                         If hlsOpt_temp.Length > 0 Then
                             hlsOpt = hlsOpt_temp
-                            hlsApp = BS1_hlsApp
+                            hlsApp = exepath_VLC
+                            hlsroot = Path.GetDirectoryName(hlsApp)
                         End If
                     Else
                         NHK_dual_mono_mode_select = 0
@@ -2680,12 +2773,13 @@ Class WebRemocon
                     hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
                     hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
                 ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
-                    If BS1_hlsApp.Length > 0 Then
+                    If exepath_VLC.Length > 0 Then
                         'hlsAppとhlsOptをVLCに置き換える
                         Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode) 'QSVEnc対応済
                         If hlsOpt_temp.Length > 0 Then
                             hlsOpt = hlsOpt_temp
-                            hlsApp = BS1_hlsApp
+                            hlsApp = exepath_VLC
+                            hlsroot = Path.GetDirectoryName(hlsApp)
                         End If
                     Else
                         NHK_dual_mono_mode_select = 0
@@ -2699,6 +2793,17 @@ Class WebRemocon
                 If hlsOptAdd.Length > 0 Then
                     log1write("QSVEncへのパラメーター追加は無視されました。" & hlsOptAdd.Replace("_-_", "  "))
                 End If
+            End If
+
+            'QSVEnc パイプ使用指定があった場合
+            If hlsApp.ToLower.IndexOf("qsvenc") >= 0 And video_force_ffmpeg_temp = 2 And exepath_PipeRun.Length > 0 And Stream_mode = 1 Then
+                hlsAppSelect = "PipeRun"
+                hlsApp = exepath_PipeRun
+                hlsroot = Path.GetDirectoryName(hlsApp)
+                log1write("PipeRun用にパラメータを修正します")
+                'ファイル再生はプロセスチェックをせず再起動しないのでhlsAppが変わっても問題ない
+                'パラメーター書き換え PipeRun_ffmpeg_QSVEnc.exe用
+                hlsOpt = hlsopt_udp2file_PipeRun(hlsOpt, VideoSeekSeconds)
             End If
 
             '"%HLSROOT/../%"用
@@ -2748,8 +2853,6 @@ Class WebRemocon
         Dim r(1) As String
         Dim i As Integer = 0
 
-        Dim hlschkstr As String = ":vlc:v:ffmpeg:f:qsvenc:qsvencc:q:qsv:"
-
         r(0) = "" '640x360
         r(1) = "" 'hlsApp
 
@@ -2789,6 +2892,9 @@ Class WebRemocon
         ElseIf resolution.ToLower.IndexOf("(q)") >= 0 Or resolution.ToLower.IndexOf("(qsv)") >= 0 Or resolution.ToLower.IndexOf("(qsvenc)") >= 0 Or resolution.ToLower.IndexOf("(qsvencc)") >= 0 Then
             hlsAppSelect = "QSVEnc"
             resolution_value = resolution.ToLower.Replace("(q)", "").Replace("(qsv)", "").Replace("(qsvenc)", "").Replace("(qsvencc)", "")
+        ElseIf resolution.ToLower.IndexOf("(p)") >= 0 Or resolution.ToLower.IndexOf("(piperun)") >= 0 Then
+            hlsAppSelect = "PipeRun"
+            resolution_value = resolution.ToLower.Replace("(p)", "").Replace("(piperun)", "")
         End If
 
         r(0) = Trim(resolution_value)
@@ -4758,7 +4864,10 @@ Class WebRemocon
         r &= "_hlsroot=" & Me._hlsroot & vbCrLf
         r &= "_hlsOpt=" & Me._hlsOpt2 & vbCrLf
         r &= "_NHK_dual_mono_mode=" & Me._NHK_dual_mono_mode & vbCrLf
-        r &= "BS1_hlsApp=" & BS1_hlsApp & vbCrLf
+        r &= "exepath_VLC=" & exepath_VLC & vbCrLf
+        r &= "exepath_ffmpeg=" & exepath_ffmpeg & vbCrLf
+        r &= "exepath_QSVEnc=" & exepath_QSVEnc & vbCrLf
+        r &= "exepath_PipeRun=" & exepath_PipeRun & vbCrLf
         r &= vbCrLf
         r &= "【HTTPサーバー】" & vbCrLf
         r &= "_wwwroot=" & Me._wwwroot & vbCrLf
@@ -4794,9 +4903,6 @@ Class WebRemocon
         r &= "_AddSubFolder=" & Me._AddSubFolder & vbCrLf
         r &= "VideoSeekDefault=" & VideoSeekDefault & vbCrLf
         r &= "VideoSizeCheck=" & VideoSizeCheck & vbCrLf
-        r &= "exepath_VLC=" & exepath_vlc & vbCrLf
-        r &= "exepath_ffmpeg=" & exepath_ffmpeg & vbCrLf
-        r &= "exepath_QSVEnc=" & exepath_QSVEnc & vbCrLf
         r &= "video_force_ffmpeg=" & video_force_ffmpeg & vbCrLf
         r &= vbCrLf
         r &= "【HTTPストリーム再生】" & vbCrLf
@@ -4900,6 +5006,58 @@ Class WebRemocon
                     r &= ffmpeg_http_option(i).resolution & vbCrLf
                 Next
             End If
+        End If
+
+        r &= vbCrLf
+        r &= "[VLC]" & vbCrLf
+        If vlc_option IsNot Nothing Then
+            For i = 0 To vlc_option.Length - 1
+                r &= vlc_option(i).resolution & vbCrLf
+            Next
+        End If
+        r &= vbCrLf
+        r &= "[VLC_http]" & vbCrLf
+        If vlc_http_option IsNot Nothing Then
+            For i = 0 To vlc_http_option.Length - 1
+                r &= vlc_http_option(i).resolution & vbCrLf
+            Next
+        End If
+
+        r &= vbCrLf
+        r &= "[ffmpeg]" & vbCrLf
+        If ffmpeg_option IsNot Nothing Then
+            For i = 0 To ffmpeg_option.Length - 1
+                r &= ffmpeg_option(i).resolution & vbCrLf
+            Next
+        End If
+        r &= vbCrLf
+        r &= "[ffmpeg_file]" & vbCrLf
+        If ffmpeg_file_option IsNot Nothing Then
+            For i = 0 To ffmpeg_file_option.Length - 1
+                r &= ffmpeg_file_option(i).resolution & vbCrLf
+            Next
+        End If
+        r &= vbCrLf
+        r &= "[ffmpeg_http]" & vbCrLf
+        If ffmpeg_http_option IsNot Nothing Then
+            For i = 0 To ffmpeg_http_option.Length - 1
+                r &= ffmpeg_http_option(i).resolution & vbCrLf
+            Next
+        End If
+
+        r &= vbCrLf
+        r &= "[QSVEnc]" & vbCrLf
+        If QSVEnc_option IsNot Nothing Then
+            For i = 0 To QSVEnc_option.Length - 1
+                r &= QSVEnc_option(i).resolution & vbCrLf
+            Next
+        End If
+        r &= vbCrLf
+        r &= "[QSVEnc_file]" & vbCrLf
+        If QSVEnc_file_option IsNot Nothing Then
+            For i = 0 To QSVEnc_file_option.Length - 1
+                r &= QSVEnc_file_option(i).resolution & vbCrLf
+            Next
         End If
 
         Return r
@@ -5353,7 +5511,10 @@ Class WebRemocon
                 Dim chk As Integer = 0
                 Dim sp As Integer = url.IndexOf("://")
                 If sp = 4 Or sp = 5 Then
-                    If Instr_pickup(url, "://", "/", 0).indexof(".2ch.net") > 0 Then
+                    Dim domain_str As String = Instr_pickup(url, "://", "/", 0)
+                    Dim dsi As Integer = domain_str.IndexOf(".2ch.net")
+                    '更に厳密に接続先が.2ch.netであることを調べるようにした
+                    If domain_str.Length - ".2ch.net".Length = dsi Then
                         If url.IndexOf("/read.cgi/") > 0 Or url.IndexOf("/subback.html") > 0 Or url.IndexOf("/bbsmenu.html") > 0 Then
                             '正常
                             chk = 1
@@ -5431,6 +5592,12 @@ Class WebRemocon
     Public Sub resume_file_streams()
         Me._procMan.resume_file_streams()
     End Sub
+
+    '本体はProcessManager.vb
+    Public Function check_hlsApp_in_stream(ByVal s As String) As Integer
+        Return Me._procMan.check_hlsApp_in_stream(s)
+    End Function
+
 End Class
 
 

@@ -393,10 +393,10 @@ Module モジュール_ts解析
                     log1write("【エラー】ffmpegフォルダにffprobe.exeが見つかりません")
                 End If
             Catch ex As Exception
-                log1write("【エラー】fprobe.exe実行中にエラーが発生しました。" & ex.Message)
+                log1write("【エラー】ffprobe.exe実行中にエラーが発生しました。" & ex.Message)
             End Try
         Else
-            log1write("HLSアプリとしてffmpeg以外を使用している場合、動画情報を取得することはできません")
+            log1write("HLSアプリとしてffmpeg以外を使用している場合、動画情報を取得することはできません。iniのexepath_ffmpegを指定してください")
         End If
 
         Return r

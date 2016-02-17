@@ -10,6 +10,7 @@ Class ProcessBean
     Private _udpProc As Process = Nothing
     Private _udpPipeId_str As String = ""
     Public _hlsProc As Process = Nothing
+    Public _hlsProc2() As Process = Nothing
     Private _procBrowserIndex As Integer = 0
     Public _udpApp As String = ""
     Public _udpOpt As String = ""
@@ -32,9 +33,10 @@ Class ProcessBean
     Public _ffmpegBuf As Byte() '= Nothing        'Public opt As String 'VLCオプション文字列
     Public _http_udp_changing As Integer
 
-    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId_str As String, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String, VideoSeekSeconds As Integer)
+    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId_str As String, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String, VideoSeekSeconds As Integer, hlsProc2() As Process)
         Me._udpProc = udpProc
         Me._hlsProc = hlsProc
+        Me._hlsProc2 = hlsProc2
         Me._procBrowserIndex = procBrowserIndex
         Me._udpPipeId_str = udpPipeId_str
         Me._udpApp = udpApp
@@ -244,6 +246,10 @@ Class ProcessBean
 
     Public Function GetHlsProc() As Process
         Return Me._hlsProc
+    End Function
+
+    Public Function GetHlsProc2() As Process()
+        Return Me._hlsProc2
     End Function
 
     Public Function GetProcBrowserIndex() As Integer

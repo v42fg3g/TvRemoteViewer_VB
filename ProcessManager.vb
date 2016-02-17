@@ -414,7 +414,7 @@ Public Class ProcessManager
                                     Me._list.RemoveAt(i)
                                 End If
                                 '                                  ↓Processはまだ決まっていない
-                                Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
+                                Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing)
                                 Me._list.Add(pb)
 
                                 '1秒毎のプロセスチェックさせない
@@ -473,7 +473,7 @@ Public Class ProcessManager
                                 End If
 
                                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex_str)'↓再起動用にパラメーターを渡しておく
-                                Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
+                                Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing)
                                 Me._list.Add(pb)
                             End If
                         Else
@@ -529,7 +529,7 @@ Public Class ProcessManager
                         End If
                         'ProcessBeans作成
                         '                                  ↓Processはまだ決まっていない
-                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds)
+                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, Nothing)
                         Me._list.Add(pb)
 
                         '1秒毎のプロセスチェックさせない
@@ -553,13 +553,95 @@ Public Class ProcessManager
                         'ログ表示
                         log1write("No.=" & num & "HLS アプリ=" & hlsApp)
                         log1write("No.=" & num & "HLS option=" & hlsOpt)
-                        'アプリケーションを起動する
-                        Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
 
-                        log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
+                        Dim hlsProc As System.Diagnostics.Process = Nothing
+                        Dim hlsProc2(1) As System.Diagnostics.Process
+                        hlsProc2(0) = Nothing
+                        hlsProc2(1) = Nothing
+
+                        If hlsApp.IndexOf("PipeRun") >= 0 Then
+                            '先に現在実行中のffmpegとQSVEncの全プロセスを記録
+                            Dim ps1a As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName("ffmpeg")
+                            Dim pstr1 As String = ":"
+                            For Each p1 As Process In ps1a
+                                pstr1 &= p1.Id.ToString & ":"
+                            Next p1
+                            Dim ps2a As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName("QSVEncC")
+                            Dim pstr2 As String = ":"
+                            For Each p2 As Process In ps2a
+                                pstr2 &= p2.Id.ToString & ":"
+                            Next p2
+
+                            'アプリケーションを起動する
+                            hlsProc2(1) = System.Diagnostics.Process.Start(hlsPsi)
+
+                            'バッチ実行後に増加したプロセスからプロセスを推定
+                            Dim chk As Integer = 30 * 10 '30秒
+                            Dim chk_ffmpeg As Integer = 0
+                            Dim chk_QSVEnc As Integer = 0
+                            While chk > 0
+                                If chk_ffmpeg = 0 Then
+                                    Dim ps1b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName("ffmpeg")
+                                    For Each p11 As Process In ps1b
+                                        If pstr1.IndexOf(":" & p11.Id.ToString & ":") < 0 Then
+                                            hlsProc2(0) = p11
+                                            chk_ffmpeg = 1
+                                            log1write("PipeRun内のバッチ処理でffmpegが起動されました。プロセスID=" & p11.Id.ToString)
+                                            Exit For
+                                        End If
+                                    Next
+                                End If
+                                If chk_QSVEnc = 0 Then
+                                    Dim ps2b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName("QSVEncC")
+                                    For Each p22 As Process In ps2b
+                                        If pstr2.IndexOf(":" & p22.Id.ToString & ":") < 0 Then
+                                            hlsProc = p22
+                                            chk_QSVEnc = 1
+                                            log1write("PipeRun内のバッチ処理でQSVEncが起動されました。プロセスID=" & p22.Id.ToString)
+                                            Exit For
+                                        End If
+                                    Next
+                                End If
+                                If chk_ffmpeg = 1 And chk_QSVEnc = 1 Then
+                                    Exit While
+                                End If
+
+                                System.Threading.Thread.Sleep(100)
+                                chk -= 1
+                            End While
+
+                            If chk <= 0 Then
+                                '失敗
+                                log1write("【エラー】" & "PipeRunによるプロセス起動に失敗したようです。")
+                            End If
+
+                            Try
+                                log1write("QSVEncプロセス=" & hlsProc.Id.ToString)
+                            Catch ex As Exception
+                            End Try
+                            Try
+                                log1write("ffmpegプロセス=" & hlsProc2(0).Id.ToString)
+                            Catch ex As Exception
+                            End Try
+                            Try
+                                log1write("PipeRunプロセス=" & hlsProc2(1).Id.ToString)
+                            Catch ex As Exception
+                                log1write("PipeRunプロセスはすでに終了したようです")
+                            End Try
+                        Else
+                            '通常
+                            'アプリケーションを起動する
+                            hlsProc = System.Diagnostics.Process.Start(hlsPsi)
+                        End If
+
+                        Try
+                            log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
+                        Catch ex As Exception
+                            log1write("No.=" & num & "のHLSアプリ起動に失敗しました。" & ex.Message)
+                        End Try
 
                         '                                                           ↓再起動用にパラメーターを渡しておく
-                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds)
+                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2)
                         Me._list.Add(pb)
                     End If
                 End If
@@ -631,140 +713,141 @@ Public Class ProcessManager
     'プロセスが順調に動いているかチェック
     Public Sub checkAllProc()
         Try
-            For i As Integer = Me._list.Count - 1 To 0 Step -1
-                If Me._list(i)._stopping > 100 Then
-                    Me._list(i)._stopping -= 1
-                    If Me._list(i)._stopping = 100 Then
-                        'ffmpeg HTTPストリーム クライアントが終了したのでストリームを終了させる
-                        log1write("No." & Me._list(i)._num & " ffmpegHTTPストリームの終了予約を検知しました")
-                        stopProc(Me._list(i)._num)
-                    End If
-                ElseIf Me._list(i)._stopping = 1 Then
-                    '終了途中
-                ElseIf Me._list(i)._stopping = 2 Then
-                    'チャンネル変更中
-                ElseIf Me._list(i)._stopping >= 100 Then '=3
-                    'ffmpeg HTTPストリーム UDPアプリだけが起動してHLSアプリの起動を待っている
-                ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 0 Or Me._list(i)._stream_mode = 2) Then
-                    '通常再生　順調かどうかチェック
-                    Dim chk As Integer = 0
-                    Dim procudp As System.Diagnostics.Process = Nothing
-                    Dim prochls As System.Diagnostics.Process = Nothing
-                    procudp = Me._list(i).GetUdpProc()
-                    prochls = Me._list(i).GetHlsProc()
-                    If procudp IsNot Nothing AndAlso Not procudp.HasExited Then
-                    Else
-                        'エラー
-                        Me._list(i)._chk_proc += 100
-                        chk += 1
-                        log1write("No.=" & Me._list(i)._num.ToString & " UDPアプリが応答しません")
-                    End If
-                    'If procudp.Responding Then
-                    'Else
-                    '応答しない
-                    'Me._list(i)._chk_proc += 10
-                    'chk += 1
-                    'log1write("UDPアプリが応答しません[B] No.=" & Me._list(i)._num.ToString)
-                    'End If
-                    If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
-                    Else
-                        'エラー
-                        Me._list(i)._chk_proc += 100
-                        chk += 1
-                        log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
-                    End If
-                    'If prochls.Responding Then
-                    'Else
-                    '応答しない
-                    'Me._list(i)._chk_proc += 10
-                    'chk += 1
-                    'log1write("HLSアプリが応答しません[B] No.=" & Me._list(i)._num.ToString)
-                    'End If
-
-                    If chk = 0 Then
-                        'エラーがなければエラーカウンタをリセット
-                        Me._list(i)._chk_proc = 0
-                    End If
-
-                    If Me._list(i)._chk_proc >= 300 Then 'プロセスが無いか3秒応答がなければ
-                        'エラーカウンタをリセット
-                        Me._list(i)._chk_proc = 0
-                        '終了して再起動
-                        'stopProcする前に起動パラメーターを一時待避
-                        Dim p1 As String = Me._list(i)._udpApp
-                        Dim p2 As String = Me._list(i)._udpOpt
-                        Dim p3 As String = Me._list(i)._hlsApp
-                        Dim p4 As String = Me._list(i)._hlsOpt
-                        Dim p5 As Integer = Me._list(i)._num
-                        Dim p6 As Integer = Me._list(i)._udpPort
-                        Dim p7 As Boolean = Me._list(i)._ShowConsole
-                        Dim p8 As Integer = Me._list(i)._stream_mode
-                        Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
-                        Dim p10 As String = Me._list(i)._resolution
-                        Dim p11 As Integer = Me._list(i)._VideoSeekSeconds
-                        'プロセスを停止
-                        stopProc(p5) 'startprocでも冒頭で停止処理をするので割愛と思ったが再起動時には停止しておいたほうが正常に動いた
-                        'プロセスを開始
-                        startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
-                        log1write("No.=" & p5 & "のプロセスを再起動しました")
-                    End If
-                ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And Me._list(i)._stream_mode = 1 Then
-                    If Me._list(i)._FileEncodeFinished = 0 Then
-                        'ファイル再生　エンコードが終わったかどうかチェック
-                        Dim prochls As System.Diagnostics.Process = Me._list(i).GetHlsProc()
-                        If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
-                            'エラーがなければエラーカウンタをリセット
-                            Me._list(i)._chk_proc = 0
+            If Me._list.Count > 0 Then
+                For i As Integer = Me._list.Count - 1 To 0 Step -1
+                    If Me._list(i)._stopping > 100 Then
+                        Me._list(i)._stopping -= 1
+                        If Me._list(i)._stopping = 100 Then
+                            'ffmpeg HTTPストリーム クライアントが終了したのでストリームを終了させる
+                            log1write("No." & Me._list(i)._num & " ffmpegHTTPストリームの終了予約を検知しました")
+                            stopProc(Me._list(i)._num)
+                        End If
+                    ElseIf Me._list(i)._stopping = 1 Then
+                        '終了途中
+                    ElseIf Me._list(i)._stopping = 2 Then
+                        'チャンネル変更中
+                    ElseIf Me._list(i)._stopping >= 100 Then '=3
+                        'ffmpeg HTTPストリーム UDPアプリだけが起動してHLSアプリの起動を待っている
+                    ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And (Me._list(i)._stream_mode = 0 Or Me._list(i)._stream_mode = 2) Then
+                        '通常再生　順調かどうかチェック
+                        Dim chk As Integer = 0
+                        Dim procudp As System.Diagnostics.Process = Nothing
+                        Dim prochls As System.Diagnostics.Process = Nothing
+                        procudp = Me._list(i).GetUdpProc()
+                        prochls = Me._list(i).GetHlsProc()
+                        If procudp IsNot Nothing AndAlso Not procudp.HasExited Then
                         Else
                             'エラー
-                            If Me._list(i)._chk_proc < 100000 Then 'フロー防止
-                                Me._list(i)._chk_proc += 100
-                            End If
-                            'log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
+                            Me._list(i)._chk_proc += 100
+                            chk += 1
+                            log1write("No.=" & Me._list(i)._num.ToString & " UDPアプリが応答しません")
+                        End If
+                        'If procudp.Responding Then
+                        'Else
+                        '応答しない
+                        'Me._list(i)._chk_proc += 10
+                        'chk += 1
+                        'log1write("UDPアプリが応答しません[B] No.=" & Me._list(i)._num.ToString)
+                        'End If
+                        If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
+                        Else
+                            'エラー
+                            Me._list(i)._chk_proc += 100
+                            chk += 1
+                            log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
+                        End If
+                        'If prochls.Responding Then
+                        'Else
+                        '応答しない
+                        'Me._list(i)._chk_proc += 10
+                        'chk += 1
+                        'log1write("HLSアプリが応答しません[B] No.=" & Me._list(i)._num.ToString)
+                        'End If
+
+                        If chk = 0 Then
+                            'エラーがなければエラーカウンタをリセット
+                            Me._list(i)._chk_proc = 0
                         End If
 
-                        If Me._list(i)._chk_proc >= 1000 And stream_last_utime(Me._list(i)._num) = 0 Then 'プロセスが無いか10秒応答がなければ
-                            Me._list(i)._FileEncodeFinished = 1 'エンコード終了
-
-                            log1write("No.=" & Me._list(i)._num.ToString & " のエンコードが終了したようです")
-                            'm3u8をチェックして#EXT-X-ENDLISTが無ければ付加
-                            Dim m3u8filename As String = _fileroot & "\mystream" & Me._list(i)._num & ".m3u8"
-                            If file_exist(m3u8filename) = 1 Then
-                                Dim str As String = ReadAllTexts(m3u8filename) 'file2str(m3u8filename, "UTF-8")
-                                If str.Length > 0 And str.IndexOf("#EXT-X-ENDLIST") < 0 Then
-                                    '最後の改行を消す
-                                    Try
-                                        While str.Substring(str.Length - 2, 2) = vbCrLf
-                                            str = str.Substring(0, str.Length - 2)
-                                        End While
-                                    Catch ex As Exception
-                                    End Try
-                                    str &= vbCrLf & "#EXT-X-ENDLIST" & vbCrLf
-                                    If str2file(m3u8filename, str, "shift_jis") = 1 Then 'shift_jisのほうが余計なものがつかないかな
-                                        log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルに#EXT-X-ENDLISTを追記しました")
-                                    Else
-                                        log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルへの#EXT-X-ENDLIST追記に失敗しました")
-                                    End If
+                        If Me._list(i)._chk_proc >= 300 Then 'プロセスが無いか3秒応答がなければ
+                            'エラーカウンタをリセット
+                            Me._list(i)._chk_proc = 0
+                            '終了して再起動
+                            'stopProcする前に起動パラメーターを一時待避
+                            Dim p1 As String = Me._list(i)._udpApp
+                            Dim p2 As String = Me._list(i)._udpOpt
+                            Dim p3 As String = Me._list(i)._hlsApp
+                            Dim p4 As String = Me._list(i)._hlsOpt
+                            Dim p5 As Integer = Me._list(i)._num
+                            Dim p6 As Integer = Me._list(i)._udpPort
+                            Dim p7 As Boolean = Me._list(i)._ShowConsole
+                            Dim p8 As Integer = Me._list(i)._stream_mode
+                            Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
+                            Dim p10 As String = Me._list(i)._resolution
+                            Dim p11 As Integer = Me._list(i)._VideoSeekSeconds
+                            'プロセスを停止
+                            stopProc(p5) 'startprocでも冒頭で停止処理をするので割愛と思ったが再起動時には停止しておいたほうが正常に動いた
+                            'プロセスを開始
+                            startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
+                            log1write("No.=" & p5 & "のプロセスを再起動しました")
+                        End If
+                    ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And Me._list(i)._stream_mode = 1 Then
+                        If Me._list(i)._FileEncodeFinished = 0 Then
+                            'ファイル再生　エンコードが終わったかどうかチェック
+                            Dim prochls As System.Diagnostics.Process = Me._list(i).GetHlsProc()
+                            If prochls IsNot Nothing AndAlso Not prochls.HasExited Then
+                                'エラーがなければエラーカウンタをリセット
+                                Me._list(i)._chk_proc = 0
+                            Else
+                                'エラー
+                                If Me._list(i)._chk_proc < 100000 Then 'フロー防止
+                                    Me._list(i)._chk_proc += 100
                                 End If
+                                'log1write("No.=" & Me._list(i)._num.ToString & " HLSアプリが応答しません")
+                            End If
 
-                                '復帰用ストリームデータ保存 同じものがStopProcにも有り
-                                Dim list_txt As String = ""
-                                list_txt &= Me._list(i)._num & "<,>"
-                                list_txt &= Me._list(i)._hlsApp & "<,>"
-                                list_txt &= Me._list(i)._hlsOpt & "<,>"
-                                list_txt &= Me._list(i)._stream_mode & "<,>"
-                                list_txt &= Me._list(i)._NHK_dual_mono_mode_select & "<,>"
-                                list_txt &= Me._list(i)._resolution & "<,>"
-                                list_txt &= Me._list(i)._fullpathfilename & "<,>"
-                                list_txt &= Me._list(i)._VideoSeekSeconds
-                                str2file(Me._fileroot & "\" & "mystream" & Me._list(i)._num.ToString & "_listdata.txt", list_txt, "UTF-8")
-                                log1write("No.=" & Me._list(i)._num.ToString & " の復帰用データを記録しました")
+                            If Me._list(i)._chk_proc >= 1000 And stream_last_utime(Me._list(i)._num) = 0 Then 'プロセスが無いか10秒応答がなければ
+                                Me._list(i)._FileEncodeFinished = 1 'エンコード終了
+
+                                log1write("No.=" & Me._list(i)._num.ToString & " のエンコードが終了したようです")
+                                'm3u8をチェックして#EXT-X-ENDLISTが無ければ付加
+                                Dim m3u8filename As String = _fileroot & "\mystream" & Me._list(i)._num & ".m3u8"
+                                If file_exist(m3u8filename) = 1 Then
+                                    Dim str As String = ReadAllTexts(m3u8filename) 'file2str(m3u8filename, "UTF-8")
+                                    If str.Length > 0 And str.IndexOf("#EXT-X-ENDLIST") < 0 Then
+                                        '最後の改行を消す
+                                        Try
+                                            While str.Substring(str.Length - 2, 2) = vbCrLf
+                                                str = str.Substring(0, str.Length - 2)
+                                            End While
+                                        Catch ex As Exception
+                                        End Try
+                                        str &= vbCrLf & "#EXT-X-ENDLIST" & vbCrLf
+                                        If str2file(m3u8filename, str, "shift_jis") = 1 Then 'shift_jisのほうが余計なものがつかないかな
+                                            log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルに#EXT-X-ENDLISTを追記しました")
+                                        Else
+                                            log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルへの#EXT-X-ENDLIST追記に失敗しました")
+                                        End If
+                                    End If
+
+                                    '復帰用ストリームデータ保存 同じものがStopProcにも有り
+                                    Dim list_txt As String = ""
+                                    list_txt &= Me._list(i)._num & "<,>"
+                                    list_txt &= Me._list(i)._hlsApp & "<,>"
+                                    list_txt &= Me._list(i)._hlsOpt & "<,>"
+                                    list_txt &= Me._list(i)._stream_mode & "<,>"
+                                    list_txt &= Me._list(i)._NHK_dual_mono_mode_select & "<,>"
+                                    list_txt &= Me._list(i)._resolution & "<,>"
+                                    list_txt &= Me._list(i)._fullpathfilename & "<,>"
+                                    list_txt &= Me._list(i)._VideoSeekSeconds
+                                    str2file(Me._fileroot & "\" & "mystream" & Me._list(i)._num.ToString & "_listdata.txt", list_txt, "UTF-8")
+                                    log1write("No.=" & Me._list(i)._num.ToString & " の復帰用データを記録しました")
+                                End If
                             End If
                         End If
                     End If
-                End If
-            Next
-
+                Next
+            End If
         Catch ex As Exception
             '終了時などに希に既に存在していないMe._list(i)へのアクセス
         End Try
@@ -817,6 +900,56 @@ Public Class ProcessManager
                                     'proc.WaitForExit()
                                     proc.Close()
                                     proc.Dispose()
+                                End If
+                            ElseIf Me._list(i)._hlsApp.ToLower.IndexOf("piperun") >= 0 Then
+                                'PipeRun QSVEncとffmpegも終了させる
+                                Dim stopchk As Integer = 0
+                                Try '■テスト
+                                    log1write("proc=" & proc.Id.ToString)
+                                Catch ex As Exception
+
+                                End Try
+                                If proc IsNot Nothing AndAlso Not proc.HasExited Then
+                                    proc.Kill()
+                                    If wait_stop_proc(proc) = 1 Then
+                                        log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ1を強制終了しました")
+                                        stopchk += 1
+                                    Else
+                                        log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ1強制終了に失敗しました")
+                                    End If
+                                    proc.Close()
+                                    proc.Dispose()
+                                Else
+                                    log1write("No.=" & Me._list(i)._num & "のPipeRunアプリは起動していないようです")
+                                    stopchk += 1
+                                End If
+                                Dim proc2() As System.Diagnostics.Process = Me._list(i).GetHlsProc2()
+                                If proc2 IsNot Nothing Then
+                                    For ij As Integer = 0 To proc2.Length - 1
+                                        Try '■テスト
+                                            log1write("proc2(" & ij.ToString & ")=" & proc2(ij).Id.ToString)
+                                        Catch ex As Exception
+                                        End Try
+                                        If proc2(ij) IsNot Nothing AndAlso Not proc2(ij).HasExited Then
+                                            proc2(ij).Kill()
+                                            If wait_stop_proc(proc2(ij)) = 1 Then
+                                                log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ(" & ij.ToString & ")を強制終了しました")
+                                                stopchk += 1
+                                            Else
+                                                log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ(" & ij.ToString & ")の強制終了に失敗しました")
+                                            End If
+                                            proc2(ij).Close()
+                                            proc2(ij).Dispose()
+                                        Else
+                                            log1write("No.=" & Me._list(i)._num & "のPipeRunアプリ(" & ij.ToString & ")は起動していないようです")
+                                            stopchk += 1
+                                        End If
+                                    Next
+                                Else
+                                    stopchk += 2
+                                End If
+                                If stopchk >= 3 Then
+                                    hls_stop = 1
                                 End If
                             ElseIf Me._list(i)._hlsApp.IndexOf("ffmpeg") >= 0 Then
                                 'ffmpeg
@@ -1024,6 +1157,9 @@ Public Class ProcessManager
                         log1write("名前指定で全てのTSTaskのプロセスを停止しました")
                     End If
                 End If
+                'PipeRunバッチファイル
+                stopProcName(Path.GetFileNameWithoutExtension(exepath_PipeRun))
+
                 Me._list.Clear() 'リストクリア
             End If
         End If
@@ -1479,18 +1615,21 @@ Public Class ProcessManager
         Dim udpopt As String = ""
         '現在のlist(i)
         Dim js As String = ""
-        For j As Integer = 0 To Me._list.Count - 1
-            If Me._list(j)._num = num Then
-                Dim s As String = Me._list(j)._udpOpt
-                Dim sp As Integer = s.ToLower.LastIndexOf("bondriver")
-                Dim ep As Integer = s.IndexOf(".dll")
-                Dim bon As String = ""
-                If sp >= 0 And ep > sp Then
-                    bon = s.Substring(sp, (ep - sp) + ".dll".Length)
-                    r = bon
+        If Me._list.Count > 0 Then
+            For j As Integer = 0 To Me._list.Count - 1
+                If Me._list(j)._num = num Then
+                    Dim s As String = Me._list(j)._udpOpt
+                    Dim sp As Integer = s.ToLower.LastIndexOf("bondriver")
+                    Dim ep As Integer = s.IndexOf(".dll")
+                    Dim bon As String = ""
+                    If sp >= 0 And ep > sp Then
+                        bon = s.Substring(sp, (ep - sp) + ".dll".Length)
+                        r = bon
+                    End If
+                    Exit For
                 End If
-            End If
-        Next
+            Next
+        End If
 
         Return r
     End Function
@@ -1500,11 +1639,14 @@ Public Class ProcessManager
         Dim r As String = ""
         '現在のlist(i)
         Dim js As String = ""
-        For j As Integer = 0 To Me._list.Count - 1
-            If Me._list(j)._num = num Then
-                r = Me._list(j)._resolution
-            End If
-        Next
+        If Me._list.Count > 0 Then
+            For j As Integer = 0 To Me._list.Count - 1
+                If Me._list(j)._num = num Then
+                    r = Me._list(j)._resolution
+                    Exit For
+                End If
+            Next
+        End If
 
         Return r
     End Function
@@ -1529,20 +1671,18 @@ Public Class ProcessManager
 
                 'nからlist(i)を求める
                 Dim stream_mode As Integer = 0
+                Dim hlsApp As String = ""
                 If Me._list.Count > 0 Then
-                    Dim j As Integer = -1
-                    For i As Integer = 0 To Me._list.Count - 1
-                        If Me._list(i)._num = n Then
-                            j = i
-                        End If
-                    Next
+                    Dim j As Integer = num2i(n)
                     If j >= 0 Then
                         'ファイル再生なら1が入る
                         stream_mode = Me._list(j)._stream_mode
+                        hlsApp = Me._list(j)._hlsApp
                     End If
                 End If
 
-                If n > 0 And stream_mode = 0 Then
+                If n > 0 And stream_mode = 0 And check_hlsApp_in_stream("ffmpeg,QSVEnc") = 1 Then
+                    'ファイル再生＆HLSアプリがffmpeg,QSVEncならば
                     Dim s As String = ReadAllTexts(tempFile)
                     'm3u8に書かれている最初のファイル
                     Dim m As Integer = -1
@@ -2034,7 +2174,7 @@ Public Class ProcessManager
                                 'If file_exist(Me._fileroot & "\mystream" & Val(d(0)).ToString & "-"
                                 'ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
                                 'stream_modeをマイナス値で与えるとファイル再生復帰
-                                Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)))
+                                Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)), Nothing)
                                 Me._list.Add(pb)
                                 log1write("ストリーム" & Val(d(0)).ToString & "が復帰されました")
                             Else
@@ -2050,6 +2190,28 @@ Public Class ProcessManager
             End Try
         End If
     End Sub
+
+    '配信中リストに該当HLSアプリケーションが存在するかどうか　,区切りで複数指定可
+    Public Function check_hlsApp_in_stream(ByVal s As String) As Integer
+        Dim r As Integer = 0
+
+        Dim d() As String = s.Split(",")
+        If Me._list.Count > 0 Then
+            For i As Integer = 0 To Me._list.Count - 1
+                For j As Integer = 0 To d.Length - 1
+                    If d(j).Length > 0 Then
+                        If Path.GetFileName(Me._list(i)._hlsApp).ToLower.IndexOf(d(j).ToLower) >= 0 Then
+                            r = 1
+                            Exit For
+                        End If
+                    End If
+                Next
+            Next
+        End If
+
+        Return r
+    End Function
+
 End Class
 
 
