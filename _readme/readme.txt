@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.91
+TvRemoteViewer_VB v1.92
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -196,9 +196,6 @@ TvRemoteViewer_VB v1.91
 	%NUM%		ストリームナンバー
 	%VIDEOFILE%	ビデオファイルに変換（実際は「-i %VIDEOFILE%」の決め打ちで-iの後ろの文字列がファイル名に変換）
 	%VIDEODURATION%	ビデオの長さ(秒)　不明な場合は0
-	%RESOLUTION%	解像度インデックス文字列
-	%SERVICEID%	サービスID
-	%PIPERUN-AUDIO%　PipeRun時の音声　normal, main, sub, audio1, audio2
 
 	・StartTv.html呼び出し時のオプション	
 	hlsOptAdd	配信時のHLSオプションに動的にパラメーターを追加できます
@@ -702,6 +699,9 @@ TvRemoteViewer_VB v1.91
 		Pipe経由QSVEncファイル再生に対応（同梱のPipeRun.exeをTvRemoteViewer.exeと同じフォルダにコピーしてください）
 		Pipe経由再生のためには、iniのvideo_force_ffmpeg=2,exepath_ffmpeg, exepath_QSVEncを指定してください
 		video_force_ffmpegの値に3を追加（2に加え再生ファイルがts以外の場合はffmpegで再生する）
+	1.92	PipeRun.exeを経由しなくともパイプ処理をできるようにした(PiprRun.exeは削除してOKです）
+		コメントファイル探しを若干修正
+
 
 
 ※ConnectedSelect.jsはhttp://d.hatena.ne.jp/Mars/20071109のスクリプトを使用させていただきました。
