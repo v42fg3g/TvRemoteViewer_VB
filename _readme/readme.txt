@@ -704,6 +704,7 @@ TvRemoteViewer_VB v1.93
 	1.93	標準HLSアプリがffmpeg以外の場合、video_force_ffmpegを指定してもハードサブが有効にならなかったバグを修正
 		標準HLSアプリがffmpeg以外の場合、exepath_ffmpegが指定されていてもffprobeが使用できなかったバグを修正
 		QSVEnc2.34の高速シークオプション「--seek」に対応
+		iniのvideo_force_ffmpegに4を追加（ts以外・倍速・ハードサブの場合ffmpegを使用）
 
 
 
