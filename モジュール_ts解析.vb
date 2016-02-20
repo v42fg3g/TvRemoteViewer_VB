@@ -37,6 +37,11 @@ Module モジュール_ts解析
     Public Function get_TOT(ByVal fullpathfilename As String, ByVal ffmpeg_path As String, Optional ByRef video_fps As Double = 0) As DateTime
         'オプションとしてByRefでフレームレートも返す
         Dim r As DateTime = C_DAY2038
+
+        If exepath_ffmpeg.Length > 0 Then
+            ffmpeg_path = exepath_ffmpeg
+        End If
+
         Dim f As tot_structure = TOT_read(fullpathfilename, ffmpeg_path)
 
         r = f.start_time
@@ -107,7 +112,7 @@ Module モジュール_ts解析
                 Dim print_debug As Integer = -1 '結果を　0=ダンプしない 1=ダンプする -1=最終結果も表示しない
 
                 Dim t0 As DateTime = CDate("1858/11/17")
-                'ファイルを開く
+                'フFァイルを開く
                 Dim fs As New System.IO.FileStream(fullpathfilename, System.IO.FileMode.Open, System.IO.FileAccess.Read)
                 'ファイルを一時的に読み込むバイト型配列を作成する 
                 Dim bs As Byte() = New Byte(187) {}

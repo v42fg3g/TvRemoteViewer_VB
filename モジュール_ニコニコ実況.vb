@@ -854,6 +854,10 @@ Module モジュール_ニコニコ実況
 
     '.tsファイル名からニコニココメントファイル.txtか.xmlを取得
     Public Function search_NicoJKtxt_file(ByVal fullpathfilename As String, ByVal ffmpeg_path As String) As String
+        If exepath_ffmpeg.Length > 0 Then
+            ffmpeg_path = exepath_ffmpeg
+        End If
+
         Dim filepath As String = ""
         Dim filename As String = ""
         Dim fileext As String = ""
@@ -870,7 +874,7 @@ Module モジュール_ニコニコ実況
 
         If file_exist(fullpathfilename) = 1 Then
             If Path.GetExtension(fullpathfilename) = ".ts" Then
-                log1write("NicoJKコメントファイル検索が終了します。" & nowt & " " & nowt.Millisecond)
+                log1write("NicoJKコメントファイル検索を開始します。" & nowt & " " & nowt.Millisecond)
                 'tsならば
                 filename = Path.GetFileName(fullpathfilename)
                 filepath = IO.Path.GetDirectoryName(fullpathfilename)

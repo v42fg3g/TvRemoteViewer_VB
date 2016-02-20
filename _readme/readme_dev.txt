@@ -22,7 +22,10 @@ TvRemoteViewer_VB v1.89
 									UTF-8でURLエンコード無しで送信かな・・？
 		VideoSeekSeconds					動画ファイル先頭からのシーク秒数（任意）
 		NHKMODE		0					音声選択　0(主副),11(主),12(副),4(音声2)（任意）
-		nohsub		0					ハードサブしない場合は1（任意）
+		nohsub		0					1=ハードサブしない
+									2=ハードサブ用assファイルをタイムシフトして作成
+									　が、ffmpegへのパラメータは変更しない
+									3=ソフトサブ　タイムシフトせずにassをコピーのみ
 		VideoSpeed	1.5					何倍速で再生するか（任意）
 		hlsOptAdd						HLSソフトに追加するパラメーター（任意）
 		nicodelay	0					コメントがずれる場合に調整？通常は0（任意）
@@ -209,3 +212,16 @@ TvRemoteViewer_VB v1.89
 
 	WI_WRITE_LOG.html?temp=[ログに書き込む文字列]
 		ログを出力　返値："OK"
+
+
+	WI_GET_PARA.html?temp=[変数名]
+		video_force_ffmpeg
+		HTTPSTREAM_App
+		html_publish_method
+
+
+	WI_SET_PARA.html?temp=[変数名]=[値]
+		video_force_ffmpeg=値
+		HTTPSTREAM_App=値
+		html_publish_method=値
+

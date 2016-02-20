@@ -1588,7 +1588,7 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをffmpegファイル再生用に書き換える
-    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
         Dim chk_duration As Integer = 0 'TOTで動画の長さを調べた場合は1
 
@@ -1650,10 +1650,10 @@ Class WebRemocon
                     If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                             '動画の開始日時（微妙な誤差はあるかも）
-                            Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp)
+                            Dim VideoStartTime As DateTime = get_TOT(filename, hlsApp)
                             chk_duration = 1
                             'txtを探してassに変換してファイル(ass_file)として保存
-                            Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
+                            Dim txt_file As String = search_NicoJKtxt_file(filename, hlsApp)
                             If txt_file.Length > 0 Then
                                 Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".txt")
                                 If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
@@ -1708,6 +1708,7 @@ Class WebRemocon
                             If nohsub = 0 Then
                                 new_file = " -vf ass=""" & new_file & """"
                             Else
+                                'nohsub=2の場合
                                 new_file = ""
                             End If
                         Else
@@ -1726,6 +1727,7 @@ Class WebRemocon
                                 If nohsub = 0 Then
                                     new_file = " -vf ass=""" & new_file & """"
                                 Else
+                                    'nohsub=2の場合
                                     new_file = ""
                                 End If
                             Else
@@ -1759,10 +1761,10 @@ Class WebRemocon
                         If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                             If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                                 '動画の開始日時（微妙な誤差はあるかも）
-                                Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp)
+                                Dim VideoStartTime As DateTime = get_TOT(filename, hlsApp)
                                 chk_duration = 1
                                 'txtを探してassに変換してファイル(ass_file)として保存
-                                Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
+                                Dim txt_file As String = search_NicoJKtxt_file(filename, hlsApp)
                                 If txt_file.Length > 0 Then
                                     Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".txt")
                                     If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
@@ -1823,7 +1825,7 @@ Class WebRemocon
 
         '動画の長さを調べていなければ調べる（かつTOT_get_durationが指定されていれば）
         If chk_duration = 0 And TOT_get_duration > 0 Then
-            Dim vt As DateTime = get_TOT(filename, Me._hlsApp)
+            Dim vt As DateTime = get_TOT(filename, hlsApp)
         End If
 
         '使用したファイル名を記録
@@ -1884,7 +1886,7 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをQSVEncファイル再生用に書き換える
-    Private Function hlsopt_udp2file_QSVEnc(ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
+    Private Function hlsopt_udp2file_QSVEnc(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
         Dim chk_duration As Integer = 0 'TOTで動画の長さを調べた場合は1
         Dim video_fps As Double = 0 '動画のfps
@@ -1936,10 +1938,10 @@ Class WebRemocon
                         If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
                             If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
                                 '動画の開始日時（微妙な誤差はあるかも）
-                                Dim VideoStartTime As DateTime = get_TOT(filename, Me._hlsApp, video_fps)
+                                Dim VideoStartTime As DateTime = get_TOT(filename, hlsApp, video_fps)
                                 chk_duration = 1
                                 'txtを探してassに変換してファイル(ass_file)として保存
-                                Dim txt_file As String = search_NicoJKtxt_file(filename, Me._hlsApp)
+                                Dim txt_file As String = search_NicoJKtxt_file(filename, hlsApp)
                                 If txt_file.Length > 0 Then
                                     Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".txt")
                                     If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
@@ -2000,7 +2002,7 @@ Class WebRemocon
 
         '動画の長さを調べていなければ調べる（かつTOT_get_durationが指定されていれば）
         If chk_duration = 0 And TOT_get_duration > 0 Then
-            Dim vt As DateTime = get_TOT(filename, Me._hlsApp, video_fps)
+            Dim vt As DateTime = get_TOT(filename, hlsApp, video_fps)
         End If
 
         '使用したファイル名を記録
@@ -2015,15 +2017,17 @@ Class WebRemocon
                 hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
             End If
 
-            'シーク秒数が指定されていれば「--trim フレーム数」を挿入
+            'シーク秒数が指定されていれば「--seek フレーム数」を挿入
             If VideoSeekSeconds > 0 Then
                 If video_fps = 0 Then
                     video_fps = 29.97 'フレームレートが判明していなければ
                 End If
-                Dim frame As Integer = Int(VideoSeekSeconds * video_fps) '秒をフレームに変換
+                'Dim frame As Integer = Int(VideoSeekSeconds * video_fps) '秒をフレームに変換
+                Dim hhmmss As String = sec2hhmmss(VideoSeekSeconds)
                 sp = hlsOpt.IndexOf("-i ")
-                If sp >= 0 Then
-                    hlsOpt = hlsOpt.Substring(0, sp) & "--trim " & frame.ToString & ":0 " & hlsOpt.Substring(sp)
+                If sp >= 0 And hhmmss.Length > 0 Then
+                    'hlsOpt = hlsOpt.Substring(0, sp) & "--trim " & frame.ToString & ":0 " & hlsOpt.Substring(sp)
+                    hlsOpt = hlsOpt.Substring(0, sp) & "--seek " & hhmmss & " " & hlsOpt.Substring(sp)
                 End If
             End If
         Else
@@ -2031,6 +2035,30 @@ Class WebRemocon
         End If
 
         Return hlsOpt
+    End Function
+
+    '秒をhh:mm:ss形式に変換
+    Public Function sec2hhmmss(ByVal sec As Integer) As String
+        Dim r As String = ""
+
+        If sec > 0 Then
+            Dim hh As Integer = Int(sec / 3600)
+            Dim mm As Integer = Int((sec - (hh * 3600)) / 60)
+            Dim ss As Integer = Int(sec Mod 60)
+
+            Dim sep As String = ""
+            If hh > 0 Then
+                r &= sep & hh.ToString
+                sep = ":"
+            End If
+            If mm > 0 Or hh > 0 Then
+                r &= sep & mm.ToString
+                sep = ":"
+            End If
+            r &= sep & ss.ToString
+        End If
+
+        Return r
     End Function
 
     'ファイル再生
@@ -2356,7 +2384,7 @@ Class WebRemocon
                 'ファイル再生
                 If filename.Length > 0 And Stream_mode = 3 Then
                     'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
                     'chapterをコピー
                     'copy_chapter_to_fileroot(num, filename, fileroot)
                 End If
@@ -2425,13 +2453,19 @@ Class WebRemocon
                 video_force_ffmpeg_temp = 2
             ElseIf video_force_ffmpeg = 3 And Stream_mode = 1 And filename.Length > 0 Then
                 Dim ext As String = Path.GetExtension(filename).ToLower
-                If ext = ".ts" Then
+                If ext <> ".ts" Or baisoku <> 1 Or nohsub = 0 Or nohsub = 2 Then
+                    hlsAppSelect = "ffmpeg"
+                    log1write("video_force_ffmpeg=3によりHLSアプリにffmpegが指定されました")
+                Else
                     hlsAppSelect = "QSVEnc"
                     log1write("video_force_ffmpeg=3によりHLSアプリにPipeRunが指定されました") '後で書き換え
                     video_force_ffmpeg_temp = 2
-                Else
+                End If
+            ElseIf video_force_ffmpeg = 4 And Stream_mode = 1 And filename.Length > 0 Then
+                Dim ext As String = Path.GetExtension(filename).ToLower
+                If ext <> ".ts" Or baisoku <> 1 Or nohsub = 0 Or nohsub = 2 Then
                     hlsAppSelect = "ffmpeg"
-                    log1write("video_force_ffmpeg=3によりHLSアプリにffmpegが指定されました")
+                    log1write("video_force_ffmpeg=4によりHLSアプリにffmpegが指定されました")
                 End If
             End If
 
@@ -2665,12 +2699,12 @@ Class WebRemocon
                 'hlsオプションを書き換える
                 If hlsApp.IndexOf("ffmpeg") >= 0 Then
                     'ffmpegのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
                     'chapterをコピー
                     'copy_chapter_to_fileroot(num, filename, fileroot)
                 ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                     'QSVEncのとき
-                    hlsOpt = hlsopt_udp2file_QSVEnc(hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
+                    hlsOpt = hlsopt_udp2file_QSVEnc(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
                 Else
                     'その他vlc
                     '今のところ未対応
@@ -4071,6 +4105,16 @@ Class WebRemocon
                                             WI_cmd_reply = "OK"
                                             WI_cmd_reply_force = 1
                                         End If
+                                    Case "WI_SET_PARA"
+                                        If Trim(temp).IndexOf("=") > 0 Then
+                                            WI_cmd_reply = WI_SET_PARA(Trim(temp))
+                                            WI_cmd_reply_force = 1
+                                        End If
+                                    Case "WI_GET_PARA"
+                                        If Trim(temp).Length > 0 Then
+                                            WI_cmd_reply = WI_GET_PARA(Trim(temp))
+                                            WI_cmd_reply_force = 1
+                                        End If
                                 End Select
                             End If
 
@@ -4812,6 +4856,57 @@ Class WebRemocon
     'ログを送る
     Public Function WI_SHOW_LOG() As String
         Return log1
+    End Function
+
+    'パラメータ（変数）をセット
+    Public Function WI_SET_PARA(ByVal s As String) As String
+        Dim r As String = ""
+        Dim sp As Integer = s.IndexOf("=")
+        If sp > 0 Then
+            Dim para As String = Trim(s.Substring(0, sp))
+            Dim value As String = ""
+            Try
+                value = Trim(s.Substring(sp + 1))
+            Catch ex As Exception
+            End Try
+            If para.Length > 0 And value.Length > 0 Then
+                r = "OK" '& vbCrLf & para & "=" & value
+                Select Case para
+                    Case "video_force_ffmpeg"
+                        video_force_ffmpeg = Val(value)
+                    Case "HTTPSTREAM_App"
+                        HTTPSTREAM_App = Val(value)
+                    Case "html_publish_method"
+                        html_publish_method = Val(value)
+                    Case Else
+                        r = "Failed(Parameter)"
+                End Select
+            Else
+                r = "Failed(Value)"
+            End If
+        Else
+            r = "Failed(equal)"
+        End If
+
+        Return r
+    End Function
+
+    'パラメータ（変数）を取得
+    Public Function WI_GET_PARA(ByVal s As String) As String
+        Dim r As String = ""
+        s = Trim(s)
+        If s.Length > 0 Then
+            Select Case s
+                Case "video_force_ffmpeg"
+                    r = video_force_ffmpeg.ToString
+                Case "HTTPSTREAM_App"
+                    r = HTTPSTREAM_App.ToString
+                Case "html_publish_method"
+                    r = html_publish_method
+            End Select
+        End If
+
+        Return r
     End Function
 
     'TvRemoteViewer_VB status

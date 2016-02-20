@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 1.92"
+    Private version As String = "TvRemoteViewer_VB 1.93"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -571,8 +571,12 @@ Public Class Form1
             log1write("【警告】BonDriverパスが指定されていません")
         End If
         'ASS字幕用font_confがあるかどうか確認
-        If Me._worker._hlsApp.IndexOf("ffmpeg") >= 0 Then
-            If file_exist(Me._worker._hlsApp.Replace("ffmpeg.exe", "\fonts\fonts.conf")) = 1 Then
+        If Me._worker._hlsApp.IndexOf("ffmpeg") >= 0 Or exepath_ffmpeg.Length > 0 Then
+            Dim fchkstr As String = Me._worker._hlsApp
+            If exepath_ffmpeg.Length > 0 Then
+                fchkstr = exepath_ffmpeg
+            End If
+            If file_exist(fchkstr.Replace("ffmpeg.exe", "\fonts\fonts.conf")) = 1 Then
                 fonts_conf_ok = 1
                 log1write("起動チェック　ASS字幕に必要なfonts.conf：OK")
             Else
