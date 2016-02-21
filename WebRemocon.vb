@@ -1843,10 +1843,18 @@ Class WebRemocon
                 sep = ":"
             End If
             If mm > 0 Or hh > 0 Then
-                r &= sep & mm.ToString
+                If hh > 0 Then
+                    r &= sep & mm.ToString.PadLeft(2, "0")
+                Else
+                    r &= sep & mm.ToString
+                End If
                 sep = ":"
             End If
-            r &= sep & ss.ToString
+            If hh > 0 Or mm > 0 Then
+                r &= sep & ss.ToString.PadLeft(2, "0")
+            Else
+                r &= sep & ss.ToString
+            End If
         End If
 
         Return r
@@ -2182,9 +2190,7 @@ Class WebRemocon
                     If exist_nico_ass = 0 Then
                         'まだassファイルが見つかっていない場合
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
-                            If NicoJK_path.Length > 0 Then
-                                txt_file = search_NicoJKtxt_file(filename, hlsApp)
-                            End If
+                            txt_file = search_NicoJKtxt_file(filename, hlsApp)
                         End If
                     End If
                 End If

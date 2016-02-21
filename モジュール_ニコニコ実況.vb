@@ -870,244 +870,246 @@ Module モジュール_ニコニコ実況
 
         Dim i As Integer = 0
 
-        If file_exist(fullpathfilename) = 1 Then
-            If Path.GetExtension(fullpathfilename) = ".ts" Then
-                log1write("NicoJKコメントファイル検索を開始します。" & nowt & " " & nowt.Millisecond)
-                'tsならば
-                filename = Path.GetFileName(fullpathfilename)
-                filepath = IO.Path.GetDirectoryName(fullpathfilename)
-                '動画ファイルの終了日時を取得
-                Dim file_tot As tot_structure = TOT_read(fullpathfilename, ffmpeg_path)
-                If file_tot.start_time < C_DAY2038 Then
-                    'TOT(キャッシュ)から取得した
-                    filestamp_start = file_tot.start_utime
-                    filestamp_end = file_tot.start_utime + file_tot.duration
-                    filestamp_mid = file_tot.start_utime + Int(file_tot.duration / 2)
-                    filestamp_duration = file_tot.duration
-                Else
-                    'ファイルスタンプから取得
-                    Try
-                        filestamp_start = time2unix(System.IO.File.GetCreationTime(fullpathfilename))
-                        filestamp_end = time2unix(System.IO.File.GetLastWriteTime(fullpathfilename))
-                        filestamp_mid = filestamp_start + Int((filestamp_end - filestamp_start) / 2)
-                        filestamp_duration = filestamp_end - filestamp_start
-                    Catch ex As Exception
-                        'エラー
-                        log1write("【エラー】" & fullpathfilename & "のファイル情報取得に失敗しました。" & ex.Message)
-                        Return targetfile
-                        Exit Function
-                    End Try
-                End If
-                If filestamp_duration < 60 Or filestamp_duration > (60 * 60 * 24) Then
-                    '長さが取得できていない場合は開始時間+4分に設定
-                    filestamp_end = filestamp_start + (60 * 4)
-                    filestamp_duration = 60 * 4
-                    log1write(fullpathfilename & "の終了時間が取得出来ませんでした")
-                End If
+        If NicoJK_path.Length > 0 Then
+            If file_exist(fullpathfilename) = 1 Then
+                If Path.GetExtension(fullpathfilename) = ".ts" Then
+                    log1write("NicoJKコメントファイル検索を開始します。" & nowt & " " & nowt.Millisecond)
+                    'tsならば
+                    filename = Path.GetFileName(fullpathfilename)
+                    filepath = IO.Path.GetDirectoryName(fullpathfilename)
+                    '動画ファイルの終了日時を取得
+                    Dim file_tot As tot_structure = TOT_read(fullpathfilename, ffmpeg_path)
+                    If file_tot.start_time < C_DAY2038 Then
+                        'TOT(キャッシュ)から取得した
+                        filestamp_start = file_tot.start_utime
+                        filestamp_end = file_tot.start_utime + file_tot.duration
+                        filestamp_mid = file_tot.start_utime + Int(file_tot.duration / 2)
+                        filestamp_duration = file_tot.duration
+                    Else
+                        'ファイルスタンプから取得
+                        Try
+                            filestamp_start = time2unix(System.IO.File.GetCreationTime(fullpathfilename))
+                            filestamp_end = time2unix(System.IO.File.GetLastWriteTime(fullpathfilename))
+                            filestamp_mid = filestamp_start + Int((filestamp_end - filestamp_start) / 2)
+                            filestamp_duration = filestamp_end - filestamp_start
+                        Catch ex As Exception
+                            'エラー
+                            log1write("【エラー】" & fullpathfilename & "のファイル情報取得に失敗しました。" & ex.Message)
+                            Return targetfile
+                            Exit Function
+                        End Try
+                    End If
+                    If filestamp_duration < 60 Or filestamp_duration > (60 * 60 * 24) Then
+                        '長さが取得できていない場合は開始時間+4分に設定
+                        filestamp_end = filestamp_start + (60 * 4)
+                        filestamp_duration = 60 * 4
+                        log1write(fullpathfilename & "の終了時間が取得出来ませんでした")
+                    End If
 
-                log1write(fullpathfilename & "のファイル情報を取得しました")
-                log1write("作成日時=" & unix2time(filestamp_start))
-                log1write("更新日時=" & unix2time(filestamp_end))
-                log1write("中間日時=" & unix2time(filestamp_mid))
-                log1write("録画秒数=" & filestamp_duration)
+                    log1write(fullpathfilename & "のファイル情報を取得しました")
+                    log1write("作成日時=" & unix2time(filestamp_start))
+                    log1write("更新日時=" & unix2time(filestamp_end))
+                    log1write("中間日時=" & unix2time(filestamp_mid))
+                    log1write("録画秒数=" & filestamp_duration)
 
-                If filename.Length > 0 Then
-                    '動画ファイル名内にサービスIDがあれば
-                    Dim fjk As String = ""
-                    If filename.IndexOf("[s") > 0 Then
-                        Dim jkf As String = Instr_pickup(filename, "[s", "]", 0)
-                        If jkf.Length > 0 Then
-                            Dim fsid As Integer = h16_10(jkf)
-                            If fsid > 0 Then
-                                fjk = sid2jk(fsid, 0)
-                                If fjk.Length > 0 Then
-                                    targetfile = search_commentfile_in_folder(NicoJK_path & "\" & fjk, filestamp_mid)
+                    If filename.Length > 0 Then
+                        '動画ファイル名内にサービスIDがあれば
+                        Dim fjk As String = ""
+                        If filename.IndexOf("[s") > 0 Then
+                            Dim jkf As String = Instr_pickup(filename, "[s", "]", 0)
+                            If jkf.Length > 0 Then
+                                Dim fsid As Integer = h16_10(jkf)
+                                If fsid > 0 Then
+                                    fjk = sid2jk(fsid, 0)
+                                    If fjk.Length > 0 Then
+                                        targetfile = search_commentfile_in_folder(NicoJK_path & "\" & fjk, filestamp_mid)
+                                    End If
                                 End If
                             End If
                         End If
-                    End If
-                    '運良くsidが見つかっていた場合
-                    If file_tot.sid > 0 Then
-                        fjk = sid2jk(file_tot.sid, 0)
-                        If fjk.Length > 0 Then
-                            targetfile = search_commentfile_in_folder(NicoJK_path & "\" & fjk, filestamp_mid)
+                        '運良くsidが見つかっていた場合
+                        If file_tot.sid > 0 Then
+                            fjk = sid2jk(file_tot.sid, 0)
+                            If fjk.Length > 0 Then
+                                targetfile = search_commentfile_in_folder(NicoJK_path & "\" & fjk, filestamp_mid)
+                            End If
                         End If
-                    End If
 
-                    If targetfile.Length = 0 Then
-                        'ファイル名と同名でtxtまたはxmlがあるか
-                        Dim filename_xml As String = fullpathfilename.Replace(".ts", ".xml")
-                        Dim filename_txt As String = fullpathfilename.Replace(".ts", ".txt")
-                        Dim filename_xml2 As String = NicoJK_path & "\xml\" & Path.GetFileNameWithoutExtension(fullpathfilename) & ".xml"
-                        If file_exist(filename_xml) = 1 Then
-                            targetfile = filename_xml
-                            log1write("同名のxmlコメントファイルが見つかりました")
-                        ElseIf file_exist(filename_txt) = 1 Then
-                            targetfile = filename_txt
-                            log1write("同名のtxtコメントファイルが見つかりました")
-                        ElseIf file_exist(filename_xml2) = 1 Then
-                            targetfile = filename_xml2
-                            log1write("NicoJKコメントフォルダ\xml\にコメントファイルが見つかりました")
-                        Else
-                            'NicoJKフォルダを探す
-                            If folder_exist(NicoJK_path) = 1 Then
-                                Dim fwoe As String = Path.GetFileNameWithoutExtension(filename)
-                                Dim jklfilename As String = ""
-                                'NicoJK_pathにあるjklファイルをチェックする
-                                Dim files As String() = System.IO.Directory.GetFiles(NicoJK_path, "*")
-                                Dim chk_nojkl As Integer = 0
-                                If files IsNot Nothing Then
-                                    Dim cnt As Integer = 0
-                                    For i = 0 To files.Length - 1
-                                        If files(i).IndexOf(".jkl") > 0 Or files(i).IndexOf(".xml") > 0 Then
-                                            '一番長い全角文字列を抜き出す
-                                            Dim fn As String = Path.GetFileNameWithoutExtension(files(i))
-                                            Dim z As String = zenkakudake_max(fn)
-                                            Dim zh As String = StrConv(z, VbStrConv.Narrow) '半角でも調べる
-                                            'タイトル最初の3文字
-                                            Dim z2_all As String = Trim(Instr_pickup(fn, "-", "[", 0))
-                                            Dim z2 As String = ""
-                                            If z2_all.Length > 0 Then
-                                                Try
-                                                    z2 = z2.Substring(0, 3)
-                                                Catch ex As Exception
-                                                End Try
-                                            Else
-                                                'xmlを想定
-                                                Try
-                                                    z2 = Path.GetFileNameWithoutExtension(files(i)).Substring(0, 3)
-                                                Catch ex As Exception
-                                                End Try
-                                            End If
-                                            Dim z2h As String = StrConv(z2, VbStrConv.Narrow)
-
-                                            Dim chk As Integer = 0
-                                            If z.Length > 0 And (filename.IndexOf(z) >= 0 Or filename.IndexOf(zh) >= 0) Then
-                                                '文字列が含まれている場合
-                                                chk = 1
-                                            ElseIf fwoe.Length > 0 And files(i).IndexOf(fwoe) >= 0 Then
-                                                '動画ファイル名がすべてjklに含まれる場合
-                                                chk = 1
-                                            ElseIf cnt = 0 And z2.Length > 0 And (filename.IndexOf(z2) >= 0 Or filename.IndexOf(z2h) >= 0) Then
-                                                'タイトル最初の3文字が含まれている場合 完全とは言えないので全jklをチェックしてから結論を出す
-                                                chk = 2
-                                            End If
-                                            If chk > 0 Then
-                                                '作成時間を照らし合わせる
-                                                Dim jklstamp As Integer = 0
-                                                Dim jklstamp_end As Integer = 0
-                                                'jklファイル名内にタイムスタンプが存在する場合はそちらを使用
-                                                Dim sp As Integer = files(i).LastIndexOf("(")
-                                                If sp > 0 Then
-                                                    Dim stampf As Integer = Val(Instr_pickup(files(i), "(", ")", sp))
-                                                    If stampf > 315500400 Then
-                                                        '1980/01/01以降なら正常とみなす
-                                                        jklstamp = stampf
-                                                        jklstamp_end = jklstamp + filestamp_duration
-                                                    Else
-                                                        jklstamp = 0
-                                                    End If
-                                                End If
-                                                If jklstamp = 0 Then
-                                                    'ファイル名内の数値が不正またはJikkyorec形式なので作成時間
-                                                    'jklファイルの中を見た方が確実だが・・どのみち開始コメントが大きくずれている可能性がある
+                        If targetfile.Length = 0 Then
+                            'ファイル名と同名でtxtまたはxmlがあるか
+                            Dim filename_xml As String = fullpathfilename.Replace(".ts", ".xml")
+                            Dim filename_txt As String = fullpathfilename.Replace(".ts", ".txt")
+                            Dim filename_xml2 As String = NicoJK_path & "\xml\" & Path.GetFileNameWithoutExtension(fullpathfilename) & ".xml"
+                            If file_exist(filename_xml) = 1 Then
+                                targetfile = filename_xml
+                                log1write("同名のxmlコメントファイルが見つかりました")
+                            ElseIf file_exist(filename_txt) = 1 Then
+                                targetfile = filename_txt
+                                log1write("同名のtxtコメントファイルが見つかりました")
+                            ElseIf file_exist(filename_xml2) = 1 Then
+                                targetfile = filename_xml2
+                                log1write("NicoJKコメントフォルダ\xml\にコメントファイルが見つかりました")
+                            Else
+                                'NicoJKフォルダを探す
+                                If folder_exist(NicoJK_path) = 1 Then
+                                    Dim fwoe As String = Path.GetFileNameWithoutExtension(filename)
+                                    Dim jklfilename As String = ""
+                                    'NicoJK_pathにあるjklファイルをチェックする
+                                    Dim files As String() = System.IO.Directory.GetFiles(NicoJK_path, "*")
+                                    Dim chk_nojkl As Integer = 0
+                                    If files IsNot Nothing Then
+                                        Dim cnt As Integer = 0
+                                        For i = 0 To files.Length - 1
+                                            If files(i).IndexOf(".jkl") > 0 Or files(i).IndexOf(".xml") > 0 Then
+                                                '一番長い全角文字列を抜き出す
+                                                Dim fn As String = Path.GetFileNameWithoutExtension(files(i))
+                                                Dim z As String = zenkakudake_max(fn)
+                                                Dim zh As String = StrConv(z, VbStrConv.Narrow) '半角でも調べる
+                                                'タイトル最初の3文字
+                                                Dim z2_all As String = Trim(Instr_pickup(fn, "-", "[", 0))
+                                                Dim z2 As String = ""
+                                                If z2_all.Length > 0 Then
                                                     Try
-                                                        jklstamp = time2unix(System.IO.File.GetCreationTime(files(i)))
-                                                        jklstamp_end = time2unix(System.IO.File.GetLastWriteTime(files(i)))
+                                                        z2 = z2.Substring(0, 3)
                                                     Catch ex As Exception
-                                                        log1write(ex.Message)
+                                                    End Try
+                                                Else
+                                                    'xmlを想定
+                                                    Try
+                                                        z2 = Path.GetFileNameWithoutExtension(files(i)).Substring(0, 3)
+                                                    Catch ex As Exception
                                                     End Try
                                                 End If
-                                                If System.Math.Abs(jklstamp - filestamp_start) < (60 * 20) Then
-                                                    '作成時間が前後20分未満ならほぼビンゴ
-                                                    jklfilename = Path.GetFileName(files(i))
-                                                    cnt += 1
+                                                Dim z2h As String = StrConv(z2, VbStrConv.Narrow)
 
-                                                    If chk = 1 Then
-                                                        '確定の場合は終了
-                                                        Exit For
+                                                Dim chk As Integer = 0
+                                                If z.Length > 0 And (filename.IndexOf(z) >= 0 Or filename.IndexOf(zh) >= 0) Then
+                                                    '文字列が含まれている場合
+                                                    chk = 1
+                                                ElseIf fwoe.Length > 0 And files(i).IndexOf(fwoe) >= 0 Then
+                                                    '動画ファイル名がすべてjklに含まれる場合
+                                                    chk = 1
+                                                ElseIf cnt = 0 And z2.Length > 0 And (filename.IndexOf(z2) >= 0 Or filename.IndexOf(z2h) >= 0) Then
+                                                    'タイトル最初の3文字が含まれている場合 完全とは言えないので全jklをチェックしてから結論を出す
+                                                    chk = 2
+                                                End If
+                                                If chk > 0 Then
+                                                    '作成時間を照らし合わせる
+                                                    Dim jklstamp As Integer = 0
+                                                    Dim jklstamp_end As Integer = 0
+                                                    'jklファイル名内にタイムスタンプが存在する場合はそちらを使用
+                                                    Dim sp As Integer = files(i).LastIndexOf("(")
+                                                    If sp > 0 Then
+                                                        Dim stampf As Integer = Val(Instr_pickup(files(i), "(", ")", sp))
+                                                        If stampf > 315500400 Then
+                                                            '1980/01/01以降なら正常とみなす
+                                                            jklstamp = stampf
+                                                            jklstamp_end = jklstamp + filestamp_duration
+                                                        Else
+                                                            jklstamp = 0
+                                                        End If
                                                     End If
-                                                ElseIf fn.IndexOf(z2_all) >= 0 Then
-                                                    'ファイルネームが全て含まれていれば時間が合っていなくてもキープ
-                                                    jklfilename = Path.GetFileName(files(i))
-                                                    cnt += 1
-                                                ElseIf System.Math.Abs((jklstamp_end) - filestamp_end) < (60 * 20) Then
-                                                    '更新時間が前後20分以内ならキープ
-                                                    jklfilename = Path.GetFileName(files(i))
-                                                    cnt += 1
+                                                    If jklstamp = 0 Then
+                                                        'ファイル名内の数値が不正またはJikkyorec形式なので作成時間
+                                                        'jklファイルの中を見た方が確実だが・・どのみち開始コメントが大きくずれている可能性がある
+                                                        Try
+                                                            jklstamp = time2unix(System.IO.File.GetCreationTime(files(i)))
+                                                            jklstamp_end = time2unix(System.IO.File.GetLastWriteTime(files(i)))
+                                                        Catch ex As Exception
+                                                            log1write(ex.Message)
+                                                        End Try
+                                                    End If
+                                                    If System.Math.Abs(jklstamp - filestamp_start) < (60 * 20) Then
+                                                        '作成時間が前後20分未満ならほぼビンゴ
+                                                        jklfilename = Path.GetFileName(files(i))
+                                                        cnt += 1
 
-                                                    If chk = 1 Then
-                                                        '確定の場合は終了
-                                                        Exit For
+                                                        If chk = 1 Then
+                                                            '確定の場合は終了
+                                                            Exit For
+                                                        End If
+                                                    ElseIf fn.IndexOf(z2_all) >= 0 Then
+                                                        'ファイルネームが全て含まれていれば時間が合っていなくてもキープ
+                                                        jklfilename = Path.GetFileName(files(i))
+                                                        cnt += 1
+                                                    ElseIf System.Math.Abs((jklstamp_end) - filestamp_end) < (60 * 20) Then
+                                                        '更新時間が前後20分以内ならキープ
+                                                        jklfilename = Path.GetFileName(files(i))
+                                                        cnt += 1
+
+                                                        If chk = 1 Then
+                                                            '確定の場合は終了
+                                                            Exit For
+                                                        End If
                                                     End If
                                                 End If
                                             End If
-                                        End If
-                                    Next
-                                    If jklfilename.Length > 0 Then
-                                        If jklfilename.IndexOf(".xml") > 0 Then
-                                            log1write("xmlファイルが見つかりました。" & jklfilename)
-                                            targetfile = NicoJK_path & "\" & jklfilename
-                                        Else
-                                            log1write("jklファイルが見つかりました。" & jklfilename)
-                                            Dim sp As Integer = jklfilename.LastIndexOf("[jk")
-                                            If sp >= 0 Then
-                                                'NicojCatch形式
-                                                targetfile = NicoJK_path & "\" & "jk" & Instr_pickup(jklfilename, "[jk", "]", sp) & "\" & Instr_pickup(jklfilename, ")", ".", sp) & ".txt"
-                                                'VideoStartTime = unix2time(Val(Instr_pickup(jklfilename, "(", ")", sp))) '動画開始日時 →動画作成日時にすることにした
-                                                If file_exist(targetfile) <= 0 Then
-                                                    targetfile = "" 'ファイルが存在しない　失敗
-                                                End If
+                                        Next
+                                        If jklfilename.Length > 0 Then
+                                            If jklfilename.IndexOf(".xml") > 0 Then
+                                                log1write("xmlファイルが見つかりました。" & jklfilename)
+                                                targetfile = NicoJK_path & "\" & jklfilename
                                             Else
-                                                'jikkyorec形式と思われる
-                                                '<JikkyoRec startTime="1367049600000" channel="jk6" />
-                                                Dim str As String = file2str(NicoJK_path & "\" & jklfilename, "UTF-8")
-                                                Dim jkstr As String = "jk" & Instr_pickup(str, "channel=""jk", """", 0)
-                                                Dim starttimestr As String = Instr_pickup(str, "startTime=""", """", 0)
-                                                If starttimestr.Length > 10 Then
-                                                    starttimestr = starttimestr.Substring(0, 10)
-                                                End If
-                                                Dim midtime As Integer = 0
-                                                Try
-                                                    midtime = Val(starttimestr) + Int(filestamp_duration / 2) '中間地点
-                                                Catch ex As Exception
-                                                    midtime = 0
-                                                End Try
-                                                'VideoStartTime = unix2time(starttime) '動画開始日時 →動画作成日時にすることにした
-                                                If jkstr.Length > 2 And midtime > 0 Then
-                                                    Dim commentfolder As String = NicoJK_path & "\" & jkstr
-                                                    If folder_exist(commentfolder) = 1 Then
-                                                        targetfile = search_commentfile_in_folder(commentfolder, midtime)
-                                                    Else
-                                                        log1write("フォルダ " & commentfolder & "が見つかりませんでした")
+                                                log1write("jklファイルが見つかりました。" & jklfilename)
+                                                Dim sp As Integer = jklfilename.LastIndexOf("[jk")
+                                                If sp >= 0 Then
+                                                    'NicojCatch形式
+                                                    targetfile = NicoJK_path & "\" & "jk" & Instr_pickup(jklfilename, "[jk", "]", sp) & "\" & Instr_pickup(jklfilename, ")", ".", sp) & ".txt"
+                                                    'VideoStartTime = unix2time(Val(Instr_pickup(jklfilename, "(", ")", sp))) '動画開始日時 →動画作成日時にすることにした
+                                                    If file_exist(targetfile) <= 0 Then
+                                                        targetfile = "" 'ファイルが存在しない　失敗
                                                     End If
                                                 Else
-                                                    log1write("Jikkyorecのjklファイルから情報が取得できませんでした")
+                                                    'jikkyorec形式と思われる
+                                                    '<JikkyoRec startTime="1367049600000" channel="jk6" />
+                                                    Dim str As String = file2str(NicoJK_path & "\" & jklfilename, "UTF-8")
+                                                    Dim jkstr As String = "jk" & Instr_pickup(str, "channel=""jk", """", 0)
+                                                    Dim starttimestr As String = Instr_pickup(str, "startTime=""", """", 0)
+                                                    If starttimestr.Length > 10 Then
+                                                        starttimestr = starttimestr.Substring(0, 10)
+                                                    End If
+                                                    Dim midtime As Integer = 0
+                                                    Try
+                                                        midtime = Val(starttimestr) + Int(filestamp_duration / 2) '中間地点
+                                                    Catch ex As Exception
+                                                        midtime = 0
+                                                    End Try
+                                                    'VideoStartTime = unix2time(starttime) '動画開始日時 →動画作成日時にすることにした
+                                                    If jkstr.Length > 2 And midtime > 0 Then
+                                                        Dim commentfolder As String = NicoJK_path & "\" & jkstr
+                                                        If folder_exist(commentfolder) = 1 Then
+                                                            targetfile = search_commentfile_in_folder(commentfolder, midtime)
+                                                        Else
+                                                            log1write("フォルダ " & commentfolder & "が見つかりませんでした")
+                                                        End If
+                                                    Else
+                                                        log1write("Jikkyorecのjklファイルから情報が取得できませんでした")
+                                                    End If
                                                 End If
                                             End If
+                                        Else
+                                            chk_nojkl = 1
+                                            log1write(fullpathfilename & "に対応するjklファイルが見つかりませんでした")
                                         End If
                                     Else
                                         chk_nojkl = 1
-                                        log1write(fullpathfilename & "に対応するjklファイルが見つかりませんでした")
                                     End If
-                                Else
-                                    chk_nojkl = 1
-                                End If
-                                If chk_nojkl = 1 Then
-                                    '純粋NicoJK（jklファイル無し）
-                                    '動画ファイルからjkナンバーを取得しなければならないが時間がかかるので止める
+                                    If chk_nojkl = 1 Then
+                                        '純粋NicoJK（jklファイル無し）
+                                        '動画ファイルからjkナンバーを取得しなければならないが時間がかかるので止める
+                                    End If
                                 End If
                             End If
                         End If
                     End If
+                    If targetfile.Length > 0 Then
+                        log1write("NicoJKコメントファイルが見つかりました。" & targetfile)
+                    Else
+                        log1write("NicoJKコメントファイルが見つかりませんでした。")
+                    End If
+                    nowt = Now()
+                    log1write("NicoJKコメントファイル検索が終了しました。" & nowt & " " & nowt.Millisecond)
                 End If
-                If targetfile.Length > 0 Then
-                    log1write("NicoJKコメントファイルが見つかりました。" & targetfile)
-                Else
-                    log1write("NicoJKコメントファイルが見つかりませんでした。")
-                End If
-                nowt = Now()
-                log1write("NicoJKコメントファイル検索が終了しました。" & nowt & " " & nowt.Millisecond)
             End If
         End If
 
