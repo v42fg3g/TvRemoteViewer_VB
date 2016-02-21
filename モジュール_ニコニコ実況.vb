@@ -854,9 +854,7 @@ Module モジュール_ニコニコ実況
 
     '.tsファイル名からニコニココメントファイル.txtか.xmlを取得
     Public Function search_NicoJKtxt_file(ByVal fullpathfilename As String, ByVal ffmpeg_path As String) As String
-        If exepath_ffmpeg.Length > 0 Then
-            ffmpeg_path = exepath_ffmpeg
-        End If
+        'ffmpeg_pathはmp4等の開始時間と動画の長さを調べるときのみに使用（exepath_ffmpegが指定されていればなんでもいい）
 
         Dim filepath As String = ""
         Dim filename As String = ""

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.93
+TvRemoteViewer_VB v1.94
 
 
 チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
@@ -705,6 +705,9 @@ TvRemoteViewer_VB v1.93
 		標準HLSアプリがffmpeg以外の場合、exepath_ffmpegが指定されていてもffprobeが使用できなかったバグを修正
 		QSVEnc2.34の高速シークオプション「--seek」に対応
 		iniのvideo_force_ffmpegに4を追加（ts以外・倍速・ハードサブの場合ffmpegを使用）
+	1.94	ファイル再生でPipeRunを選択した場合、旧--trimオプションが残ってしまっていたバグを修正
+		ハードサブを指定した場合、コメントファイルが無くともffmpegが選択されてしまっていた不具合を修正
+		細かいバグフィックス
 
 
 

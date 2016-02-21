@@ -36,11 +36,8 @@ Module モジュール_ts解析
 
     Public Function get_TOT(ByVal fullpathfilename As String, ByVal ffmpeg_path As String, Optional ByRef video_fps As Double = 0) As DateTime
         'オプションとしてByRefでフレームレートも返す
+        'ffmpeg_pathはmp4等の開始時間と動画の長さを調べるときのみに使用（exepath_ffmpegが指定されていればなんでもいい）
         Dim r As DateTime = C_DAY2038
-
-        If exepath_ffmpeg.Length > 0 Then
-            ffmpeg_path = exepath_ffmpeg
-        End If
 
         Dim f As tot_structure = TOT_read(fullpathfilename, ffmpeg_path)
 

@@ -1588,34 +1588,14 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをffmpegファイル再生用に書き換える
-    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer, ByVal ass_file As String) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
-        Dim chk_duration As Integer = 0 'TOTで動画の長さを調べた場合は1
 
         filename = filename_escape_recall(filename) ',エスケープを元に戻す
 
         'エラー防止
         If file_last_filename(num) Is Nothing Then
             file_last_filename(num) = ""
-        End If
-
-        '前回のファイル名と違えば字幕ファイルを削除
-        Dim exist_nico_ass As Integer = 0 'タイムシフト前大元のASSファイルが存在するかどうか
-        If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
-            exist_nico_ass = 1
-        End If
-        If file_last_filename(num) <> filename Or filename.Length = 0 Then
-            '古いsub%num%.assがあれば削除
-            If file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") = 1 Then
-                deletefile(fileroot & "\" & "sub" & num.ToString & ".ass")
-            End If
-            If exist_nico_ass = 1 Then
-                exist_nico_ass = 0
-                deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
-            End If
-            'If file_exist(fileroot & "\" & "chapter" & num.ToString & ".chapter") = 1 Then
-            'deletefile(fileroot & "\" & "chapter" & num.ToString & ".chapter")
-            'End If
         End If
 
         'タイムシフトを古い方式でやるなら1
@@ -1639,181 +1619,68 @@ Class WebRemocon
         Dim rename_file As String = "" 'assフルパス
         If (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0) Or nohsub = 2 Then
             'fonts.confが存在し、無変換でなく、ハードサブ禁止でなければ （又はnohsub=2）
-            Dim dt As Integer = filename.LastIndexOf(".")
-            If dt > 0 Then
-                Dim ass_file As String = filename.Substring(0, dt) & ".ass"
-                If file_exist(ass_file) <= 0 Then
-                    ass_file = ""
-                End If
-                If exist_nico_ass = 0 Then
-                    'NicoJKログをassに変換
-                    If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
-                        If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
-                            '動画の開始日時（微妙な誤差はあるかも）
-                            Dim VideoStartTime As DateTime = get_TOT(filename, hlsApp)
-                            chk_duration = 1
-                            'txtを探してassに変換してファイル(ass_file)として保存
-                            Dim txt_file As String = search_NicoJKtxt_file(filename, hlsApp)
-                            If txt_file.Length > 0 Then
-                                Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".txt")
-                                If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
-                                    'すでに同フォルダにassが存在していれば
-                                    log1write("字幕ファイルとして " & txt_file_ass & " を使用します")
-                                    'コピー
-                                    Dim tfn As String = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
-                                    My.Computer.FileSystem.CopyFile(txt_file_ass, tfn, True)
-                                    ass_file = tfn
-                                Else
-                                    'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                                    log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
-                                    ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
-                                    If ass_file.Length > 0 Then
-                                        log1write("字幕ASSファイルへの変換が終了しました")
-                                        If NicoConvAss_copy2NicoJK = 1 And txt_file.IndexOf(".txt") > 0 And txt_file.IndexOf(NicoJK_path) >= 0 Then
-                                            Dim tfn As String = txt_file.Replace(".txt", ".ass")
-                                            My.Computer.FileSystem.CopyFile(ass_file, tfn, True)
-                                            log1write(tfn & "を作成しました")
-                                        End If
-                                    End If
-                                End If
-                            End If
-                        End If
-                    End If
-                Else
-                    'すでに_nico.assファイルが存在する
-                    log1write("既存の字幕ASSファイル_nico.assを使用します")
-                    ass_file = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
-                End If
-                If ass_file.Length > 0 Then
-                    If file_exist(ass_file) = 1 Then
-                        'Try
-                        log1write("字幕ASSファイルとして" & ass_file & "を読み込みます")
-                        '存在していればstreamフォルダに名前を変えてコピー
-                        new_file = "sub" & num.ToString & ".ass"
-                        '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
-                        rename_file = fileroot & "\" & new_file
+            If ass_file.Length > 0 Then
+                log1write("字幕ASSファイルとして" & ass_file & "を読み込みます")
+                '存在していればstreamフォルダに名前を変えてコピー
+                new_file = "sub" & num.ToString & ".ass"
+                '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                rename_file = fileroot & "\" & new_file
 
-                        If (VideoSeekSeconds <= 0 And baisoku = "1") Or timeshift_old_flg = 1 Then
-                            'シークが指定されていなければそのままコピー
-                            'リネーム
-                            My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
-                            'ファイルが出来るまで待機
-                            Dim i As Integer = 0
-                            While i < 100 And file_exist(rename_file) < 1
-                                System.Threading.Thread.Sleep(50)
-                                i += 1
-                            End While
-                            log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
-                            'オプションに挿入する文字列を作成
-                            If nohsub = 0 Then
-                                new_file = " -vf ass=""" & new_file & """"
-                            Else
-                                'nohsub=2の場合
-                                new_file = ""
-                            End If
-                        Else
-                            'シークが指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
-                            log1write("字幕ASSファイルを修正しています")
-                            Dim VideoSeekSeconds_temp As Integer = VideoSeekSeconds
-                            If timeshift_old_flg = 1 Then
-                                '古い方式ならタイムシフトはしない
-                                VideoSeekSeconds_temp = 0
-                            End If
-                            If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds_temp, baisoku) = 1 Then
-                                '修正完了
-                                log1write("字幕ASSファイルの修正が完了しました")
-                                log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
-                                'オプションに挿入する文字列を作成
-                                If nohsub = 0 Then
-                                    new_file = " -vf ass=""" & new_file & """"
-                                Else
-                                    'nohsub=2の場合
-                                    new_file = ""
-                                End If
-                            Else
-                                'エラー
-                                log1write("字幕ASSファイルの修正に失敗しました")
-                                'オプションに-vfは挿入しない
-                                new_file = ""
-                            End If
-                        End If
-                        'Catch ex As Exception
-                        'log1write("字幕ASSファイル処理でエラーが発生しました。" & ex.Message)
-                        'new_file = ""
-                        'End Try
+                If VideoSeekSeconds <= 0 And baisoku = "1" Then
+                    'シークが指定されていなければそのままコピー
+                    'リネーム
+                    My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                    'ファイルが出来るまで待機
+                    Dim i As Integer = 0
+                    While i < 100 And file_exist(rename_file) < 1
+                        System.Threading.Thread.Sleep(50)
+                        i += 1
+                    End While
+                    log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
+                Else
+                    'シーク・倍速が指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
+                    log1write("字幕ASSファイルを修正しています")
+                    If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds, baisoku) = 1 Then
+                        '修正完了
+                        log1write("字幕ASSファイルの修正が完了しました")
+                        log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
+                    Else
+                        'エラー
+                        log1write("字幕ASSファイルの修正に失敗しました")
+                        'オプションに-vfは挿入しない
+                        new_file = ""
                     End If
+                End If
+                'オプションに挿入する文字列を作成
+                If nohsub = 0 And new_file.Length > 0 Then
+                    'ハードサブの場合
+                    new_file = " -vf ass=""" & new_file & """"
+                Else
+                    new_file = ""
                 End If
             End If
         ElseIf nohsub = 3 Then
-            'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
-            Dim dt As Integer = filename.LastIndexOf(".")
-            If dt > 0 Then
-                Dim ass_file As String = filename.Substring(0, dt) & ".ass"
-                If file_exist(ass_file) <= 0 Then
-                    ass_file = ""
-                End If
-
-                '前回と違うファイル、または字幕ファイルが存在しなければ作成
-                '前回と同じファイルならすでに存在しているので無駄なことはしない
-                If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") <= 0) Then
-                    If exist_nico_ass = 0 Then
-                        'NicoJKログをassに変換
-                        If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
-                            If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
-                                '動画の開始日時（微妙な誤差はあるかも）
-                                Dim VideoStartTime As DateTime = get_TOT(filename, hlsApp)
-                                chk_duration = 1
-                                'txtを探してassに変換してファイル(ass_file)として保存
-                                Dim txt_file As String = search_NicoJKtxt_file(filename, hlsApp)
-                                If txt_file.Length > 0 Then
-                                    Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".txt")
-                                    If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
-                                        'すでに同フォルダにassが存在していれば
-                                        log1write("字幕ファイルとして " & txt_file_ass & " を使用します")
-                                        'コピー
-                                        Dim tfn As String = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
-                                        My.Computer.FileSystem.CopyFile(txt_file_ass, tfn, True)
-                                        ass_file = tfn
-                                    Else
-                                        'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                                        log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
-                                        ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
-                                        If ass_file.Length > 0 Then
-                                            log1write("字幕ASSファイルへの変換が終了しました")
-                                            If NicoConvAss_copy2NicoJK = 1 And txt_file.IndexOf(".txt") > 0 And txt_file.IndexOf(NicoJK_path) >= 0 Then
-                                                Dim tfn As String = txt_file.Replace(".txt", ".ass")
-                                                My.Computer.FileSystem.CopyFile(ass_file, tfn, True)
-                                                log1write(tfn & "を作成しました")
-                                            End If
-                                        End If
-                                    End If
-                                End If
-                            End If
-                        End If
-                    Else
-                        'すでに_nico.assファイルが存在する
-                        log1write("既存の字幕ASSファイル_nico.assを使用します[CopyOnly]")
-                        ass_file = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
-                    End If
-
-                    If ass_file.Length > 0 Then
-                        log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
-                        '存在していればstreamフォルダに名前を変えてコピー
-                        '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
-                        rename_file = fileroot & "\" & "sub" & num.ToString & ".ass"
-                        'シークが指定されていなければそのままコピー
-                        'リネーム
-                        My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
-                        'ファイルが出来るまで待機
-                        Dim i As Integer = 0
-                        While i < 100 And file_exist(rename_file) < 1
-                            System.Threading.Thread.Sleep(50)
-                            i += 1
-                        End While
-                        log1write("字幕ASSファイルとして" & rename_file & "をセットしました[CopyOnly]")
-                    End If
-                End If
+        'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
+        '前回と違うファイル、または字幕ファイルが存在しなければ作成
+        '前回と同じファイルならすでに存在しているので無駄なことはしない
+        If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") <= 0) Then
+            If ass_file.Length > 0 Then
+                log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
+                '存在していればstreamフォルダに名前を変えてコピー
+                '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                rename_file = fileroot & "\" & "sub" & num.ToString & ".ass"
+                'シークが指定されていなければそのままコピー
+                'リネーム
+                My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                'ファイルが出来るまで待機
+                Dim i As Integer = 0
+                While i < 100 And file_exist(rename_file) < 1
+                    System.Threading.Thread.Sleep(50)
+                    i += 1
+                End While
+                log1write("字幕ASSファイルとして" & rename_file & "をセットしました[CopyOnly]")
             End If
+        End If
         End If
 
         '字幕があればチャプターを打てるかどうかチェック
@@ -1821,11 +1688,6 @@ Class WebRemocon
             log1write("コメントファイルからchapterファイル作成を試みます")
             'rename_fileが実際のassファイル（フルパス）
             F_make_chapter(filename, rename_file)
-        End If
-
-        '動画の長さを調べていなければ調べる（かつTOT_get_durationが指定されていれば）
-        If chk_duration = 0 And TOT_get_duration > 0 Then
-            Dim vt As DateTime = get_TOT(filename, hlsApp)
         End If
 
         '使用したファイル名を記録
@@ -1886,35 +1748,14 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをQSVEncファイル再生用に書き換える
-    Private Function hlsopt_udp2file_QSVEnc(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer) As String
+    Private Function hlsopt_udp2file_QSVEnc(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer, ByVal ass_file As String) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
-        Dim chk_duration As Integer = 0 'TOTで動画の長さを調べた場合は1
-        Dim video_fps As Double = 0 '動画のfps
 
         filename = filename_escape_recall(filename) ',エスケープを元に戻す
 
         'エラー防止
         If file_last_filename(num) Is Nothing Then
             file_last_filename(num) = ""
-        End If
-
-        '前回のファイル名と違えば字幕ファイルを削除
-        Dim exist_nico_ass As Integer = 0 'タイムシフト前大元のASSファイルが存在するかどうか
-        If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
-            exist_nico_ass = 1
-        End If
-        If file_last_filename(num) <> filename Or filename.Length = 0 Then
-            '古いsub%num%.assがあれば削除
-            If file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") = 1 Then
-                deletefile(fileroot & "\" & "sub" & num.ToString & ".ass")
-            End If
-            If exist_nico_ass = 1 Then
-                exist_nico_ass = 0
-                deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
-            End If
-            'If file_exist(fileroot & "\" & "chapter" & num.ToString & ".chapter") = 1 Then
-            'deletefile(fileroot & "\" & "chapter" & num.ToString & ".chapter")
-            'End If
         End If
 
         Dim rename_file As String = "" 'assフルパス
@@ -1925,54 +1766,9 @@ Class WebRemocon
             'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
             Dim dt As Integer = filename.LastIndexOf(".")
             If dt > 0 Then
-                Dim ass_file As String = filename.Substring(0, dt) & ".ass"
-                If file_exist(ass_file) <= 0 Then
-                    ass_file = ""
-                End If
-
                 '前回と違うファイル、または字幕ファイルが存在しなければ作成
                 '前回と同じファイルならすでに存在しているので無駄なことはしない
                 If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") <= 0) Then
-                    If exist_nico_ass = 0 Then
-                        'NicoJKログをassに変換
-                        If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
-                            If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
-                                '動画の開始日時（微妙な誤差はあるかも）
-                                Dim VideoStartTime As DateTime = get_TOT(filename, hlsApp, video_fps)
-                                chk_duration = 1
-                                'txtを探してassに変換してファイル(ass_file)として保存
-                                Dim txt_file As String = search_NicoJKtxt_file(filename, hlsApp)
-                                If txt_file.Length > 0 Then
-                                    Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".txt")
-                                    If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
-                                        'すでに同フォルダにassが存在していれば
-                                        log1write("字幕ファイルとして " & txt_file_ass & " を使用します")
-                                        'コピー
-                                        Dim tfn As String = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
-                                        My.Computer.FileSystem.CopyFile(txt_file_ass, tfn, True)
-                                        ass_file = tfn
-                                    Else
-                                        'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
-                                        log1write("字幕ファイルとしてNicoJKコメント " & txt_file & " を使用します")
-                                        ass_file = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
-                                        If ass_file.Length > 0 Then
-                                            log1write("字幕ASSファイルへの変換が終了しました")
-                                            If NicoConvAss_copy2NicoJK = 1 And txt_file.IndexOf(".txt") > 0 And txt_file.IndexOf(NicoJK_path) >= 0 Then
-                                                Dim tfn As String = txt_file.Replace(".txt", ".ass")
-                                                My.Computer.FileSystem.CopyFile(ass_file, tfn, True)
-                                                log1write(tfn & "を作成しました")
-                                            End If
-                                        End If
-                                    End If
-                                End If
-                            End If
-                        End If
-                    Else
-                        'すでに_nico.assファイルが存在する
-                        log1write("既存の字幕ASSファイル_nico.assを使用します[CopyOnly]")
-                        ass_file = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
-                    End If
-
                     If ass_file.Length > 0 Then
                         log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
                         '存在していればstreamフォルダに名前を変えてコピー
@@ -2000,11 +1796,6 @@ Class WebRemocon
             F_make_chapter(filename, rename_file)
         End If
 
-        '動画の長さを調べていなければ調べる（かつTOT_get_durationが指定されていれば）
-        If chk_duration = 0 And TOT_get_duration > 0 Then
-            Dim vt As DateTime = get_TOT(filename, hlsApp, video_fps)
-        End If
-
         '使用したファイル名を記録
         file_last_filename(num) = filename
 
@@ -2019,14 +1810,9 @@ Class WebRemocon
 
             'シーク秒数が指定されていれば「--seek フレーム数」を挿入
             If VideoSeekSeconds > 0 Then
-                If video_fps = 0 Then
-                    video_fps = 29.97 'フレームレートが判明していなければ
-                End If
-                'Dim frame As Integer = Int(VideoSeekSeconds * video_fps) '秒をフレームに変換
                 Dim hhmmss As String = sec2hhmmss(VideoSeekSeconds)
                 sp = hlsOpt.IndexOf("-i ")
                 If sp >= 0 And hhmmss.Length > 0 Then
-                    'hlsOpt = hlsOpt.Substring(0, sp) & "--trim " & frame.ToString & ":0 " & hlsOpt.Substring(sp)
                     hlsOpt = hlsOpt.Substring(0, sp) & "--seek " & hhmmss & " " & hlsOpt.Substring(sp)
                 End If
             End If
@@ -2067,10 +1853,10 @@ Class WebRemocon
         Dim hlsOpt As String = hlsOpt_QSVEnc
         Dim hlsOpt_result As String = ""
         'QSVEnc用のhlsOptが与えられる
-        '--trimを削除
-        Dim sp As Integer = hlsOpt.IndexOf("--trim ")
+        '--seekを削除
+        Dim sp As Integer = hlsOpt.IndexOf("--seek ")
         If sp >= 0 Then
-            Dim ep As Integer = hlsOpt.IndexOf(" ", sp + "--trim ".Length)
+            Dim ep As Integer = hlsOpt.IndexOf(" ", sp + "--seek ".Length)
             If ep > 0 Then
                 Try
                     hlsOpt = hlsOpt.Substring(0, sp) + hlsOpt.Substring(ep + 1)
@@ -2351,6 +2137,96 @@ Class WebRemocon
         'video_force_ffmpeg
         Dim video_force_ffmpeg_temp As Integer = video_force_ffmpeg
 
+        'stream_modeが指定されていなかった場合に備えて
+        If filename.Length > 0 Then
+            If Stream_mode = 0 Then
+                Stream_mode = 1
+            ElseIf Stream_mode = 2 Then
+                Stream_mode = 3
+            End If
+        End If
+
+        '★あらかじめコメントファイルを探しておく（HLSアプリ、コメントが無ければ変更しない）
+        Dim ass_file As String = "" 'ここにタイムシフト前のassファイルが入る
+        '前回のファイル名と違えば字幕ファイルを削除
+        Dim exist_nico_ass As Integer = 0 'タイムシフト前大元のASSファイルが存在するかどうか
+        If file_exist(fileroot & "\" & "sub" & num.ToString & "_nico.ass") = 1 Then
+            exist_nico_ass = 1
+        End If
+        If file_last_filename(num) <> filename Or filename.Length = 0 Then
+            '古いsub%num%.assがあれば削除
+            If file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") = 1 Then
+                deletefile(fileroot & "\" & "sub" & num.ToString & ".ass")
+            End If
+            If exist_nico_ass = 1 Then
+                exist_nico_ass = 0
+                deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
+            End If
+        End If
+        If (Stream_mode = 1 Or Stream_mode = 3) Then
+            'コメントファイルを探す
+            Dim txt_file As String = "" 'NicoJKコメントファイルtxt
+            If nohsub <> 1 Then
+                log1write("[字幕]コメントファイルを探しています")
+                Dim dt As Integer = filename.LastIndexOf(".")
+                If dt > 0 Then
+                    ass_file = filename.Substring(0, dt) & ".ass"
+                    If file_exist(ass_file) <= 0 Then
+                        ass_file = ""
+                    End If
+                    If exist_nico_ass = 0 Then
+                        'まだassファイルが見つかっていない場合
+                        If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
+                            txt_file = search_NicoJKtxt_file(filename, hlsApp)
+                        End If
+                    End If
+                End If
+
+                If exist_nico_ass = 1 Then
+                    'すでに　fileroot & "\" & "sub" & num.ToString & "_nico.ass"　が存在している
+                    log1write("[字幕]既存の字幕ASSファイル_nico.assを使用します")
+                    ass_file = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
+                ElseIf txt_file.Length > 0 Then
+                    'txt_fileが存在すれば
+                    '変換に成功すればass_fileに入れる
+                    '動画の開始日時（微妙な誤差はあるかも）
+                    Dim VideoStartTime As DateTime = get_TOT(filename, hlsApp)
+                    Dim txt_file_ass As String = txt_file.Replace(".txt", ".ass").Replace(".xml", ".ass")
+                    If txt_file_ass.IndexOf(".ass") > 0 And file_exist(txt_file_ass) = 1 Then
+                        'すでに同フォルダにassが存在していれば （例えば123456789.assが存在する）
+                        log1write("[字幕]字幕ファイルとして " & txt_file_ass & " を使用します")
+                        'コピー
+                        Dim tfn As String = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
+                        My.Computer.FileSystem.CopyFile(txt_file_ass, tfn, True)
+                        ass_file = tfn
+                    Else
+                        'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存
+                        If NicoJK_path.Length > 0 And NicoConvAss_path.Length > 0 Then
+                            log1write("[字幕]字幕ファイルとしてNicoJKコメント " & txt_file & " を変換して使用します")
+                            Dim ass_file_temp As String = convert_NicoJK2ass(num, txt_file, fileroot, margin1, filename, VideoStartTime)
+                            If ass_file_temp.Length > 0 Then
+                                ass_file = ass_file_temp
+                                log1write("[字幕]字幕ASSファイルへの変換が終了しました")
+                                If NicoConvAss_copy2NicoJK = 1 And txt_file.IndexOf(".txt") > 0 And txt_file.IndexOf(NicoJK_path) >= 0 Then
+                                    'txtと同じフォルダにassファイルをコピーする　（123456789.assとして）
+                                    Dim tfn As String = txt_file.Replace(".txt", ".ass")
+                                    My.Computer.FileSystem.CopyFile(ass_file, tfn, True)
+                                    log1write("[字幕]" & tfn & "を作成しました")
+                                End If
+                            Else
+                                log1write("[字幕]字幕ASSファイルへの変換が失敗しました")
+                            End If
+                        Else
+                            log1write("[字幕]NicoJK_pathまたはNicoConvAss_pathが指定されていません")
+                        End If
+                    End If
+                End If
+                If ass_file.Length > 0 Then
+                    log1write("[字幕]" & ass_file & "をコメントファイルとしてセットしました")
+                End If
+            End If
+        End If
+
         'VLC http ストリーム用にhlsAppとhlsOptを入れ替える
         If Stream_mode = 2 Or Stream_mode = 3 Then
             'httpストリームアプリが指定されていれば
@@ -2384,7 +2260,7 @@ Class WebRemocon
                 'ファイル再生
                 If filename.Length > 0 And Stream_mode = 3 Then
                     'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
                     'chapterをコピー
                     'copy_chapter_to_fileroot(num, filename, fileroot)
                 End If
@@ -2407,11 +2283,6 @@ Class WebRemocon
                 End If
             End If
         ElseIf Stream_mode = 0 Or Stream_mode = 1 Then
-            'stream_modeが指定されていなかった場合に備えて
-            If filename.Length > 0 Then
-                Stream_mode = 1
-            End If
-
             'パラメータ内にHLSアプリ指定が埋め込まれている場合
             Dim resolution_org As String = Trim(resolution)
             'アプリと解像度に分離し、アプリ指定があればhlsAppSelectにセット
@@ -2443,6 +2314,7 @@ Class WebRemocon
                     resolution = Trim(form1_resolution)
                 End If
             End If
+
             'video_force_ffmpegが指定されている場合
             If video_force_ffmpeg = 1 And Stream_mode = 1 Then
                 hlsAppSelect = "ffmpeg"
@@ -2453,7 +2325,7 @@ Class WebRemocon
                 video_force_ffmpeg_temp = 2
             ElseIf video_force_ffmpeg = 3 And Stream_mode = 1 And filename.Length > 0 Then
                 Dim ext As String = Path.GetExtension(filename).ToLower
-                If ext <> ".ts" Or baisoku <> 1 Or nohsub = 0 Or nohsub = 2 Then
+                If ext <> ".ts" Or baisoku <> 1 Or (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0 And ass_file.Length > 0) Then
                     hlsAppSelect = "ffmpeg"
                     log1write("video_force_ffmpeg=3によりHLSアプリにffmpegが指定されました")
                 Else
@@ -2463,7 +2335,7 @@ Class WebRemocon
                 End If
             ElseIf video_force_ffmpeg = 4 And Stream_mode = 1 And filename.Length > 0 Then
                 Dim ext As String = Path.GetExtension(filename).ToLower
-                If ext <> ".ts" Or baisoku <> 1 Or nohsub = 0 Or nohsub = 2 Then
+                If ext <> ".ts" Or baisoku <> 1 Or (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0 And ass_file.Length > 0) Then
                     hlsAppSelect = "ffmpeg"
                     log1write("video_force_ffmpeg=4によりHLSアプリにffmpegが指定されました")
                 End If
@@ -2699,12 +2571,12 @@ Class WebRemocon
                 'hlsオプションを書き換える
                 If hlsApp.IndexOf("ffmpeg") >= 0 Then
                     'ffmpegのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
                     'chapterをコピー
                     'copy_chapter_to_fileroot(num, filename, fileroot)
                 ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                     'QSVEncのとき
-                    hlsOpt = hlsopt_udp2file_QSVEnc(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1)
+                    hlsOpt = hlsopt_udp2file_QSVEnc(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
                 Else
                     'その他vlc
                     '今のところ未対応
