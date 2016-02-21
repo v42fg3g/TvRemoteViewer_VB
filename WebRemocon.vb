@@ -1626,7 +1626,7 @@ Class WebRemocon
                 '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
                 rename_file = fileroot & "\" & new_file
 
-                If VideoSeekSeconds <= 0 And baisoku = "1" Then
+                If (VideoSeekSeconds <= 0 And baisoku = "1") Or timeshift_old_flg = 1 Then
                     'シークが指定されていなければそのままコピー
                     'リネーム
                     My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
@@ -1640,7 +1640,12 @@ Class WebRemocon
                 Else
                     'シーク・倍速が指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
                     log1write("字幕ASSファイルを修正しています")
-                    If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds, baisoku) = 1 Then
+                    Dim VideoSeekSeconds_temp As Integer = VideoSeekSeconds
+                    If timeshift_old_flg = 1 Then
+                        '古い方式ならタイムシフトはしない
+                        VideoSeekSeconds_temp = 0
+                    End If
+                    If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds_temp, baisoku) = 1 Then
                         '修正完了
                         log1write("字幕ASSファイルの修正が完了しました")
                         log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
@@ -2163,11 +2168,11 @@ Class WebRemocon
                 deletefile(fileroot & "\" & "sub" & num.ToString & "_nico.ass")
             End If
         End If
-        If (Stream_mode = 1 Or Stream_mode = 3) Then
+        If Stream_mode = 1 Or Stream_mode = 3 Then
             'コメントファイルを探す
             Dim txt_file As String = "" 'NicoJKコメントファイルtxt
             If nohsub <> 1 Then
-                log1write("[字幕]コメントファイルを探しています")
+                log1write("[字幕]字幕ファイルを探しています")
                 Dim dt As Integer = filename.LastIndexOf(".")
                 If dt > 0 Then
                     ass_file = filename.Substring(0, dt) & ".ass"
@@ -2177,7 +2182,9 @@ Class WebRemocon
                     If exist_nico_ass = 0 Then
                         'まだassファイルが見つかっていない場合
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
-                            txt_file = search_NicoJKtxt_file(filename, hlsApp)
+                            If NicoJK_path.Length > 0 Then
+                                txt_file = search_NicoJKtxt_file(filename, hlsApp)
+                            End If
                         End If
                     End If
                 End If
@@ -2223,6 +2230,8 @@ Class WebRemocon
                 End If
                 If ass_file.Length > 0 Then
                     log1write("[字幕]" & ass_file & "をコメントファイルとしてセットしました")
+                Else
+                    log1write("[字幕]字幕ファイルは見つかりませんでした")
                 End If
             End If
         End If
