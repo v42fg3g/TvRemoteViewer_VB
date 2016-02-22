@@ -1665,27 +1665,27 @@ Class WebRemocon
                 End If
             End If
         ElseIf nohsub = 3 Then
-        'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
-        '前回と違うファイル、または字幕ファイルが存在しなければ作成
-        '前回と同じファイルならすでに存在しているので無駄なことはしない
-        If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") <= 0) Then
-            If ass_file.Length > 0 Then
-                log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
-                '存在していればstreamフォルダに名前を変えてコピー
-                '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
-                rename_file = fileroot & "\" & "sub" & num.ToString & ".ass"
-                'シークが指定されていなければそのままコピー
-                'リネーム
-                My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
-                'ファイルが出来るまで待機
-                Dim i As Integer = 0
-                While i < 100 And file_exist(rename_file) < 1
-                    System.Threading.Thread.Sleep(50)
-                    i += 1
-                End While
-                log1write("字幕ASSファイルとして" & rename_file & "をセットしました[CopyOnly]")
+            'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
+            '前回と違うファイル、または字幕ファイルが存在しなければ作成
+            '前回と同じファイルならすでに存在しているので無駄なことはしない
+            If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") <= 0) Then
+                If ass_file.Length > 0 Then
+                    log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
+                    '存在していればstreamフォルダに名前を変えてコピー
+                    '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                    rename_file = fileroot & "\" & "sub" & num.ToString & ".ass"
+                    'シークが指定されていなければそのままコピー
+                    'リネーム
+                    My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                    'ファイルが出来るまで待機
+                    Dim i As Integer = 0
+                    While i < 100 And file_exist(rename_file) < 1
+                        System.Threading.Thread.Sleep(50)
+                        i += 1
+                    End While
+                    log1write("字幕ASSファイルとして" & rename_file & "をセットしました[CopyOnly]")
+                End If
             End If
-        End If
         End If
 
         '字幕があればチャプターを打てるかどうかチェック
@@ -1745,7 +1745,7 @@ Class WebRemocon
             '倍速指定があれば
             hlsOpt = modify_baisoku(hlsOpt, baisoku)
         Else
-            log1write("【エラー】HlsOptが指定されていません")
+            log1write("【エラー】HlsOpt内に-iが見つかりません")
         End If
 
         Return hlsOpt
@@ -1822,7 +1822,7 @@ Class WebRemocon
                 End If
             End If
         Else
-            log1write("【エラー】HlsOptが指定されていません")
+            log1write("【エラー】HlsOpt内に-iが見つかりません")
         End If
 
         Return hlsOpt
@@ -2307,26 +2307,33 @@ Class WebRemocon
                 '解像度インデックスにアプリが指定されていればStartTv.htmlより優先
                 hlsAppSelect = rez(1) 'hlsApp
             End If
-            'resolution指定がなければフォーム上のHLSオプションから解像度文字列を取得
+
+            'resolution_org : 指定そのまま "F_640x360L"
+            'resolution_value : HLSアプリ指定を取り除いた解像度のみ "640x360L"
+            'resolution : 指定そのまま　"F_640x360L"　ただし指定無しの場合は↓でフォームから解像度のみ取得 ""→"640x360"
+            '                 StartTv.htmlからのAppSelect指定などでありえる
+
+            'resolution指定がなければフォーム上のHLSオプションから解像度のみ取得
             If resolution.Length = 0 Then
-                If hlsApp.IndexOf("ffmpeg") >= 0 Then
-                    '解像度が無指定でHLS配信でHLS_option_ffmpeg_file.txt指定のファイル再生ならば
-                    'フォーム上のオプションから解像度を算出して解像度をセット
-                    resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
-                ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
-                    'QSVEnc
-                    resolution = trim8(instr_pickup_para(hlsOpt2, "--output-res ", " ", 0))
-                ElseIf hlsApp.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0 Then
-                    'vlc 再生にはffmpeg使用
-                    Dim vlc_w As Integer = Val(Trim(Instr_pickup(hlsOpt2, "width=", ",", 0)))
-                    Dim vlc_h As Integer = Val(Trim(Instr_pickup(hlsOpt2, "height=", ",", 0)))
-                    If vlc_w > 0 And vlc_h > 0 Then
-                        resolution = vlc_w.ToString & "x" & vlc_h.ToString
-                    End If
-                End If
+                '見つからなければフォーム上の解像度コンボボックスの値から取得
+                Dim rez2() As String = get_resolution_and_hlsApp(Trim(Trim(form1_resolution))) 'resolutionから解像度とhlsAppを取得
+                resolution = Trim(rez2(0)) '解像度文字列　"640x360L"
                 If resolution.Length = 0 Then
-                    '見つからなければフォーム上の解像度コンボボックスの値から取得
-                    resolution = Trim(form1_resolution)
+                    'まずありえないがフォーム上で解像度が指定されていない場合
+                    'フォーム上のオプションから解像度を算出して解像度をセット
+                    If hlsApp.IndexOf("ffmpeg") >= 0 Then
+                        resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
+                    ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                        'QSVEnc
+                        resolution = trim8(instr_pickup_para(hlsOpt2, "--output-res ", " ", 0))
+                    ElseIf hlsApp.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0 Then
+                        'vlc 再生にはffmpeg使用
+                        Dim vlc_w As Integer = Val(Trim(Instr_pickup(hlsOpt2, "width=", ",", 0)))
+                        Dim vlc_h As Integer = Val(Trim(Instr_pickup(hlsOpt2, "height=", ",", 0)))
+                        If vlc_w > 0 And vlc_h > 0 Then
+                            resolution = vlc_w.ToString & "x" & vlc_h.ToString
+                        End If
+                    End If
                 End If
             End If
 
@@ -2428,15 +2435,37 @@ Class WebRemocon
                 If h_file.Length > 0 Then
                     hlsOpt = search_hlsOption(resolution, h_option, h_file, hls_option_first)
                     If hlsOpt.Length = 0 Then
-                        log1write("【エラー】" & hlsAppSelect & "に該当するHLSオプションが" & h_file & "内に見つかりませんでした。")
+                        log1write(hlsAppSelect & "に該当するHLSオプションが" & h_file & "内に見つかりませんでした。")
+                        'ファイル再生　_fileで見つからなければ_file無しのライブ用ファイルから検索
+                        If Stream_mode = 1 Then
+                            Select Case hlsAppSelect.ToLower & ":" & Stream_mode.ToString
+                                Case "ffmpeg:1"
+                                    h_option = ffmpeg_option
+                                    h_file = "HLS_option_ffmpeg.txt"
+                                Case "qsvenc:1"
+                                    h_option = QSVEnc_option
+                                    h_file = "HLS_option_QSVEnc.txt"
+                                Case Else
+                                    h_option = Nothing
+                                    h_file = ""
+                            End Select
+                            If h_file.Length > 0 Then
+                                log1write("ライブ用" & h_file & "からHLSオプションを検索します")
+                                hlsOpt = search_hlsOption(resolution, h_option, h_file, 0)
+                                If hlsOpt.Length = 0 Then
+                                    log1write(hlsAppSelect & "に該当するHLSオプションが" & h_file & "内に見つかりませんでした。")
+                                End If
+                            End If
+                        End If
                     End If
                 Else
-                    log1write("【エラー】HLSアプリ" & hlsAppSelect & "に該当するHLSオプションファイルが見つかりませんでした。stream_mode=" & Stream_mode.ToString)
+                    log1write("【警告】HLSアプリ" & hlsAppSelect & "に該当するHLSオプションファイルが見つかりませんでした。stream_mode=" & Stream_mode.ToString)
                 End If
 
-                If hlsOpt.Length = 0 And resolution_org.Length = 0 Then
+                'HLSアプリが指定されているにもかかわらず、HLSオプションが見つからなかった場合
+                If hlsOpt.Length = 0 Then
                     hlsOpt = hlsOpt2
-                    log1write("解像度指定が無かったのでフォーム上のHLSオプションが使用されます")
+                    log1write("【警告】解像度[" & resolution & "]に対応するHLSオプションが見つかりませんでした。フォーム上のHLSオプションが使用されます")
                 End If
             Else
                 '明示的にHLSアプリの指定が無かった場合
@@ -2455,30 +2484,30 @@ Class WebRemocon
                     If h_file.Length > 0 Then
                         hlsOpt = search_hlsOption(resolution, h_option, h_file, 0)
                         If hlsOpt.Length = 0 Then
-                            log1write("【エラー】ファイル再生：" & hlsAppSelect & "に該当するHLSオプションが" & h_file & "内に見つかりませんでした")
+                            log1write("【警告】ファイル再生：HLSオプションが" & h_file & "内に見つかりませんでした")
                         End If
                     Else
-                        log1write("【エラー】ファイル再生：HLSアプリ" & hlsAppSelect & "に該当するファイル再生用HLSオプションファイルが見つかりませんでした。stream_mode=" & Stream_mode.ToString)
+                        log1write("【警告】ファイル再生：ファイル再生用HLSオプションファイルが見つかりませんでした。stream_mode=" & Stream_mode.ToString)
                     End If
                 End If
-            End If
 
-            If hlsOpt.Length = 0 Then
-                If resolution_org.Length = 0 Then
-                    hlsOpt = hlsOpt2
-                    log1write("解像度指定が無かったのでフォーム上のHLSオプションが使用されます")
-                Else
-                    'HLSアプリが明示的に指定されていない場合、もしくは見つからなかった場合はhls_optionから探す
-                    hlsOpt = search_hlsOption(resolution, hls_option, "HLS_option.txt", 0)
-                    If hlsOpt.Length = 0 Then
-                        log1write("【エラー】" & hlsAppSelect & "に該当するHLSオプションが" & "HLS_option.txt" & "内に見つかりませんでした。")
+                'ファイル再生や個別指定用に無理矢理割り出したresolutionを元々指定されたものに戻す（HLSアプリ指定を除いた解像度インデックス）
+                resolution = resolution_value
+
+                If hlsOpt.Length = 0 Then
+                    '元々指定された解像度でHLSオプションを検索
+                    If resolution_value.Length = 0 Then
+                        hlsOpt = hlsOpt2
+                        log1write("解像度指定が無かったのでフォーム上のHLSオプションが使用されます")
+                    ElseIf resolution_value.Length > 0 Then
+                        hlsOpt = search_hlsOption(resolution_value, hls_option, "HLS_option.txt", 0)
+                        If hlsOpt.Length = 0 Then
+                            log1write("HLS_option.txt内に" & resolution_value & "に対するオプションが見つかりませんでした")
+                            hlsOpt = hlsOpt2
+                            log1write("フォーム上のHLSオプションが使用されます")
+                        End If
                     End If
                 End If
-            End If
-            If hlsOpt.Length = 0 Then
-                'それでも見つからなかった場合はフォーム上のHLSオプションを使用
-                hlsOpt = hlsOpt2
-                log1write("フォーム上のHLSオプションが使用されます")
             End If
 
             'ここまででhlsAppとhlsOptが準備完了
@@ -2757,8 +2786,6 @@ Class WebRemocon
                 'VLC port udpPortに定数を足して作成することにした
                 hlsOpt = hlsOpt.Replace("%VLCPORT%", (udpPortNumber + HTTPSTREAM_VLC_port_plus).ToString)
             End If
-
-            'log1write("HLS option=" & hlsOpt)
 
             Try
                 Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更

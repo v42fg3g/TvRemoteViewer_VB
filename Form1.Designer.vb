@@ -87,6 +87,7 @@ Partial Class Form1
         Me.ComboBoxHLSorHTTP = New System.Windows.Forms.ComboBox()
         Me.ButtonCopy2Clipboard = New System.Windows.Forms.Button()
         Me.Button7 = New System.Windows.Forms.Button()
+        Me.ComboBoxRezFormOrCombo = New System.Windows.Forms.ComboBox()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -520,7 +521,7 @@ Partial Class Form1
         'CheckBoxShowConsole
         '
         Me.CheckBoxShowConsole.AutoSize = True
-        Me.CheckBoxShowConsole.Location = New System.Drawing.Point(395, 479)
+        Me.CheckBoxShowConsole.Location = New System.Drawing.Point(394, 466)
         Me.CheckBoxShowConsole.Name = "CheckBoxShowConsole"
         Me.CheckBoxShowConsole.Size = New System.Drawing.Size(122, 16)
         Me.CheckBoxShowConsole.TabIndex = 86
@@ -649,11 +650,23 @@ Partial Class Form1
         Me.Button7.Text = "再読込"
         Me.Button7.UseVisualStyleBackColor = True
         '
+        'ComboBoxRezFormOrCombo
+        '
+        Me.ComboBoxRezFormOrCombo.FormattingEnabled = True
+        Me.ComboBoxRezFormOrCombo.Items.AddRange(New Object() {"HLSオプションを送る", "解像度インデックスを送る"})
+        Me.ComboBoxRezFormOrCombo.Location = New System.Drawing.Point(374, 484)
+        Me.ComboBoxRezFormOrCombo.Name = "ComboBoxRezFormOrCombo"
+        Me.ComboBoxRezFormOrCombo.Size = New System.Drawing.Size(145, 20)
+        Me.ComboBoxRezFormOrCombo.TabIndex = 102
+        Me.ComboBoxRezFormOrCombo.TabStop = False
+        Me.ComboBoxRezFormOrCombo.Text = "HLSオプションを送る"
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(530, 685)
+        Me.Controls.Add(Me.ComboBoxRezFormOrCombo)
         Me.Controls.Add(Me.Button7)
         Me.Controls.Add(Me.ButtonCopy2Clipboard)
         Me.Controls.Add(Me.Label15)
@@ -784,5 +797,6 @@ Partial Class Form1
     Friend WithEvents ButtonCopy2Clipboard As System.Windows.Forms.Button
     Friend WithEvents SeekMethodList As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents Button7 As System.Windows.Forms.Button
+    Friend WithEvents ComboBoxRezFormOrCombo As System.Windows.Forms.ComboBox
 
 End Class
