@@ -1535,6 +1535,11 @@ Class WebRemocon
                                 If video_force_ffmpeg = 1 Then
                                     log1write("ファイル再生に個別実行用ffmpegを使用するようセットしました")
                                 End If
+                            Case "PipeRun_ffmpeg_option"
+                                If youso(1).Length > 0 Then
+                                    PipeRun_ffmpeg_option = youso(1)
+                                    log1write("PipeRun実行時にffmpegに渡すオプション= " & PipeRun_ffmpeg_option)
+                                End If
 
 
 
@@ -1887,7 +1892,10 @@ Class WebRemocon
             If videoseekseconds > 0 Then
                 hlsOpt_result = "-ss " & videoseekseconds.ToString & " "
             End If
-            hlsOpt_result &= "-i """ & filename & """" & " -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1"
+            'hlsOpt_result &= "-i """ & filename & """" & " -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1"
+            'hlsOpt_result &= "-i %VIDEOFILE% -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1"
+            hlsOpt_result = PipeRun_ffmpeg_option
+            hlsOpt_result = hlsOpt_result.Replace("%VIDEOFILE%", """" & filename & """")
             'パイプ記号
             hlsOpt_result &= " | "
             'QSVEnc

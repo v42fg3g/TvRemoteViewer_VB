@@ -1,5 +1,8 @@
 ﻿Module モジュール_その他
 
+    'パイプ経由時にffmpegに渡すパラメータ
+    Public PipeRun_ffmpeg_option As String = "-i %VIDEOFILE% -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1"
+
     'ファイル再生はffmpegを使用する場合は1
     Public video_force_ffmpeg As Integer = 0
 
