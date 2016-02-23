@@ -1265,59 +1265,63 @@ Public Class Form1
         'カレントディレクトリ変更
         F_set_ppath4program()
 
-        Dim hlsAppNameForm As String = ""
-        Dim hlsAppNameFile As String = ""
-        Dim hlsOptFile As String = ""
+        Dim hls1 As String = file2str("HLS_option.txt")
 
-        Dim hlsAppFilename As String = Path.GetFileName(textBoxHlsApp.Text.ToString)
-        Dim hlsAppNum As Integer = 0
-        If hlsAppFilename.IndexOf("vlc") >= 0 Then
-            hlsAppNum = 1
-            hlsAppNameForm = "vlc"
-            hlsOptFile = "HLS_option_VLC.txt"
-        ElseIf hlsAppFilename.IndexOf("ffmpeg") >= 0 Then
-            hlsAppNum = 2
-            hlsAppNameForm = "ffmpeg"
-            hlsOptFile = "HLS_option_ffmpeg.txt"
-        ElseIf hlsAppFilename.ToLower.IndexOf("qsvencc") >= 0 Then
-            hlsAppNum = 3
-            hlsAppNameForm = "QSVEnc"
-            hlsOptFile = "HLS_option_QSVEnc.txt"
-        End If
+        'HLS_option.txtが目次としてのみ使われていればスルー
+        If hls1.IndexOf(" --sout ") >= 0 Or hls1.IndexOf("vlc:") >= 0 Or hls1.IndexOf(" -acodec ") >= 0 Or hls1.IndexOf(" -vcodec ") >= 0 Or hls1.IndexOf("hls_segment_filename:") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
+            Dim hlsAppNameForm As String = ""
+            Dim hlsAppNameFile As String = ""
+            Dim hlsOptFile As String = ""
 
-        If hlsAppNum > 0 Then
-            Dim hls1 As String = file2str("HLS_option.txt")
-            Dim hls1str As String = ""
-            If hls1.IndexOf(" --sout ") >= 0 Or hls1.IndexOf("vlc:") >= 0 Then
-                hls1str &= ":1:"
-                hlsAppNameFile = "vlc"
-            End If
-            If hls1.IndexOf(" -acodec ") >= 0 Or hls1.IndexOf(" -vcodec ") >= 0 Then
-                hls1str &= ":2:"
-                hlsAppNameFile = "ffmpeg"
-            End If
-            If hls1.IndexOf("hls_segment_filename:") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
-                hls1str &= ":3:"
-                hlsAppNameFile = "QSVEnc"
+            Dim hlsAppFilename As String = Path.GetFileName(textBoxHlsApp.Text.ToString)
+            Dim hlsAppNum As Integer = 0
+            If hlsAppFilename.IndexOf("vlc") >= 0 Then
+                hlsAppNum = 1
+                hlsAppNameForm = "vlc"
+                hlsOptFile = "HLS_option_VLC.txt"
+            ElseIf hlsAppFilename.IndexOf("ffmpeg") >= 0 Then
+                hlsAppNum = 2
+                hlsAppNameForm = "ffmpeg"
+                hlsOptFile = "HLS_option_ffmpeg.txt"
+            ElseIf hlsAppFilename.ToLower.IndexOf("qsvencc") >= 0 Then
+                hlsAppNum = 3
+                hlsAppNameForm = "QSVEnc"
+                hlsOptFile = "HLS_option_QSVEnc.txt"
             End If
 
-            If hls1str.Length > 0 And hls1str.IndexOf(":" & hlsAppNum.ToString & ":") < 0 Then
-                'メッセージボックスを表示する 
-                Dim result As DialogResult = MessageBox.Show("HLS_option.txtの内容が" & hlsAppNameForm & "と一致しません。" & vbCrLf & hlsOptFile & "の内容をHLS_option.txtへコピーしますか？" & vbCrLf & "※フォーム上のHLSオプション欄は保持されますので必要ならば手動で変更してください", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
-                If result = DialogResult.Yes Then
-                    Try
-                        System.IO.File.Copy("HLS_option.txt", "HLS_option.txt.bak", True)
-                        System.IO.File.Copy(hlsOptFile, "HLS_option.txt", True)
-                        log1write(hlsOptFile & "の内容をHLS_option.txtにコピーしました")
-                        'HLSオプション変数更新
-                        Me._worker.read_hls_option()
-                        Dim hlsopt2temp As String = textBoxHlsOpt2.Text.ToString
-                        'コンボボックス更新
-                        search_ComboBoxResolution()
-                        textBoxHlsOpt2.Text = hlsopt2temp
-                    Catch ex As Exception
-                        log1write("【エラー】ファイルコピーに失敗しました。" & ex.Message)
-                    End Try
+            If hlsAppNum > 0 Then
+                Dim hls1str As String = ""
+                If hls1.IndexOf(" --sout ") >= 0 Or hls1.IndexOf("vlc:") >= 0 Then
+                    hls1str &= ":1:"
+                    hlsAppNameFile = "vlc"
+                End If
+                If hls1.IndexOf(" -acodec ") >= 0 Or hls1.IndexOf(" -vcodec ") >= 0 Then
+                    hls1str &= ":2:"
+                    hlsAppNameFile = "ffmpeg"
+                End If
+                If hls1.IndexOf("hls_segment_filename:") >= 0 Or hls1.IndexOf(" --audio-codec ") >= 0 Then
+                    hls1str &= ":3:"
+                    hlsAppNameFile = "QSVEnc"
+                End If
+
+                If hls1str.Length > 0 And hls1str.IndexOf(":" & hlsAppNum.ToString & ":") < 0 Then
+                    'メッセージボックスを表示する 
+                    Dim result As DialogResult = MessageBox.Show("HLS_option.txtの内容が" & hlsAppNameForm & "と一致しません。" & vbCrLf & hlsOptFile & "の内容をHLS_option.txtへコピーしますか？" & vbCrLf & "※フォーム上のHLSオプション欄は保持されますので必要ならば手動で変更してください", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+                    If result = DialogResult.Yes Then
+                        Try
+                            System.IO.File.Copy("HLS_option.txt", "HLS_option.txt.bak", True)
+                            System.IO.File.Copy(hlsOptFile, "HLS_option.txt", True)
+                            log1write(hlsOptFile & "の内容をHLS_option.txtにコピーしました")
+                            'HLSオプション変数更新
+                            Me._worker.read_hls_option()
+                            Dim hlsopt2temp As String = textBoxHlsOpt2.Text.ToString
+                            'コンボボックス更新
+                            search_ComboBoxResolution()
+                            textBoxHlsOpt2.Text = hlsopt2temp
+                        Catch ex As Exception
+                            log1write("【エラー】ファイルコピーに失敗しました。" & ex.Message)
+                        End Try
+                    End If
                 End If
             End If
         End If
