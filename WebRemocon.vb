@@ -2798,6 +2798,9 @@ Class WebRemocon
                 hlsOpt = hlsOpt.Replace("%VLCPORT%", (udpPortNumber + HTTPSTREAM_VLC_port_plus).ToString)
             End If
 
+            '純粋な解像度のみを取り出して記録する
+            resolution = get_resolution_from_resolution(resolution) '取得できなければ送った解像度インデックスが返ってくる
+
             Try
                 Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
             Catch ex As Exception
