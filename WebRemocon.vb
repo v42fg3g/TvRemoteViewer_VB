@@ -2316,32 +2316,33 @@ Class WebRemocon
                 hlsAppSelect = rez(1) 'hlsApp
             End If
 
-            'resolution_org : 指定そのまま "F_640x360L"
-            'resolution_value : HLSアプリ指定を取り除いた解像度のみ "640x360L"
+            'resolution_org : 指定そのまま "F_640x360L"　や　無指定""
+            'resolution_value : HLSアプリ指定を取り除いた解像度のみ "640x360L" や　無指定""
             'resolution : 指定そのまま　"F_640x360L"　ただし指定無しの場合は↓でフォームから解像度のみ取得 ""→"640x360"
             '                 StartTv.htmlからのAppSelect指定などでありえる
 
             'resolution指定がなければフォーム上のHLSオプションから解像度のみ取得
             If resolution.Length = 0 Then
-                '見つからなければフォーム上の解像度コンボボックスの値から取得
-                Dim rez2() As String = get_resolution_and_hlsApp(Trim(Trim(form1_resolution))) 'resolutionから解像度とhlsAppを取得
-                resolution = Trim(rez2(0)) '解像度文字列　"640x360L"
-                If resolution.Length = 0 Then
-                    'まずありえないがフォーム上で解像度が指定されていない場合
-                    'フォーム上のオプションから解像度を算出して解像度をセット
-                    If hlsApp.IndexOf("ffmpeg") >= 0 Then
-                        resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
-                    ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
-                        'QSVEnc
-                        resolution = trim8(instr_pickup_para(hlsOpt2, "--output-res ", " ", 0))
-                    ElseIf hlsApp.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0 Then
-                        'vlc 再生にはffmpeg使用
-                        Dim vlc_w As Integer = Val(Trim(Instr_pickup(hlsOpt2, "width=", ",", 0)))
-                        Dim vlc_h As Integer = Val(Trim(Instr_pickup(hlsOpt2, "height=", ",", 0)))
-                        If vlc_w > 0 And vlc_h > 0 Then
-                            resolution = vlc_w.ToString & "x" & vlc_h.ToString
-                        End If
+                'フォーム上のオプションから解像度を算出して解像度をセット
+                If hlsApp.IndexOf("ffmpeg") >= 0 Then
+                    resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
+                ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                    'QSVEnc
+                    resolution = trim8(instr_pickup_para(hlsOpt2, "--output-res ", " ", 0))
+                ElseIf hlsApp.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0 Then
+                    'vlc 再生にはffmpeg使用
+                    Dim vlc_w As Integer = Val(Trim(Instr_pickup(hlsOpt2, "width=", ",", 0)))
+                    Dim vlc_h As Integer = Val(Trim(Instr_pickup(hlsOpt2, "height=", ",", 0)))
+                    If vlc_w > 0 And vlc_h > 0 Then
+                        resolution = vlc_w.ToString & "x" & vlc_h.ToString
                     End If
+                End If
+                '見つからなければフォーム上の解像度コンボボックスの値から取得
+                If resolution.Length = 0 Then
+                    Dim rez2() As String = get_resolution_and_hlsApp(Trim(Trim(form1_resolution))) 'resolutionから解像度とhlsAppを取得
+                    resolution = Trim(rez2(0)) '解像度文字列　"640x360L"
+                    '標準HLSオプションの解像度インデックスだとは限らないので解像度のみを取り出す
+                    resolution = get_resolution_from_resolution(resolution) '取得できなければ送った解像度インデックスが返ってくる
                 End If
             End If
 
@@ -2499,9 +2500,6 @@ Class WebRemocon
                     End If
                 End If
 
-                'ファイル再生や個別指定用に無理矢理割り出したresolutionを元々指定されたものに戻す（HLSアプリ指定を除いた解像度インデックス）
-                resolution = resolution_value
-
                 If hlsOpt.Length = 0 Then
                     '元々指定された解像度でHLSオプションを検索
                     If resolution_value.Length = 0 Then
@@ -2516,6 +2514,11 @@ Class WebRemocon
                         End If
                     End If
                 End If
+
+                '_list()用に記録する解像度インデックス
+                'ファイル再生や個別指定用に無理矢理割り出したresolutionを元々指定されたものに戻す（HLSアプリ指定を除いた解像度インデックス）
+                'resolution = resolution_value
+                '↑このresolutionが本来_list()に記録されていた解像度インデックスなのだがQSVEncでresolutionが無指定""だと640x360になってしまうので。問題無いのでそのまま記録するようにした
             End If
 
             'ここまででhlsAppとhlsOptが準備完了
@@ -2810,6 +2813,49 @@ Class WebRemocon
             stream_last_utime(num) = 0 '前回配信準備開始時間リセット
         End If
     End Sub
+
+    '解像度インデックスから純粋解像度を取得する　取得できなければそのまま返す
+    Public Function get_resolution_from_resolution(ByVal str As String) As String
+        Dim r As String = str
+
+        If str.Length > 0 Then
+            Dim w As String = ""
+            Dim h As String = ""
+            Dim z() As String = Nothing
+            Dim j As Integer = -1
+            Dim isStr As Integer = 1
+            For i As Integer = 0 To str.Length - 1
+                Dim a As String = str.Substring(i, 1)
+                If IsNumeric(a) Then
+                    If isStr = 1 Then
+                        '新規
+                        j += 1
+                        ReDim Preserve z(j)
+                        z(j) = a
+                        isStr = 0
+                    Else
+                        z(j) &= a
+                    End If
+                Else
+                    isStr = 1
+                End If
+            Next
+
+            If z IsNot Nothing Then
+                If z.Length >= 2 Then
+                    For i As Integer = 0 To z.Length - 2
+                        If z(i) >= 50 And z(i + 1) >= 50 Then
+                            '隣り合った数値がどちらも50以上だった場合は解像度だと見なす
+                            r = z(i) & "x" & z(i + 1)
+                            Exit For
+                        End If
+                    Next
+                End If
+            End If
+        End If
+
+        Return r
+    End Function
 
     Public Function get_resolution_and_hlsApp(ByVal resolution As String) As String()
         Dim r(1) As String
