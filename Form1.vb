@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 1.96"
+    Private version As String = "TvRemoteViewer_VB 1.97"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -422,6 +422,7 @@ Public Class Form1
         '解像度コンボボックスをセット httpサーバースタート後にhls_option()がセットされている
         search_ComboBoxResolution()
         form1_resolution = ComboBoxResolution.Text.ToString
+        form1_hls_or_rez = ComboBoxRezFormOrCombo.Text.ToString
 
         'フォーム上の項目が正常かどうかチェック
         check_form_youso()
@@ -788,7 +789,7 @@ Public Class Form1
                 textBoxHlsOpt2.Text = Me._worker.hls_option(i).opt
             End If
         Next
-        form1_resolution = textBoxHlsOpt2.Text.ToString
+        form1_resolution = ComboBoxResolution.Text.ToString
     End Sub
 
     'BonDriverを探してコンボボックスに追加
@@ -1344,4 +1345,7 @@ Public Class Form1
         log1write("フォーム上のHLSオプションは保持されていますので必要ならば手動で更新してください")
     End Sub
 
+    Private Sub ComboBoxRezFormOrCombo_SelectedIndexChanged(sender As System.Object, e As System.EventArgs) Handles ComboBoxRezFormOrCombo.SelectedIndexChanged
+        form1_hls_or_rez = ComboBoxRezFormOrCombo.Text.ToString
+    End Sub
 End Class

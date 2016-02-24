@@ -521,7 +521,7 @@ Partial Class Form1
         'CheckBoxShowConsole
         '
         Me.CheckBoxShowConsole.AutoSize = True
-        Me.CheckBoxShowConsole.Location = New System.Drawing.Point(394, 466)
+        Me.CheckBoxShowConsole.Location = New System.Drawing.Point(394, 488)
         Me.CheckBoxShowConsole.Name = "CheckBoxShowConsole"
         Me.CheckBoxShowConsole.Size = New System.Drawing.Size(122, 16)
         Me.CheckBoxShowConsole.TabIndex = 86
@@ -654,7 +654,7 @@ Partial Class Form1
         '
         Me.ComboBoxRezFormOrCombo.FormattingEnabled = True
         Me.ComboBoxRezFormOrCombo.Items.AddRange(New Object() {"HLSオプションを送る", "解像度インデックスを送る"})
-        Me.ComboBoxRezFormOrCombo.Location = New System.Drawing.Point(374, 484)
+        Me.ComboBoxRezFormOrCombo.Location = New System.Drawing.Point(101, 403)
         Me.ComboBoxRezFormOrCombo.Name = "ComboBoxRezFormOrCombo"
         Me.ComboBoxRezFormOrCombo.Size = New System.Drawing.Size(145, 20)
         Me.ComboBoxRezFormOrCombo.TabIndex = 102

@@ -13,6 +13,8 @@
 
     'フォーム上の解像度コンボボックス.text
     Public form1_resolution As String = ""
+    'フォーム上のHLSオプションか解像度どちらを選択するかのコンボボックス
+    Public form1_hls_or_rez As String = ""
 
     '直前配信履歴簡易記録　各ストリームが最後に使用した識別文字列（短時間での重複配信指令防止）
     Public stream_last_utime(8) As Integer
