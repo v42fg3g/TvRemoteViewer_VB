@@ -410,7 +410,7 @@ Partial Class Form1
         'ComboBoxResolution
         '
         Me.ComboBoxResolution.FormattingEnabled = True
-        Me.ComboBoxResolution.Location = New System.Drawing.Point(258, 403)
+        Me.ComboBoxResolution.Location = New System.Drawing.Point(264, 403)
         Me.ComboBoxResolution.Name = "ComboBoxResolution"
         Me.ComboBoxResolution.Size = New System.Drawing.Size(87, 20)
         Me.ComboBoxResolution.TabIndex = 75
@@ -653,13 +653,13 @@ Partial Class Form1
         'ComboBoxRezFormOrCombo
         '
         Me.ComboBoxRezFormOrCombo.FormattingEnabled = True
-        Me.ComboBoxRezFormOrCombo.Items.AddRange(New Object() {"HLSオプションを送る", "解像度インデックスを送る"})
+        Me.ComboBoxRezFormOrCombo.Items.AddRange(New Object() {"HLSオプション優先使用", "解像度インデックス優先使用"})
         Me.ComboBoxRezFormOrCombo.Location = New System.Drawing.Point(101, 403)
         Me.ComboBoxRezFormOrCombo.Name = "ComboBoxRezFormOrCombo"
-        Me.ComboBoxRezFormOrCombo.Size = New System.Drawing.Size(145, 20)
+        Me.ComboBoxRezFormOrCombo.Size = New System.Drawing.Size(161, 20)
         Me.ComboBoxRezFormOrCombo.TabIndex = 102
         Me.ComboBoxRezFormOrCombo.TabStop = False
-        Me.ComboBoxRezFormOrCombo.Text = "HLSオプションを送る"
+        Me.ComboBoxRezFormOrCombo.Text = "HLSオプション優先使用"
         '
         'Form1
         '

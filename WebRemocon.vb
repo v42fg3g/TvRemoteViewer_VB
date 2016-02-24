@@ -2325,7 +2325,25 @@ Class WebRemocon
             If resolution.Length = 0 Then
                 If form1_hls_or_rez.IndexOf("解像度") >= 0 Then
                     '解像度を送る　が選択されている
-                    resolution = form1_hls_or_rez.ToString
+                    resolution = form1_resolution.ToString
+                    'hlsApp指定が無ければ
+                    Dim rtez() As String = get_resolution_and_hlsApp(Trim(resolution))
+                    If rtez(1).Length = 0 Then
+                        'HLS_option.txt内に該当解像度が存在しなければ各HLS_option～.txtを読み込むようにセット
+                        Dim hlstemp As String = search_hlsOption(resolution, hls_option, "HLS_option.txt", 0)
+                        If Trim(hlstemp).Length = 0 Then
+                            If hlsApp.IndexOf("ffmpeg") >= 0 Then
+                                hlsAppSelect = "ffmpeg"
+                            ElseIf hlsApp.ToLower.IndexOf("qsvenc") >= 0 Then
+                                hlsAppSelect = "QSVEnc"
+                            ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                                hlsAppSelect = "VLC"
+                            End If
+                        End If
+                    Else
+                        'App指定有り
+                        hlsAppSelect = rtez(1)
+                    End If
                 Else
                     'HLSオプションを送る　が選択されている
                     'フォーム上のオプションから解像度を算出して解像度をセット
@@ -2936,7 +2954,9 @@ Class WebRemocon
                 For i As Integer = 0 To hls_option.Length - 1
                     If hls_option(i).resolution.Length > 0 And Trim(hls_option(i).resolution).ToLower = resolution_org.ToLower Then
                         hlsOpt = hls_option(i).opt
-                        log1write("HLS_option.txt内に[" & resolution & "]に該当するHLSオプションが見つかりました（優先)")
+                        If hlsOpt.Length > 0 Then
+                            log1write("HLS_option.txt内に[" & resolution & "]に該当するHLSオプションが見つかりました（優先)")
+                        End If
                         Exit For
                     End If
                 Next
@@ -2952,7 +2972,9 @@ Class WebRemocon
                     For i As Integer = 0 To ho.Length - 1
                         If ho(i).resolution.Length > 0 And Trim(ho(i).resolution).ToLower = resolution_org.ToLower Then
                             hlsOpt = ho(i).opt
-                            log1write(ho_name & "内に[" & resolution & "]に該当するHLSオプションが見つかりました。")
+                            If hlsOpt.Length > 0 Then
+                                log1write(ho_name & "内に[" & resolution & "]に該当するHLSオプションが見つかりました。")
+                            End If
                             Exit For
                         End If
                     Next
@@ -2961,7 +2983,9 @@ Class WebRemocon
                         For i As Integer = 0 To ho.Length - 1
                             If ho(i).resolution.Length > 0 And Trim(ho(i).resolution).ToLower = resolution_value.ToLower Then
                                 hlsOpt = ho(i).opt
-                                log1write(ho_name & "内に" & resolution & "で指定された解像度[" & resolution_value & "]に該当するHLSオプションが見つかりました。")
+                                If hlsOpt.Length > 0 Then
+                                    log1write(ho_name & "内に" & resolution & "で指定された解像度[" & resolution_value & "]に該当するHLSオプションが見つかりました。")
+                                End If
                                 Exit For
                             End If
                         Next

@@ -45,10 +45,10 @@ Public Class Form1
             Dim HLSorHTTP As Integer = ComboBoxHLSorHTTP.SelectedIndex * 2 '0or2
             '解像度
             Dim resolution As String = ""
-            If ComboBoxRezFormOrCombo.Text.IndexOf("解像度") >= 0 Then
-                resolution = ComboBoxResolution.Text.ToString
-                hlsOpt2 = ""
-            End If
+            'If ComboBoxRezFormOrCombo.Text.IndexOf("解像度") >= 0 Then
+            'resolution = ComboBoxResolution.Text.ToString
+            'hlsOpt2 = ""
+            'End If
             If num > 0 Then
                 'If fileroot.IndexOf(wwwroot) = 0 Or fileroot.Length = 0 Then
                 If bondriver.IndexOf(".dll") > 0 Then
@@ -1348,4 +1348,5 @@ Public Class Form1
     Private Sub ComboBoxRezFormOrCombo_SelectedIndexChanged(sender As System.Object, e As System.EventArgs) Handles ComboBoxRezFormOrCombo.SelectedIndexChanged
         form1_hls_or_rez = ComboBoxRezFormOrCombo.Text.ToString
     End Sub
+
 End Class
