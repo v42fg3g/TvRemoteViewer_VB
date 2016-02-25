@@ -574,7 +574,7 @@ Public Class Form1
             log1write("【警告】BonDriverパスが指定されていません")
         End If
         'ASS字幕用font_confがあるかどうか確認
-        If Me._worker._hlsApp.IndexOf("ffmpeg") >= 0 Or exepath_ffmpeg.Length > 0 Then
+        If Me._worker._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or exepath_ffmpeg.Length > 0 Then
             Dim fchkstr As String = Me._worker._hlsApp
             If exepath_ffmpeg.Length > 0 Then
                 fchkstr = exepath_ffmpeg

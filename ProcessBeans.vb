@@ -170,7 +170,7 @@ Class ProcessBean
                 If Me._hlsProc IsNot Nothing And Me._hlsProc.HasExited = False Then
                     log1write("HLSアプリのプロセスが残っているので終了を試みます")
                     'HLS終了指令
-                    If Me._hlsApp.IndexOf("vlc") >= 0 Then
+                    If Me._hlsApp.ToLower.IndexOf("vlc") >= 0 Then
                         'VLC
                         If Me.vlc_quit_VLC() = 0 Then
                             Me._hlsProc.Kill()
