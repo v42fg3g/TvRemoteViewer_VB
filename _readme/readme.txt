@@ -1,8 +1,6 @@
 TvRemoteViewer_VB v1.97
 
 
-チューナー数だけ平行起動してパパッとチャンネルを変更しようと思ったが4つでCPU100%・・
-
 
 
 ■これってなに？
@@ -14,10 +12,11 @@ TvRemoteViewer_VB v1.97
 ■環境
 
 	Windowsが動作するPC
-	FrameWork4.0
+	FrameWork4.5.x
+	TVTestが動作する環境
 	
-	RecTask
-	ffmpegもしくはVLC
+	UDPソフト：　RecTask, TSTask
+	HLSソフト：　ffmpeg, VLC, QSVEnc
 
 
 
@@ -25,17 +24,17 @@ TvRemoteViewer_VB v1.97
 
 	★注意★
 	Windows8以降では以下のどちらかの操作が必要です。
-	・TvRemoteViewer_vb.exeを右クリック、
-	　「プロパティ」→「互換性」→「管理者としてこのプログラムを実行する」にチェック
-	・コマンドプロンプトから
+	・【強く推奨】コマンドプロンプトから
 	　netsh http add urlacl url=http://+:40003/ user=XXXXX
 	　(XXXXXは実行するユーザー、もしくは Everyone と入力する)
+	　入力例：　netsh http add urlacl url=http://+:40003/ user=Everyone
+	・【↑ができなかった場合】TvRemoteViewer_vb.exeを右クリック、
+	　「プロパティ」→「互換性」→「管理者としてこのプログラムを実行する」にチェック
 
 
 	設置後、起動するとタスクトレイからスタートします。
-	ダブルクリックで通常の大きさになります。
+	ダブルクリックで通常の大きさになります（×で閉じると終了してしまいます）
 	各パラメーターはreadme.jpg参照のこと
-	プログラミングするときはForm1のWindowStateをNormalにしておくと通常の大きさで起動しますから便利でしょう。
 
 
 
@@ -50,122 +49,43 @@ TvRemoteViewer_VB v1.97
 
 ■設置 readme.jpgや下に書いたテスト環境を参考にしてください
 
+	素晴らしい解説サイト
+	http://vladi.cocolog-nifty.com/
+	http://vladi.cocolog-nifty.com/blog/2014/10/iphoneandroidpc.html
+	をご覧ください
+
+	以下はてきとーな情報です
+
 	・RecTaskとBonDriverを適切に配置
-
-
 	・ffmpeg又はVLCをインストール
-	（★ffmpegを使う場合は同梱のlibx264-ipod640.ffpresetをffmpegをインストールしたとこのpresetsフォルダにコピー）
-
-
-	・同梱のform_status～.txtとHLS_option～.txtをTvRemoteViewer_VB.exeと同じフォルダにコピー
-
-
+	（★ffmpegを使う場合は同梱のlibx264-ipod640.ffpresetをffmpegをインストールしたところのpresetsフォルダにコピー）
+	・同梱のHLS_option～.txtをTvRemoteViewer_VB.exeと同じフォルダにコピー
 	・WWWROOT（WEBルートフォルダ）となるフォルダに同梱のHTMLフォルダ内のファイルをコピー
 	（★VLC使用の場合は半角スペースが入らない場所のほうが安心です）
-
-
-	・ファイル再生させるためには、あらかじめ同梱のVideoPath.txtを編集して動画があるフォルダを指定しておく必要があります。
-
-	・地デジ番組表の設定	VideoPath.txtを編集してください
-
+	・ファイル再生させるためには、あらかじめ同梱のTvRemoteViewer_VB.iniを編集して動画があるフォルダを指定しておく必要があります。
+	・地デジ番組表の設定	TvRemoteViewer_VB.iniを編集してください
 	・TvRock番組表につきまして
 		1.ブラウザで
 		　http://[TvRockが稼働しているPCのローカルIP]:[TvRockのポート]/[ユーザー名]/iphone?md=2&d=0
 		　（例　http://127.0.0.1:8969/ユーザー名/iphone?md=2&d=0）
 		　にアクセスする。
 		　すると、iPhone用番組表が表示されます。
-		2. 「予約表示」数を「無し」にする。無し以外でも構いませんが反応が遅くなる可能性があります。
+		2. 「予約表示」数を3以上にする。無しを選択しますと次番組が表示されません
 		　（Firefoxではうまく切り替わらないかもしれません）
 		　ここで表示された番組表がデータとして使用されます。
 		3. ブラウザを閉じる
 		
 		※地デジまたはBS/CSのどちらかだけを表示したい場合は、チューナーを選択してください
-
 	・EDCB番組表につきまして
 		EpgTimer.exeが存在するフォルダにあるEpgTimerSrv.iniを開いて[SET]直後に
 			EnableHttpSrv=1
 			HttpPort=5510
 		を書き加えてEpgTimerを再起動してください
 		参考　http://blog.livedoor.jp/kotositu/archives/1923002.html
-
+		↑は
 	・ptTimer番組表につきまして
 		sqlite3.exeをTvRemoteViewer_VB.exeと同じフォルダに設置してください
 		sqlite3.exeはググればすぐ見つかると思います
-
-
-	【安定性実験】
-	・UDP,HLS各exeを配信ナンバー毎に違うexeを使用できるようにした。
-　		exeが存在するフォルダ名に配信ナンバーを追記したフォルダ内のexeを使用します。
-　		例：HLSアプリにffmpegを使用している場合
-　　		通常～\bin\ffmpeg.exeを使用しているときに
-　　		～\bin1\ffmpeg.exeを用意しておけば配信1のときに使用するようになります。
-　　		～\bin2\ffmpeg.exeを用意しておけば配信2のときに使用するようになります。
-　　		UDPアプリにつきましても同様です。
-
-
-
-■WEBデザインを変更したい場合
-
-	・index.html
-	index.htmlからStartTv（配信開始）が呼び出される際にWEBから送られるパラメーターとしては今のところ以下を想定しています。
-	WebRemoconvb→Web_Start()内を編集すれば違う動作や異なるWEB設計にもできるでしょう。
-	パラメーター	valueの例
-	"num"		"1"					ストリームナンバー
-	"BonDriver"	"BonDriver_pt2_t0.dll"			BonDriverファイル名
-	"ServiceID"	"54321"					サービスID
-	"ChSpace"	"0"（CSは1)				チャンネルスペース
-	"resolution"	"640x360"				解像度
-	"Bon_Sid_Ch"	"BonDriver_pt2_t0.dll,54321,0"		上記３つを同時に設定(HLSのみ)
-	"redirect"	"ViewTV2.html"				配信開始後ジャンプするページ(HLSのみ)
-
-
-	・index.html、ViewTV[n].htmlで使用できる変数
-	html内に以下の変数を記入しておくと呼び出されたときに適切な値またはHTMLに変換されます
-	変換前				変換後
-	%NUM%				ストリームナンバー
-	%SELECTBONSIDCH%		index.html内でBonDriver＆ServiceID&ChSpaceを選択する<SELECT>セットを作成
-	%PROCBONLIST%			配信中のストリームナンバーとBonDriverをテキストで表示する
-	%VIEWBUTTONS%			ストリームの数だけ視聴ボタンを作成
-	%SELECTNUM%			ストリームナンバー選択
-	%SELECTRESOLUTION%		解像度選択
-	%IDPASS%			「ユーザー名:パスワード@」に変換（iniでALLOW_IDPASS2HTML=1のとき）
-					使用例　http://%IDPASS%" + location.host + "/%FILEROOT%mystream%NUM%.m3u8";
-					IEなどではセキュリティ設定でURL内パスワードを許可しないと見れなくなります
-	%VIDEOSEEKSECONDS%		ファイル再生時にシークする秒数
-	%SELECTVIDEO%			ビデオファイル一覧HTML部品
-	%VIDEOFROMDATE%			ビデオファイル一覧を表示した際の一番古いファイルの更新日時「yyyy/MM/dd」
-	
-
-	・ViewTV[n].htmlのみで使用できる変数
-	%SELECTCH%			ViewTV.html内で番組を選択する<SELECT>を作成する
-	%WIDTH%				ビデオの幅
-	%HEIGHT%			ビデオの高さ
-	%FILEROOT%			.m3u8が存在する相対フォルダ
-	%SUBSTR%			Nico2HLSによってニコニコ実況コメント取得中ならば"_s"に変換される
-	%JKNUM%				ニコニコ実況のチャンネル文字列（例：jk8)
-	%JKVALUE%			ニコニコ実況用接続用文字列
-
-
-	・なお、%PROCBONLIST%、%SELECTCH%、%VIEWBUTTONS%、%SELECTBONSIDCH%、%SELECTNHKMODE%、%SELECTRESOLUTION%　に対しては、要素の前中後に表示するhtmlタグを指定できます。
-	書式	%VIEWBUTTONS:[前方に表示するhtmlタグ]:[ボタンとボタンの間に表示するhtmlタグ]:[後方に表示するhtmlタグ]:[要素が表示されない場合に替わりに表示されるhtmlタグ]%
-	例	%VIEWBUTTONS:視聴可能ストリーム<br>:<br>===================<br>:ボタンを押してください<br>%
-	結果	視聴可能ストリーム
-		[ストリーム1を視聴]
-		===================
-		[ストリーム2を視聴]
-		ボタンを押してください
-
-
-	・Waiting.html
-	%NUM%				ストリームナンバー
-	%WAITING%			メッセージ（配信準備中 or 配信されていません）
-
-
-	・ERROR.html
-	%NUM%				ストリームナンバー
-	%ERRORTITLE%			エラーページタイトル
-	%ERRORMESSAGE%			エラーメッセージ
-	%ERRORRELOAD%			プログラムから指定された場合に再読込ボタンを表示する
 
 
 
@@ -173,11 +93,8 @@ TvRemoteViewer_VB v1.97
 
 	・ffmpegをご使用の場合【推奨】
 	http://ffmpeg.zeranoe.com/builds/
-	うちではx64最新版を使用。４つまでは同時起動確認（古いバージョンでは3つ以上は不安定でした）
 	ffmpegインストール先のpresetsフォルダ内に同梱のlibx264-ipod640.ffpresetをコピーしてください。
 	参考：http://frmmpgit.blog.fc2.com/blog-entry-179.html
-	640x360以外の解像度は試していません。
-	極希に新たなフレームが読み込まれずm3u8が更新されなくなる現象有り
 
 
 	・VLCをご使用の場合
@@ -194,39 +111,13 @@ TvRemoteViewer_VB v1.97
 	%HLSROOT/../%	HLSアプリが存在するフォルダの１つ上の親フォルダ（ffmpeg解凍時のフォルダ構造に対応）
 	%rc-host%	"127.0.0.1:%UDPPORT%"に変換されます。
 	%NUM%		ストリームナンバー
-	%VIDEOFILE%	ビデオファイルに変換（実際は「-i %VIDEOFILE%」の決め打ちで-iの後ろの文字列がファイル名に変換）
-	%VIDEODURATION%	ビデオの長さ(秒)　不明な場合は0
-
-	・StartTv.html呼び出し時のオプション	
-	hlsOptAdd	配信時のHLSオプションに動的にパラメーターを追加できます
-	hlsOptAdd=[1～2],[1～4],[文字列]
-	例：hlsOptAdd=2,2,-map 0,0 -map 0,1
-	また、「_-_」で区切ることにより複数の書き換えを行うことができます
-	例：hlsOptAdd=2,9,-hls_-_2,2,-map 0,0 -map 0,1	（-hls部分を削除した後に-map～を追加）
-	第1パラメータ：	1=HLSオプションの-iより前に文字列を追加します
-			2=HLSオプションの-iの後に文字列を追加します
-	第2パラメータ：	HLSオプション上に同じパラメータがあった場合にどうするか
-			1=変更しない
-			2=既存のHLSオプション上のパラメータを破棄し新しく追加します
-			3=既存のHLSオプションの要素に追加を試みます（例：-vf a→-vf a,b)
-			4=単純に追加
-			9=指定パラメータ部分を削除
-
-	・NHKMODE 詳細
-		'0=主・副　HLSオプション変更無し
-                '1=NHKならば主　NHK以外は主・副
-                '2=NHKならば副　NHK以外は主・副
-		'3(ini限定)=選択式
-                '4=全ての放送局で音声1 -map 0:0 -map 0:1
-                '5=全ての放送局で音声2 -map 0:0 -map 0:2
-                '6=全ての放送局で音声3 -map 0:0 -map 0:3
-		'9=NHKならばVLCで再生
-                '11=全ての放送局で主
-                '12=全ての放送局で副
+	%VIDEOFILE%	"ビデオファイル"に変換（実際は「-i %VIDEOFILE%」の決め打ちで-iの後ろの文字列がファイル名に変換）
+	%VIDEODURATION%	ビデオの長さ(秒)　不明な場合は0（任意）
 
 
 
 ■HLSアプリの個別指定についきまして
+
 	○指定方法
 	・HLS_option*.txtへの記述（インデックスまたはHLSオプション本文）
 	・StartTv.htmlへhlsAppSelect引数によりHLSアプリ名を指定(hlsAppSelect=VLC,V,ffmpeg,F,QSVEnc,Q,QSV,PiprRun,P)
@@ -237,6 +128,7 @@ TvRemoteViewer_VB v1.97
 	・HLSアプリが指定されていない＆ファイル再生の場合はHLS_option_[HLSアプリ]_file.txtが優先的に使用されます
 	・HLSアプリが指定されていない＆解像度指定があればHLS_option.txtからHLSオプションが使用されます
 	・HLSアプリが指定されていない＆解像度指定が無い場合はフォーム上のHLSオプションが使用されます（例 フォーム上のStartボタン）
+	・v1.97～　フォーム上の「HLSオプションor解像度を送る」選択の値によって、解像度指定の無い場合にフォーム上のHLSオプションの値を優先するか、HLSアプリに応じたHLS_option～.txt内の値を優先するか選べるようになりました
 
 	○HLSアプリの個別指定方法
 	・HLSアプリ指定文字列（大文字・小文字どちらでもOK）
@@ -293,13 +185,6 @@ TvRemoteViewer_VB v1.97
 
 
 
-■修正したり追加したりして欲しいところ
-
-	・全般的にクラスというものがわかってない・・お～まいがっ
-	・ffmpegの穏便な終了
-
-
-
 ■ptTimerにて1ストリームしか使用できないことへの対策
 	1. BonDriver_ptmr.dllを適当な名前で4つコピーします
 	2. それぞれの.ch2ファイルをBonDriver_ptmr.ch2からコピーして以下の通り編集します
@@ -307,6 +192,13 @@ TvRemoteViewer_VB v1.97
 	   例えば、1つめは「;#SPACE(1,T0)」、2つめは「;#SPACE(3,T1)」、3つめは「;#SPACE(0,S0)」、4つめは「;#SPACE(2,S1)」、
            というふうにチャンネル空間を１つだけにします
 	3. これで4ストリーム全て使用することができます
+
+
+
+■修正したり追加したりして欲しいところ
+
+	・全般的にクラスというものがわかってない・・お～まいがっ
+	・ffmpegの穏便な終了
 
 
 

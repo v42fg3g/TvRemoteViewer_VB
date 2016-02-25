@@ -4,10 +4,9 @@ TvRemoteViewer_VB v1.89
 ※1　	%NUM%は配信番号を表します
 ※2	パラメーターはGET,POSTどちらでも可です（WatchTV.html除く）
 
-■配信開始
+■HLS配信開始
 
 	StartTv.html (HLS配信開始　または、HTTP配信準備)
-	WI_START_STREAM.html (HLS配信開始　または、HTTP配信準備)
 		GET、POSTどちらでも可　　※HTTP配信の場合は録画準備だけで実際の配信はまだされません
 		パラメーター	valueの例				説明
 		num		1					ストリームナンバー（WatchTVの場合以外必須）
@@ -22,14 +21,35 @@ TvRemoteViewer_VB v1.89
 									UTF-8でURLエンコード無しで送信かな・・？
 		VideoSeekSeconds					動画ファイル先頭からのシーク秒数（任意）
 		NHKMODE		0					音声選択　0(主副),11(主),12(副),4(音声2)（任意）
+			0=主・副　HLSオプション変更無し
+                	1=NHKならば主　NHK以外は主・副　-dual_mono_mode main
+                	2=NHKならば副　NHK以外は主・副　-dual_mono_mode sub
+			3(ini限定)=選択式
+                	4=第二音声　-map 0:v:0 -map 0:a -map -0:a:0
+                	5=動画主音声 -af pan=stereo|c0=c0|c1=c0
+                	6=動画副音声 -af pan=stereo|c0=c1|c1=c1
+			9=NHKならばVLCで再生
+                	11=全ての放送局で主　-dual_mono_mode main
+                	12=全ての放送局で副　-dual_mono_mode sub
 		nohsub		0					1=ハードサブしない
-									2=ハードサブ用assファイルをタイムシフトして作成
-									　が、ffmpegへのパラメータは変更しない
+									2=ソフトサブ用assファイルをタイムシフトして作成
 									3=ソフトサブ　タイムシフトせずにassをコピーのみ
 		VideoSpeed	1.5					何倍速で再生するか（任意）
-		hlsOptAdd						HLSソフトに追加するパラメーター（任意）
 		nicodelay	0					コメントがずれる場合に調整？通常は0（任意）
 		hlsAppSelect	ffmpeg					HLSアプリ名を指定(VLC,V,ffmpeg,F,QSVEnc,Q,QSV)
+
+		hlsOptAdd	[1～2],[1～4],[文字列]			HLSソフトに追加するパラメーター（任意）
+			第1パラメータ：	1=HLSオプションの-iより前に文字列を追加します
+				2=HLSオプションの-iの後に文字列を追加します
+			第2パラメータ：	HLSオプション上に同じパラメータがあった場合にどうするか
+				1=変更しない
+				2=既存のHLSオプション上のパラメータを破棄し新しく追加します
+				3=既存のHLSオプションの要素に追加を試みます（例：-vf a→-vf a,b)
+				4=単純に追加
+				9=指定パラメータ部分を削除
+			例：hlsOptAdd=2,2,-map 0,0 -map 0,1
+			また、「_-_」で区切ることにより複数の書き換えを行うことができます
+			例：hlsOptAdd=2,9,-hls_-_2,2,-map 0,0 -map 0,1	（-hls部分を削除した後に-map～を追加）
 
 
 		例：
@@ -37,7 +57,8 @@ TvRemoteViewer_VB v1.89
 		http://127.0.0.1:40003/StartTv.html?VideoName=D:\test.ts&VideoSeekSeconds=30
 
 
-■HTTP配信
+
+■HTTP配信開始
 
 	まず、サーバー側が使用しているHTTP配信アプリ、VLCの配信先頭ポートをWI_GET_TVRV_STATUS.htmlで取得しておきます
 
@@ -78,7 +99,73 @@ TvRemoteViewer_VB v1.89
 		num		1		1～　各ストリーム停止
 						-1=全停止（UDP・HLSソフト名前停止無し）
 						-2=全停止（UDP・HLSソフト名前停止。iniでの設定に従う）
-						-3=全停止（-2と同様。エンコ済みファイル削除せず）
+						-3=全停止（-2と同様。ただしエンコ済みファイル削除せず）
+
+
+■HLS_option～.txt オプション内で変換される定数
+	%UDPPORT%	ソフトで自動的に割り当てられたudpポート
+	%WWWROOT%	WWWのrootフォルダ
+	%FILEROOT%	m3u8やtsが作成されるフォルダ
+	%HLSROOT%	HLSアプリが存在するフォルダ
+	%HLSROOT/../%	HLSアプリが存在するフォルダの１つ上の親フォルダ（ffmpeg解凍時のフォルダ構造に対応）
+	%rc-host%	"127.0.0.1:%UDPPORT%"に変換されます。
+	%NUM%		ストリームナンバー
+	%VIDEOFILE%	ビデオファイルに変換（実際は「-i %VIDEOFILE%」の決め打ちで-iの後ろの文字列がファイル名に変換）
+	%VIDEODURATION%	ビデオの長さ(秒)　不明な場合は0
+
+
+■HTML出力時のパラメータ変換
+
+	自作htmlでWEBデザインを変更したい場合に使用できます
+
+	・index.html、ViewTV[n].htmlで使用できる変数
+	html内に以下の変数を記入しておくと呼び出されたときに適切な値またはHTMLに変換されます
+	変換前				変換後
+	%NUM%				ストリームナンバー
+	%SELECTBONSIDCH%		index.html内でBonDriver＆ServiceID&ChSpaceを選択する<SELECT>セットを作成
+	%PROCBONLIST%			配信中のストリームナンバーとBonDriverをテキストで表示する
+	%VIEWBUTTONS%			ストリームの数だけ視聴ボタンを作成
+	%SELECTNUM%			ストリームナンバー選択
+	%SELECTRESOLUTION%		解像度選択
+	%IDPASS%			「ユーザー名:パスワード@」に変換（iniでALLOW_IDPASS2HTML=1のとき）
+					使用例　http://%IDPASS%" + location.host + "/%FILEROOT%mystream%NUM%.m3u8";
+					IEなどではセキュリティ設定でURL内パスワードを許可しないと見れなくなります
+	%VIDEOSEEKSECONDS%		ファイル再生時にシークする秒数
+	%SELECTVIDEO%			ビデオファイル一覧HTML部品
+	%VIDEOFROMDATE%			ビデオファイル一覧を表示した際の一番古いファイルの更新日時「yyyy/MM/dd」
+	
+
+	・ViewTV[n].htmlのみで使用できる変数
+	%SELECTCH%			ViewTV.html内で番組を選択する<SELECT>を作成する
+	%WIDTH%				ビデオの幅
+	%HEIGHT%			ビデオの高さ
+	%FILEROOT%			.m3u8が存在する相対フォルダ
+	%SUBSTR%			Nico2HLSによってニコニコ実況コメント取得中ならば"_s"に変換される
+	%JKNUM%				ニコニコ実況のチャンネル文字列（例：jk8)
+	%JKVALUE%			ニコニコ実況用接続用文字列
+
+
+	・なお、%PROCBONLIST%、%SELECTCH%、%VIEWBUTTONS%、%SELECTBONSIDCH%、%SELECTNHKMODE%、%SELECTRESOLUTION%　に対しては、要素の前中後に表示するhtmlタグを指定できます。
+	書式	%VIEWBUTTONS:[前方に表示するhtmlタグ]:[ボタンとボタンの間に表示するhtmlタグ]:[後方に表示するhtmlタグ]:[要素が表示されない場合に替わりに表示されるhtmlタグ]%
+	例	%VIEWBUTTONS:視聴可能ストリーム<br>:<br>===================<br>:ボタンを押してください<br>%
+	結果	視聴可能ストリーム
+		[ストリーム1を視聴]
+		===================
+		[ストリーム2を視聴]
+		ボタンを押してください
+
+
+	・Waiting.html
+	%NUM%				ストリームナンバー
+	%WAITING%			メッセージ（配信準備中 or 配信されていません）
+
+
+	・ERROR.html
+	%NUM%				ストリームナンバー
+	%ERRORTITLE%			エラーページタイトル
+	%ERRORMESSAGE%			エラーメッセージ
+	%ERRORRELOAD%			プログラムから指定された場合に再読込ボタンを表示する
+
 
 
 ■情報取得
