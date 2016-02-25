@@ -1910,7 +1910,7 @@ Class WebRemocon
             End If
             'hlsOpt_result &= "-i """ & filename & """" & " -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1"
             'hlsOpt_result &= "-i %VIDEOFILE% -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1"
-            hlsOpt_result = PipeRun_ffmpeg_option
+            hlsOpt_result &= PipeRun_ffmpeg_option
             hlsOpt_result = hlsOpt_result.Replace("%VIDEOFILE%", """" & filename & """")
             'パイプ記号
             hlsOpt_result &= " | "
