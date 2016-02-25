@@ -1532,8 +1532,8 @@ Class WebRemocon
                                 End If
                             Case "video_force_ffmpeg"
                                 video_force_ffmpeg = Val(youso(1).ToString)
-                                If video_force_ffmpeg = 1 Then
-                                    log1write("ファイル再生に個別実行用ffmpegを使用するようセットしました")
+                                If video_force_ffmpeg > 0 Then
+                                    log1write("ファイル再生に標準HLSアプリ以外を使用するようセットしました")
                                 End If
                             Case "PipeRun_ffmpeg_option"
                                 If youso(1).Length > 0 Then
@@ -1559,6 +1559,22 @@ Class WebRemocon
             Next
         End If
 
+    End Sub
+
+    'iniを元に設定したパラメータの整合性チェック
+    Public Sub check_ini_parameter()
+        Select Case video_force_ffmpeg
+            Case 1, 4
+                If exepath_ffmpeg.Length = 0 Then
+                    video_force_ffmpeg = 0
+                    log1write("【エラー】exepath_ffmpegが指定されていません。video_force_ffmpegの設定は無効とされました")
+                End If
+            Case 2, 3
+                If exepath_ffmpeg.Length = 0 Or exepath_QSVEnc.Length = 0 Then
+                    video_force_ffmpeg = 0
+                    log1write("【エラー】exepath_ffmpegまたはexepath_QSVEncが指定されていません。video_force_ffmpegの設定は無効とされました")
+                End If
+        End Select
     End Sub
 
     'パラメーターを,で区切って数値を配列で返す

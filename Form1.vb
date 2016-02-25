@@ -387,6 +387,8 @@ Public Class Form1
 
         'iniからパラ－メータを読み込む
         Me._worker.read_videopath()
+        'iniを元に設定したパラメータの整合性チェック
+        Me._worker.check_ini_parameter()
 
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止
