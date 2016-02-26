@@ -2337,52 +2337,51 @@ Class WebRemocon
             'resolution : 指定そのまま　"F_640x360L"　ただし指定無しの場合は↓でフォームから解像度のみ取得 ""→"640x360"
             '                 StartTv.htmlからのAppSelect指定などでありえる
 
-            'resolution指定がなければフォーム上のHLSオプションから解像度のみ取得
-            If resolution.Length = 0 Then
-                If form1_hls_or_rez.IndexOf("解像度") >= 0 Then
-                    '解像度を送る　が選択されている
+            If form1_hls_or_rez.IndexOf("解像度") >= 0 Then
+                '解像度を送る　が選択されている
+                If resolution.Length = 0 Then
                     resolution = form1_resolution.ToString
-                    'hlsApp指定が無ければ
-                    Dim rtez() As String = get_resolution_and_hlsApp(Trim(resolution))
-                    If rtez(1).Length = 0 Then
-                        'HLS_option.txt内に該当解像度が存在しなければ各HLS_option～.txtを読み込むようにセット
-                        Dim hlstemp As String = search_hlsOption(resolution, hls_option, "HLS_option.txt", 0)
-                        If Trim(hlstemp).Length = 0 Then
-                            If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
-                                hlsAppSelect = "ffmpeg"
-                            ElseIf hlsApp.ToLower.IndexOf("qsvenc") >= 0 Then
-                                hlsAppSelect = "QSVEnc"
-                            ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 Then
-                                hlsAppSelect = "VLC"
-                            End If
+                End If
+                'hlsApp指定が無ければ
+                Dim rtez() As String = get_resolution_and_hlsApp(Trim(resolution))
+                If rtez(1).Length = 0 Then
+                    'HLS_option.txt内に該当解像度が存在しなければ各HLS_option～.txtを読み込むようにセット
+                    Dim hlstemp As String = search_hlsOption(resolution, hls_option, "HLS_option.txt", 0)
+                    If Trim(hlstemp).Length = 0 Then
+                        If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                            hlsAppSelect = "ffmpeg"
+                        ElseIf hlsApp.ToLower.IndexOf("qsvenc") >= 0 Then
+                            hlsAppSelect = "QSVEnc"
+                        ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                            hlsAppSelect = "VLC"
                         End If
-                    Else
-                        'App指定有り
-                        hlsAppSelect = rtez(1)
                     End If
                 Else
-                    'HLSオプションを送る　が選択されている
-                    'フォーム上のオプションから解像度を算出して解像度をセット
-                    If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
-                        resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
-                    ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
-                        'QSVEnc
-                        resolution = trim8(instr_pickup_para(hlsOpt2, "--output-res ", " ", 0))
-                    ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0 Then
-                        'vlc 再生にはffmpeg使用
-                        Dim vlc_w As Integer = Val(Trim(Instr_pickup(hlsOpt2, "width=", ",", 0)))
-                        Dim vlc_h As Integer = Val(Trim(Instr_pickup(hlsOpt2, "height=", ",", 0)))
-                        If vlc_w > 0 And vlc_h > 0 Then
-                            resolution = vlc_w.ToString & "x" & vlc_h.ToString
-                        End If
+                    'App指定有り
+                    hlsAppSelect = rtez(1)
+                End If
+            ElseIf resolution.Length = 0 Then
+                'HLSオプションを送る　が選択されている
+                'フォーム上のオプションから解像度を算出して解像度をセット
+                If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                    resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
+                ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                    'QSVEnc
+                    resolution = trim8(instr_pickup_para(hlsOpt2, "--output-res ", " ", 0))
+                ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0 Then
+                    'vlc 再生にはffmpeg使用
+                    Dim vlc_w As Integer = Val(Trim(Instr_pickup(hlsOpt2, "width=", ",", 0)))
+                    Dim vlc_h As Integer = Val(Trim(Instr_pickup(hlsOpt2, "height=", ",", 0)))
+                    If vlc_w > 0 And vlc_h > 0 Then
+                        resolution = vlc_w.ToString & "x" & vlc_h.ToString
                     End If
-                    '見つからなければフォーム上の解像度コンボボックスの値から取得
-                    If resolution.Length = 0 Then
-                        Dim rez2() As String = get_resolution_and_hlsApp(Trim(form1_resolution)) 'resolutionから解像度とhlsAppを取得
-                        resolution = Trim(rez2(0)) '解像度文字列　"640x360L"
-                        '標準HLSオプションの解像度インデックスだとは限らないので解像度のみを取り出す
-                        resolution = get_resolution_from_resolution(resolution) '取得できなければ送った解像度インデックスが返ってくる
-                    End If
+                End If
+                '見つからなければフォーム上の解像度コンボボックスの値から取得
+                If resolution.Length = 0 Then
+                    Dim rez2() As String = get_resolution_and_hlsApp(Trim(form1_resolution)) 'resolutionから解像度とhlsAppを取得
+                    resolution = Trim(rez2(0)) '解像度文字列　"640x360L"
+                    '標準HLSオプションの解像度インデックスだとは限らないので解像度のみを取り出す
+                    resolution = get_resolution_from_resolution(resolution) '取得できなければ送った解像度インデックスが返ってくる
                 End If
             End If
 
