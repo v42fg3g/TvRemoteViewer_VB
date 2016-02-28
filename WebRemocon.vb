@@ -2778,15 +2778,15 @@ Class WebRemocon
                     hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream FR", 0)
                 ElseIf NHK_dual_mono_mode_select = 4 Then
                     '第二音声
-                    hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
-                    'hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
-                    'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream 2")
-                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream 2", 0)
+                    'hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
+                    ''hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
+                    ''hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream 2")
+                    'hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream 2", 0)
                     '×--audio-codec書き換え　失敗、配信開始されず
                     'hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-codec") '--audio-codec削除
                     'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-codec 2?aac")
                     '×--audio-codec入れ替え　失敗、配信開始されず
-                    'hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "---audio-codec 2?aac", 1)
+                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "---audio-codec 2?aac", 1)
                 ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
                     If exepath_VLC.Length > 0 Then
                         'hlsAppとhlsOptをVLCに置き換える
