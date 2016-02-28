@@ -2651,11 +2651,11 @@ Class WebRemocon
             If hlsApp.Length > 0 And hlsOpt.Length > 0 Then
                 Dim AppOptChk As Integer = 0
                 Dim haf As String = Path.GetFileNameWithoutExtension(hlsApp)
-                If haf.ToLower.IndexOf("vlc") >= 0 And (hlsOpt.IndexOf(" --sout ") >= 0 Or hlsOpt.IndexOf("vlc:") >= 0) Then
+                If haf.ToLower.IndexOf("vlc") >= 0 And (hlsOpt.IndexOf("--sout") >= 0 Or hlsOpt.IndexOf("vlc:") >= 0 Or hlsOpt.IndexOf("--rc-host") >= 0) Then
                     AppOptChk = 1
-                ElseIf haf.ToLower.IndexOf("ffmpeg") >= 0 And (hlsOpt.IndexOf(" -acodec ") >= 0 Or hlsOpt.IndexOf(" -vcodec ") >= 0) Then
+                ElseIf haf.ToLower.IndexOf("ffmpeg") >= 0 And (hlsOpt.IndexOf(" -acodec") >= 0 Or hlsOpt.IndexOf(" -vcodec") >= 0 Or hlsOpt.IndexOf(" -hls_time") >= 0) Then
                     AppOptChk = 1
-                ElseIf haf.ToLower.IndexOf("qsvenc") >= 0 And (hlsOpt.IndexOf("hls_segment_filename:") >= 0 Or hlsOpt.IndexOf(" --audio-codec ") >= 0) Then
+                ElseIf haf.ToLower.IndexOf("qsvenc") >= 0 And (hlsOpt.IndexOf("hls_segment_filename:") >= 0 Or hlsOpt.IndexOf("--audio-codec") >= 0 Or hlsOpt.IndexOf("hls_time:") >= 0) Then
                     AppOptChk = 1
                 End If
                 If AppOptChk = 0 Then
@@ -2764,26 +2764,29 @@ Class WebRemocon
                 '12=N全部副
                 '4=メイン
                 '5=サブ
-                If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 11) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                    '主モノラル固定 1or11
-                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
-                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FL -i ")
-                ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 12) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                    '副モノラル固定 2or12
-                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
-                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FR -i ")
+                If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 5 Or NHK_dual_mono_mode_select = 11) Then
+                    '主モノラル固定 1 or 5 or 11
+                    hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
+                    'hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FL -i ")
+                    'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream FL")
+                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream FL", 0)
+                ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 6 Or NHK_dual_mono_mode_select = 12) Then
+                    '副モノラル固定 2 or 6 or 12
+                    hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
+                    'hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FR -i ")
+                    'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream FR")
+                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream FR", 0)
                 ElseIf NHK_dual_mono_mode_select = 4 Then
                     '第二音声
-                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
-                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
-                ElseIf NHK_dual_mono_mode_select = 5 Then
-                    '動画主音声
-                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
-                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 1?:streo -i ")
-                ElseIf NHK_dual_mono_mode_select = 6 Then
-                    '動画副音声
-                    hlsOpt = QSVEnc_audiostr_delete(hlsOpt) '--audio-stream削除
-                    hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
+                    hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
+                    'hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
+                    'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream 2")
+                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream 2", 0)
+                    '×--audio-codec書き換え　失敗、配信開始されず
+                    'hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-codec") '--audio-codec削除
+                    'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-codec 2?aac")
+                    '×--audio-codec入れ替え　失敗、配信開始されず
+                    'hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "---audio-codec 2?aac", 1)
                 ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
                     If exepath_VLC.Length > 0 Then
                         'hlsAppとhlsOptをVLCに置き換える
@@ -2861,6 +2864,32 @@ Class WebRemocon
             stream_last_utime(num) = 0 '前回配信準備開始時間リセット
         End If
     End Sub
+
+    '指定されたパラメータの直後に新パラメータを挿入　「-aaa 値」のもののみ　「-aaa」単体のものはＮＧ
+    Public Function insert_str_after_para_in_hlsOpt(ByVal hlsOpt As String, ByVal search_para As String, ByVal ins_para As String, ByVal exchange As Integer) As String
+        'exchange=1の場合はsearch_paraを入れ替え
+        Dim sp1 As Integer = hlsOpt.IndexOf(search_para & " ")
+        If sp1 >= 0 Then
+            Dim sp2 As Integer = hlsOpt.IndexOf(" ", sp1 + (search_para & " ").Length)
+            If sp2 >= 0 Then
+                If exchange = 0 Then
+                    hlsOpt = hlsOpt.Substring(0, sp2) & " " & ins_para & hlsOpt.Substring(sp2)
+                Else
+                    hlsOpt = hlsOpt.Substring(0, sp1) & ins_para & hlsOpt.Substring(sp2)
+                End If
+            Else
+                If exchange = 0 Then
+                    hlsOpt = hlsOpt.Substring(0, sp2) & " " & ins_para
+                Else
+                    hlsOpt = hlsOpt.Substring(0, sp1) & ins_para
+                End If
+            End If
+        Else
+            '前提のsearch_paraが見つからない場合は-i直後に
+            hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, ins_para)
+        End If
+        Return hlsOpt
+    End Function
 
     '解像度インデックスから純粋解像度を取得する　取得できなければそのまま返す
     Public Function get_resolution_from_resolution(ByVal str As String) As String
@@ -3020,13 +3049,14 @@ Class WebRemocon
         Return hlsOpt
     End Function
 
-    'QSVEncのhlsOptから--audio-streamを削除
-    Public Function QSVEnc_audiostr_delete(ByVal hlsOpt As String) As String
-        If hlsOpt.IndexOf("--audio-stream ") >= 0 Then
+    'hlsOptからパラメータ（--audio-stream等）を削除
+    Public Function hlsOpt_parameter_delete(ByVal hlsOpt As String, ByVal parah As String) As String
+        'parah = "--audio-stream"
+        If hlsOpt.IndexOf(parah & " ") >= 0 Then
             '--audio-streamが存在するならば削除
-            Dim asts As String = instr_pickup_para(hlsOpt, "--audio-stream ", " ", 0)
+            Dim asts As String = instr_pickup_para(hlsOpt, parah & " ", " ", 0)
             If asts.Length > 0 Then
-                hlsOpt = hlsOpt.Replace("--audio-stream " & asts & " ", "")
+                hlsOpt = hlsOpt.Replace(parah & " " & asts & " ", "")
             End If
         End If
         Return hlsOpt
