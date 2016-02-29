@@ -1504,30 +1504,33 @@ Class WebRemocon
                             Case "meta_refresh_fix"
                                 meta_refresh_fix = Val(youso(1).ToString)
                             Case "exepath_VLC", "exepath_vlc", "BS1_hlsApp"
-                                exepath_VLC = youso(1).ToString
-                                If exepath_VLC.Length > 0 Then
-                                    If file_exist(exepath_VLC) = 1 Then
+                                If youso(1).Length > 0 Then
+                                    If file_exist(youso(1)) = 1 Then
+                                        exepath_VLC = youso(1).ToString
                                         log1write("個別実行用vlcとして" & exepath_VLC & "が指定されました")
                                     Else
                                         log1write("【エラー】個別実行用vlcが見つかりませんでした。" & exepath_VLC)
+                                        exepath_VLC = ""
                                     End If
                                 End If
                             Case "exepath_ffmpeg", "thumbnail_ffmpeg"
-                                exepath_ffmpeg = youso(1).ToString
-                                If exepath_ffmpeg.Length > 0 Then
-                                    If file_exist(exepath_ffmpeg) = 1 Then
+                                If youso(1).Length > 0 Then
+                                    If file_exist(youso(1)) = 1 Then
+                                        exepath_ffmpeg = youso(1).ToString
                                         log1write("個別実行用ffmpegとして" & exepath_ffmpeg & "が指定されました")
                                     Else
                                         log1write("【エラー】個別実行用ffmpegが見つかりませんでした。" & exepath_ffmpeg)
+                                        exepath_ffmpeg = ""
                                     End If
                                 End If
                             Case "exepath_QSVEnc"
-                                exepath_QSVEnc = youso(1).ToString
-                                If exepath_QSVEnc.Length > 0 Then
-                                    If file_exist(exepath_QSVEnc) = 1 Then
+                                If youso(1).Length > 0 Then
+                                    If file_exist(youso(1)) = 1 Then
+                                        exepath_QSVEnc = youso(1).ToString
                                         log1write("個別実行用QSVEncとして" & exepath_QSVEnc & "が指定されました")
                                     Else
                                         log1write("【エラー】個別実行用QSVEncが見つかりませんでした。" & exepath_QSVEnc)
+                                        exepath_QSVEnc = ""
                                     End If
                                 End If
                             Case "video_force_ffmpeg"
