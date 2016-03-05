@@ -2346,25 +2346,27 @@ Class WebRemocon
                     resolution = form1_resolution.ToString
                 End If
                 'hlsApp指定が無ければ
-                Dim rtez() As String = get_resolution_and_hlsApp(Trim(resolution))
-                If rtez(1).Length = 0 Then
-                    'HLS_option.txt内に該当解像度が存在しなければ各HLS_option～.txtを読み込むようにセット
-                    Dim hlstemp As String = search_hlsOption(resolution, hls_option, "HLS_option.txt", 0)
-                    If Trim(hlstemp).Length = 0 Then
-                        If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
-                            hlsAppSelect = "ffmpeg"
-                        ElseIf hlsApp.ToLower.IndexOf("qsvenc") >= 0 Then
-                            hlsAppSelect = "QSVEnc"
-                        ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 Then
-                            hlsAppSelect = "VLC"
+                If Stream_mode = 0 Then
+                    If rez(1).Length = 0 Then
+                        'App指定無し
+                        'HLS_option.txt内に該当解像度が存在しなければ各HLS_option～.txtを読み込むようにセット
+                        hlsOpt = search_hlsOption(resolution, hls_option, "HLS_option.txt", 0)
+                        If hlsOpt.Length = 0 Then
+                            If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                                hlsAppSelect = "ffmpeg"
+                            ElseIf hlsApp.ToLower.IndexOf("qsvenc") >= 0 Then
+                                hlsAppSelect = "QSVEnc"
+                            ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                                hlsAppSelect = "VLC"
+                            End If
                         End If
+                    Else
+                        'App指定有り
+                        hlsAppSelect = rez(1)
                     End If
-                Else
-                    'App指定有り
-                    hlsAppSelect = rtez(1)
                 End If
             ElseIf resolution.Length = 0 Then
-                'HLSオプションを送る　が選択されている
+                'HLSオプションを送る　が選択されている & 解像度の指定が無い
                 'フォーム上のオプションから解像度を算出して解像度をセット
                 If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
                     resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
@@ -2459,6 +2461,9 @@ Class WebRemocon
                             log1write("【エラー】ini内のexepath_～の指定が不足しています")
                             hlsAppSelect = ""
                         End If
+                    Case Else
+                        log1write("【エラー】対応していないHLSアプリが指定されました。hlsAppSelect=" & hlsAppSelect)
+                        hlsAppSelect = ""
                 End Select
             End If
             If hlsAppSelect.Length > 0 Then
@@ -2536,6 +2541,8 @@ Class WebRemocon
                     ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
                         h_option = QSVEnc_file_option
                         h_file = "HLS_option_QSVEnc_file.txt"
+                    Else
+                        log1write("【エラー】ファイル再生に未対応のHLSアプリです。hlsApp=" & hlsApp)
                     End If
                     'hlsオプションを取得
                     If h_file.Length > 0 Then
@@ -2553,7 +2560,7 @@ Class WebRemocon
                     If resolution_value.Length = 0 Then
                         hlsOpt = hlsOpt2
                         log1write("解像度指定が無かったのでフォーム上のHLSオプションが使用されます")
-                    ElseIf resolution_value.Length > 0 Then
+                    Else
                         hlsOpt = search_hlsOption(resolution_value, hls_option, "HLS_option.txt", 0)
                         If hlsOpt.Length = 0 Then
                             log1write("HLS_option.txt内に" & resolution_value & "に対するオプションが見つかりませんでした")
