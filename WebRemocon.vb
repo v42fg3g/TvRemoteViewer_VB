@@ -3966,6 +3966,10 @@ Class WebRemocon
 
                             'プロファイル指定
                             Dim profileSelect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("profile") & ""
+                            If Trim(profileSelect.Replace("-", "")).Length = 0 Then
+                                '---等が指定されてきた場合
+                                profileSelect = ""
+                            End If
 
                             '汎用文字列
                             Dim temp As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("temp") & ""

@@ -159,7 +159,7 @@ Module モジュール_プロファイル
     'カンマ区切りの文字列中に該当文字列があるかどうか
     Public Function isMatch_file_instr(ByVal str As String, ByVal s2 As String) As Integer
         Dim r As Integer = 0
-        If s2.IndexOf("*") >= 0 Or s2.Length = 0 Or str.IndexOf("*") >= 0 Or str.Length = 0 Then
+        If s2.IndexOf("*") >= 0 Or s2.Length = 0 Then
             '全てにマッチ
             r = 1
         Else
@@ -180,7 +180,7 @@ Module モジュール_プロファイル
     'カンマ区切りの文字列中に該当文字列があるかどうか
     Public Function isMatch_kamma(ByVal str As String, ByVal s2 As String) As Integer
         Dim r As Integer = 0
-        If s2.IndexOf("*") >= 0 Or s2.Length = 0 Or str.IndexOf("*") >= 0 Or str.Length = 0 Then
+        If s2.IndexOf("*") >= 0 Or s2.Length = 0 Then
             '全てにマッチ
             r = 1
         Else
