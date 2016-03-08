@@ -28,9 +28,6 @@ Imports System.Net
 'http://looooooooop.blog35.fc2.com/blog-entry-1014.html
 
 Class WebRemocon
-    'HLSアプリ　解像度インデックス　チェック用文字列
-    Public hlschkstr As String = ":vlc:v:ffmpeg:f:qsvenc:qsvencc:q:qsv:piperun:p:"
-
     Public _isWebStart As [Boolean] = False
     Private _listener As HttpListener = Nothing
     Private _procMan As ProcessManager = Nothing
@@ -1533,11 +1530,6 @@ Class WebRemocon
                                         exepath_QSVEnc = ""
                                     End If
                                 End If
-                            Case "video_force_ffmpeg"
-                                video_force_ffmpeg = Val(youso(1).ToString)
-                                If video_force_ffmpeg > 0 Then
-                                    log1write("ファイル再生に標準HLSアプリ以外を使用するようセットしました")
-                                End If
                             Case "PipeRun_ffmpeg_option"
                                 If youso(1).Length > 0 Then
                                     PipeRun_ffmpeg_option = youso(1)
@@ -1545,6 +1537,12 @@ Class WebRemocon
                                 End If
 
 
+
+                                'Case "video_force_ffmpeg"
+                                'video_force_ffmpeg = Val(youso(1).ToString)
+                                'If video_force_ffmpeg > 0 Then
+                                'log1write("ファイル再生に標準HLSアプリ以外を使用するようセットしました")
+                                'End If
 
                                 'Case "WhiteBrowserWB_path"
                                 'WhiteBrowserWB_path = trim8(youso(1).ToString)
@@ -2099,7 +2097,7 @@ Class WebRemocon
     End Function
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String)
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String, ByVal profileSelect As String)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         '解像度指定が「---」だった場合
@@ -2187,6 +2185,7 @@ Class WebRemocon
         End If
 
         '★あらかじめコメントファイルを探しておく（HLSアプリ、コメントが無ければ変更しない）
+        Dim hardsub_on As Integer = 0 'ハードサブするなら1が入る
         Dim ass_file As String = "" 'ここにタイムシフト前のassファイルが入る
         '前回のファイル名と違えば字幕ファイルを削除
         Dim exist_nico_ass As Integer = 0 'タイムシフト前大元のASSファイルが存在するかどうか
@@ -2266,6 +2265,10 @@ Class WebRemocon
                 Else
                     log1write("[字幕]字幕ファイルは見つかりませんでした")
                 End If
+            End If
+            'ハードサブを表示するならばフラグセット
+            If fonts_conf_ok = 1 And ass_file.Length > 0 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0 Then
+                hardsub_on = 1
             End If
         End If
 
@@ -2400,7 +2403,7 @@ Class WebRemocon
                 video_force_ffmpeg_temp = 2
             ElseIf video_force_ffmpeg = 3 And Stream_mode = 1 And filename.Length > 0 Then
                 Dim ext As String = Path.GetExtension(filename).ToLower
-                If ext <> ".ts" Or baisoku <> 1 Or (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0 And ass_file.Length > 0) Then
+                If ext <> ".ts" Or baisoku <> 1 Or hardsub_on = 1 Then
                     hlsAppSelect = "ffmpeg"
                     log1write("video_force_ffmpeg=3によりHLSアプリにffmpegが指定されました")
                 Else
@@ -2410,10 +2413,34 @@ Class WebRemocon
                 End If
             ElseIf video_force_ffmpeg = 4 And Stream_mode = 1 And filename.Length > 0 Then
                 Dim ext As String = Path.GetExtension(filename).ToLower
-                If ext <> ".ts" Or baisoku <> 1 Or (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0 And ass_file.Length > 0) Then
+                If ext <> ".ts" Or baisoku <> 1 Or hardsub_on = 1 Then
                     hlsAppSelect = "ffmpeg"
                     log1write("video_force_ffmpeg=4によりHLSアプリにffmpegが指定されました")
                 End If
+            ElseIf video_force_ffmpeg = 9 And profiletxt.Length > 0 Then
+                Dim hls_temp As String = Path.GetFileNameWithoutExtension(hlsApp).ToLower
+                If hlsAppSelect.Length > 0 Then
+                    hls_temp = hlsAppSelect.ToLower
+                End If
+                hls_temp = modify_hlsAppName(hls_temp)
+                log1write("video_force_ffmpeg=11によりHLSアプリ=" & hls_temp & "、解像度=" & resolution & "、音声モード=" & NHK_dual_mono_mode_select & "がチェックされます")
+                Dim HlsRezAud() As String = get_hlsApp_and_resolution_from_profiles(profileSelect, Stream_mode, hlsApp, resolution, filename, NHK_dual_mono_mode_select, baisoku, hardsub_on)
+                If HlsRezAud IsNot Nothing Then
+                    If HlsRezAud(0).Length > 0 And HlsRezAud(0) <> "*" And hls_temp <> HlsRezAud(0) Then
+                        log1write("video_force_ffmpeg=11によりHLSアプリが" & hls_temp & "から" & HlsRezAud(0) & "に変更されました")
+                        hlsAppSelect = HlsRezAud(0)
+                        hls_temp = HlsRezAud(0)
+                    End If
+                    If HlsRezAud(1).Length > 0 And HlsRezAud(1) <> "*" And resolution <> HlsRezAud(1) Then
+                        log1write("video_force_ffmpeg=11により解像度が" & resolution & "から" & HlsRezAud(1) & "に変更されました")
+                        resolution = HlsRezAud(1)
+                    End If
+                    If HlsRezAud(2).Length > 0 And HlsRezAud(2) <> "*" And NHK_dual_mono_mode_select <> HlsRezAud(2) Then
+                        log1write("video_force_ffmpeg=11により音声が" & NHK_dual_mono_mode_select & "から" & HlsRezAud(2) & "に変更されました")
+                        NHK_dual_mono_mode_select = HlsRezAud(2)
+                    End If
+                End If
+                log1write("video_force_ffmpeg=11によりHLSアプリ=" & hls_temp & "、解像度=" & resolution & "、音声モード=" & NHK_dual_mono_mode_select & "が指定されました")
             End If
 
             If hlsAppSelect.Length > 0 Then
@@ -2945,60 +2972,6 @@ Class WebRemocon
                 End If
             End If
         End If
-
-        Return r
-    End Function
-
-    Public Function get_resolution_and_hlsApp(ByVal resolution As String) As String()
-        Dim r(1) As String
-        Dim i As Integer = 0
-
-        r(0) = "" '640x360
-        r(1) = "" 'hlsApp
-
-        resolution = Trim(resolution).ToLower
-
-        Dim hlsAppSelect As String = ""
-        Dim resolution_value As String = Trim(resolution)
-
-        If resolution.IndexOf("_") > 0 Then
-            Dim sp As Integer = resolution.IndexOf("_")
-            hlsAppSelect = Trim(resolution.Substring(0, sp))
-            Try
-                resolution_value = Trim(resolution.Substring(sp + 1))
-            Catch ex As Exception
-            End Try
-            If hlschkstr.IndexOf(":" & hlsAppSelect & ":") < 0 Then
-                '後ろに指定があった場合
-                sp = resolution.LastIndexOf("_")
-                resolution_value = resolution.Substring(0, sp)
-                Try
-                    hlsAppSelect = Trim(resolution.Substring(sp + 1))
-                Catch ex As Exception
-                End Try
-                If hlschkstr.IndexOf(":" & hlsAppSelect & ":") < 0 Then
-                    'HLSアプリ指定は含まれていない
-                    hlsAppSelect = ""
-                    resolution_value = resolution
-                End If
-            End If
-        End If
-        If resolution.ToLower.IndexOf("(v)") >= 0 Or resolution.ToLower.IndexOf("(vlc)") >= 0 Then
-            hlsAppSelect = "VLC"
-            resolution_value = resolution.ToLower.Replace("(v)", "").Replace("(vlc)", "")
-        ElseIf resolution.ToLower.IndexOf("(f)") >= 0 Or resolution.ToLower.IndexOf("(ffmpeg)") >= 0 Then
-            hlsAppSelect = "ffmpeg"
-            resolution_value = resolution.ToLower.Replace("(f)", "").Replace("(ffmpeg)", "")
-        ElseIf resolution.ToLower.IndexOf("(q)") >= 0 Or resolution.ToLower.IndexOf("(qsv)") >= 0 Or resolution.ToLower.IndexOf("(qsvenc)") >= 0 Or resolution.ToLower.IndexOf("(qsvencc)") >= 0 Then
-            hlsAppSelect = "QSVEnc"
-            resolution_value = resolution.ToLower.Replace("(q)", "").Replace("(qsv)", "").Replace("(qsvenc)", "").Replace("(qsvencc)", "")
-        ElseIf resolution.ToLower.IndexOf("(p)") >= 0 Or resolution.ToLower.IndexOf("(piperun)") >= 0 Then
-            hlsAppSelect = "PipeRun"
-            resolution_value = resolution.ToLower.Replace("(p)", "").Replace("(piperun)", "")
-        End If
-
-        r(0) = Trim(resolution_value)
-        r(1) = Trim(hlsAppSelect)
 
         Return r
     End Function
@@ -3698,7 +3671,7 @@ Class WebRemocon
                         If (h_stream_mode = 2 And h_bondriver.Length > 0 And Val(h_sid) > 0) Or (h_stream_mode = 3 And h_videoname.Length > 0) Then
                             'httpストリーム配信開始
                             'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
-                            Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1, "")
+                            Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1, "", "")
                         Else
                             'パラメーターが不正
                             context.Response.Headers("Content-Type") = "text/plain"
@@ -3991,6 +3964,9 @@ Class WebRemocon
                             'HLSアプリ個別指定
                             Dim hlsAppSelect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("hlsAppSelect") & ""
 
+                            'プロファイル指定
+                            Dim profileSelect As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("profile") & ""
+
                             '汎用文字列
                             Dim temp As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("temp") & ""
 
@@ -4235,14 +4211,14 @@ Class WebRemocon
                                         num = GET_num_check_BonDriver(num, bondriver)
                                     End If
                                     '正しければ配信スタート
-                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0, hlsAppSelect)
+                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0, hlsAppSelect, profileSelect)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
                                     If Me._hlsApp.ToLower.IndexOf("ffmpeg") > 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") > 0 Or (video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0) Then
                                         'ffmpegなら
-                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect)
+                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect)
                                     Else
                                         '今のところVLCには未対応
                                         request_page = 12

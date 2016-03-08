@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 1.99"
+    Private version As String = "TvRemoteViewer_VB 2.00"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -55,7 +55,7 @@ Public Class Form1
                     If s.Length = 3 Then
                         sid = Val(s(1))
                         Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
-                        Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP, resolution, 0, 0, "1", "", 0, "")
+                        Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP, resolution, 0, 0, "1", "", 0, "", "")
                     Else
                         MsgBox("サービスIDを指定してください")
                     End If
@@ -414,6 +414,12 @@ Public Class Form1
         End If
         STOP_IDLEMINUTES_LAST = Now()
 
+        'プロファイル読込
+        If file_exist("profile.txt") = 1 Then
+            profiletxt = file2str("profile.txt", "UTF-8")
+            log1write("プロファイルを読み込みました")
+        End If
+
         'サブフォルダ監視修正
         'サブフォルダをファイル一覧作成のために追加
         Me._worker.add_subfolder()
@@ -682,6 +688,8 @@ Public Class Form1
                             ComboBoxHLSorHTTP.Text = lr(1)
                         Case "ffmpeg_seek_method_files"
                             ffmpeg_seek_method_files = lr(1).Replace("\r\n", vbCrLf)
+                        Case "ComboBoxVideoForce"
+                            ComboBoxVideoForce.Text = lr(1)
                     End Select
                 ElseIf lr.Length > 2 And trim8(lr(0)) = "textBoxHlsOpt" Then
                     'VLC OPTION
@@ -763,6 +771,7 @@ Public Class Form1
         s &= "textBoxHlsOpt=" & textBoxHlsOpt2.Text & vbCrLf
         s &= "ComboBoxHLSorHTTP=" & ComboBoxHLSorHTTP.Text & vbCrLf
         s &= "ffmpeg_seek_method_files=" & ffmpeg_seek_method_files.Replace(vbCrLf, "\r\n") & vbCrLf
+        s &= "ComboBoxVideoForce=" & ComboBoxVideoForce.Text & vbCrLf
 
         'ステータスファイル書き込み
         str2file("form_status.txt", s)
@@ -1351,4 +1360,32 @@ Public Class Form1
         form1_hls_or_rez = ComboBoxRezFormOrCombo.Text.ToString
     End Sub
 
+    Private Sub Button8_Click(sender As System.Object, e As System.EventArgs) Handles Button8.Click
+        Try
+            'カレントディレクトリ変更
+            F_set_ppath4program()
+            Try
+                System.Diagnostics.Process.Start("profile.txt")
+            Catch ex As Exception
+            End Try
+        Catch ex As Exception
+        End Try
+    End Sub
+
+    Private Sub ComboBoxVideoForce_SelectedIndexChanged(sender As System.Object, e As System.EventArgs) Handles ComboBoxVideoForce.SelectedIndexChanged
+        video_force_ffmpeg = Val(ComboBoxVideoForce.Text.ToString)
+        log1write("video_force_ffmpeg=" & video_force_ffmpeg)
+    End Sub
+
+    Private Sub Button4_Click(sender As System.Object, e As System.EventArgs) Handles Button4.Click
+        'プロファイル更新
+        'カレントディレクトリ変更
+        F_set_ppath4program()
+        If file_exist("profile.txt") = 1 Then
+            profiletxt = file2str("profile.txt", "UTF-8")
+            log1write("プロファイルを読み込みました")
+        Else
+            log1write("【エラー】profile.txtが見つかりません")
+        End If
+    End Sub
 End Class

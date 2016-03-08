@@ -1,4 +1,6 @@
 ﻿Module モジュール_その他
+    'プロファイル　hlsApp,resolution,Audioモード
+    Public profiletxt As String = ""
 
     'パイプ経由時にffmpegに渡すパラメータ
     Public PipeRun_ffmpeg_option As String = "-i %VIDEOFILE% -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1"

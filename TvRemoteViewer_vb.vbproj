@@ -149,6 +149,7 @@
     <Compile Include="モジュール_ニコニコ実況.vb" />
     <Compile Include="モジュール_ビデオファイル一覧.vb" />
     <Compile Include="モジュール_ファイル.vb" />
+    <Compile Include="モジュール_プロファイル.vb" />
     <Compile Include="モジュール_ログ.vb" />
     <Compile Include="モジュール_番組表.vb" />
     <Compile Include="モジュール_名前付きパイプ取得.vb" />

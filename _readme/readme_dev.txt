@@ -50,6 +50,7 @@ TvRemoteViewer_VB v1.89
 			例：hlsOptAdd=2,2,-map 0,0 -map 0,1
 			また、「_-_」で区切ることにより複数の書き換えを行うことができます
 			例：hlsOptAdd=2,9,-hls_-_2,2,-map 0,0 -map 0,1	（-hls部分を削除した後に-map～を追加）
+		profile		任意の文字列（profile.txtに記入されたプロファイル名と連動）
 
 
 		例：

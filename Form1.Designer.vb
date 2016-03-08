@@ -88,6 +88,9 @@ Partial Class Form1
         Me.ButtonCopy2Clipboard = New System.Windows.Forms.Button()
         Me.Button7 = New System.Windows.Forms.Button()
         Me.ComboBoxRezFormOrCombo = New System.Windows.Forms.ComboBox()
+        Me.ComboBoxVideoForce = New System.Windows.Forms.ComboBox()
+        Me.Button4 = New System.Windows.Forms.Button()
+        Me.Button8 = New System.Windows.Forms.Button()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -117,7 +120,7 @@ Partial Class Form1
         Me.textBoxHlsOpt2.Multiline = True
         Me.textBoxHlsOpt2.Name = "textBoxHlsOpt2"
         Me.textBoxHlsOpt2.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
-        Me.textBoxHlsOpt2.Size = New System.Drawing.Size(415, 118)
+        Me.textBoxHlsOpt2.Size = New System.Drawing.Size(415, 96)
         Me.textBoxHlsOpt2.TabIndex = 40
         Me.textBoxHlsOpt2.TabStop = False
         '
@@ -233,7 +236,7 @@ Partial Class Form1
         '
         Me.ComboBoxNum.FormattingEnabled = True
         Me.ComboBoxNum.Items.AddRange(New Object() {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"})
-        Me.ComboBoxNum.Location = New System.Drawing.Point(102, 439)
+        Me.ComboBoxNum.Location = New System.Drawing.Point(102, 445)
         Me.ComboBoxNum.Name = "ComboBoxNum"
         Me.ComboBoxNum.Size = New System.Drawing.Size(51, 20)
         Me.ComboBoxNum.TabIndex = 53
@@ -260,7 +263,7 @@ Partial Class Form1
         '
         'TextBoxChSpace
         '
-        Me.TextBoxChSpace.Location = New System.Drawing.Point(102, 490)
+        Me.TextBoxChSpace.Location = New System.Drawing.Point(102, 492)
         Me.TextBoxChSpace.Name = "TextBoxChSpace"
         Me.TextBoxChSpace.Size = New System.Drawing.Size(28, 19)
         Me.TextBoxChSpace.TabIndex = 57
@@ -270,7 +273,7 @@ Partial Class Form1
         'Label3
         '
         Me.Label3.AutoSize = True
-        Me.Label3.Location = New System.Drawing.Point(8, 493)
+        Me.Label3.Location = New System.Drawing.Point(8, 495)
         Me.Label3.Name = "Label3"
         Me.Label3.Size = New System.Drawing.Size(47, 12)
         Me.Label3.TabIndex = 56
@@ -315,7 +318,7 @@ Partial Class Form1
         'Label5
         '
         Me.Label5.AutoSize = True
-        Me.Label5.Location = New System.Drawing.Point(8, 468)
+        Me.Label5.Location = New System.Drawing.Point(8, 472)
         Me.Label5.Name = "Label5"
         Me.Label5.Size = New System.Drawing.Size(56, 12)
         Me.Label5.TabIndex = 65
@@ -333,7 +336,7 @@ Partial Class Form1
         'Label7
         '
         Me.Label7.AutoSize = True
-        Me.Label7.Location = New System.Drawing.Point(8, 442)
+        Me.Label7.Location = New System.Drawing.Point(8, 448)
         Me.Label7.Name = "Label7"
         Me.Label7.Size = New System.Drawing.Size(92, 12)
         Me.Label7.TabIndex = 67
@@ -369,7 +372,7 @@ Partial Class Form1
         'ComboBoxBonDriver
         '
         Me.ComboBoxBonDriver.FormattingEnabled = True
-        Me.ComboBoxBonDriver.Location = New System.Drawing.Point(102, 464)
+        Me.ComboBoxBonDriver.Location = New System.Drawing.Point(102, 468)
         Me.ComboBoxBonDriver.Name = "ComboBoxBonDriver"
         Me.ComboBoxBonDriver.Size = New System.Drawing.Size(210, 20)
         Me.ComboBoxBonDriver.TabIndex = 71
@@ -410,7 +413,7 @@ Partial Class Form1
         'ComboBoxResolution
         '
         Me.ComboBoxResolution.FormattingEnabled = True
-        Me.ComboBoxResolution.Location = New System.Drawing.Point(264, 403)
+        Me.ComboBoxResolution.Location = New System.Drawing.Point(264, 379)
         Me.ComboBoxResolution.Name = "ComboBoxResolution"
         Me.ComboBoxResolution.Size = New System.Drawing.Size(87, 20)
         Me.ComboBoxResolution.TabIndex = 75
@@ -428,7 +431,7 @@ Partial Class Form1
         '
         'ButtonHLSoption
         '
-        Me.ButtonHLSoption.Location = New System.Drawing.Point(355, 400)
+        Me.ButtonHLSoption.Location = New System.Drawing.Point(355, 376)
         Me.ButtonHLSoption.Name = "ButtonHLSoption"
         Me.ButtonHLSoption.Size = New System.Drawing.Size(102, 25)
         Me.ButtonHLSoption.TabIndex = 77
@@ -532,7 +535,7 @@ Partial Class Form1
         'LabelStream
         '
         Me.LabelStream.AutoSize = True
-        Me.LabelStream.Location = New System.Drawing.Point(165, 443)
+        Me.LabelStream.Location = New System.Drawing.Point(165, 449)
         Me.LabelStream.Name = "LabelStream"
         Me.LabelStream.Size = New System.Drawing.Size(47, 12)
         Me.LabelStream.TabIndex = 88
@@ -613,7 +616,7 @@ Partial Class Form1
         'Label15
         '
         Me.Label15.AutoSize = True
-        Me.Label15.Location = New System.Drawing.Point(182, 492)
+        Me.Label15.Location = New System.Drawing.Point(182, 494)
         Me.Label15.Name = "Label15"
         Me.Label15.Size = New System.Drawing.Size(53, 12)
         Me.Label15.TabIndex = 98
@@ -623,7 +626,7 @@ Partial Class Form1
         '
         Me.ComboBoxHLSorHTTP.FormattingEnabled = True
         Me.ComboBoxHLSorHTTP.Items.AddRange(New Object() {"HLS", "HTTP"})
-        Me.ComboBoxHLSorHTTP.Location = New System.Drawing.Point(241, 489)
+        Me.ComboBoxHLSorHTTP.Location = New System.Drawing.Point(241, 491)
         Me.ComboBoxHLSorHTTP.Name = "ComboBoxHLSorHTTP"
         Me.ComboBoxHLSorHTTP.Size = New System.Drawing.Size(51, 20)
         Me.ComboBoxHLSorHTTP.TabIndex = 97
@@ -642,7 +645,7 @@ Partial Class Form1
         '
         'Button7
         '
-        Me.Button7.Location = New System.Drawing.Point(458, 400)
+        Me.Button7.Location = New System.Drawing.Point(458, 376)
         Me.Button7.Name = "Button7"
         Me.Button7.Size = New System.Drawing.Size(59, 25)
         Me.Button7.TabIndex = 101
@@ -654,18 +657,52 @@ Partial Class Form1
         '
         Me.ComboBoxRezFormOrCombo.FormattingEnabled = True
         Me.ComboBoxRezFormOrCombo.Items.AddRange(New Object() {"HLSオプション優先使用", "解像度インデックス優先使用"})
-        Me.ComboBoxRezFormOrCombo.Location = New System.Drawing.Point(101, 403)
+        Me.ComboBoxRezFormOrCombo.Location = New System.Drawing.Point(101, 379)
         Me.ComboBoxRezFormOrCombo.Name = "ComboBoxRezFormOrCombo"
         Me.ComboBoxRezFormOrCombo.Size = New System.Drawing.Size(161, 20)
         Me.ComboBoxRezFormOrCombo.TabIndex = 102
         Me.ComboBoxRezFormOrCombo.TabStop = False
         Me.ComboBoxRezFormOrCombo.Text = "HLSオプション優先使用"
         '
+        'ComboBoxVideoForce
+        '
+        Me.ComboBoxVideoForce.FormattingEnabled = True
+        Me.ComboBoxVideoForce.Items.AddRange(New Object() {"0 通常再生", "1 ファイル再生にffmpeg使用", "2 Pipe経由 ffmpeg→QSVEnc", "3 Pipe経由+ts以外・倍速等はffmpeg", "4 ts以外・倍速等はffmpegで再生", "9 プロファイル(profile.txt)に従って再生"})
+        Me.ComboBoxVideoForce.Location = New System.Drawing.Point(101, 403)
+        Me.ComboBoxVideoForce.Name = "ComboBoxVideoForce"
+        Me.ComboBoxVideoForce.Size = New System.Drawing.Size(250, 20)
+        Me.ComboBoxVideoForce.TabIndex = 103
+        Me.ComboBoxVideoForce.TabStop = False
+        Me.ComboBoxVideoForce.Text = "0 通常再生"
+        '
+        'Button4
+        '
+        Me.Button4.Location = New System.Drawing.Point(458, 400)
+        Me.Button4.Name = "Button4"
+        Me.Button4.Size = New System.Drawing.Size(59, 25)
+        Me.Button4.TabIndex = 105
+        Me.Button4.TabStop = False
+        Me.Button4.Text = "再読込"
+        Me.Button4.UseVisualStyleBackColor = True
+        '
+        'Button8
+        '
+        Me.Button8.Location = New System.Drawing.Point(355, 400)
+        Me.Button8.Name = "Button8"
+        Me.Button8.Size = New System.Drawing.Size(102, 25)
+        Me.Button8.TabIndex = 104
+        Me.Button8.TabStop = False
+        Me.Button8.Text = "profile.txt(*)"
+        Me.Button8.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(530, 685)
+        Me.Controls.Add(Me.Button4)
+        Me.Controls.Add(Me.Button8)
+        Me.Controls.Add(Me.ComboBoxVideoForce)
         Me.Controls.Add(Me.ComboBoxRezFormOrCombo)
         Me.Controls.Add(Me.Button7)
         Me.Controls.Add(Me.ButtonCopy2Clipboard)
@@ -798,5 +835,8 @@ Partial Class Form1
     Friend WithEvents SeekMethodList As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents Button7 As System.Windows.Forms.Button
     Friend WithEvents ComboBoxRezFormOrCombo As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBoxVideoForce As System.Windows.Forms.ComboBox
+    Friend WithEvents Button4 As System.Windows.Forms.Button
+    Friend WithEvents Button8 As System.Windows.Forms.Button
 
 End Class
