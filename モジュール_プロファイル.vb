@@ -250,4 +250,42 @@ Module モジュール_プロファイル
         Return r
     End Function
 
+    'プロファイル一覧を返す
+    Public Function WI_GET_PROFILES() As String
+        Dim r As String = ""
+
+        Dim profiles() As String = Nothing
+
+        Dim line() As String = Split(profiletxt, vbCrLf)
+        If line IsNot Nothing Then
+            Dim j As Integer = 0
+            For i As Integer = 0 To line.Length - 1
+                Dim sp As Integer = line(i).IndexOf(";")
+                If sp >= 0 Then
+                    'コメント削除
+                    line(i) = line(i).Substring(0, sp)
+                End If
+                Dim d() As String = Split(line(i), vbTab)
+                If d.Length >= 9 Then
+                    If Trim(d(0)) <> "*" Then
+                        If profiles Is Nothing Then
+                            ReDim Preserve profiles(j)
+                            profiles(j) = Trim(d(0))
+                            r &= Trim(d(0)) & vbCrLf
+                            j += 1
+                        Else
+                            If Array.IndexOf(profiles, Trim(d(0))) < 0 Then
+                                ReDim Preserve profiles(j)
+                                profiles(j) = Trim(d(0))
+                                r &= Trim(d(0)) & vbCrLf
+                                j += 1
+                            End If
+                        End If
+                    End If
+                End If
+            Next
+        End If
+
+        Return r
+    End Function
 End Module

@@ -313,3 +313,5 @@ TvRemoteViewer_VB v1.89
 		HTTPSTREAM_App=値
 		html_publish_method=値
 
+	WI_GET_PROFILES.html
+		profile.txt内に記述されたプロファイル一覧が返されます

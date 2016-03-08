@@ -4158,6 +4158,9 @@ Class WebRemocon
                                             WI_cmd_reply = WI_GET_PARA(Trim(temp))
                                             WI_cmd_reply_force = 1
                                         End If
+                                    Case "WI_GET_PROFILES"
+                                        WI_cmd_reply = WI_GET_PROFILES()
+                                        WI_cmd_reply_force = 1
                                 End Select
                             End If
 

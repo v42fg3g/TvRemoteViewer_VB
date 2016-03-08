@@ -617,6 +617,7 @@ TvRemoteViewer_VB v1.99
 		（フォーム上で「9 プロファイル(profile.txt)に従って再生」を指定した場合）
 		profile.txtを追加
 		StartTv.htmlへのパラメータとしてprofile=を追加
+		WI_GET_PROFILES.htmlを追加
 		フォーム上にプロファイル関係のコンボボックスとボタンを追加
 
 
