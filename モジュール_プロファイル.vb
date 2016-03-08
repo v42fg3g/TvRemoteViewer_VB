@@ -162,6 +162,9 @@ Module モジュール_プロファイル
         If s2.IndexOf("*") >= 0 Or s2.Length = 0 Then
             '全てにマッチ
             r = 1
+        ElseIf str.Length = 0 Then
+            '比べるものがなければ
+            r = 0
         Else
             Dim d() As String = s2.Split(",")
             For i As Integer = 0 To d.Length - 1
@@ -183,6 +186,9 @@ Module モジュール_プロファイル
         If s2.IndexOf("*") >= 0 Or s2.Length = 0 Then
             '全てにマッチ
             r = 1
+        ElseIf str.Length = 0 Then
+            '比べるものがなければ
+            r = 0
         Else
             Dim d() As String = s2.Split(",")
             For i As Integer = 0 To d.Length - 1
