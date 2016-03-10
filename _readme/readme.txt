@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.99
+TvRemoteViewer_VB v2.01
 
 
 
@@ -619,6 +619,7 @@ TvRemoteViewer_VB v1.99
 		StartTv.htmlへのパラメータとしてprofile=を追加
 		WI_GET_PROFILES.htmlを追加
 		フォーム上にプロファイル関係のコンボボックスとボタンを追加
+	2.01	VLCのファイル再生に対応（音声切替と焼込には未対応）
 
 
 

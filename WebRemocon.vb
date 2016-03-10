@@ -64,6 +64,7 @@ Class WebRemocon
     'HLSのオプション用
     Public hls_option() As HLSoptionstructure
     Public vlc_option() As HLSoptionstructure
+    Public vlc_file_option() As HLSoptionstructure
     Public vlc_http_option() As HLSoptionstructure
     Public ffmpeg_option() As HLSoptionstructure
     Public ffmpeg_file_option() As HLSoptionstructure
@@ -1002,6 +1003,7 @@ Class WebRemocon
 
         hls_option = set_hls_option("HLS_option.txt")
         vlc_option = set_hls_option("HLS_option_VLC.txt")
+        vlc_file_option = set_hls_option("HLS_option_VLC_file.txt")
         vlc_http_option = set_hls_option("HLS_option_VLC_http.txt")
         ffmpeg_option = set_hls_option("HLS_option_ffmpeg.txt")
         ffmpeg_file_option = set_hls_option("HLS_option_ffmpeg_file.txt")
@@ -1786,7 +1788,7 @@ Class WebRemocon
         End If
 
         Dim rename_file As String = "" 'assフルパス
-        If (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0) Or nohsub = 2 Then
+        If (fonts_conf_ok = 1 And nohsub = 0) Or nohsub = 2 Then
             'QSVEncではハードサブに未対応
             log1write("【警告】QSVEncはハードサブに未対応です")
         ElseIf nohsub = 3 Then
@@ -1845,6 +1847,146 @@ Class WebRemocon
             End If
         Else
             log1write("【エラー】HlsOpt内に-iが見つかりません")
+        End If
+
+        Return hlsOpt
+    End Function
+
+    'VLC httpファイル再生
+    '現在のhlsOptをファイル再生用に書き換える
+    Private Function hlsopt_udp2file_VLC_http(ByVal hlsOpt As String, ByVal filename As String) As String
+        Dim sp As Integer = hlsOpt.IndexOf("udp://@:")
+        Dim se As Integer = hlsOpt.IndexOf(" ", sp + 7)
+        If sp >= 0 And se > sp Then
+            hlsOpt = hlsOpt.Substring(0, sp) & """" & filename & """" & hlsOpt.Substring(se)
+        End If
+        Return hlsOpt
+    End Function
+
+    'ファイル再生
+    '現在のhlsOptをVLCファイル再生用に書き換える
+    Private Function hlsopt_udp2file_VLC(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer, ByVal ass_file As String) As String
+        '字幕ファイルがあれば挿入
+
+        filename = filename_escape_recall(filename) ',エスケープを元に戻す
+
+        'エラー防止
+        If file_last_filename(num) Is Nothing Then
+            file_last_filename(num) = ""
+        End If
+
+        Dim new_file As String = ""
+        Dim rename_file As String = "" 'assフルパス
+        If (fonts_conf_ok = 1 And nohsub = 0) Or nohsub = 2 Then
+            'fonts.confが存在し、無変換でなく、ハードサブ禁止でなければ （又はnohsub=2）
+            If ass_file.Length > 0 Then
+                log1write("字幕ASSファイルとして" & ass_file & "を読み込みます")
+                '存在していればstreamフォルダに名前を変えてコピー
+                new_file = "sub" & num.ToString & ".ass"
+                rename_file = fileroot & "\" & new_file
+
+                If VideoSeekSeconds <= 0 And baisoku = "1" Then
+                    'シークが指定されていなければそのままコピー
+                    'リネーム
+                    My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                    'ファイルが出来るまで待機
+                    Dim i As Integer = 0
+                    While i < 100 And file_exist(rename_file) < 1
+                        System.Threading.Thread.Sleep(50)
+                        i += 1
+                    End While
+                    log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
+                Else
+                    'シーク・倍速が指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
+                    log1write("字幕ASSファイルを修正しています")
+                    Dim VideoSeekSeconds_temp As Integer = VideoSeekSeconds
+                    If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds_temp, baisoku) = 1 Then
+                        '修正完了
+                        log1write("字幕ASSファイルの修正が完了しました")
+                        log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
+                    Else
+                        'エラー
+                        log1write("字幕ASSファイルの修正に失敗しました")
+                    End If
+                End If
+                'オプションに挿入する文字列を作成
+                If nohsub = 0 And new_file.Length > 0 Then
+                    'ハードサブの場合
+                    '二重"はエラー
+                    'new_file = " --sub-file=" & rename_file
+                    log1write("【警告】VLCでハードサブは実行できません。--sub-file=[字幕ファイル]が働かないため")
+                    new_file = ""
+                Else
+                    new_file = ""
+                End If
+            End If
+        ElseIf nohsub = 3 Then
+            'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
+            '前回と違うファイル、または字幕ファイルが存在しなければ作成
+            '前回と同じファイルならすでに存在しているので無駄なことはしない
+            If file_last_filename(num) <> filename Or (file_last_filename(num) = filename And file_exist(fileroot & "\" & "sub" & num.ToString & ".ass") <= 0) Then
+                If ass_file.Length > 0 Then
+                    log1write("字幕ASSファイルとして" & ass_file & "を読み込みます[CopyOnly]")
+                    '存在していればstreamフォルダに名前を変えてコピー
+                    '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+                    rename_file = fileroot & "\" & "sub" & num.ToString & ".ass"
+                    'シークが指定されていなければそのままコピー
+                    'リネーム
+                    My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                    'ファイルが出来るまで待機
+                    Dim i As Integer = 0
+                    While i < 100 And file_exist(rename_file) < 1
+                        System.Threading.Thread.Sleep(50)
+                        i += 1
+                    End While
+                    log1write("字幕ASSファイルとして" & rename_file & "をセットしました[CopyOnly]")
+                End If
+            End If
+        End If
+
+        '字幕があればチャプターを打てるかどうかチェック
+        If rename_file.Length > 0 And make_chapter = 1 Then
+            log1write("コメントファイルからchapterファイル作成を試みます")
+            'rename_fileが実際のassファイル（フルパス）
+            F_make_chapter(filename, rename_file)
+        End If
+
+        '使用したファイル名を記録
+        file_last_filename(num) = filename
+
+        filename = """" & filename & """"
+
+        Dim sp As Integer = 0
+        Dim se As Integer = 0
+
+        'ライブ用HLSオプション
+        sp = hlsOpt.IndexOf("-I ")
+        Dim spstr As String = "-I "
+        Dim sp2 As Integer = hlsOpt.IndexOf("-I dummy ")
+        If sp2 >= 0 Then
+            sp = sp2
+            spstr = "-I dummy "
+        End If
+        If sp >= 0 Then
+            se = hlsOpt.IndexOf(" ", sp + spstr.Length)
+            If se > sp Then
+                'シーク秒数が指定されていれば「--start-time=秒」を挿入
+                Dim seekstr As String = ""
+                If VideoSeekSeconds > 0 Then
+                    seekstr = " --start-time=" & VideoSeekSeconds.ToString
+                End If
+
+                Dim baisokustr As String = ""
+                If baisoku <> 1 Then
+                    '倍速指定があれば
+                    baisokustr = " --rate=" & baisoku.ToString
+                End If
+
+                '各オプションを統合
+                hlsOpt = hlsOpt.Substring(0, sp) & spstr & filename & seekstr & baisokustr & new_file & hlsOpt.Substring(se)
+            End If
+        Else
+        log1write("【エラー】HlsOpt内に-Iが見つかりません")
         End If
 
         Return hlsOpt
@@ -1996,17 +2138,6 @@ Class WebRemocon
             End If
         End If
 
-        Return hlsOpt
-    End Function
-
-    'ファイル再生
-    '現在のhlsOptをファイル再生用に書き換える
-    Private Function hlsopt_udp2file_vlc(ByVal hlsOpt As String, ByVal filename As String) As String
-        Dim sp As Integer = hlsOpt.IndexOf("udp://@:")
-        Dim se As Integer = hlsOpt.IndexOf(" ", sp + 7)
-        If sp >= 0 And se > sp Then
-            hlsOpt = hlsOpt.Substring(0, sp) & """" & filename & """" & hlsOpt.Substring(se)
-        End If
         Return hlsOpt
     End Function
 
@@ -2324,7 +2455,7 @@ Class WebRemocon
                 'ファイル再生
                 If filename.Length > 0 And Stream_mode = 3 Then
                     'VLC httpストリームのとき
-                    hlsOpt = hlsopt_udp2file_vlc(hlsOpt, filename)
+                    hlsOpt = hlsopt_udp2file_VLC_http(hlsOpt, filename)
                 End If
             End If
         ElseIf Stream_mode = 0 Or Stream_mode = 1 Then
@@ -2504,7 +2635,8 @@ Class WebRemocon
                         h_file = "HLS_option_VLC.txt"
                         hls_option_first = 1
                     Case "vlc:1"
-                        '未対応
+                        h_option = vlc_file_option
+                        h_file = "HLS_option_VLC_file.txt"
                     Case "ffmpeg:0"
                         h_option = ffmpeg_option
                         h_file = "HLS_option_ffmpeg.txt"
@@ -2528,6 +2660,9 @@ Class WebRemocon
                         'ファイル再生　_fileで見つからなければ_file無しのライブ用ファイルから検索
                         If Stream_mode = 1 Then
                             Select Case hlsAppSelect.ToLower & ":" & Stream_mode.ToString
+                                Case "vlc:1"
+                                    h_option = vlc_option
+                                    h_file = "HLS_option_VLC.txt"
                                 Case "ffmpeg:1"
                                     h_option = ffmpeg_option
                                     h_file = "HLS_option_ffmpeg.txt"
@@ -2562,7 +2697,10 @@ Class WebRemocon
                     'ファイル再生
                     Dim h_file As String = ""
                     Dim h_option() As HLSoptionstructure = Nothing
-                    If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                    If hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                        h_option = vlc_file_option
+                        h_file = "HLS_option_VLC_file.txt"
+                    ElseIf hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
                         h_option = ffmpeg_file_option
                         h_file = "HLS_option_ffmpeg_file.txt"
                     ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
@@ -2706,7 +2844,10 @@ Class WebRemocon
             'ファイル再生か？
             If Stream_mode = 1 And hlsOpt.Length > 0 Then
                 'hlsオプションを書き換える
-                If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                If hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                    'VLCのとき
+                    hlsOpt = hlsopt_udp2file_VLC(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
+                ElseIf hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
                     'ffmpegのとき
                     hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
                     'chapterをコピー
@@ -2724,133 +2865,9 @@ Class WebRemocon
         End If
 
         If hlsOpt.Length > 0 Then
-            '音声切り替え　NHK BS1、BSプレミアム対策
-            If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
-                Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
-                '1=NHKなら主　それ以外はステレオ
-                '2=NHKなら主　それ以外はステレオ
-                '11=全部主
-                '12=N全部副
-                '4=メイン
-                '5=サブ
-                If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 11) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                    '主モノラル固定 1or11
-                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
-                ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 12) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
-                    '副モノラル固定 2or12
-                    hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
-                ElseIf NHK_dual_mono_mode_select = 4 Then
-                    '第二音声
-                    hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-map 0:v:0 -map 0:a -map -0:a:0")
-                ElseIf NHK_dual_mono_mode_select = 5 Then
-                    '動画主音声
-                    hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-af pan=stereo|c0=c0|c1=c0")
-                ElseIf NHK_dual_mono_mode_select = 6 Then
-                    '動画副音声
-                    hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-af pan=stereo|c0=c1|c1=c1")
-                ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
-                    If exepath_VLC.Length > 0 Then
-                        'hlsAppとhlsOptをVLCに置き換える
-                        Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode)
-                        If hlsOpt_temp.Length > 0 Then
-                            hlsOpt = hlsOpt_temp
-                            hlsApp = exepath_VLC
-                            hlsroot = Path.GetDirectoryName(hlsApp)
-                        End If
-                    Else
-                        NHK_dual_mono_mode_select = 0
-                        log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
-                    End If
-                Else
-                    'それ以外は書き換えない　→主・副
-                End If
-
-                'hlsOptに追加で文字列
-                If hlsOptAdd.Length > 0 Then
-                    '例 hlsOptAdd="2,2,-map 0,0 -map 0,1"
-                    '例 hlsOptAdd="2,9,-map_-_2,2,-map 0,0 -map 0,1"
-                    Dim hOAs() As String = Nothing
-                    If hlsOptAdd.IndexOf("_-_") >= 0 Then
-                        '複数指定
-                        hOAs = hlsOptAdd.Split("_-_")
-                    Else
-                        ReDim Preserve hOAs(0)
-                        hOAs(0) = hlsOptAdd
-                    End If
-                    For i As Integer = 0 To hOAs.Length - 1
-                        Dim d() As String = hOAs(i).Split(",")
-                        If d.Length >= 3 Then
-                            Dim ba As Integer = Val(d(0)) '1=-iの前　2=-iの後
-                            Dim force As Integer = Val(d(1)) '重複の場合、0,1=入れ替えしない 2=交換 3=追加(要素追加優先) 4=追加
-                            Dim str As String = ""
-                            Dim sep As String = ""
-                            For j As Integer = 2 To d.Length - 1
-                                str &= sep & d(j)
-                                sep = ","
-                            Next
-                            '文字列を追加
-                            hlsOpt = insert_str_in_hlsOpt(hlsOpt, str, ba, force)
-                        End If
-                    Next
-                End If
-            ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
-                Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
-                '1=NHKなら主　それ以外はステレオ
-                '2=NHKなら主　それ以外はステレオ
-                '11=全部主
-                '12=N全部副
-                '4=メイン
-                '5=サブ
-                If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 5 Or NHK_dual_mono_mode_select = 11) Then
-                    '主モノラル固定 1 or 5 or 11
-                    hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
-                    'hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FL -i ")
-                    'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream FL")
-                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream FL", 0)
-                ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 6 Or NHK_dual_mono_mode_select = 12) Then
-                    '副モノラル固定 2 or 6 or 12
-                    hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
-                    'hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FR -i ")
-                    'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream FR")
-                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream FR", 0)
-                ElseIf NHK_dual_mono_mode_select = 4 Then
-                    '第二音声
-                    '×hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
-                    ''hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
-                    ''hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream 2")
-                    'hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream 2", 0)
-                    '×--audio-codec書き換え　失敗、配信開始されず
-                    'hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-codec") '--audio-codec削除
-                    'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-codec 2?aac")
-                    '×--audio-codec入れ替え　失敗、配信開始されず
-                    'hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "---audio-codec 2?aac", 1)
-                    'QSVEncさん推奨
-                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-codec 2?aac", 1)
-                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream 2?:stereo", 0)
-                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-bitrate", "--audio-bitrate 2?192", 1)
-                    hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-samplerate", "--audio-samplerate 2?48000", 1)
-                ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
-                    If exepath_VLC.Length > 0 Then
-                        'hlsAppとhlsOptをVLCに置き換える
-                        Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode) 'QSVEnc対応済
-                        If hlsOpt_temp.Length > 0 Then
-                            hlsOpt = hlsOpt_temp
-                            hlsApp = exepath_VLC
-                            hlsroot = Path.GetDirectoryName(hlsApp)
-                        End If
-                    Else
-                        NHK_dual_mono_mode_select = 0
-                        log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
-                    End If
-                Else
-                    'それ以外は書き換えない　→主・副
-                End If
-
-                'hlsOptに追加で文字列
-                If hlsOptAdd.Length > 0 Then
-                    log1write("QSVEncへのパラメーター追加は無視されました。" & hlsOptAdd.Replace("_-_", "  "))
-                End If
-            End If
+            '音声切り替え
+            'hlsroot, hlsOptAdd はByRefで値が返ってくる
+            hlsOpt = modify_voice_option(udpOpt, hlsApp, hlsOpt, Stream_mode, NHK_dual_mono_mode_select, hlsroot, hlsOptAdd)
 
             'QSVEnc パイプ使用指定があった場合
             If hlsApp.ToLower.IndexOf("qsvenc") >= 0 And video_force_ffmpeg_temp = 2 And Stream_mode = 1 Then
@@ -2906,6 +2923,167 @@ Class WebRemocon
             stream_last_utime(num) = 0 '前回配信準備開始時間リセット
         End If
     End Sub
+
+    '音声切り替え
+    Public Function modify_voice_option(ByVal udpOpt As String, ByVal hlsApp As String, ByVal hlsOpt As String, ByVal Stream_mode As Integer, ByVal NHK_dual_mono_mode_select As Integer, ByRef hlsroot As String, ByRef hlsOptAdd As String) As String
+        '音声切り替え　NHK BS1、BSプレミアム対策
+        'hlsrootとhlsOptAddはByrefで値を返す
+        If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+            Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
+            '1=NHKなら主　それ以外はステレオ
+            '2=NHKなら主　それ以外はステレオ
+            '11=全部主
+            '12=N全部副
+            '4=メイン
+            '5=サブ
+            If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 11) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                '主モノラル固定 1or11
+                hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode main -i ")
+            ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 12) And hlsOpt.IndexOf("-dual_mono_mode") < 0 Then
+                '副モノラル固定 2or12
+                hlsOpt = hlsOpt.Replace("-i ", "-dual_mono_mode sub -i ")
+            ElseIf NHK_dual_mono_mode_select = 4 Then
+                '第二音声
+                hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-map 0:v:0 -map 0:a -map -0:a:0")
+            ElseIf NHK_dual_mono_mode_select = 5 Then
+                '動画主音声
+                hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-af pan=stereo|c0=c0|c1=c0")
+            ElseIf NHK_dual_mono_mode_select = 6 Then
+                '動画副音声
+                hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "-af pan=stereo|c0=c1|c1=c1")
+            ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
+                If exepath_VLC.Length > 0 Then
+                    'hlsAppとhlsOptをVLCに置き換える
+                    Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode)
+                    If hlsOpt_temp.Length > 0 Then
+                        hlsOpt = hlsOpt_temp
+                        hlsApp = exepath_VLC
+                        hlsroot = Path.GetDirectoryName(hlsApp)
+                    End If
+                Else
+                    NHK_dual_mono_mode_select = 0
+                    log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
+                End If
+            Else
+                'それ以外は書き換えない　→主・副
+            End If
+
+            'hlsOptに追加で文字列
+            If hlsOptAdd.Length > 0 Then
+                '例 hlsOptAdd="2,2,-map 0,0 -map 0,1"
+                '例 hlsOptAdd="2,9,-map_-_2,2,-map 0,0 -map 0,1"
+                Dim hOAs() As String = Nothing
+                If hlsOptAdd.IndexOf("_-_") >= 0 Then
+                    '複数指定
+                    hOAs = hlsOptAdd.Split("_-_")
+                Else
+                    ReDim Preserve hOAs(0)
+                    hOAs(0) = hlsOptAdd
+                End If
+                For i As Integer = 0 To hOAs.Length - 1
+                    Dim d() As String = hOAs(i).Split(",")
+                    If d.Length >= 3 Then
+                        Dim ba As Integer = Val(d(0)) '1=-iの前　2=-iの後
+                        Dim force As Integer = Val(d(1)) '重複の場合、0,1=入れ替えしない 2=交換 3=追加(要素追加優先) 4=追加
+                        Dim str As String = ""
+                        Dim sep As String = ""
+                        For j As Integer = 2 To d.Length - 1
+                            str &= sep & d(j)
+                            sep = ","
+                        Next
+                        '文字列を追加
+                        hlsOpt = insert_str_in_hlsOpt(hlsOpt, str, ba, force)
+                    End If
+                Next
+            End If
+        ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+            Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
+            '1=NHKなら主　それ以外はステレオ
+            '2=NHKなら主　それ以外はステレオ
+            '11=全部主
+            '12=N全部副
+            '4=メイン
+            '5=サブ
+            If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 5 Or NHK_dual_mono_mode_select = 11) Then
+                '主モノラル固定 1 or 5 or 11
+                hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
+                'hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FL -i ")
+                'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream FL")
+                hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream FL", 0)
+            ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 6 Or NHK_dual_mono_mode_select = 12) Then
+                '副モノラル固定 2 or 6 or 12
+                hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
+                'hlsOpt = hlsOpt.Replace("-i ", "--audio-stream FR -i ")
+                'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream FR")
+                hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream FR", 0)
+            ElseIf NHK_dual_mono_mode_select = 4 Then
+                '第二音声
+                '×hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-stream") '--audio-stream削除
+                ''hlsOpt = hlsOpt.Replace("-i ", "--audio-stream 2?:streo -i ")
+                ''hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-stream 2")
+                'hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream 2", 0)
+                '×--audio-codec書き換え　失敗、配信開始されず
+                'hlsOpt = hlsOpt_parameter_delete(hlsOpt, "--audio-codec") '--audio-codec削除
+                'hlsOpt = insert_str_after_i_in_hlsOpt(hlsOpt, "--audio-codec 2?aac")
+                '×--audio-codec入れ替え　失敗、配信開始されず
+                'hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "---audio-codec 2?aac", 1)
+                'QSVEncさん推奨
+                hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-codec 2?aac", 1)
+                hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-codec", "--audio-stream 2?:stereo", 0)
+                hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-bitrate", "--audio-bitrate 2?192", 1)
+                hlsOpt = insert_str_after_para_in_hlsOpt(hlsOpt, "--audio-samplerate", "--audio-samplerate 2?48000", 1)
+            ElseIf isNHK = 1 And NHK_dual_mono_mode_select = 9 Then
+                If exepath_VLC.Length > 0 Then
+                    'hlsAppとhlsOptをVLCに置き換える
+                    Dim hlsOpt_temp As String = translate_ffmpeg2vlc(hlsOpt, Stream_mode) 'QSVEnc対応済
+                    If hlsOpt_temp.Length > 0 Then
+                        hlsOpt = hlsOpt_temp
+                        hlsApp = exepath_VLC
+                        hlsroot = Path.GetDirectoryName(hlsApp)
+                    End If
+                Else
+                    NHK_dual_mono_mode_select = 0
+                    log1write("VLCが指定されていないのでNHK_dual_mono_mode=0に変更します。")
+                End If
+            Else
+                'それ以外は書き換えない　→主・副
+            End If
+
+            'hlsOptに追加で文字列
+            If hlsOptAdd.Length > 0 Then
+                log1write("QSVEncへのパラメーター追加は無視されました。" & hlsOptAdd.Replace("_-_", "  "))
+            End If
+        ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+            'VLC
+            '音声切り替えオプション不明
+            Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
+            '1=NHKなら主　それ以外はステレオ
+            '2=NHKなら主　それ以外はステレオ
+            '11=全部主
+            '12=N全部副
+            '4=メイン
+            '5=サブ
+            If ((NHK_dual_mono_mode_select = 1 And isNHK = 1) Or NHK_dual_mono_mode_select = 5 Or NHK_dual_mono_mode_select = 11) Then
+                '主モノラル固定 1 or 5 or 11
+                log1write("【エラー】VLCの音声切り替えオプションが不明なため処理出来ませんでした")
+            ElseIf ((NHK_dual_mono_mode_select = 2 And isNHK = 1) Or NHK_dual_mono_mode_select = 6 Or NHK_dual_mono_mode_select = 12) Then
+                '副モノラル固定 2 or 6 or 12
+                log1write("【エラー】VLCの音声切り替えオプションが不明なため処理出来ませんでした")
+            ElseIf NHK_dual_mono_mode_select = 4 Then
+                '第二音声
+                log1write("【エラー】VLCの音声切り替えオプションが不明なため処理出来ませんでした")
+            Else
+                'それ以外は書き換えない　→主・副
+            End If
+
+            'hlsOptに追加で文字列
+            If hlsOptAdd.Length > 0 Then
+                log1write("VLCへのパラメーター追加は無視されました。" & hlsOptAdd.Replace("_-_", "  "))
+            End If
+        End If
+
+        Return hlsOpt
+    End Function
 
     '指定されたパラメータの直後に新パラメータを挿入　「-aaa 値」のもののみ　「-aaa」単体のものはＮＧ
     Public Function insert_str_after_para_in_hlsOpt(ByVal hlsOpt As String, ByVal search_para As String, ByVal ins_para As String, ByVal exchange As Integer) As String
@@ -4223,13 +4401,7 @@ Class WebRemocon
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
-                                    If Me._hlsApp.ToLower.IndexOf("ffmpeg") > 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") > 0 Or (video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0) Then
-                                        'ffmpegなら
-                                        Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect)
-                                    Else
-                                        '今のところVLCには未対応
-                                        request_page = 12
-                                    End If
+                                    Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 Else
@@ -4357,13 +4529,6 @@ Class WebRemocon
                                 'html19 &= "<a href=""WatchTV" & num & ".ts"">WatchTV" & num & ".ts</a>" & vbCrLf
                                 'sw.WriteLine(ERROR_PAGE("HTTPストリーミング", html19))
                                 swdata = ERROR_PAGE("HTTPストリーミング", html19)
-                            ElseIf request_page = 12 Then
-                                'VLCはファイル再生未対応
-                                'Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
-                                'sw.WriteLine(ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません"))
-                                swdata = ERROR_PAGE("ファイル再生失敗", "VLCでのファイル再生には対応していません")
-                                'sw.Flush()
-                                log1write(num.ToString & ":配信されていません")
                             Else
                                 Dim s As String = ""
                                 If File.Exists(path) Then

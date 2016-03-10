@@ -516,6 +516,22 @@ Public Class ProcessManager
                     'ファイル再生
                     'フルパスファイル名を取得
                     Dim fullpathfilename As String = trim8(Instr_pickup(hlsOpt, "-i """, """", 0)) 'ffmpeg限定
+                    If fullpathfilename.Length = 0 Then
+                        'VLCの可能性
+                        fullpathfilename = trim8(Instr_pickup(hlsOpt, "-I dummy """, """", 0))
+                        If fullpathfilename.Length = 0 Then
+                            fullpathfilename = trim8(Instr_pickup(hlsOpt, "-I """, """", 0))
+                        End If
+                        'VLCは上の非表示コマンドが効かないのでオプションを書き換える
+                        If ShowConsole = False And hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                            If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
+                                hlsOpt = hlsOpt.Replace("-I dummy", "-I dummy --dummy-quiet")
+                            End If
+                            If hlsOpt.IndexOf("--rc-quiet") < 0 And hlsOpt.IndexOf("--rc-host=") >= 0 Then
+                                hlsOpt = hlsOpt.Replace("--rc-host=", "--rc-quiet --rc-host=")
+                            End If
+                        End If
+                    End If
                     If HTTPSTREAM_App = 2 And hlsApp.ToLower.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
                         'ffmpeg HTTPストリーム ファイル再生
                         'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
