@@ -36,17 +36,17 @@ Module モジュール_プロファイル
                             log1write("Profile：" & line(i))
                             If isMatch_kamma(profile, src(0)) = 1 Then
                                 'profileがマッチ
-                                result &= "○" & vbTab
+                                result &= "o" & vbTab
                                 src(1) = src(1).Replace("ライブ", "0").Replace("ライブ", "0").Replace("ファイル", "1").Replace("ファイル再生", "1")
                                 If isMatch_kamma(StreamMode, src(1)) = 1 Then
                                     'StreamModeがマッチ
-                                    result &= "○" & vbTab
+                                    result &= "o" & vbTab
                                     'hlsApp名調整
                                     hlsAppName = modify_hlsAppName(hlsAppName)
                                     src(2) = modify_hlsAppName(src(2))
                                     If isMatch_kamma(hlsAppName, src(2)) = 1 Then
                                         'hlsAppNameがマッチ
-                                        result &= "○" & vbTab
+                                        result &= "o" & vbTab
                                         'hlsApp & 解像度をチェック
                                         Dim rez() As String = get_resolution_and_hlsApp(Trim(resolution)) 'resolutionから解像度とhlsAppを取得
                                         Dim resolution_value As String = rez(0) '純粋な解像度文字列
@@ -59,18 +59,18 @@ Module モジュール_プロファイル
                                         End If
                                         If isMatch_kamma(rez(0), src(3)) = 1 And errchk = 0 Then '解像度がマッチしているか
                                             '解像度がマッチ
-                                            result &= "○" & vbTab
+                                            result &= "o" & vbTab
                                             If isMatch_kamma(file_ext, src(4)) = 1 Then
-                                                result &= "○" & vbTab
+                                                result &= "o" & vbTab
                                                 If isMatch_file_instr(file_instr, src(5)) = 1 Then
-                                                    result &= "○" & vbTab
+                                                    result &= "o" & vbTab
                                                     '音声調整
                                                     src(6) = src(6).Replace("主・副", "0").Replace("主", "11").Replace("副", "12").Replace("第二音声", "4").Replace("第二", "4").Replace("第2", "4").Replace("第２", "4")
                                                     If isMatch_kamma(voice, src(6)) = 1 Then
-                                                        result &= "○" & vbTab
+                                                        result &= "o" & vbTab
                                                         src(7) = src(7).Replace("等速", "1")
                                                         If isMatch_kamma(speed, src(7)) = 1 Or (speed <> 1 And src(7) <> "1") Then
-                                                            result &= "○" & vbTab
+                                                            result &= "o" & vbTab
                                                             src(8) = src(8).Replace("ソフト", 0).Replace("ハード", 1)
                                                             If isMatch_kamma(hardsub_on, src(8)) = 1 Then
                                                                 result &= "○ Match!" & vbTab
@@ -101,31 +101,31 @@ Module モジュール_プロファイル
                                                                 log1write("判定：" & result)
                                                                 Exit For
                                                             Else
-                                                                result &= "×ハードサブ(" & hardsub_on & ")" & vbTab
+                                                                result &= "x焼込(" & hardsub_on & ")" & vbTab
                                                             End If
                                                         Else
-                                                            result &= "×倍速(" & speed & ")" & vbTab
+                                                            result &= "x倍速(" & speed & ")" & vbTab
                                                         End If
                                                     Else
-                                                        result &= "×音声(" & voice & ")" & vbTab
+                                                        result &= "x音声(" & voice & ")" & vbTab
                                                     End If
                                                 Else
-                                                    result &= "×ファイル名に含まれる文字" & vbTab
+                                                    result &= "xファイル名に含まれる文字" & vbTab
                                                 End If
                                             Else
-                                                result &= "×拡張子" & vbTab
+                                                result &= "x拡張子" & vbTab
                                             End If
                                         Else
-                                            result &= "×解像度(" & rez(0) & ")" & vbTab
+                                            result &= "x解像度(" & rez(0) & ")" & vbTab
                                         End If
                                     Else
-                                        result &= "×HLSアプリ(" & hlsAppName & ")" & vbTab
+                                        result &= "xHLSアプリ(" & hlsAppName & ")" & vbTab
                                     End If
                                 Else
-                                    result &= "×ライブorファイル再生" & vbTab
+                                    result &= "xライブorファイル再生" & vbTab
                                 End If
                             Else
-                                result &= "×プロファイル" & vbTab
+                                result &= "xプロファイル" & vbTab
                             End If
                             log1write("判定：" & result)
                         End If

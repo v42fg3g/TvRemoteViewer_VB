@@ -2554,24 +2554,24 @@ Class WebRemocon
                     hls_temp = hlsAppSelect.ToLower
                 End If
                 hls_temp = modify_hlsAppName(hls_temp)
-                log1write("video_force_ffmpeg=11によりHLSアプリ=" & hls_temp & "、解像度=" & resolution & "、音声モード=" & NHK_dual_mono_mode_select & "がチェックされます")
+                log1write("video_force_ffmpeg=9によりHLSアプリ=" & hls_temp & "、解像度=" & resolution & "、音声モード=" & NHK_dual_mono_mode_select & "がチェックされます")
                 Dim HlsRezAud() As String = get_hlsApp_and_resolution_from_profiles(profileSelect, Stream_mode, hlsApp, resolution, filename, NHK_dual_mono_mode_select, baisoku, hardsub_on, video_force_ffmpeg_temp)
                 If HlsRezAud IsNot Nothing Then
                     If HlsRezAud(0).Length > 0 And HlsRezAud(0) <> "*" And hls_temp <> HlsRezAud(0) Then
-                        log1write("video_force_ffmpeg=11によりHLSアプリが" & hls_temp & "から" & HlsRezAud(0) & "に変更されました")
+                        log1write("video_force_ffmpeg=9によりHLSアプリが" & hls_temp & "から" & HlsRezAud(0) & "に変更されました")
                         hlsAppSelect = HlsRezAud(0)
                         hls_temp = HlsRezAud(0)
                     End If
                     If HlsRezAud(1).Length > 0 And HlsRezAud(1) <> "*" And resolution <> HlsRezAud(1) Then
-                        log1write("video_force_ffmpeg=11により解像度が" & resolution & "から" & HlsRezAud(1) & "に変更されました")
+                        log1write("video_force_ffmpeg=9により解像度が" & resolution & "から" & HlsRezAud(1) & "に変更されました")
                         resolution = HlsRezAud(1)
                     End If
                     If HlsRezAud(2).Length > 0 And HlsRezAud(2) <> "*" And NHK_dual_mono_mode_select <> HlsRezAud(2) Then
-                        log1write("video_force_ffmpeg=11により音声が" & NHK_dual_mono_mode_select & "から" & HlsRezAud(2) & "に変更されました")
+                        log1write("video_force_ffmpeg=9により音声が" & NHK_dual_mono_mode_select & "から" & HlsRezAud(2) & "に変更されました")
                         NHK_dual_mono_mode_select = HlsRezAud(2)
                     End If
                 End If
-                log1write("video_force_ffmpeg=11によりHLSアプリ=" & hls_temp & "、解像度=" & resolution & "、音声モード=" & NHK_dual_mono_mode_select & "が指定されました")
+                log1write("video_force_ffmpeg=9によりHLSアプリ=" & hls_temp & "、解像度=" & resolution & "、音声モード=" & NHK_dual_mono_mode_select & "が指定されました")
             End If
 
             If hlsAppSelect.Length > 0 Then
