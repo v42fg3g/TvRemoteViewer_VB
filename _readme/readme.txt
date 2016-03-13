@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.01
+TvRemoteViewer_VB v2.02
 
 
 
@@ -620,6 +620,8 @@ TvRemoteViewer_VB v2.01
 		WI_GET_PROFILES.htmlを追加
 		フォーム上にプロファイル関係のコンボボックスとボタンを追加
 	2.01	VLCのファイル再生に対応（音声切替と焼込には未対応）
+	2.02	HLSアプリ判定を厳密にした
+		プロファイル記述に「-」無指定以外を追加
 
 
 

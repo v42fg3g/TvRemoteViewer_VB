@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 2.01"
+    Private version As String = "TvRemoteViewer_VB 2.02"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -489,7 +489,7 @@ Public Class Form1
             log1write("【エラー】HLSアプリ " & f_hls_exe & " が見つかりません")
         End If
         'ffmpegプリセットチェック
-        If f_hls_exe.IndexOf("ffmpeg.exe") >= 0 Then
+        If isMatch_HLS(f_hls_exe, "ffmpeg.exe") = 1 Then
             Dim f_hlsopt As String = Me.textBoxHlsOpt2.Text.ToString
             If f_hlsopt.Length > 0 Then
                 Dim f_fpre_str As String = Instr_pickup(f_hlsopt, "-fpre """, """", 0)
@@ -582,7 +582,7 @@ Public Class Form1
             log1write("【警告】BonDriverパスが指定されていません")
         End If
         'ASS字幕用font_confがあるかどうか確認
-        If Me._worker._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or exepath_ffmpeg.Length > 0 Then
+        If isMatch_HLS(Me._worker._hlsApp, "ffmpeg") = 1 Or exepath_ffmpeg.Length > 0 Then
             Dim fchkstr As String = Me._worker._hlsApp
             If exepath_ffmpeg.Length > 0 Then
                 fchkstr = exepath_ffmpeg
@@ -1287,15 +1287,15 @@ Public Class Form1
 
             Dim hlsAppFilename As String = Path.GetFileName(textBoxHlsApp.Text.ToString)
             Dim hlsAppNum As Integer = 0
-            If hlsAppFilename.IndexOf("vlc") >= 0 Then
+            If isMatch_HLS(hlsAppFilename, "vlc") = 1 Then
                 hlsAppNum = 1
                 hlsAppNameForm = "vlc"
                 hlsOptFile = "HLS_option_VLC.txt"
-            ElseIf hlsAppFilename.IndexOf("ffmpeg") >= 0 Then
+            ElseIf isMatch_HLS(hlsAppFilename, "ffmpeg") = 1 Then
                 hlsAppNum = 2
                 hlsAppNameForm = "ffmpeg"
                 hlsOptFile = "HLS_option_ffmpeg.txt"
-            ElseIf hlsAppFilename.ToLower.IndexOf("qsvencc") >= 0 Then
+            ElseIf isMatch_HLS(hlsAppFilename, "qsvencc") = 1 Then
                 hlsAppNum = 3
                 hlsAppNameForm = "QSVEnc"
                 hlsOptFile = "HLS_option_QSVEnc.txt"

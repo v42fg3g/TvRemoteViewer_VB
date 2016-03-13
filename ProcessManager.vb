@@ -405,7 +405,7 @@ Public Class ProcessManager
                                 udpProc.WaitForInputIdle()
                             End If
 
-                            If HTTPSTREAM_App = 2 And hlsApp.ToLower.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
+                            If HTTPSTREAM_App = 2 And isMatch_HLS(hlsApp, "ffmpeg.exe") = 1 And (stream_mode = 2 Or stream_mode = 3) Then
                                 'ffmpeg HTTPストリーム
                                 'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
                                 'ProcessBeans作成
@@ -429,7 +429,7 @@ Public Class ProcessManager
                                 '起動するファイルのパスを指定する
                                 hlsPsi.FileName = hlsApp
                                 'VLCは上の非表示コマンドが効かないのでオプションを書き換える
-                                If ShowConsole = False And hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                                If ShowConsole = False And isMatch_HLS(hlsApp, "vlc") = 1 Then
                                     If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
                                         hlsOpt = hlsOpt.Replace("-I dummy", "-I dummy --dummy-quiet")
                                     End If
@@ -523,7 +523,7 @@ Public Class ProcessManager
                             fullpathfilename = trim8(Instr_pickup(hlsOpt, "-I """, """", 0))
                         End If
                         'VLCは上の非表示コマンドが効かないのでオプションを書き換える
-                        If ShowConsole = False And hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                        If ShowConsole = False And isMatch_HLS(hlsApp, "vlc") = 1 Then
                             If hlsOpt.IndexOf("--dummy-quiet") < 0 And hlsOpt.IndexOf("-I dummy") >= 0 Then
                                 hlsOpt = hlsOpt.Replace("-I dummy", "-I dummy --dummy-quiet")
                             End If
@@ -532,7 +532,7 @@ Public Class ProcessManager
                             End If
                         End If
                     End If
-                    If HTTPSTREAM_App = 2 And hlsApp.ToLower.IndexOf("ffmpeg.exe") >= 0 And (stream_mode = 2 Or stream_mode = 3) Then
+                    If HTTPSTREAM_App = 2 And isMatch_HLS(hlsApp, "ffmpeg.exe") = 1 And (stream_mode = 2 Or stream_mode = 3) Then
                         'ffmpeg HTTPストリーム ファイル再生
                         'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
                         'すでにリストにある場合はリストから取り除いた後に改めて作成
@@ -886,7 +886,7 @@ Public Class ProcessManager
                     Try
                         proc = Me._list(i).GetHlsProc()
                         If proc IsNot Nothing AndAlso Not proc.HasExited Then
-                            If Me._list(i)._hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                            If isMatch_HLS(Me._list(i)._hlsApp, "vlc") = 1 Then
                                 'VLCならば
                                 If quit_VLC(i) = 1 Then
                                     'プロセスが無くなるまで待機
@@ -912,7 +912,7 @@ Public Class ProcessManager
                                     proc.Close()
                                     proc.Dispose()
                                 End If
-                            ElseIf Me._list(i)._hlsApp.ToLower.IndexOf("piperun") >= 0 Then
+                            ElseIf isMatch_HLS(Me._list(i)._hlsApp, "piperun") = 1 Then
                                 'PipeRun QSVEncとffmpegも終了させる
                                 Dim stopchk As Integer = 0
                                 Try 'テスト
@@ -960,7 +960,7 @@ Public Class ProcessManager
                                 If stopchk >= 2 Then
                                     hls_stop = 1
                                 End If
-                            ElseIf Me._list(i)._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                            ElseIf isMatch_HLS(Me._list(i)._hlsApp, "ffmpeg") = 1 Then
                                 'ffmpeg
                                 'コンソールが表示されてないときにも有効かどうかわからないのでsendkeyは却下
                                 'AppActivate(proc.Id) '最前面にする
@@ -983,7 +983,7 @@ Public Class ProcessManager
                                 End If
                                 proc.Close()
                                 proc.Dispose()
-                            ElseIf Me._list(i)._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                            ElseIf isMatch_HLS(Me._list(i)._hlsApp, "qsvencc") = 1 Then
                                 'QSVEnc
                                 proc.Kill()
                                 If wait_stop_proc(proc) = 1 Then
@@ -1014,7 +1014,7 @@ Public Class ProcessManager
                             'プロセスが無い
                             hls_stop = 1
                             'HLSファイル再生でnum=-3ならファイルは削除しない
-                            If num = -3 And Me._list(i)._stream_mode = 1 And (Me._list(i)._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or Me._list(i)._hlsApp.ToLower.IndexOf("qsvencc") >= 0) Then
+                            If num = -3 And Me._list(i)._stream_mode = 1 Then
                                 hold_files = 1
                             End If
                         End If
@@ -1023,7 +1023,7 @@ Public Class ProcessManager
                         log1write("No.=" & Me._list(i)._num & "のHLSプロセスが見つかりません。" & ex.Message)
                         hls_stop = 1
                         'HLSファイル再生でnum=-3ならファイルは削除しない
-                        If num = -3 And Me._list(i)._stream_mode = 1 And (Me._list(i)._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or Me._list(i)._hlsApp.ToLower.IndexOf("qsvencc") >= 0) Then
+                        If num = -3 And Me._list(i)._stream_mode = 1 Then
                             hold_files = 1
                         End If
                     End Try
@@ -1368,11 +1368,11 @@ Public Class ProcessManager
         If d IsNot Nothing Then
             For j As Integer = 0 To d.Length - 1
                 ReDim Preserve r(j)
-                If Me._list(j)._hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                If isMatch_HLS(Me._list(j)._hlsApp, "vlc") = 1 Then
                     r(j) = 1
-                ElseIf Me._list(j)._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                ElseIf isMatch_HLS(Me._list(j)._hlsApp, "ffmpeg") = 1 Then
                     r(j) = 2
-                ElseIf Me._list(j)._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                ElseIf isMatch_HLS(Me._list(j)._hlsApp, "qsvencc") = 1 Then
                     r(j) = 3
                 End If
             Next

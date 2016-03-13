@@ -350,7 +350,7 @@ Module モジュール_ts解析
             ffmpeg_path = exepath_ffmpeg
         End If
 
-        If ffmpeg_path.IndexOf("ffmpeg.exe") >= 0 Then
+        If isMatch_HLS(ffmpeg_path, "ffmpeg.exe") = 1 Then
             Try
                 Dim f_path As String = Path.GetDirectoryName(ffmpeg_path)
                 Dim ffprobe_path As String = f_path & "\ffprobe.exe"

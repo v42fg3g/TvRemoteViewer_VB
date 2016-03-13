@@ -219,7 +219,7 @@ Class WebRemocon
             'NHKかどうか調べる
             'If Me._procMan.check_isNHK(num) = 1 Then
             'NHKなら
-            If Me._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+            If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvencc|piperun") = 1 Then
                 If NHKMODE = 3 Then
                     Dim atag2(3) As String
                     vhtml &= "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(atag2, num) & "</span>"
@@ -1986,7 +1986,7 @@ Class WebRemocon
                 hlsOpt = hlsOpt.Substring(0, sp) & spstr & filename & seekstr & baisokustr & new_file & hlsOpt.Substring(se)
             End If
         Else
-        log1write("【エラー】HlsOpt内に-Iが見つかりません")
+            log1write("【エラー】HlsOpt内に-Iが見つかりません")
         End If
 
         Return hlsOpt
@@ -2409,7 +2409,7 @@ Class WebRemocon
             If HTTPSTREAM_App = 1 Then
                 'vlc指定
                 If exepath_VLC.Length > 0 Then
-                    If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                    If isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
                         hlsApp = exepath_VLC
                         hlsroot = Path.GetDirectoryName(hlsApp)
                     End If
@@ -2420,7 +2420,7 @@ Class WebRemocon
                 End If
             ElseIf HTTPSTREAM_App = 2 Then
                 'ffmpeg指定
-                If hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                If isMatch_HLS(hlsApp, "vlc") = 1 Then
                     'vlcからffmpegへの変換は未対応
                     log1write("VLCからffmpegへの変更は対応していません。VLCのまま続行します")
                 End If
@@ -2429,7 +2429,7 @@ Class WebRemocon
             End If
 
             'hlsOptをHTTPストリーム用のものに入れ替える
-            If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+            If isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
                 'hlsOptを置き換える
                 hlsOpt = translate_hls2http(0, hlsOpt2, resolution)
 
@@ -2440,7 +2440,7 @@ Class WebRemocon
                     'chapterをコピー
                     'copy_chapter_to_fileroot(num, filename, fileroot)
                 End If
-            ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+            ElseIf isMatch_HLS(hlsApp, "vlc") = 1 Then
                 'hlsOptを置き換える
                 hlsOpt = translate_hls2http(1, hlsOpt2, resolution)
                 'パスワードが設定されている場合
@@ -2486,11 +2486,11 @@ Class WebRemocon
                         'HLS_option.txt内に該当解像度が存在しなければ各HLS_option～.txtを読み込むようにセット
                         hlsOpt = search_hlsOption(resolution, hls_option, "HLS_option.txt", 0)
                         If hlsOpt.Length = 0 Then
-                            If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                            If isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
                                 hlsAppSelect = "ffmpeg"
-                            ElseIf hlsApp.ToLower.IndexOf("qsvenc") >= 0 Then
+                            ElseIf isMatch_HLS(hlsApp, "qsvenc") = 1 Then
                                 hlsAppSelect = "QSVEnc"
-                            ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                            ElseIf isMatch_HLS(hlsApp, "vlc") = 1 Then
                                 hlsAppSelect = "VLC"
                             End If
                         End If
@@ -2502,12 +2502,12 @@ Class WebRemocon
             ElseIf resolution.Length = 0 Then
                 'HLSオプションを送る　が選択されている & 解像度の指定が無い
                 'フォーム上のオプションから解像度を算出して解像度をセット
-                If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                If isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
                     resolution = trim8(instr_pickup_para(hlsOpt2, "-s ", " ", 0))
-                ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                ElseIf isMatch_HLS(hlsApp, "qsvencc") = 1 Then
                     'QSVEnc
                     resolution = trim8(instr_pickup_para(hlsOpt2, "--output-res ", " ", 0))
-                ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 And video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0 Then
+                ElseIf isMatch_HLS(hlsApp, "vlc") = 1 And video_force_ffmpeg = 1 And exepath_ffmpeg.Length > 0 Then
                     'vlc 再生にはffmpeg使用
                     Dim vlc_w As Integer = Val(Trim(Instr_pickup(hlsOpt2, "width=", ",", 0)))
                     Dim vlc_h As Integer = Val(Trim(Instr_pickup(hlsOpt2, "height=", ",", 0)))
@@ -2555,7 +2555,7 @@ Class WebRemocon
                 End If
                 hls_temp = modify_hlsAppName(hls_temp)
                 log1write("video_force_ffmpeg=11によりHLSアプリ=" & hls_temp & "、解像度=" & resolution & "、音声モード=" & NHK_dual_mono_mode_select & "がチェックされます")
-                Dim HlsRezAud() As String = get_hlsApp_and_resolution_from_profiles(profileSelect, Stream_mode, hlsApp, resolution, filename, NHK_dual_mono_mode_select, baisoku, hardsub_on)
+                Dim HlsRezAud() As String = get_hlsApp_and_resolution_from_profiles(profileSelect, Stream_mode, hlsApp, resolution, filename, NHK_dual_mono_mode_select, baisoku, hardsub_on, video_force_ffmpeg_temp)
                 If HlsRezAud IsNot Nothing Then
                     If HlsRezAud(0).Length > 0 And HlsRezAud(0) <> "*" And hls_temp <> HlsRezAud(0) Then
                         log1write("video_force_ffmpeg=11によりHLSアプリが" & hls_temp & "から" & HlsRezAud(0) & "に変更されました")
@@ -2697,13 +2697,13 @@ Class WebRemocon
                     'ファイル再生
                     Dim h_file As String = ""
                     Dim h_option() As HLSoptionstructure = Nothing
-                    If hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                    If isMatch_HLS(hlsApp, "vlc") = 1 Then
                         h_option = vlc_file_option
                         h_file = "HLS_option_VLC_file.txt"
-                    ElseIf hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                    ElseIf isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
                         h_option = ffmpeg_file_option
                         h_file = "HLS_option_ffmpeg_file.txt"
-                    ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                    ElseIf isMatch_HLS(hlsApp, "qsvencc") = 1 Then
                         h_option = QSVEnc_file_option
                         h_file = "HLS_option_QSVEnc_file.txt"
                     Else
@@ -2826,11 +2826,11 @@ Class WebRemocon
             If hlsApp.Length > 0 And hlsOpt.Length > 0 Then
                 Dim AppOptChk As Integer = 0
                 Dim haf As String = Path.GetFileNameWithoutExtension(hlsApp)
-                If haf.ToLower.IndexOf("vlc") >= 0 And (hlsOpt.IndexOf("--sout") >= 0 Or hlsOpt.IndexOf("vlc:") >= 0 Or hlsOpt.IndexOf("--rc-host") >= 0) Then
+                If isMatch_HLS(haf, "vlc") = 1 And (hlsOpt.IndexOf("--sout") >= 0 Or hlsOpt.IndexOf("vlc:") >= 0 Or hlsOpt.IndexOf("--rc-host") >= 0) Then
                     AppOptChk = 1
-                ElseIf haf.ToLower.IndexOf("ffmpeg") >= 0 And (hlsOpt.IndexOf(" -acodec") >= 0 Or hlsOpt.IndexOf(" -vcodec") >= 0 Or hlsOpt.IndexOf(" -hls_time") >= 0) Then
+                ElseIf isMatch_HLS(haf, "ffmpeg") = 1 And (hlsOpt.IndexOf(" -acodec") >= 0 Or hlsOpt.IndexOf(" -vcodec") >= 0 Or hlsOpt.IndexOf(" -hls_time") >= 0) Then
                     AppOptChk = 1
-                ElseIf haf.ToLower.IndexOf("qsvenc") >= 0 And (hlsOpt.IndexOf("hls_segment_filename:") >= 0 Or hlsOpt.IndexOf("--audio-codec") >= 0 Or hlsOpt.IndexOf("hls_time:") >= 0) Then
+                ElseIf isMatch_HLS(haf, "qsvenc") = 1 And (hlsOpt.IndexOf("hls_segment_filename:") >= 0 Or hlsOpt.IndexOf("--audio-codec") >= 0 Or hlsOpt.IndexOf("hls_time:") >= 0) Then
                     AppOptChk = 1
                 End If
                 If AppOptChk = 0 Then
@@ -2844,15 +2844,15 @@ Class WebRemocon
             'ファイル再生か？
             If Stream_mode = 1 And hlsOpt.Length > 0 Then
                 'hlsオプションを書き換える
-                If hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                If isMatch_HLS(hlsApp, "vlc") = 1 Then
                     'VLCのとき
                     hlsOpt = hlsopt_udp2file_VLC(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
-                ElseIf hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                ElseIf isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
                     'ffmpegのとき
                     hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
                     'chapterをコピー
                     'copy_chapter_to_fileroot(num, filename, fileroot)
-                ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                ElseIf isMatch_HLS(hlsApp, "qsvencc") = 1 Then
                     'QSVEncのとき
                     hlsOpt = hlsopt_udp2file_QSVEnc(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
                 Else
@@ -2870,7 +2870,7 @@ Class WebRemocon
             hlsOpt = modify_voice_option(udpOpt, hlsApp, hlsOpt, Stream_mode, NHK_dual_mono_mode_select, hlsroot, hlsOptAdd)
 
             'QSVEnc パイプ使用指定があった場合
-            If hlsApp.ToLower.IndexOf("qsvenc") >= 0 And video_force_ffmpeg_temp = 2 And Stream_mode = 1 Then
+            If isMatch_HLS(hlsApp, "qsvenc") = 1 And video_force_ffmpeg_temp = 2 And Stream_mode = 1 Then
                 hlsAppSelect = "PipeRun"
                 hlsApp = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\PipeRun.exe" 'ダミー
                 hlsroot = Path.GetDirectoryName(hlsApp)
@@ -2928,7 +2928,7 @@ Class WebRemocon
     Public Function modify_voice_option(ByVal udpOpt As String, ByVal hlsApp As String, ByVal hlsOpt As String, ByVal Stream_mode As Integer, ByVal NHK_dual_mono_mode_select As Integer, ByRef hlsroot As String, ByRef hlsOptAdd As String) As String
         '音声切り替え　NHK BS1、BSプレミアム対策
         'hlsrootとhlsOptAddはByrefで値を返す
-        If hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+        If isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
             Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
             '1=NHKなら主　それ以外はステレオ
             '2=NHKなら主　それ以外はステレオ
@@ -2996,7 +2996,7 @@ Class WebRemocon
                     End If
                 Next
             End If
-        ElseIf hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+        ElseIf isMatch_HLS(hlsApp, "qsvencc") = 1 Then
             Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
             '1=NHKなら主　それ以外はステレオ
             '2=NHKなら主　それ以外はステレオ
@@ -3053,7 +3053,7 @@ Class WebRemocon
             If hlsOptAdd.Length > 0 Then
                 log1write("QSVEncへのパラメーター追加は無視されました。" & hlsOptAdd.Replace("_-_", "  "))
             End If
-        ElseIf hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+        ElseIf isMatch_HLS(hlsApp, "vlc") = 1 Then
             'VLC
             '音声切り替えオプション不明
             Dim isNHK As Integer = Me._procMan.check_isNHK(0, udpOpt)
@@ -4607,35 +4607,35 @@ Class WebRemocon
                                     s = s.Replace("%VIDEOFROMDATE%", VIDEOFROMDATE.ToString("yyyy/MM/dd"))
 
                                     '地デジ番組表（通常のネットから取得）
-                                    If Me._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvencc") = 1 Then
                                         s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
                                     End If
 
                                     'TvRock番組表
-                                    If Me._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvencc") = 1 Then
                                         s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
                                     End If
 
                                     'EDCB番組表
-                                    If Me._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvencc") = 1 Then
                                         s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
                                     End If
 
                                     'ptTimer番組表
-                                    If Me._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvencc") = 1 Then
                                         s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, -1))
                                     End If
 
                                     'Tvmaid番組表
-                                    If Me._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvencc") = 1 Then
                                         s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, Me._NHK_dual_mono_mode))
                                     Else
                                         s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, -1))
@@ -4683,7 +4683,7 @@ Class WebRemocon
                                     'NHK音声モード
                                     While s.IndexOf("%SELECTNHKMODE") >= 0
                                         Dim gt() As String = get_atags("%SELECTNHKMODE", s)
-                                        If Me._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Or Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                                        If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvencc|piperun") = 1 Then
                                             If Me._NHK_dual_mono_mode = 3 Then
                                                 Dim viewbutton_html As String = "<span id=""NHKVIEW"">" & WEB_make_NHKMODE_html(gt, num) & "</span>"
                                                 s = s.Replace("%SELECTNHKMODE" & gt(0) & "%", viewbutton_html)
@@ -4744,7 +4744,7 @@ Class WebRemocon
                                             rez_hlsopt = 1
                                             Dim ho As String = Me._hlsOpt2
                                             Dim sp1, sp2 As Integer
-                                            If Me._hlsApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                                            If isMatch_HLS(Me._hlsApp, "ffmpeg") = 1 Then
                                                 Try
                                                     sp1 = ho.IndexOf("-s ")
                                                     sp2 = ho.IndexOf(" ", sp1 + 3)
@@ -4752,7 +4752,7 @@ Class WebRemocon
                                                 Catch ex As Exception
                                                     rez = ""
                                                 End Try
-                                            ElseIf Me._hlsApp.ToLower.IndexOf("vlc") >= 0 Then
+                                            ElseIf isMatch_HLS(Me._hlsApp, "vlc") = 1 Then
                                                 Try
                                                     sp1 = ho.IndexOf("width=")
                                                     sp2 = ho.IndexOf(",", sp1)
@@ -4768,7 +4768,7 @@ Class WebRemocon
                                                 Catch ex As Exception
                                                     rez = ""
                                                 End Try
-                                            ElseIf Me._hlsApp.ToLower.IndexOf("qsvencc") >= 0 Then
+                                            ElseIf isMatch_HLS(Me._hlsApp, "qsvencc") = 1 Then
                                                 Try
                                                     sp1 = ho.IndexOf("--output-res ")
                                                     sp2 = ho.IndexOf(" ", sp1 + 3)
@@ -5629,7 +5629,7 @@ Class WebRemocon
                                 'VLC配信
                                 fname = "mystream" & n & ".ts"
                                 port = HTTPSTREAM_VLC_port + n - 1
-                            ElseIf HApp.ToLower.IndexOf("ffmpeg") >= 0 Then
+                            ElseIf isMatch_HLS(HApp, "ffmpeg") = 1 Then
                                 'ffmpeg配信
                                 fname = "WatchTV" & n & ".ts"
                             Else

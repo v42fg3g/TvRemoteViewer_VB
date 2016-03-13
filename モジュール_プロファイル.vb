@@ -9,7 +9,8 @@ Module モジュール_プロファイル
     Public hlschkstr_qsvenc As String = ":qsvenc:qsvencc:q:qsv:"
     Public hlschkstr_piperun As String = ":piperun:p:"
 
-    Public Function get_hlsApp_and_resolution_from_profiles(ByVal profile As String, ByVal StreamMode As Integer, ByVal hlsAppSelect As String, ByVal resolution As String, ByVal filename As String, ByVal voice As String, ByVal speed As String, hardsub_on As String) As String()
+    Public Function get_hlsApp_and_resolution_from_profiles(ByVal profile As String, ByVal StreamMode As Integer, ByVal hlsAppSelect As String, ByVal resolution As String, ByVal filename As String, ByVal voice As String, ByVal speed As String, ByVal hardsub_on As String, ByRef video_force_ffmpeg_temp As Integer) As String()
+        'video_force_ffmpeg_tempはByRefで返す
         Dim file_ext As String = Path.GetExtension(filename)
         Dim file_instr As String = Path.GetFileName(filename)
         Dim hlsAppName As String = Path.GetFileName(hlsAppSelect)
@@ -77,6 +78,11 @@ Module モジュール_プロファイル
                                                                 ReDim Preserve r(2)
                                                                 If Trim(dst(1)).Length > 0 And Trim(dst(1)) <> "*" Then
                                                                     r(0) = modify_hlsAppName(Trim(dst(1))) 'hlsAppSelect
+                                                                    If isMatch_HLS(r(0), "piperun") = 1 Then
+                                                                        '指定がPipeRunならば
+                                                                        r(0) = "QSVEnc"
+                                                                        video_force_ffmpeg_temp = 2
+                                                                    End If
                                                                 Else
                                                                     r(0) = hlsAppSelect
                                                                 End If
@@ -131,6 +137,24 @@ Module モジュール_プロファイル
         Return r
     End Function
 
+    'HLSアプリ判定
+    Public Function isMatch_HLS(ByVal fullpath As String, ByVal s As String) As Integer
+        Dim r As Integer = 0
+
+        Dim p As String = Path.GetFileNameWithoutExtension(fullpath).ToLower
+        Dim d() As String = s.Split("|")
+        For i As Integer = 0 To d.Length - 1
+            If d(i).Length > 0 Then
+                If p.IndexOf(d(i).ToLower) >= 0 Then
+                    r = 1
+                    Exit For
+                End If
+            End If
+        Next
+
+        Return r
+    End Function
+
     '統一した形でhlsApp名を返す
     Public Function modify_hlsAppName(ByVal s As String) As String
         Dim r As String = ""
@@ -161,6 +185,9 @@ Module モジュール_プロファイル
         Dim r As Integer = 0
         If s2.IndexOf("*") >= 0 Or s2.Length = 0 Then
             '全てにマッチ
+            r = 1
+        ElseIf s2 = "-" And str.Length > 0 Then
+            '空白でなければマッチ
             r = 1
         ElseIf str.Length = 0 Then
             '比べるものがなければ

@@ -42,7 +42,7 @@
             ffmpeg_path = exepath_ffmpeg
         End If
 
-        If ffmpeg_path.IndexOf("ffmpeg") >= 0 Then
+        If isMatch_HLS(ffmpeg_path, "ffmpeg") = 1 Then
             'サムネイル作成終了を待たない場合
             If ss.IndexOf("thru") = 0 Then
                 Try
