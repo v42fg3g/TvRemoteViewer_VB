@@ -187,7 +187,10 @@ Module モジュール_プロファイル
             '全てにマッチ
             r = 1
         ElseIf s2 = "-" And str.Length > 0 Then
-            '空白でなければマッチ
+            '無指定でなければマッチ
+            r = 1
+        ElseIf s2 = "_" And str.Length = 0 Then
+            '無指定ならばマッチ
             r = 1
         ElseIf str.Length = 0 Then
             '比べるものがなければ

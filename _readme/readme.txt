@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.02
+TvRemoteViewer_VB v2.03
 
 
 
@@ -622,6 +622,7 @@ TvRemoteViewer_VB v2.02
 	2.01	VLCのファイル再生に対応（音声切替と焼込には未対応）
 	2.02	HLSアプリ判定を厳密にした
 		プロファイル記述に「-」無指定以外を追加
+	2.03	プロファイル記述に「_」無指定を追加
 
 
 
