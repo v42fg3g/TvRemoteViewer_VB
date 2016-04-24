@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.03
+TvRemoteViewer_VB v2.04
 
 
 
@@ -623,6 +623,7 @@ TvRemoteViewer_VB v2.03
 	2.02	HLSアプリ判定を厳密にした
 		プロファイル記述に「-」無指定以外を追加
 	2.03	プロファイル記述に「_」無指定を追加
+	2.04	BonDriver名の大文字小文字を維持するようにした
 
 
 

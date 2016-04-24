@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 2.03"
+    Private version As String = "TvRemoteViewer_VB 2.04"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -550,7 +550,7 @@ Public Class Form1
                             '表示しないBonDriverかをチェック
                             If BonDriver_NGword IsNot Nothing Then
                                 For i As Integer = 0 To BonDriver_NGword.Length - 1
-                                    If bonfile.IndexOf(BonDriver_NGword(i)) >= 0 Then
+                                    If bonfile.IndexOf(BonDriver_NGword(i).ToLower) >= 0 Then
                                         bonfile = ""
                                     End If
                                 Next
@@ -1374,7 +1374,9 @@ Public Class Form1
 
     Private Sub ComboBoxVideoForce_SelectedIndexChanged(sender As System.Object, e As System.EventArgs) Handles ComboBoxVideoForce.SelectedIndexChanged
         video_force_ffmpeg = Val(ComboBoxVideoForce.Text.ToString)
-        log1write("video_force_ffmpeg=" & video_force_ffmpeg)
+        If TvRemoteViewer_VB_Start = 1 Then
+            log1write("video_force_ffmpeg=" & video_force_ffmpeg)
+        End If
     End Sub
 
     Private Sub Button4_Click(sender As System.Object, e As System.EventArgs) Handles Button4.Click

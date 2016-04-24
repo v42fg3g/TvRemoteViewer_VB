@@ -1864,7 +1864,7 @@ Public Class ProcessManager
                     '表示しないBonDriverかをチェック
                     If BonDriver_NGword IsNot Nothing Then
                         For j As Integer = 0 To BonDriver_NGword.Length - 1
-                            If sl.IndexOf(BonDriver_NGword(j)) >= 0 Then
+                            If sl.IndexOf(BonDriver_NGword(j).ToLower) >= 0 Then
                                 sl = ""
                             End If
                         Next
@@ -1872,7 +1872,7 @@ Public Class ProcessManager
                     If sl.IndexOf("bondriver") = 0 Then
                         'セレクトボックス用にBonDriverを記録しておく
                         ReDim Preserve bons(bons_n)
-                        bons(bons_n) = sl
+                        bons(bons_n) = s
                         bons_n += 1
                     End If
                 End If

@@ -766,7 +766,7 @@ Class WebRemocon
                         If sl.IndexOf("bondriver") = 0 Then
                             'セレクトボックス用にBonDriverを記録しておく
                             ReDim Preserve bons(bons_n)
-                            bons(bons_n) = sl
+                            bons(bons_n) = s
                             bons_n += 1
                         End If
                     End If
