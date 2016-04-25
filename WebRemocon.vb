@@ -1610,6 +1610,51 @@ Class WebRemocon
         Return r
     End Function
 
+    'ハードサブ用assファイルをセットして字幕ファイル名を返す
+    Private Function F_set_hardsub(ByVal num As Integer, ByVal ass_file As String, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal baisoku As String, ByVal timeshift_old_flg As Integer, ByVal nohsub As Integer) As String
+        Dim new_file As String = ""
+        'fonts.confが存在し、無変換でなく、ハードサブ禁止でなければ （又はnohsub=2）
+        If ass_file.Length > 0 Then
+            log1write("字幕ASSファイルとして" & ass_file & "を読み込みます")
+            '存在していればstreamフォルダに名前を変えてコピー
+            new_file = "sub" & num.ToString & ".ass"
+            '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+            Dim rename_file As String = fileroot & "\" & new_file
+
+            If (VideoSeekSeconds <= 0 And baisoku = "1") Or timeshift_old_flg = 1 Then
+                'シークが指定されていなければそのままコピー
+                'リネーム
+                My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
+                'ファイルが出来るまで待機
+                Dim i As Integer = 0
+                While i < 100 And file_exist(rename_file) < 1
+                    System.Threading.Thread.Sleep(50)
+                    i += 1
+                End While
+                log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
+            Else
+                'シーク・倍速が指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
+                log1write("字幕ASSファイルを修正しています")
+                Dim VideoSeekSeconds_temp As Integer = VideoSeekSeconds
+                If timeshift_old_flg = 1 Then
+                    '古い方式ならタイムシフトはしない
+                    VideoSeekSeconds_temp = 0
+                End If
+                If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds_temp, baisoku) = 1 Then
+                    '修正完了
+                    log1write("字幕ASSファイルの修正が完了しました")
+                    log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
+                Else
+                    'エラー
+                    log1write("字幕ASSファイルの修正に失敗しました")
+                    'オプションに-vfは挿入しない
+                    new_file = ""
+                End If
+            End If
+        End If
+        Return new_file
+    End Function
+
     'ファイル再生
     '現在のhlsOptをffmpegファイル再生用に書き換える
     Private Function hlsopt_udp2file_ffmpeg(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer, ByVal ass_file As String) As String
@@ -1639,54 +1684,16 @@ Class WebRemocon
             Next
         End If
 
-        Dim new_file As String = ""
+        Dim opt_hardsub As String = ""
         Dim rename_file As String = "" 'assフルパス
         If (fonts_conf_ok = 1 And hlsOpt.IndexOf("-vcodec copy") < 0 And nohsub = 0) Or nohsub = 2 Then
-            'fonts.confが存在し、無変換でなく、ハードサブ禁止でなければ （又はnohsub=2）
-            If ass_file.Length > 0 Then
-                log1write("字幕ASSファイルとして" & ass_file & "を読み込みます")
-                '存在していればstreamフォルダに名前を変えてコピー
-                new_file = "sub" & num.ToString & ".ass"
-                '現在のカレントフォルダを取得（ffmpegの場合そこがstreamフォルダ）
+            'ハードサブ
+            Dim new_file As String = F_set_hardsub(num, ass_file, fileroot, VideoSeekSeconds, baisoku, timeshift_old_flg, nohsub)
+            'オプションに挿入する文字列を作成
+            If nohsub = 0 And new_file.Length > 0 Then
+                'ハードサブの場合
+                opt_hardsub = " -vf ass=""" & new_file & """"
                 rename_file = fileroot & "\" & new_file
-
-                If (VideoSeekSeconds <= 0 And baisoku = "1") Or timeshift_old_flg = 1 Then
-                    'シークが指定されていなければそのままコピー
-                    'リネーム
-                    My.Computer.FileSystem.CopyFile(ass_file, rename_file, True)
-                    'ファイルが出来るまで待機
-                    Dim i As Integer = 0
-                    While i < 100 And file_exist(rename_file) < 1
-                        System.Threading.Thread.Sleep(50)
-                        i += 1
-                    End While
-                    log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
-                Else
-                    'シーク・倍速が指定されていれば一旦読み込んで指定秒を開始時間とするようassをシフト
-                    log1write("字幕ASSファイルを修正しています")
-                    Dim VideoSeekSeconds_temp As Integer = VideoSeekSeconds
-                    If timeshift_old_flg = 1 Then
-                        '古い方式ならタイムシフトはしない
-                        VideoSeekSeconds_temp = 0
-                    End If
-                    If ass_adjust_seektime(ass_file, rename_file, VideoSeekSeconds_temp, baisoku) = 1 Then
-                        '修正完了
-                        log1write("字幕ASSファイルの修正が完了しました")
-                        log1write("字幕ASSファイルとして" & rename_file & "をセットしました")
-                    Else
-                        'エラー
-                        log1write("字幕ASSファイルの修正に失敗しました")
-                        'オプションに-vfは挿入しない
-                        new_file = ""
-                    End If
-                End If
-                'オプションに挿入する文字列を作成
-                If nohsub = 0 And new_file.Length > 0 Then
-                    'ハードサブの場合
-                    new_file = " -vf ass=""" & new_file & """"
-                Else
-                    new_file = ""
-                End If
             End If
         ElseIf nohsub = 3 Then
             'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
@@ -1730,14 +1737,13 @@ Class WebRemocon
             If sp >= 0 And se > sp Then
                 If hlsOpt.IndexOf(" -vf ") < 0 Then
                     'HLSオプション内に-vfが存在しない場合は
-                    ''hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
-                    hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & new_file & hlsOpt.Substring(se)
+                    hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & opt_hardsub & hlsOpt.Substring(se)
                 Else
                     'HLSオプション内に-vfが存在する場合は -vf部分を入れ替える
                     hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
-                    If new_file.Length > 0 Then
-                        new_file &= "," '" -vf ass=""" & new_file & """" & " "
-                        hlsOpt = hlsOpt.Replace(" -vf ", new_file)
+                    If opt_hardsub.Length > 0 Then
+                        opt_hardsub &= ","
+                        hlsOpt = hlsOpt.Replace(" -vf ", opt_hardsub)
                     End If
                 End If
                 'セグメント分割部分を削除
@@ -1787,10 +1793,20 @@ Class WebRemocon
             file_last_filename(num) = ""
         End If
 
+        Dim opt_hardsub As String = ""
         Dim rename_file As String = "" 'assフルパス
-        If (fonts_conf_ok = 1 And nohsub = 0) Or nohsub = 2 Then
-            'QSVEncではハードサブに未対応
-            log1write("【警告】QSVEncはハードサブに未対応です")
+        If (fonts_conf_ok = 1 And nohsub = 0 And hlsOpt.IndexOf("--sub-copy") < 0 And hlsOpt.IndexOf("--vpp-sub") < 0) Or nohsub = 2 Then
+            ''QSVEncではハードサブに未対応
+            'log1write("【警告】QSVEncはハードサブに未対応です")
+            'ハードサブ
+            Dim new_file As String = F_set_hardsub(num, ass_file, fileroot, VideoSeekSeconds, baisoku, 0, nohsub)
+            'オプションに挿入する文字列を作成
+            If nohsub = 0 And new_file.Length > 0 Then
+                'ハードサブの場合
+                opt_hardsub = " --vpp-sub " & """" & fileroot & "\" & new_file & """" 'フルパス
+                'opt_hardsub = " --vpp-sub " & new_file 'ファイル名のみ
+                rename_file = fileroot & "\" & new_file
+            End If
         ElseIf nohsub = 3 Then
             'nohsub=3の場合は、.assファイルをstreamフォルダに別名でコピーするだけとする
             Dim dt As Integer = filename.LastIndexOf(".")
@@ -1834,7 +1850,8 @@ Class WebRemocon
         If sp >= 0 Then
             Dim se As Integer = hlsOpt.IndexOf(" ", sp + 3)
             If sp >= 0 And se > sp Then
-                hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & hlsOpt.Substring(se)
+                'ファイル名挿入（ついでにハードサブ文字列も挿入）
+                hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & opt_hardsub & hlsOpt.Substring(se)
             End If
 
             'シーク秒数が指定されていれば「--seek フレーム数」を挿入
@@ -2555,7 +2572,7 @@ Class WebRemocon
                 End If
                 hls_temp = modify_hlsAppName(hls_temp)
                 log1write("video_force_ffmpeg=9によりHLSアプリ=" & hls_temp & "、解像度=" & resolution & "、音声モード=" & NHK_dual_mono_mode_select & "がチェックされます")
-                Dim HlsRezAud() As String = get_hlsApp_and_resolution_from_profiles(profileSelect, Stream_mode, hlsApp, resolution, filename, NHK_dual_mono_mode_select, baisoku, hardsub_on, video_force_ffmpeg_temp)
+                Dim HlsRezAud() As String = get_hlsApp_and_resolution_from_profiles(profileSelect, Stream_mode, hlsAppSelect, resolution, filename, NHK_dual_mono_mode_select, baisoku, hardsub_on, video_force_ffmpeg_temp)
                 If HlsRezAud IsNot Nothing Then
                     If HlsRezAud(0).Length > 0 And HlsRezAud(0) <> "*" And hls_temp <> HlsRezAud(0) Then
                         log1write("video_force_ffmpeg=9によりHLSアプリが" & hls_temp & "から" & HlsRezAud(0) & "に変更されました")

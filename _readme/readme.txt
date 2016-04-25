@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.04
+TvRemoteViewer_VB v2.05
 
 
 
@@ -624,6 +624,9 @@ TvRemoteViewer_VB v2.04
 		プロファイル記述に「-」無指定以外を追加
 	2.03	プロファイル記述に「_」無指定を追加
 	2.04	BonDriver名の大文字小文字を維持するようにした
+	2.05	プロファイル指定において使用HLSアプリ判定がフォーム上のアプリに固定されていたバグを修正
+		Waiting.htmlに配信中止ボタンを設置
+		QSVEnc2.46の字幕焼込のテストを行えるようにした（要profile.txtの2行目をコメントアウト）
 
 
 
