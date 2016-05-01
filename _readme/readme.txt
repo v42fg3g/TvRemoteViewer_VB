@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.05
+TvRemoteViewer_VB v2.06
 
 
 
@@ -627,6 +627,7 @@ TvRemoteViewer_VB v2.05
 	2.05	プロファイル指定において使用HLSアプリ判定がフォーム上のアプリに固定されていたバグを修正
 		Waiting.htmlに配信中止ボタンを設置
 		QSVEnc2.46の字幕焼込のテストを行えるようにした（要profile.txtの2行目をコメントアウト）
+	2.06	tsの動画スタート日時の解析をTOTを元にしPCRで補正するようにした
 
 
 

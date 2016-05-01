@@ -124,6 +124,9 @@ Module モジュール_ts解析
                 Dim sid As Integer = 0
                 Dim sid_count As Integer = 0
 
+                Dim pcr_first As Long = -1 '最初に出てきたPCR
+                Dim pcr_last As Long = -1 'TOT直前のPCR
+
                 'ファイルを読み込む 
                 Dim chk As Integer = 0
                 While True
@@ -148,6 +151,17 @@ Module モジュール_ts解析
                     Dim pidx As String = Convert.ToString(pid, 16).PadLeft(2, "0"c)
                     Dim adaptation_field As Integer = (bs(3) And Convert.ToInt32("20", 16)) / Convert.ToInt32("20", 16)
                     Dim payload_field As Integer = (bs(3) And Convert.ToInt32("10", 16)) / Convert.ToInt32("10", 16)
+
+                    'PCR取得
+                    If adaptation_field = 1 And t_chk = 0 Then
+                        If bs(5) And Convert.ToInt32("10", 16) Then
+                            pcr_last = CType(bs(6), Long) * 33554432 + bs(7) * 131072 + bs(8) * 512 + bs(9) * 2 + ((bs(10) And 128) / 128)
+                            If pcr_first < 0 Then
+                                pcr_first = pcr_last
+                            End If
+                        End If
+                    End If
+
                     Select Case pidx
                         Case "14"
                             'TOT
@@ -249,18 +263,29 @@ Module モジュール_ts解析
                 fs.Close()
 
                 If err = 0 Then
-                    '秒数を調整（端数切り捨て）
+                    '秒数を調整
+
                     '始点
-                    Dim s_ajust As Integer = Second(tstart) Mod 10
-                    tstart = DateAdd(DateInterval.Second, -s_ajust, tstart)
-                    'ファイル作成日時と比べ併せて間違いなければファイル作成日時のほうを優先
-                    Try
-                        If System.Math.Abs(time2unix(t2) - time2unix(tstart)) <= 10 Then
-                            '10秒以内のずれならばファイル作成日時に合わせる
-                            tstart = t2
+                    'PCR補正
+                    If pcr_first = pcr_last Then
+                        'PCRが1個以下しか見つかっていない場合はTOTそのままでＯＫ
+                    Else
+                        Dim pcr_delay As Long = pcr_last - pcr_first
+                        If pcr_delay < 0 Then
+                            pcr_delay = 8589934592 - pcr_last + pcr_first
                         End If
-                    Catch ex As Exception
-                    End Try
+                        pcr_delay = Math.Ceiling(pcr_delay / 90000) '切り上げ
+                        log1write("最初のPCR出現より" & pcr_delay.ToString & "秒経過しています")
+                        log1write("最初のTOT" & tstart.ToString & "から" & pcr_delay & "秒遡ります")
+                        tstart = DateAdd(DateInterval.Second, -CType(pcr_delay, Integer), tstart)
+                    End If
+                    'ファイル作成日時が1秒速ければそちらを採用する（誤差を考えて。早い分には団子防止で緩和されるので）
+                    If time2unix(tstart) - time2unix(t2) = 1 Then
+                        log1write("ファイル作成日時の方が1秒早いので誤差を考え作成日時を採用します")
+                        tstart = t2
+                    End If
+                    log1write("動画の開始日時を" & tstart.ToString & "にセットしました")
+
                     '終点
                     Dim e_ajust As Integer = 60 - Second(tend)
                     If e_ajust < 10 Then
