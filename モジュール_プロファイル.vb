@@ -3,10 +3,11 @@ Imports System.IO
 
 Module モジュール_プロファイル
     'HLSアプリ　解像度インデックス　チェック用文字列
-    Public hlschkstr As String = ":vlc:v:ffmpeg:f:qsvenc:qsvencc:q:qsv:piperun:p:"
+    Public hlschkstr As String = ":vlc:v:ffmpeg:f:qsvenc:qsvencc:q:qsv:nvenc:nvencc:n:nsv:piperun:p:"
     Public hlschkstr_vlc As String = ":vlc:v:"
     Public hlschkstr_ffmpeg As String = ":ffmpeg:f:"
     Public hlschkstr_qsvenc As String = ":qsvenc:qsvencc:q:qsv:"
+    Public hlschkstr_nvenc As String = ":nvenc:nvencc:n:nsv:"
     Public hlschkstr_piperun As String = ":piperun:p:"
 
     Public Function get_hlsApp_and_resolution_from_profiles(ByVal profile As String, ByVal StreamMode As Integer, ByVal hlsAppSelect As String, ByVal resolution As String, ByVal filename As String, ByVal voice As String, ByVal speed As String, ByVal hardsub_on As String, ByRef video_force_ffmpeg_temp As Integer) As String()
@@ -169,6 +170,8 @@ Module モジュール_プロファイル
                     r = "ffmpeg"
                 ElseIf hlschkstr_qsvenc.IndexOf(s) >= 0 Then
                     r = "qsvenc"
+                ElseIf hlschkstr_nvenc.IndexOf(s) >= 0 Then
+                    r = "nvenc"
                 ElseIf hlschkstr_vlc.IndexOf(s) >= 0 Then
                     r = "vlc"
                 ElseIf hlschkstr_piperun.IndexOf(s) >= 0 Then
@@ -275,6 +278,9 @@ Module モジュール_プロファイル
         ElseIf resolution.ToLower.IndexOf("(q)") >= 0 Or resolution.ToLower.IndexOf("(qsv)") >= 0 Or resolution.ToLower.IndexOf("(qsvenc)") >= 0 Or resolution.ToLower.IndexOf("(qsvencc)") >= 0 Then
             hlsAppSelect = "QSVEnc"
             resolution_value = resolution.ToLower.Replace("(q)", "").Replace("(qsv)", "").Replace("(qsvenc)", "").Replace("(qsvencc)", "")
+        ElseIf resolution.ToLower.IndexOf("(n)") >= 0 Or resolution.ToLower.IndexOf("(nv)") >= 0 Or resolution.ToLower.IndexOf("(nvenc)") >= 0 Or resolution.ToLower.IndexOf("(nvencc)") >= 0 Then
+            hlsAppSelect = "NVEnc"
+            resolution_value = resolution.ToLower.Replace("(n)", "").Replace("(nv)", "").Replace("(nvenc)", "").Replace("(nvencc)", "")
         ElseIf resolution.ToLower.IndexOf("(p)") >= 0 Or resolution.ToLower.IndexOf("(piperun)") >= 0 Then
             hlsAppSelect = "PipeRun"
             resolution_value = resolution.ToLower.Replace("(p)", "").Replace("(piperun)", "")
