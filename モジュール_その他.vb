@@ -12,6 +12,7 @@
     Public exepath_ffmpeg As String = "" 'thumbnail_ffmpegと置き換え
     Public exepath_VLC As String = ""
     Public exepath_QSVEnc As String = ""
+    Public exepath_NVEnc As String = ""
 
     'フォーム上の解像度コンボボックス.text
     Public form1_resolution As String = ""
@@ -66,6 +67,9 @@
 
     'TvRemoteViewer_VBの起動時、終了時、全停止時にQSVEncを名前付きで停止するかどうか
     Public Stop_QSVEnc_at_StartEnd As Integer = 1
+
+    'TvRemoteViewer_VBの起動時、終了時、全停止時にNVEncを名前付きで停止するかどうか
+    Public Stop_NVEnc_at_StartEnd As Integer = 1
 
     'HTMLにID:PASS@を変換してもよいかどうか
     Public ALLOW_IDPASS2HTML As Integer = 0

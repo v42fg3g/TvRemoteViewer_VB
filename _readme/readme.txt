@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.06
+TvRemoteViewer_VB v2.07
 
 
 
@@ -16,7 +16,7 @@ TvRemoteViewer_VB v2.06
 	TVTestが動作する環境
 	
 	UDPソフト：　RecTask, TSTask
-	HLSソフト：　ffmpeg, VLC, QSVEnc
+	HLSソフト：　ffmpeg, VLC, QSVEnc,NVEnc
 
 
 
@@ -120,7 +120,7 @@ TvRemoteViewer_VB v2.06
 
 	○指定方法
 	・HLS_option*.txtへの記述（インデックスまたはHLSオプション本文）
-	・StartTv.htmlへhlsAppSelect引数によりHLSアプリ名を指定(hlsAppSelect=VLC,V,ffmpeg,F,QSVEnc,Q,QSV,PiprRun,P)
+	・StartTv.htmlへhlsAppSelect引数によりHLSアプリ名を指定(hlsAppSelect=VLC,V,ffmpeg,F,QSVEnc,Q,QSV,NVEnc,N,NSV,PiprRun,P)
 
 	○どのHLSオプションが使用されるのか？
 	・明示的にHLSアプリが個別指定された場合は、各アプリに対応したHLS_option_[HLSアプリ]*.txtからHLSオプションが優先的に使用されます
@@ -135,6 +135,7 @@ TvRemoteViewer_VB v2.06
 	VLC: VLC, V
 	ffmpeg: ffmpeg, F
 	QSVEnc: QSVEnc, QSVEncC, Q, QSV 
+	NVEnc: NVEnc, NVEncC, N, NV 
 	PipeRun: PipeRun, P
 
 	○HLS_option*.txtの記述
@@ -628,6 +629,8 @@ TvRemoteViewer_VB v2.06
 		Waiting.htmlに配信中止ボタンを設置
 		QSVEnc2.46の字幕焼込のテストを行えるようにした（要profile.txtの2行目をコメントアウト）
 	2.06	tsの動画スタート日時の解析をTOTを元にしPCRで補正するようにした
+	2.07	NVEncCに対応
+		iniにexepath_NVEncとStop_NVEnc_at_StartEndを追加
 
 
 
