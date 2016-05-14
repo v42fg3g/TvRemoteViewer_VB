@@ -1153,7 +1153,7 @@ Class WebRemocon
                                     ElseIf clset.Length > 0 Then
                                         ReDim Preserve Me._videopath_ini(clset.Length - 1)
                                         For j = 0 To clset.Length - 1
-                                            Me._videopath_ini(j) = trim8(clset(j))
+                                            Me._videopath_ini(j) = trim8(path_s2z(clset(j)))
                                         Next
                                     End If
                                 End If
@@ -1405,7 +1405,7 @@ Class WebRemocon
                             Case "OLDTS_NODELETE"
                                 OLDTS_NODELETE = Val(youso(1).ToString)
                             Case "RecTask_SPHD"
-                                RecTask_SPHD = trim8(youso(1).ToString)
+                                RecTask_SPHD = trim8(path_s2z(youso(1).ToString))
                                 If RecTask_SPHD.Length > 0 Then
                                     If file_exist(RecTask_SPHD) <= 0 Then
                                         log1write("【エラー】" & RecTask_SPHD & " が見つかりません")
@@ -1445,7 +1445,7 @@ Class WebRemocon
                                     log1write("TvmaidYUIのサーバーURLが指定されました。" & Tvmaid_url)
                                 End If
                             Case "NicoJK_path"
-                                NicoJK_path = youso(1).ToString
+                                NicoJK_path = trim8(path_s2z(youso(1).ToString))
                                 If NicoJK_path.Length > 0 Then
                                     If folder_exist(NicoJK_path) <= 0 Then
                                         log1write("【エラー】" & NicoJK_path & " が見つかりません")
@@ -1457,7 +1457,7 @@ Class WebRemocon
                             Case "NicoJK_first"
                                 NicoJK_first = Val(youso(1).ToString)
                             Case "NicoConvAss_path"
-                                NicoConvAss_path = youso(1).ToString
+                                NicoConvAss_path = trim8(path_s2z(youso(1).ToString))
                                 If NicoConvAss_path.Length > 0 Then
                                     If file_exist(NicoConvAss_path) <= 0 Then
                                         log1write("【エラー】" & NicoConvAss_path & " が見つかりません")
@@ -1509,6 +1509,7 @@ Class WebRemocon
                             Case "meta_refresh_fix"
                                 meta_refresh_fix = Val(youso(1).ToString)
                             Case "exepath_VLC", "exepath_vlc", "BS1_hlsApp"
+                                youso(1) = trim8(path_s2z((youso(1))))
                                 If youso(1).Length > 0 Then
                                     If file_exist(youso(1)) = 1 Then
                                         exepath_VLC = youso(1).ToString
@@ -1519,6 +1520,7 @@ Class WebRemocon
                                     End If
                                 End If
                             Case "exepath_ffmpeg", "thumbnail_ffmpeg"
+                                youso(1) = trim8(path_s2z((youso(1))))
                                 If youso(1).Length > 0 Then
                                     If file_exist(youso(1)) = 1 Then
                                         exepath_ffmpeg = youso(1).ToString
@@ -1529,6 +1531,7 @@ Class WebRemocon
                                     End If
                                 End If
                             Case "exepath_QSVEnc"
+                                youso(1) = trim8(path_s2z((youso(1))))
                                 If youso(1).Length > 0 Then
                                     If file_exist(youso(1)) = 1 Then
                                         exepath_QSVEnc = youso(1).ToString
@@ -1539,6 +1542,7 @@ Class WebRemocon
                                     End If
                                 End If
                             Case "exepath_NVEnc"
+                                youso(1) = trim8(path_s2z((youso(1))))
                                 If youso(1).Length > 0 Then
                                     If file_exist(youso(1)) = 1 Then
                                         exepath_NVEnc = youso(1).ToString
@@ -1549,6 +1553,7 @@ Class WebRemocon
                                     End If
                                 End If
                             Case "PipeRun_ffmpeg_option"
+                                youso(1) = trim8(path_s2z((youso(1))))
                                 If youso(1).Length > 0 Then
                                     PipeRun_ffmpeg_option = youso(1)
                                     log1write("PipeRun実行時にffmpegに渡すオプション= " & PipeRun_ffmpeg_option)

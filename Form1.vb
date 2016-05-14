@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 2.07"
+    Private version As String = "TvRemoteViewer_VB 2.08"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -26,9 +26,9 @@ Public Class Form1
             Dim bondriver As String = ComboBoxBonDriver.Text.ToString
             Dim sid As Integer = 0 '下で取得
             Dim chspace As Integer = Val(TextBoxChSpace.Text.ToString)
-            Dim udpApp As String = textBoxUdpApp.Text.ToString
+            Dim udpApp As String = path_s2z(textBoxUdpApp.Text.ToString)
             Dim udpOpt3 As String = TextBoxUdpOpt3.Text.ToString
-            Dim hlsApp As String = textBoxHlsApp.Text.ToString
+            Dim hlsApp As String = path_s2z(textBoxHlsApp.Text.ToString)
             Dim hlsroot As String = ""
             Dim ss As String = "\"
             Dim sp As Integer = hlsApp.LastIndexOf(ss)
@@ -37,8 +37,8 @@ Public Class Form1
             End If
             Dim hlsOpt1 As String = "" 'textBoxHlsOpt1.Text.ToString
             Dim hlsOpt2 As String = textBoxHlsOpt2.Text.ToString
-            Dim wwwroot As String = TextBoxWWWroot.Text.ToString
-            Dim fileroot As String = TextBoxFILEROOT.Text.ToString
+            Dim wwwroot As String = path_s2z(TextBoxWWWroot.Text.ToString)
+            Dim fileroot As String = path_s2z(TextBoxFILEROOT.Text.ToString)
             Dim s() As String = ComboBoxServiceID.Text.Split(",")
             Dim ShowConsole As Boolean = CheckBoxShowConsole.Checked
             Dim NHK_dual_mono_mode_select As Integer = 0 'フォームからは指定しない常に０
@@ -216,18 +216,18 @@ Public Class Form1
     'httpサーバー　スタート
     Private Sub StartHttpServer()
         'フォームからパラメーターを取得
-        Dim udpApp As String = Me.textBoxUdpApp.Text.ToString
+        Dim udpApp As String = path_s2z(Me.textBoxUdpApp.Text.ToString)
         Dim udpPort As Integer = Val(Me.textBoxUdpPort.Text.ToString)
         Dim udpOpt3 As String = Me.TextBoxUdpOpt3.Text.ToString
         Dim chSpace As Integer = Val(Me.TextBoxChSpace.Text.ToString)
-        Dim hlsApp As String = Me.textBoxHlsApp.Text.ToString
+        Dim hlsApp As String = path_s2z(Me.textBoxHlsApp.Text.ToString)
         Dim hlsOpt1 As String = "" 'Me.textBoxHlsOpt1.Text.ToString
         Dim hlsOpt2 As String = Me.textBoxHlsOpt2.Text.ToString
-        Dim wwwroot As String = Me.TextBoxWWWroot.Text.ToString
-        Dim fileroot As String = Me.TextBoxFILEROOT.Text.ToString
+        Dim wwwroot As String = path_s2z(Me.TextBoxWWWroot.Text.ToString)
+        Dim fileroot As String = path_s2z(Me.TextBoxFILEROOT.Text.ToString)
         Dim wwwport As Integer = Val(Me.textHttpPortNumber.Text.ToString)
         Dim num As Integer = Val(Me.ComboBoxNum.Text.ToString)
-        Dim BonDriverPath As String = Me.TextBoxBonDriverPath.Text.ToString
+        Dim BonDriverPath As String = path_s2z(Me.TextBoxBonDriverPath.Text.ToString)
         Dim ShowConsole As Boolean = Me.CheckBoxShowConsole.Checked
         Dim id As String = Me.TextBoxID.Text.ToString
         Dim pass As String = Me.TextBoxPASS.Text.ToString
@@ -249,21 +249,14 @@ Public Class Form1
         Me.ButtonWebStart.Enabled = True
     End Sub
 
-    'IEを開く
-    Public Sub IE_open(ByVal url As String)
-        Dim objIE As Object
-        objIE = CreateObject("internetexplorer.application")
-        objIE.Visible = True
-        objIE.navigate(url)
-        objIE = Nothing
-    End Sub
-
     'IEでhttp://127.0.0.1:ポート/を開く
     Private Sub Button2_Click(sender As System.Object, e As System.EventArgs) Handles Button2.Click
-        Dim port As String = textHttpPortNumber.Text
-        If Val(port) > 0 Then
-            IE_open("http://127.0.0.1:" & port)
-        End If
+        Dim port As String = textHttpPortNumber.Text.ToString
+        Try
+            System.Diagnostics.Process.Start("http://127.0.0.1:" & port)
+        Catch ex As Exception
+            '開けないファイルだった場合
+        End Try
     End Sub
 
     'VideoPath.txt編集
@@ -392,7 +385,7 @@ Public Class Form1
 
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止
-        StopUdpAppName = Me.textBoxUdpApp.Text.ToString '名前指定でストップすべきUDPアプリを記録
+        StopUdpAppName = path_s2z(Me.textBoxUdpApp.Text.ToString) '名前指定でストップすべきUDPアプリを記録
         Me._worker.stopProc(-2)
 
         'HTMLキャラクターコード
@@ -475,14 +468,14 @@ Public Class Form1
     'フォーム上の項目が正常かどうかチェック
     Private Sub check_form_youso()
         'UDPアプリチェック
-        Dim f_udp_exe As String = Me.textBoxUdpApp.Text.ToString
+        Dim f_udp_exe As String = path_s2z(Me.textBoxUdpApp.Text.ToString)
         If file_exist(f_udp_exe) = 1 Then
             log1write("起動チェック　UDPアプリ：OK")
         Else
             log1write("【エラー】UDPアプリ " & f_udp_exe & " が見つかりません")
         End If
         'HLSアプリチェック
-        Dim f_hls_exe As String = Me.textBoxHlsApp.Text.ToString
+        Dim f_hls_exe As String = path_s2z(Me.textBoxHlsApp.Text.ToString)
         If file_exist(f_hls_exe) = 1 Then
             log1write("起動チェック　HLSアプリ：OK")
         Else
@@ -509,7 +502,7 @@ Public Class Form1
             End If
         End If
         'wwwroot
-        Dim f_wwwroot As String = Me.TextBoxWWWroot.Text.ToString
+        Dim f_wwwroot As String = path_s2z(Me.TextBoxWWWroot.Text.ToString)
         If f_wwwroot.Length > 0 Then
             If folder_exist(f_wwwroot) = 1 Then
                 log1write("起動チェック　WWWROOT：OK")
@@ -520,7 +513,7 @@ Public Class Form1
             log1write("【エラー】WWWROOTが設定されていません")
         End If
         'fileroot
-        Dim f_fileroot As String = Me.TextBoxFILEROOT.Text.ToString
+        Dim f_fileroot As String = path_s2z(Me.TextBoxFILEROOT.Text.ToString)
         If f_fileroot.Length > 0 Then
             If folder_exist(f_fileroot) = 1 Then
                 log1write("起動チェック　FILEROOT：OK")
@@ -529,10 +522,10 @@ Public Class Form1
             End If
         End If
         'bondriver
-        Dim f_bondriver As String = Me.TextBoxBonDriverPath.Text.ToString
+        Dim f_bondriver As String = path_s2z(Me.TextBoxBonDriverPath.Text.ToString)
         If f_bondriver.Length = 0 Then
             Try
-                f_bondriver = IO.Path.GetDirectoryName(Me.textBoxUdpApp.Text.ToString)
+                f_bondriver = IO.Path.GetDirectoryName(path_s2z(Me.textBoxUdpApp.Text.ToString))
             Catch ex As Exception
                 f_bondriver = ""
             End Try
@@ -605,7 +598,7 @@ Public Class Form1
         End If
 
         'RAMドライブに作成されることを考慮して存在しない場合は作成
-        Dim fileroot As String = TextBoxFILEROOT.Text.ToString
+        Dim fileroot As String = path_s2z(TextBoxFILEROOT.Text.ToString)
         If fileroot.Length > 0 Then
             Dim sp As Integer = fileroot.LastIndexOf("\")
             If sp > 0 Then
@@ -806,10 +799,10 @@ Public Class Form1
     'BonDriverを探してコンボボックスに追加
     Private Sub search_BonDriver()
         ComboBoxBonDriver.Items.Clear()
-        Dim bondriver_path As String = TextBoxBonDriverPath.Text.ToString
+        Dim bondriver_path As String = path_s2z(TextBoxBonDriverPath.Text.ToString)
         If bondriver_path.Length = 0 Then
             '指定が無い場合はUDPAPPと同じフォルダにあると見なす
-            bondriver_path = filepath2path(textBoxUdpApp.Text.ToString)
+            bondriver_path = filepath2path(path_s2z(textBoxUdpApp.Text.ToString))
         End If
         Try
             For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
@@ -846,10 +839,10 @@ Public Class Form1
     'ComboBoxBonDriverの値にしたがってComboBoxServiceIDを変更
     Private Sub search_ServiceID()
         ComboBoxServiceID.Items.Clear()
-        Dim bondriver_path As String = TextBoxBonDriverPath.Text.ToString
+        Dim bondriver_path As String = path_s2z(TextBoxBonDriverPath.Text.ToString)
         If bondriver_path.Length = 0 Then
             '指定が無い場合はUDPAPPと同じフォルダにあると見なす
-            bondriver_path = filepath2path(textBoxUdpApp.Text.ToString)
+            bondriver_path = filepath2path(path_s2z(textBoxUdpApp.Text.ToString))
         End If
         Dim filename As String = ""
         If ComboBoxBonDriver.Text.ToString.Length > 0 Then
@@ -972,7 +965,7 @@ Public Class Form1
 
     'WWWROOT選択
     Private Sub ButtonWWWROOT_Click(sender As System.Object, e As System.EventArgs) Handles ButtonWWWROOT.Click
-        Dim s As String = F_get_folder(TextBoxWWWroot.Text.ToString)
+        Dim s As String = F_get_folder(path_s2z(TextBoxWWWroot.Text.ToString))
         Try
             If s.Length > 0 Then
                 TextBoxWWWroot.Text = s
@@ -983,7 +976,7 @@ Public Class Form1
 
     'FILEROOT選択
     Private Sub ButtonFILEROOT_Click(sender As System.Object, e As System.EventArgs) Handles ButtonFILEROOT.Click
-        Dim s As String = F_get_folder(TextBoxFILEROOT.Text.ToString)
+        Dim s As String = F_get_folder(path_s2z(TextBoxFILEROOT.Text.ToString))
         Try
             If s.Length > 0 Then
                 TextBoxFILEROOT.Text = s
@@ -994,7 +987,7 @@ Public Class Form1
 
     'BonDriverフォルダ選択
     Private Sub ButtonBonDriverPath_Click(sender As System.Object, e As System.EventArgs) Handles ButtonBonDriverPath.Click
-        Dim s As String = F_get_folder(TextBoxBonDriverPath.Text.ToString)
+        Dim s As String = F_get_folder(path_s2z(TextBoxBonDriverPath.Text.ToString))
         Try
             If s.Length > 0 Then
                 TextBoxBonDriverPath.Text = s
@@ -1005,7 +998,7 @@ Public Class Form1
 
     'UDPアプリ選択
     Private Sub buttonUdpAppPath_Click(sender As System.Object, e As System.EventArgs) Handles buttonUdpAppPath.Click
-        Dim s As String = F_get_filename(textBoxUdpApp.Text.ToString)
+        Dim s As String = F_get_filename(path_s2z(textBoxUdpApp.Text.ToString))
         Try
             If s.Length > 0 Then
                 textBoxUdpApp.Text = s
@@ -1016,7 +1009,7 @@ Public Class Form1
 
     'HLSアプリ選択
     Private Sub buttonHlsAppPath_Click(sender As System.Object, e As System.EventArgs) Handles buttonHlsAppPath.Click
-        Dim s As String = F_get_filename(textBoxHlsApp.Text.ToString)
+        Dim s As String = F_get_filename(path_s2z(textBoxHlsApp.Text.ToString))
         Try
             If s.Length > 0 Then
                 textBoxHlsApp.Text = s
@@ -1053,7 +1046,7 @@ Public Class Form1
         ComboBoxServiceID.Text = ""
         '項目が変更されたことをインスタンスに知らせる
         Try
-            Me._worker._BonDriverPath = TextBoxBonDriverPath.Text.ToString
+            Me._worker._BonDriverPath = path_s2z(TextBoxBonDriverPath.Text.ToString)
         Catch ex As Exception
         End Try
     End Sub
@@ -1062,7 +1055,7 @@ Public Class Form1
     Private Sub textBoxUdpApp_TextChanged(sender As System.Object, e As System.EventArgs) Handles textBoxUdpApp.TextChanged
         search_BonDriver()
         Try
-            Me._worker._udpApp = textBoxUdpApp.Text.ToString
+            Me._worker._udpApp = path_s2z(textBoxUdpApp.Text.ToString)
         Catch ex As Exception
         End Try
     End Sub
@@ -1070,7 +1063,7 @@ Public Class Form1
     '項目が変更されたことをインスタンスに知らせる
     Private Sub textBoxHlsApp_TextChanged(sender As System.Object, e As System.EventArgs) Handles textBoxHlsApp.TextChanged
         Try
-            Me._worker._hlsApp = textBoxHlsApp.Text.ToString
+            Me._worker._hlsApp = path_s2z(textBoxHlsApp.Text.ToString)
             Dim ss As String = "\"
             Dim sp As Integer = Me._worker._hlsApp.LastIndexOf(ss)
             If sp > 0 Then
@@ -1285,7 +1278,7 @@ Public Class Form1
             Dim hlsAppNameFile As String = ""
             Dim hlsOptFile As String = ""
 
-            Dim hlsAppFilename As String = Path.GetFileName(textBoxHlsApp.Text.ToString)
+            Dim hlsAppFilename As String = Path.GetFileName(path_s2z(textBoxHlsApp.Text.ToString))
             Dim hlsAppNum As Integer = 0
             If isMatch_HLS(hlsAppFilename, "vlc") = 1 Then
                 hlsAppNum = 1
@@ -1390,4 +1383,5 @@ Public Class Form1
             log1write("【エラー】profile.txtが見つかりません")
         End If
     End Sub
+
 End Class

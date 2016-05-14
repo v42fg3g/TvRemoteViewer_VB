@@ -1,4 +1,6 @@
-﻿Module モジュール_その他
+﻿Imports System.IO
+
+Module モジュール_その他
     'プロファイル　hlsApp,resolution,Audioモード
     Public profiletxt As String = ""
 
@@ -146,6 +148,38 @@
         Catch ex As Exception
         End Try
         Return r
+    End Function
+
+    '(相対)パスを絶対パスで返す
+    Public Function path_s2z(ByVal path As String) As String
+        If path.IndexOf(":") > 0 Or path.IndexOf("\\") = 0 Or trim8(path).Length = 0 Then
+            '絶対パス
+            Return path
+            Exit Function
+        Else
+            '相対パス
+            'http://dobon.net/vb/dotnet/file/getabsolutepath.html
+            Try
+                Dim basePath As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                Dim filePath As String = "..\" & path
+
+                '"%"を"%25"に変換しておく（デコード対策）
+                basePath = basePath.Replace("%", "%25")
+                filePath = filePath.Replace("%", "%25")
+
+                '絶対パスを取得する
+                Dim u1 As New Uri(basePath)
+                Dim u2 As New Uri(u1, filePath)
+                Dim absolutePath As String = u2.LocalPath
+                '"%25"を"%"に戻す
+                absolutePath = absolutePath.Replace("%25", "%")
+
+                Return absolutePath
+            Catch ex As Exception
+                log1write("【エラー】相対→絶対パス変換エラー。" & ex.Message)
+                Return path
+            End Try
+        End If
     End Function
 
     'プログラム用
