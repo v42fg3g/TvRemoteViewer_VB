@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.07
+TvRemoteViewer_VB v2.08
 
 
 
@@ -631,6 +631,8 @@ TvRemoteViewer_VB v2.07
 	2.06	tsの動画スタート日時の解析をTOTを元にしPCRで補正するようにした
 	2.07	NVEncCに対応
 		iniにexepath_NVEncとStop_NVEnc_at_StartEndを追加
+	2.08	相対パスを指定できるようにした
+		「index.htmlを開く」ボタンを関連付けされたアプリで開くようにした
 
 
 
