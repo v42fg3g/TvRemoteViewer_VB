@@ -158,10 +158,21 @@ Module モジュール_その他
             Exit Function
         Else
             '相対パス
+            Dim basePath As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+            basePath &= "\"
+
             'http://dobon.net/vb/dotnet/file/getabsolutepath.html
+
+            While path.Substring(0, 2) = ".\"
+                Try
+                    path = path.Substring(2)
+                Catch ex As Exception
+                    path = ""
+                End Try
+            End While
+
             Try
-                Dim basePath As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-                Dim filePath As String = "..\" & path
+                Dim filePath As String = path
 
                 '"%"を"%25"に変換しておく（デコード対策）
                 basePath = basePath.Replace("%", "%25")

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.08
+TvRemoteViewer_VB v2.09
 
 
 
@@ -633,6 +633,7 @@ TvRemoteViewer_VB v2.08
 		iniにexepath_NVEncとStop_NVEnc_at_StartEndを追加
 	2.08	相対パスを指定できるようにした
 		「index.htmlを開く」ボタンを関連付けされたアプリで開くようにした
+	2.09	相対パスのバグを修正
 
 
 
