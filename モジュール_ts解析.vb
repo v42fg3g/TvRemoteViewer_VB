@@ -274,6 +274,7 @@ Module モジュール_ts解析
                         If pcr_delay < 0 Then
                             pcr_delay = 8589934592 - pcr_last + pcr_first
                         End If
+                        pcr_delay += 9000 '両端で最大0.2秒の誤差を考え平均値0.1秒足しておく
                         pcr_delay = Math.Ceiling(pcr_delay / 90000) '切り上げ
                         log1write("最初のPCR出現より" & pcr_delay.ToString & "秒経過しています")
                         log1write("最初のTOT" & tstart.ToString & "から" & pcr_delay & "秒遡ります")
