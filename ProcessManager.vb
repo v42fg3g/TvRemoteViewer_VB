@@ -781,26 +781,34 @@ Public Class ProcessManager
                         End If
 
                         If Me._list(i)._chk_proc >= 300 Then 'プロセスが無いか3秒応答がなければ
-                            'エラーカウンタをリセット
-                            Me._list(i)._chk_proc = 0
-                            '終了して再起動
-                            'stopProcする前に起動パラメーターを一時待避
-                            Dim p1 As String = Me._list(i)._udpApp
-                            Dim p2 As String = Me._list(i)._udpOpt
-                            Dim p3 As String = Me._list(i)._hlsApp
-                            Dim p4 As String = Me._list(i)._hlsOpt
-                            Dim p5 As Integer = Me._list(i)._num
-                            Dim p6 As Integer = Me._list(i)._udpPort
-                            Dim p7 As Boolean = Me._list(i)._ShowConsole
-                            Dim p8 As Integer = Me._list(i)._stream_mode
-                            Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
-                            Dim p10 As String = Me._list(i)._resolution
-                            Dim p11 As Integer = Me._list(i)._VideoSeekSeconds
-                            'プロセスを停止
-                            stopProc(p5) 'startprocでも冒頭で停止処理をするので割愛と思ったが再起動時には停止しておいたほうが正常に動いた
-                            'プロセスを開始
-                            startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
-                            log1write("No.=" & p5 & "のプロセスを再起動しました")
+                            stream_reset_count(Me._list(i)._num) += 1 '再起動回数
+                            If stream_reset_count(Me._list(i)._num) <= stream_reset_limit Then
+                                'エラーカウンタをリセット
+                                Me._list(i)._chk_proc = 0
+                                '終了して再起動
+                                'stopProcする前に起動パラメーターを一時待避
+                                Dim p1 As String = Me._list(i)._udpApp
+                                Dim p2 As String = Me._list(i)._udpOpt
+                                Dim p3 As String = Me._list(i)._hlsApp
+                                Dim p4 As String = Me._list(i)._hlsOpt
+                                Dim p5 As Integer = Me._list(i)._num
+                                Dim p6 As Integer = Me._list(i)._udpPort
+                                Dim p7 As Boolean = Me._list(i)._ShowConsole
+                                Dim p8 As Integer = Me._list(i)._stream_mode
+                                Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
+                                Dim p10 As String = Me._list(i)._resolution
+                                Dim p11 As Integer = Me._list(i)._VideoSeekSeconds
+                                'プロセスを停止
+                                stopProc(p5) 'startprocでも冒頭で停止処理をするので割愛と思ったが再起動時には停止しておいたほうが正常に動いた
+                                'プロセスを開始
+                                startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
+                                log1write("No.=" & p5 & "のプロセスを再起動しました")
+                            Else
+                                '起動失敗（何度も再起動）
+                                log1write(stream_reset_limit.ToString & "回以上ストリームが再起動されたので配信を停止します。ストリーム番号=" & Me._list(i)._num)
+                                stream_reset_count(Me._list(i)._num) = 0
+                                stopProc(Me._list(i)._num)
+                            End If
                         End If
                     ElseIf Me._list(i)._num > 0 And Me._list(i)._stopping = 0 And Me._list(i)._stream_mode = 1 Then
                         If Me._list(i)._FileEncodeFinished = 0 Then

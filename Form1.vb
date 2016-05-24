@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 2.09"
+    Private version As String = "TvRemoteViewer_VB 2.10"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -457,6 +457,13 @@ Public Class Form1
 
         'stream_last_utimeの再定義
         ReDim Preserve stream_last_utime(MAX_STREAM_NUMBER + 1)
+
+        'ストリーム再起動回数の再定義
+        ReDim Preserve stream_reset_count(MAX_STREAM_NUMBER + 1)
+
+        'waitingmessage_countの再定義
+        ReDim Preserve waitingmessage_count(MAX_STREAM_NUMBER + 1)
+        ReDim Preserve waitingmessage_str(MAX_STREAM_NUMBER + 1)
 
         'HLS_option.txtの内容との整合性チェック
         check_hls_option_txt()

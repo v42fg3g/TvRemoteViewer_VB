@@ -699,7 +699,7 @@ Partial Class Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(530, 685)
+        Me.ClientSize = New System.Drawing.Size(530, 683)
         Me.Controls.Add(Me.Button4)
         Me.Controls.Add(Me.Button8)
         Me.Controls.Add(Me.ComboBoxVideoForce)

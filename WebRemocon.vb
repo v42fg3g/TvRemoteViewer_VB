@@ -1558,6 +1558,15 @@ Class WebRemocon
                                     PipeRun_ffmpeg_option = youso(1)
                                     log1write("PipeRun実行時にffmpegに渡すオプション= " & PipeRun_ffmpeg_option)
                                 End If
+                            Case "stream_reset_limit"
+                                stream_reset_limit = Val(youso(1).ToString)
+                                log1write("ストリーム再起動回数の上限を" & stream_reset_limit.ToString & "回にセットしました")
+                            Case "waitingmessage_slow_limit"
+                                waitingmessage_slow_limit = Val(youso(1).ToString)
+                                log1write("同じwaitingページが" & waitingmessage_count.ToString & "回繰り返し表示された場合にrefresh秒数を延長するようセットしました")
+                            Case "waitingmessage_slow_sec"
+                                waitingmessage_slow_sec = Val(youso(1).ToString)
+                                log1write("同じwaitingページが繰り返し表示された場合にrefreshを" & waitingmessage_slow_sec.ToString & "秒以上とするようセットしました")
 
 
 
@@ -2268,6 +2277,9 @@ Class WebRemocon
     '映像配信開始
     Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String, ByVal profileSelect As String)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
+
+        '再起動回数をリセット
+        stream_reset_count(num) = 0
 
         '解像度指定が「---」だった場合
         If Trim(resolution.Replace("-", "")).Length = 0 Then
@@ -3924,6 +3936,8 @@ Class WebRemocon
 
                         If (h_stream_mode = 2 And h_bondriver.Length > 0 And Val(h_sid) > 0) Or (h_stream_mode = 3 And h_videoname.Length > 0) Then
                             'httpストリーム配信開始
+                            waitingmessage_count(ffmpeg_num) = 0
+                            waitingmessage_str(ffmpeg_num) = ""
                             'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
                             Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1, "", "")
                         Else
@@ -4472,11 +4486,15 @@ Class WebRemocon
                                         num = GET_num_check_BonDriver(num, bondriver)
                                     End If
                                     '正しければ配信スタート
+                                    waitingmessage_count(num) = 0
+                                    waitingmessage_str(num) = ""
                                     Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0, hlsAppSelect, profileSelect)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
+                                    waitingmessage_count(num) = 0
+                                    waitingmessage_str(num) = ""
                                     Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
@@ -4542,9 +4560,11 @@ Class WebRemocon
                                         jstr &= "</head"
                                         s = s.Replace("</head", jstr)
                                         Dim sp As Integer = s.IndexOf("<meta http-equiv=""refresh""")
-                                        Dim sp2 As Integer = s.IndexOf(">", sp)
-                                        s = s.Substring(0, sp) & "<!--refresh fix--" & s.Substring(sp2)
-                                        s = s.Replace("<body", "<body onLoad=""javascript:setTimeout('AutoJump()'," & (rsec * 1000).ToString & ");"" ")
+                                        If sp > 0 Then
+                                            Dim sp2 As Integer = s.IndexOf(">", sp)
+                                            s = s.Substring(0, sp) & "<!--refresh fix--" & s.Substring(sp2)
+                                            s = s.Replace("<body", "<body onLoad=""javascript:setTimeout('AutoJump()'," & (rsec * 1000).ToString & ");"" ")
+                                        End If
                                     End If
                                 Else
                                     '従来通り
@@ -4585,6 +4605,31 @@ Class WebRemocon
                                     s &= "</html>" & vbCrLf
 
                                     'sw.Flush()
+                                End If
+
+                                '長時間waitingが続く場合にボタンを押しやすくするようrefresh時間を長くする
+                                If waitingmessage_str(num) = s Then
+                                    waitingmessage_count(num) += 1 '何回同じwaitingページが表示されたか
+                                Else
+                                    waitingmessage_count(num) = 0
+                                    waitingmessage_str(num) = s
+                                End If
+                                Dim refreshsec As Integer = Int(waitingmessage_count(num) / waitingmessage_slow_limit) * waitingmessage_slow_sec
+                                If refreshsec > 0 Then
+                                    Dim sp As Integer = s.IndexOf("refresh"" content=""")
+                                    If sp > 0 Then
+                                        Dim sp2 As Integer = s.IndexOf(";", sp)
+                                        If sp2 > sp Then
+                                            s = s.Substring(0, sp + "refresh"" content=""".Length) & refreshsec.ToString & " " & s.Substring(sp2)
+                                        End If
+                                    End If
+                                    sp = s.IndexOf("setTimeout('AutoJump()',")
+                                    If sp > 0 Then
+                                        Dim sp2 As Integer = s.IndexOf("000", sp)
+                                        If sp2 > sp Then
+                                            s = s.Substring(0, sp + "setTimeout('AutoJump()',".Length) & refreshsec & s.Substring(sp2)
+                                        End If
+                                    End If
                                 End If
 
                                 'sw.WriteLine(s)
@@ -5530,6 +5575,13 @@ Class WebRemocon
             Catch ex As Exception
                 fl_file = ""
             End Try
+            '先頭が.\なら削る
+            Try
+                While fl_file.Substring(0, 2) = ".\"
+                    fl_file = fl_file.Substring(2)
+                End While
+            Catch ex As Exception
+            End Try
             '先頭が\なら削る
             Try
                 While fl_file.Substring(0, 1) = "\"
@@ -5578,21 +5630,24 @@ Class WebRemocon
 
         'フォルダが存在しなければ作成
         If fl_cmd.IndexOf("write") >= 0 Then
-            If folder_exist(fullpath) < 1 Then
+            If folder_exist(fullpath) < 1 And fullpath.IndexOf("..") < 0 Then
                 Try
                     System.IO.Directory.CreateDirectory(fullpath)
                 Catch ex As Exception
                     r = "2,フォルダ作成に失敗しました。" & ex.Message & vbCrLf
+                    log1write("【エラー】フォルダ作成に失敗しました。" & fullpath)
                     Return r
                     Exit Function
                 End Try
             End If
         End If
 
-        If fl_file.IndexOf("\..\") >= 0 Then
+        If fullpath.IndexOf("..") >= 0 Then
             r = "2,フォルダ指定が不正です" & vbCrLf '失敗
+            log1write("【エラー】不正なフォルダへのアクセスがありました。" & fullpath)
         ElseIf folder_exist(fullpath) < 1 Then
             r = "2,指定されたフォルダが見つかりません" & vbCrLf
+            log1write("【エラー】指定されたフォルダが見つかりません。" & fullpath)
         Else
             Select Case fl_cmd
                 Case "dir"
@@ -5609,6 +5664,7 @@ Class WebRemocon
                     Catch ex As Exception
                         'エラー
                         r = "2,ファイル一覧取得中にエラーが発生しました。" & ex.Message & vbCrLf
+                        log1write("【エラー】ファイル一覧取得中にエラーが発生しました。" & fullpath & " > " & ex.Message)
                     End Try
                 Case "read"
                     If file_exist(fullpathfilename) = 1 Then
@@ -5616,6 +5672,7 @@ Class WebRemocon
                         r = "0,SUCCESS" & vbCrLf & r
                     Else
                         r = "2,ファイルが見つかりませんでした" & vbCrLf
+                        log1write("【エラー】ファイルが見つかりませんでした。" & fullpathfilename)
                     End If
                 Case "write" '新規・上書き
                     If filename.Length > 0 Then
@@ -5625,10 +5682,12 @@ Class WebRemocon
                         Else
                             '失敗
                             r = "2,ファイル書き込みに失敗しました" & vbCrLf
+                            log1write("【エラー】ファイル書き込みに失敗しました。" & fullpathfilename)
                         End If
                     Else
                         'ファイル名が指定されていない
                         r = "2,ファイル名が不正です" & vbCrLf
+                        log1write("【エラー】ファイル名が不正です。長さ0")
                     End If
                 Case "write_add" '追記
                     If filename.Length > 0 Then
@@ -5642,10 +5701,12 @@ Class WebRemocon
                         Catch ex As Exception
                             'ファイルオープンエラー
                             r = "2,追記書き込みに失敗しました。" & ex.Message & vbCrLf
+                            log1write("【エラー】追記書き込みに失敗しました。" & fullpathfilename & " > " & ex.Message)
                         End Try
                     Else
                         'ファイル名が指定されていない
                         r = "2,ファイル名が不正です" & vbCrLf
+                        log1write("【エラー】ファイル名が不正です。長さ0")
                     End If
                 Case "delete" '削除
                     If filename.Length > 0 Then
@@ -5655,14 +5716,17 @@ Class WebRemocon
                         Else
                             '失敗
                             r = "2,ファイル削除に失敗しました" & vbCrLf
+                            log1write("【エラー】ファイル削除に失敗しました。" & fullpathfilename)
                         End If
                     Else
                         'ファイル名が指定されていない
                         r = "2,ファイル名が不正です" & vbCrLf
+                        log1write("【エラー】ファイル名が不正です。長さ0")
                     End If
                 Case Else
                     'コマンドエラー
                     r = "2,コマンドが不正です" & vbCrLf
+                    log1write("【エラー】FILE_OPE:コマンドが不正です")
             End Select
         End If
 

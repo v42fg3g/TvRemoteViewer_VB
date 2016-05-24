@@ -94,6 +94,16 @@ Module モジュール_その他
     'RecTaskのチャンネル変更最大待機時間
     Public RecTask_CH_MaxWait As Integer = 5 '標準は5秒
 
+    '何回起動失敗したか
+    Public stream_reset_count() As Integer
+    Public stream_reset_limit As Integer = 3 '何回ストリーム起動に失敗したら配信停止するか
+
+    '何回waitingメッセージを表示したか
+    Public waitingmessage_count() As Integer
+    Public waitingmessage_str() As String
+    Public waitingmessage_slow_limit As Integer = 10 '秒間waitingが続いたらrefreshを長くする
+    Public waitingmessage_slow_sec As Integer = 4 'どれだけのrefresh値にするか
+
     Public Function time2unix(ByVal t As DateTime) As Integer
         Try
             Dim ut As Integer = DateDiff("s", #1/1/1970#, t)
