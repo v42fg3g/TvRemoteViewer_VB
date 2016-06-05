@@ -3879,6 +3879,7 @@ Class WebRemocon
                     Dim rUrl As String = context.Request.RawUrl
                     If rUrl.IndexOf("?") > 0 And rUrl.IndexOf("=") > 0 Then
                         'パラメーターがGETで渡されていればここで配信準備し直接配信する
+                        log1write("ffmpeg HTTP ストリーム直接配信開始の要求がありました")
                         '必須
                         Dim h_num As String = instr_pickup_para(rUrl, "num=", "&", 0)
                         If IsNumeric(h_num) Then
@@ -5267,7 +5268,14 @@ Class WebRemocon
         r &= "_udpOpt=" & Me._udpOpt3 & vbCrLf
         r &= vbCrLf
         r &= "【BonDriver】" & vbCrLf
-        r &= "_BonDriverPath=" & Me._udpApp & vbCrLf
+        'r &= "_BonDriverPath=" & Me._udpApp & vbCrLf
+        r &= "_BonDriverPath="
+        If Me._BonDriverPath.Length > 0 Then
+            r &= Me._BonDriverPath
+        Else
+            r &= Path.GetDirectoryName(Me._udpApp)
+        End If
+        r &= vbCrLf
         r &= "TvProgramD_BonDriver1st="
         If TvProgramD_BonDriver1st IsNot Nothing Then
             Dim s As String = ""
@@ -5275,8 +5283,8 @@ Class WebRemocon
                 r &= s & TvProgramD_BonDriver1st(i)
                 s = ","
             Next
-            r &= vbCrLf
         End If
+        r &= vbCrLf
         r &= "TvProgramS_BonDriver1st="
         If TvProgramS_BonDriver1st IsNot Nothing Then
             Dim s As String = ""
@@ -5284,8 +5292,8 @@ Class WebRemocon
                 r &= s & TvProgramS_BonDriver1st(i)
                 s = ","
             Next
-            r &= vbCrLf
         End If
+        r &= vbCrLf
         r &= "TvProgramP_BonDriver1st="
         If TvProgramP_BonDriver1st IsNot Nothing Then
             Dim s As String = ""
@@ -5293,8 +5301,8 @@ Class WebRemocon
                 r &= s & TvProgramP_BonDriver1st(i)
                 s = ","
             Next
-            r &= vbCrLf
         End If
+        r &= vbCrLf
         r &= "Allow_BonDriver4Streams=" & Me.Allow_BonDriver4Streams & vbCrLf
         r &= vbCrLf
         r &= "【HLSアプリ】" & vbCrLf

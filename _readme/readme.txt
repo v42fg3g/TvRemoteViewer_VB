@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.09
+TvRemoteViewer_VB v2.11
 
 
 
@@ -637,6 +637,8 @@ TvRemoteViewer_VB v2.09
 	2.10	ファイルオペレーションの一部不具合を修正
 		ライブ再生失敗時の再起動回数を制限するようにした（標準3回）
 		何度も同じwaitingページが表示された場合にリフレッシュ秒数を伸ばすようにした（標準10回以上で4秒）
+	2.11	LTV等でffmpeg http配信ができなくなっていたバグを修正
+		サーバー設定取得（WI_GET_TVRV_STATUS）においてBonDriverパスが間違えていたバグを修正（影響無し）
 
 
 
