@@ -92,6 +92,14 @@ TvRemoteViewer_VB v1.89
                 http://127.0.0.1:40003/WatchTV1.ts?VideoName=D%3a%5ctest.ts&VideoSeekSeconds=30
 		ちなみに↑のURLをVLCのストリームを開くから参照すると配信が開始されます
 
+		WatchTV1.webmにアクセスすることによりwebmストリームをブラウザ上で再生することも可能
+		（実験してみたらできた程度）
+		resolution=に対応するオプションをHLS_option_ffmpeg_http.txtに記述
+		例：[960x540webm]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+		その後、VLCまたはブラウザで
+		http://127.0.0.1:40003/WatchTV1.webm?resolution=960x540webm&VideoName=D:\test.ts
+		などとアクセスすれば再生されます。videoタグに埋め込み可
+
 
 ■配信停止
 
@@ -314,4 +322,4 @@ TvRemoteViewer_VB v1.89
 		html_publish_method=値
 
 	WI_GET_PROFILES.html
-		profile.txt内に記述されたプロファイル一覧が返されます
+		profile.txt内に記述されたプロファイル名一覧が返されます
