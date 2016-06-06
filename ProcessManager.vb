@@ -532,7 +532,7 @@ Public Class ProcessManager
                             End If
                         End If
                     End If
-                    If HTTPSTREAM_App = 2 And isMatch_HLS(hlsApp, "ffmpeg.exe") = 1 And (stream_mode = 2 Or stream_mode = 3) Then
+                    If HTTPSTREAM_App = 2 And isMatch_HLS(hlsApp, "ffmpeg") = 1 And (stream_mode = 2 Or stream_mode = 3) Then
                         'ffmpeg HTTPストリーム ファイル再生
                         'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
                         'すでにリストにある場合はリストから取り除いた後に改めて作成

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.11
+TvRemoteViewer_VB v2.12
 
 
 
@@ -639,6 +639,10 @@ TvRemoteViewer_VB v2.11
 		何度も同じwaitingページが表示された場合にリフレッシュ秒数を伸ばすようにした（標準10回以上で4秒）
 	2.11	LTV等でffmpeg http配信ができなくなっていたバグを修正
 		サーバー設定取得（WI_GET_TVRV_STATUS）においてBonDriverパスが間違えていたバグを修正（影響無し）
+	2.12	HLSアプリ判別で数カ所ffmpeg認識ができていなかったバグを修正
+		　起動時のffmpeg-presetチェックがスルーされていた
+		　ffmpeg-http配信でファイル再生ができなくなっていた
+		　ts以外の動画の長さ等が判別できなくなっていた
 
 
 

@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 2.11"
+    Private version As String = "TvRemoteViewer_VB 2.12"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -489,7 +489,7 @@ Public Class Form1
             log1write("【エラー】HLSアプリ " & f_hls_exe & " が見つかりません")
         End If
         'ffmpegプリセットチェック
-        If isMatch_HLS(f_hls_exe, "ffmpeg.exe") = 1 Then
+        If isMatch_HLS(f_hls_exe, "ffmpeg") = 1 Then
             Dim f_hlsopt As String = Me.textBoxHlsOpt2.Text.ToString
             If f_hlsopt.Length > 0 Then
                 Dim f_fpre_str As String = Instr_pickup(f_hlsopt, "-fpre """, """", 0)
