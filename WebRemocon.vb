@@ -3964,7 +3964,13 @@ Class WebRemocon
                                 'ffmpeg HTTP ストリーム配信開始
                                 log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
                                 'context.Response.Headers("Content-Type") = "video/mpeg"
-                                context.Response.Headers("Content-Type") = "video/MP2T"
+                                Select Case Path.GetExtension(context.Request.RawUrl)
+                                    Case ".webm"
+                                        context.Response.Headers("Content-Type") = "video/webm"
+                                    Case Else
+                                        context.Response.Headers("Content-Type") = "video/MP2T"
+                                End Select
+
                                 Me._procMan.ffmpeg_http_stream_Start(ffmpeg_num, context.Response.OutputStream)
 
                                 '現在稼働中のlist(i)._numをログに表示
