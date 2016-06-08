@@ -6067,8 +6067,15 @@ Class WebRemocon
         If video_path.IndexOf(".") > 0 Then
             Dim url_path As String = get_soutaiaddress_from_fileroot()
             Dim ffmpeg_path As String = Me._hlsApp
+            If exepath_ffmpeg.Length > 0 Then
+                ffmpeg_path = exepath_ffmpeg
+            End If
             Dim stream_folder As String = Me._fileroot
-            r = F_make_thumbnail(num, ffmpeg_path, stream_folder, url_path, video_path, ss, w, h)
+            If ffmpeg_path.ToLower.IndexOf("ffmpeg.exe") >= 0 Then
+                r = F_make_thumbnail(num, ffmpeg_path, stream_folder, url_path, video_path, ss, w, h)
+            Else
+                log1write("【エラー】サムネイルを作成するためのffmpeg.exeが見つかりませんでした")
+            End If
         End If
 
         Return r

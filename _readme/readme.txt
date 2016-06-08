@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.12
+TvRemoteViewer_VB v2.13
 
 
 
@@ -643,6 +643,7 @@ TvRemoteViewer_VB v2.12
 		　起動時のffmpeg-presetチェックがスルーされていた
 		　ffmpeg-http配信でファイル再生ができなくなっていた
 		　ts以外の動画の長さ等が判別できなくなっていた
+	2.13	フォーム上のHLSアプリにffmpeg以外が指定されている場合にサムネイル作成ができなｋったバグを修正
 
 
 
