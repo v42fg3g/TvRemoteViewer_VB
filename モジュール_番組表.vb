@@ -470,6 +470,8 @@ Module モジュール_番組表
                     Dim html As String = sr.ReadToEnd()
                     If html.IndexOf(")"">チューナー") > 0 And html.IndexOf(">録画<") > 0 Then
                         log1write("TVROCKのチューナーを" & TvProgram_tvrock_tuner.ToString & "番にセットしました")
+                    ElseIf TvProgram_tvrock_tuner = 0 And html.IndexOf(")"">チューナー") > 0 Then
+                        log1write("TVROCKのチューナー指定をリセットしました")
                     Else
                         log1write("【エラー】TVROCKのチューナーをセット出来ませんでした。チューナー番号を確認してください")
                     End If
