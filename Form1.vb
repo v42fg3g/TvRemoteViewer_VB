@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 2.13"
+    Private version As String = "TvRemoteViewer_VB 2.14"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -374,6 +374,9 @@ Public Class Form1
         log1write("httpサーバーを起動しています")
         StartHttpServer()
         log1write("httpサーバーを起動しました")
+
+        'ファイル操作許可リスト（file_ope_allow.txtが存在すれば）
+        Me._worker.load_file_ope_allow_filelist()
 
         'チャンネル情報を取得　今までは表示要求があった時点で１つ１つ取得していた
         Me._worker.WI_GET_CHANNELS()

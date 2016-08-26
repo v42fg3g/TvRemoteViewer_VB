@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v1.89
+TvRemoteViewer_VB v2.14
 
 
 ※1　	%NUM%は配信番号を表します
@@ -222,6 +222,13 @@ TvRemoteViewer_VB v1.89
 		temp		dirの場合のフィルタ(無指定の場合は「*」)　例：「*.jpg」や「mystream*」
 		結果：
 		0,SUCCESS(+改行[結果])　又は　2,[エラー内容]
+		
+		2.14～	ファイル操作は拡張子 .json .m3u .txtのみ有効
+			その他のファイルを操作したい場合はプログラムフォルダにfile_ope_allow.txtという
+			ファイルを設置し、操作したいファイル名をフォルダごと記入すること
+			*.拡張子でもOK
+			例：	file\abc.log
+				*.ini
 
 
 	WI_STREAMFILE_EXIST.html?fl_file=[ファイル名]

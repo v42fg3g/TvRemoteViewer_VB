@@ -5675,6 +5675,15 @@ Class WebRemocon
                                 r &= fn & vbCrLf
                             Next
                         End If
+                        'TvRemoteFiles向けdir View～.htmlダミー html作成を抑制
+                        'ViewTV～.htmlが無ければViewTV1.htmlが使用されるので実物が無くても問題無い
+                        If fl_file.Length = 0 Then
+                            For i = 1 To 100
+                                If Array.IndexOf(files, fullpath & "ViewTV" & i.ToString & ".html") < 0 Then
+                                    r &= fullpath & "ViewTV" & i.ToString & ".html" & vbCrLf
+                                End If
+                            Next
+                        End If
                     Catch ex As Exception
                         'エラー
                         r = "2,ファイル一覧取得中にエラーが発生しました。" & ex.Message & vbCrLf
@@ -5690,13 +5699,15 @@ Class WebRemocon
                     End If
                 Case "write" '新規・上書き
                     If filename.Length > 0 Then
-                        If str2file(fullpathfilename, fl_text, "UTF-8") = 1 Then
-                            '新規・上書き成功
-                            r = "0,SUCCESS" & vbCrLf
-                        Else
-                            '失敗
-                            r = "2,ファイル書き込みに失敗しました" & vbCrLf
-                            log1write("【エラー】ファイル書き込みに失敗しました。" & fullpathfilename)
+                        If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
+                            If str2file(fullpathfilename, fl_text, "UTF-8") = 1 Then
+                                '新規・上書き成功
+                                r = "0,SUCCESS" & vbCrLf
+                            Else
+                                '失敗
+                                r = "2,ファイル書き込みに失敗しました" & vbCrLf
+                                log1write("【エラー】ファイル書き込みに失敗しました。" & fullpathfilename)
+                            End If
                         End If
                     Else
                         'ファイル名が指定されていない
@@ -5705,18 +5716,20 @@ Class WebRemocon
                     End If
                 Case "write_add" '追記
                     If filename.Length > 0 Then
-                        Try
-                            Dim sw As New System.IO.StreamWriter(fullpathfilename, True, System.Text.Encoding.GetEncoding("UTF-8"))
-                            '内容を追加モードで書き込む
-                            sw.Write(fl_text)
-                            '閉じる
-                            sw.Close()
-                            r = "0,SUCCESS" & vbCrLf
-                        Catch ex As Exception
-                            'ファイルオープンエラー
-                            r = "2,追記書き込みに失敗しました。" & ex.Message & vbCrLf
-                            log1write("【エラー】追記書き込みに失敗しました。" & fullpathfilename & " > " & ex.Message)
-                        End Try
+                        If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
+                            Try
+                                Dim sw As New System.IO.StreamWriter(fullpathfilename, True, System.Text.Encoding.GetEncoding("UTF-8"))
+                                '内容を追加モードで書き込む
+                                sw.Write(fl_text)
+                                '閉じる
+                                sw.Close()
+                                r = "0,SUCCESS" & vbCrLf
+                            Catch ex As Exception
+                                'ファイルオープンエラー
+                                r = "2,追記書き込みに失敗しました。" & ex.Message & vbCrLf
+                                log1write("【エラー】追記書き込みに失敗しました。" & fullpathfilename & " > " & ex.Message)
+                            End Try
+                        End If
                     Else
                         'ファイル名が指定されていない
                         r = "2,ファイル名が不正です" & vbCrLf
@@ -5724,13 +5737,15 @@ Class WebRemocon
                     End If
                 Case "delete" '削除
                     If filename.Length > 0 Then
-                        If deletefile(fullpathfilename) = 1 Then
-                            '削除成功
-                            r = "0,SUCCESS" & vbCrLf
-                        Else
-                            '失敗
-                            r = "2,ファイル削除に失敗しました" & vbCrLf
-                            log1write("【エラー】ファイル削除に失敗しました。" & fullpathfilename)
+                        If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
+                            If deletefile(fullpathfilename) = 1 Then
+                                '削除成功
+                                r = "0,SUCCESS" & vbCrLf
+                            Else
+                                '失敗
+                                r = "2,ファイル削除に失敗しました" & vbCrLf
+                                log1write("【エラー】ファイル削除に失敗しました。" & fullpathfilename)
+                            End If
                         End If
                     Else
                         'ファイル名が指定されていない
@@ -5746,6 +5761,41 @@ Class WebRemocon
 
         Return r
     End Function
+
+    Public file_ope_allow_filelist() As String
+    Public Function file_ope_allow_files(ByVal fl_cmd As String, ByVal fl_file As String, ByVal fullpathfilename As String)
+        Dim r As Integer = 0
+
+        Dim ext As String = Path.GetExtension(fullpathfilename)
+
+        If ext.Length > 0 Then
+            If file_ope_allow_filelist IsNot Nothing Then
+                If Array.IndexOf(file_ope_allow_filelist, fl_file) >= 0 Then
+                    r = 1
+                ElseIf Array.IndexOf(file_ope_allow_filelist, "*" & ext) >= 0 Then
+                    r = 1
+                End If
+            End If
+
+            Select Case ext
+                Case ".json", ".m3u", ".txt"
+                    'jsonとm3uとtxtだけ許可
+                    r = 1
+            End Select
+        End If
+
+        If r = 0 Then
+            log1write("【エラー】" & fullpathfilename & "への" & fl_cmd & "操作は遮断されました。")
+        End If
+
+        Return r
+    End Function
+
+    Public Sub load_file_ope_allow_filelist()
+        If file_exist("file_ope_allow.txt") = 1 Then
+            file_ope_allow_filelist = file2line("file_ope_allow.txt")
+        End If
+    End Sub
 
     '　本体はProcessManager.vbに
     'Public Function WI_GET_LIVE_STREAM() As String
