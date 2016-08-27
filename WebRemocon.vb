@@ -5656,7 +5656,7 @@ Class WebRemocon
             End If
         End If
 
-        fl_text = check_fl_text(fl_text) 'エラーならば"[<ERROR>]"が返ってくる
+        fl_text = check_fl_text(fl_cmd, fl_file, fl_text) 'エラーならば"[<ERROR>]"が返ってくる
 
         If fullpath.IndexOf("..") >= 0 Then
             r = "2,フォルダ指定が不正です" & vbCrLf '失敗
@@ -5767,36 +5767,102 @@ Class WebRemocon
         Return r
     End Function
 
-    Public Function check_fl_text(ByVal fl_text As String) As String
-        Dim ng_words() As String = {"onblur", "onfocus", "onchange", "onselect", "onselectstart", "onsubmit", "onreset", "onabort", "onerror", "onload", "onunload", "onclick", "ondblclick", "onkeypress", "onkeydown", "onkeyup", "onmouseout", "onmouseover", "onmousedown", "onmouseup", "onmousemove", "ondragdrop"} '操作中止にする文字 (httpや://はリモコンで使用)
-        '↑番組名に使われ無さそうな単語
-        Dim wide_words() As String = {"script", "input"} '全角に変換し、かつ2文字目に空白を挿入 （「=」に適用したかったがリモコンで使用）
-        '↑番組名に使われるかもな単語
+    Public Function check_fl_text(ByVal fl_cmd As String, ByVal fl_file As String, ByVal fl_text As String) As String
+        If fl_text IsNot Nothing Then
 
-        Dim s As String = fl_text.ToLower '小文字に
-        s = s.Replace(" ", "")
-        If ng_words IsNot Nothing Then
-            For i As Integer = 0 To ng_words.Length - 1
-                If ng_words(i).Length > 0 Then
-                    If s.IndexOf(ng_words(i)) >= 0 Then
-                        fl_text = "[<ERROR>]" 'アウト
-                        log1write("【エラー】NGワードにヒットしました。[" & ng_words(i) & "]")
-                        Exit For
-                    End If
-                End If
-            Next
-        End If
+            Dim i As Integer = 0
 
-        If wide_words IsNot Nothing Then
-            For i As Integer = 0 To wide_words.Length - 1
-                If wide_words(i).Length > 0 Then
-                    Dim w As String = StrConv(wide_words(i), VbStrConv.Wide)
-                    If w.Length > 1 Then
-                        w = w.Substring(0, 1) & " " & w.Substring(1)
+            Dim ng_words() As String = Nothing '操作中止にする文字 (httpや://はリモコンで使用)
+            '↑含まれていれば操作中止 番組名に含まれていると再生に不具合　なのでとりあえず未使用
+
+            '全角に変換
+            Dim wide_words() As String = {"<", ">", "script", "input", "onblur", "onfocus", "onchange", "onselect", "onselectstart", "onsubmit", "onreset", "onabort", "onerror", "onload", "onunload", "onclick", "ondblclick", "onkeypress", "onkeydown", "onkeyup", "onmouseout", "onmouseover", "onmousedown", "onmouseup", "onmousemove", "ondragdrop"}
+            '↑これらの文字列を含むファイルはファイル再生不可（まずないと思うが・・）
+            '↑<>はファイル名には使用されていない。TvRemoteFilesでも書き込まれることは無い。が、番組名には使われるかも(影響なしのはず）
+
+            Dim s As String = fl_text.ToLower '小文字に
+
+            'ローカルIP以外のURLが書き込まれるのを防ぐ ドメイン名も不可　たぶんリモコンはローカルIP
+            Dim ip_chk As Integer = 0
+            If s.IndexOf("://") >= 0 Then
+                Dim domainstr As String = Instr_pickup(s, "://", "/", 0)
+                If domainstr.Length > 0 Then
+                    Dim e() As String = domainstr.Split(":")
+                    domainstr = e(0)
+
+                    Dim d() As String = domainstr.Split(".")
+                    If d.Length = 4 Then
+                        For i = 0 To 3
+                            If IsNumeric(d(i)) Then
+                            Else
+                                '不正
+                                ip_chk = 1
+                                Exit For
+                            End If
+                        Next
+                        If ip_chk = 0 Then
+                            'ローカルIPかチェック
+                            Select Case d(0)
+                                Case "10"
+                                Case "127"
+                                    If d(1) <> "0" Or d(2) <> "0" Or d(3) <> "1" Then
+                                        ip_chk = 1
+                                    End If
+                                Case "172"
+                                    If Val(d(1)) < 16 Or Val(d(1)) > 31 Then
+                                        ip_chk = 1
+                                    End If
+                                Case "192"
+                                    If d(1) <> "168" Then
+                                        ip_chk = 1
+                                    End If
+                                Case Else
+                                    ip_chk = 1
+                            End Select
+                        End If
+                    Else
+                        '不正
+                        ip_chk = 1
                     End If
-                    fl_text = Replace(fl_text, wide_words(i), w, 1, -1, CompareMethod.Text) '大文字小文字区別無く置換
+                Else
+                    '不正
+                    ip_chk = 1
                 End If
-            Next
+
+                If ip_chk = 1 Then
+                    fl_text = "[<ERROR>]"
+                    log1write("【エラー】WI_FILE_OPE ローカルIPではありません。" & fl_cmd & " " & fl_file & " [" & domainstr & "]")
+                    Return fl_text
+                    Exit Function
+                End If
+            End If
+
+            '禁止文字
+            If ng_words IsNot Nothing Then
+                For i = 0 To ng_words.Length - 1
+                    If ng_words(i).Length > 0 Then
+                        If s.IndexOf(ng_words(i)) >= 0 Then
+                            fl_text = "[<ERROR>]" 'アウト
+                            log1write("【エラー】NGワードにヒットしました。" & fl_cmd & " " & fl_file & " [" & ng_words(i) & "]")
+                            Exit For
+                        End If
+                    End If
+                Next
+            End If
+
+            '全角に変換
+            If wide_words IsNot Nothing Then
+                For i = 0 To wide_words.Length - 1
+                    If wide_words(i).Length > 0 Then
+                        If s.IndexOf(wide_words(i)) >= 0 Then
+                            Dim w As String = StrConv(wide_words(i), VbStrConv.Wide)
+                            fl_text = Replace(fl_text, wide_words(i), w, 1, -1, CompareMethod.Text) '大文字小文字区別無く置換
+                            log1write("【警告】NGワードを全角に変換しました。" & fl_cmd & " " & fl_file & " [" & wide_words(i) & "]")
+                        End If
+                    End If
+                Next
+            End If
+
         End If
 
         Return fl_text
