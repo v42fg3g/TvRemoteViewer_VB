@@ -5768,12 +5768,13 @@ Class WebRemocon
     End Function
 
     Public Function check_fl_text(ByVal fl_text As String) As String
-        Dim ng_words() As String = {"http", "script", "://"} '操作中止にする文字
-        Dim wide_words() As String = {"="} '全角に変換する文字（番組名に含まれる可能性アリ）
+        Dim ng_words() As String = {"onblur", "onfocus", "onchange", "onselect", "onselectstart", "onsubmit", "onreset", "onabort", "onerror", "onload", "onunload", "onclick", "ondblclick", "onkeypress", "onkeydown", "onkeyup", "onmouseout", "onmouseover", "onmousedown", "onmouseup", "onmousemove", "ondragdrop"} '操作中止にする文字 (httpや://はリモコンで使用)
+        '↑番組名に使われ無さそうな単語
+        Dim wide_words() As String = {"script", "input"} '全角に変換し、かつ2文字目に空白を挿入 （「=」に適用したかったがリモコンで使用）
+        '↑番組名に使われるかもな単語
 
         Dim s As String = fl_text.ToLower '小文字に
         s = s.Replace(" ", "")
-
         If ng_words IsNot Nothing Then
             For i As Integer = 0 To ng_words.Length - 1
                 If ng_words(i).Length > 0 Then
@@ -5790,7 +5791,10 @@ Class WebRemocon
             For i As Integer = 0 To wide_words.Length - 1
                 If wide_words(i).Length > 0 Then
                     Dim w As String = StrConv(wide_words(i), VbStrConv.Wide)
-                    fl_text = fl_text.Replace(wide_words(i), w)
+                    If w.Length > 1 Then
+                        w = w.Substring(0, 1) & " " & w.Substring(1)
+                    End If
+                    fl_text = Replace(fl_text, wide_words(i), w, 1, -1, CompareMethod.Text) '大文字小文字区別無く置換
                 End If
             Next
         End If
