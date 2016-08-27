@@ -5656,12 +5656,17 @@ Class WebRemocon
             End If
         End If
 
+        fl_text = check_fl_text(fl_text) 'エラーならば"[<ERROR>]"が返ってくる
+
         If fullpath.IndexOf("..") >= 0 Then
             r = "2,フォルダ指定が不正です" & vbCrLf '失敗
             log1write("【エラー】不正なフォルダへのアクセスがありました。" & fullpath)
         ElseIf folder_exist(fullpath) < 1 Then
             r = "2,指定されたフォルダが見つかりません" & vbCrLf
             log1write("【エラー】指定されたフォルダが見つかりません。" & fullpath)
+        ElseIf fl_text = "[<ERROR>]" Then
+            r = "2,WI_FILE_OPE 不正な文字列が指定されました" & vbCrLf
+            log1write("【エラー】WI_FILE_OPE 不正な文字列が指定されました。")
         Else
             Select Case fl_cmd
                 Case "dir"
@@ -5760,6 +5765,37 @@ Class WebRemocon
         End If
 
         Return r
+    End Function
+
+    Public Function check_fl_text(ByVal fl_text As String) As String
+        Dim ng_words() As String = {"http", "script", "://"} '操作中止にする文字
+        Dim wide_words() As String = {"="} '全角に変換する文字（番組名に含まれる可能性アリ）
+
+        Dim s As String = fl_text.ToLower '小文字に
+        s = s.Replace(" ", "")
+
+        If ng_words IsNot Nothing Then
+            For i As Integer = 0 To ng_words.Length - 1
+                If ng_words(i).Length > 0 Then
+                    If s.IndexOf(ng_words(i)) >= 0 Then
+                        fl_text = "[<ERROR>]" 'アウト
+                        log1write("【エラー】NGワードにヒットしました。[" & ng_words(i) & "]")
+                        Exit For
+                    End If
+                End If
+            Next
+        End If
+
+        If wide_words IsNot Nothing Then
+            For i As Integer = 0 To wide_words.Length - 1
+                If wide_words(i).Length > 0 Then
+                    Dim w As String = StrConv(wide_words(i), VbStrConv.Wide)
+                    fl_text = fl_text.Replace(wide_words(i), w)
+                End If
+            Next
+        End If
+
+        Return fl_text
     End Function
 
     Public file_ope_allow_filelist() As String
