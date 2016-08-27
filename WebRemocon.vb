@@ -5792,7 +5792,7 @@ Class WebRemocon
                     ip_err = 1
                     Exit While
                 End If
-                sp = s.IndexOf("://", sp + 3)
+                sp = s.IndexOf("://", sp + 2)
             End While
             If ip_err = 1 Then
                 fl_text = "[<ERROR>]"
