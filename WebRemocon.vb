@@ -5783,58 +5783,22 @@ Class WebRemocon
             Dim s As String = fl_text.ToLower '小文字に
 
             'ローカルIP以外のURLが書き込まれるのを防ぐ ドメイン名も不可　たぶんリモコンはローカルIP
-            Dim ip_chk As Integer = 0
-            If s.IndexOf("://") >= 0 Then
-                Dim domainstr As String = Instr_pickup(s, "://", "/", 0)
-                If domainstr.Length > 0 Then
-                    Dim e() As String = domainstr.Split(":")
-                    domainstr = e(0)
-
-                    Dim d() As String = domainstr.Split(".")
-                    If d.Length = 4 Then
-                        For i = 0 To 3
-                            If IsNumeric(d(i)) Then
-                            Else
-                                '不正
-                                ip_chk = 1
-                                Exit For
-                            End If
-                        Next
-                        If ip_chk = 0 Then
-                            'ローカルIPかチェック
-                            Select Case d(0)
-                                Case "10"
-                                Case "127"
-                                    If d(1) <> "0" Or d(2) <> "0" Or d(3) <> "1" Then
-                                        ip_chk = 1
-                                    End If
-                                Case "172"
-                                    If Val(d(1)) < 16 Or Val(d(1)) > 31 Then
-                                        ip_chk = 1
-                                    End If
-                                Case "192"
-                                    If d(1) <> "168" Then
-                                        ip_chk = 1
-                                    End If
-                                Case Else
-                                    ip_chk = 1
-                            End Select
-                        End If
-                    Else
-                        '不正
-                        ip_chk = 1
-                    End If
-                Else
-                    '不正
-                    ip_chk = 1
+            Dim ip_err As Integer = 0
+            Dim sp As Integer = s.IndexOf("://")
+            Dim domainstr As String = ""
+            While sp >= 0
+                domainstr = Instr_pickup(s, "://", "/", sp)
+                If IsLocalIP(domainstr) = 0 Then
+                    ip_err = 1
+                    Exit While
                 End If
-
-                If ip_chk = 1 Then
-                    fl_text = "[<ERROR>]"
-                    log1write("【エラー】WI_FILE_OPE ローカルIPではありません。" & fl_cmd & " " & fl_file & " [" & domainstr & "]")
-                    Return fl_text
-                    Exit Function
-                End If
+                sp = s.IndexOf("://", sp + 3)
+            End While
+            If ip_err = 1 Then
+                fl_text = "[<ERROR>]"
+                log1write("【エラー】WI_FILE_OPE ローカルIPではありません。" & fl_cmd & " " & fl_file & " [" & domainstr & "]")
+                Return fl_text
+                Exit Function
             End If
 
             '禁止文字
@@ -5866,6 +5830,60 @@ Class WebRemocon
         End If
 
         Return fl_text
+    End Function
+
+    Public Function IsLocalIP(ByVal domainstr As String) As Integer
+        Dim r As Integer = 0
+        Dim ip_chk As Integer = 0
+
+        If domainstr.Length > 0 Then
+            Dim e() As String = domainstr.Split(":")
+            domainstr = e(0)
+
+            Dim d() As String = domainstr.Split(".")
+            If d.Length = 4 Then
+                For i = 0 To 3
+                    If IsNumeric(d(i)) Then
+                    Else
+                        '不正
+                        ip_chk = 1
+                        Exit For
+                    End If
+                Next
+                If ip_chk = 0 Then
+                    'ローカルIPかチェック
+                    Select Case d(0)
+                        Case "10"
+                        Case "127"
+                            If d(1) <> "0" Or d(2) <> "0" Or d(3) <> "1" Then
+                                ip_chk = 1
+                            End If
+                        Case "172"
+                            If Val(d(1)) < 16 Or Val(d(1)) > 31 Then
+                                ip_chk = 1
+                            End If
+                        Case "192"
+                            If d(1) <> "168" Then
+                                ip_chk = 1
+                            End If
+                        Case Else
+                            ip_chk = 1
+                    End Select
+                End If
+            Else
+                '不正
+                ip_chk = 1
+            End If
+        Else
+            '不正
+            ip_chk = 1
+        End If
+
+        If ip_chk = 0 Then
+            r = 1
+        End If
+
+        Return r
     End Function
 
     Public file_ope_allow_filelist() As String
