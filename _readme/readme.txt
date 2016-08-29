@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.17
+TvRemoteViewer_VB v2.18
 
 
 
@@ -650,6 +650,7 @@ TvRemoteViewer_VB v2.17
 	2.17	ネット上から非推奨バージョン＆推奨バージョンを取得するようにした
 		WI_GET_VERSION.htmlを追加
 		NVEncがストリーム中、いらなくなったtsファイルの処理を追加（付け忘れ）
+	2.18	NicoJKコメント再生時、jkコメントフォルダが存在しないと例外エラーが起こっていたバグを修正
 
 
 

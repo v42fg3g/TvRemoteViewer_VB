@@ -1120,26 +1120,34 @@ Module モジュール_ニコニコ実況
     Public Function search_commentfile_in_folder(ByVal commentfolder As String, ByVal midtime As Integer) As String
         Dim targetfile As String = ""
         Dim chk_over As Integer = 0
-        Dim files2 As String() = System.IO.Directory.GetFiles(commentfolder, "*.txt")
-        If files2 IsNot Nothing Then
-            'unixtimeだけを抜き出して並び替え
-            For i = 0 To files2.Length - 1
-                files2(i) = Val(Path.GetFileName(files2(i))).ToString
-            Next
-            Dim k As Integer = files2.Length
-            ReDim Preserve files2(k)
-            files2(k) = time2unix(C_DAY2038).ToString 'ダミー
-            Array.Sort(files2)
-            '該当時間のファイルがあれば
-            For i = 0 To files2.Length - 2
-                If midtime >= Val(files2(i)) And midtime < Val(files2(i + 1)) Then
-                    If midtime - Val(files2(i)) < (60 * 60 * 24) Then
-                        '24時間以内のものならば
-                        targetfile = commentfolder & "\" & files2(i) & ".txt"
-                    End If
-                    Exit For
+        If folder_exist(commentfolder) = 1 Then
+            Try
+                Dim files2 As String() = System.IO.Directory.GetFiles(commentfolder, "*.txt")
+                If files2 IsNot Nothing Then
+                    'unixtimeだけを抜き出して並び替え
+                    For i = 0 To files2.Length - 1
+                        files2(i) = Val(Path.GetFileName(files2(i))).ToString
+                    Next
+                    Dim k As Integer = files2.Length
+                    ReDim Preserve files2(k)
+                    files2(k) = time2unix(C_DAY2038).ToString 'ダミー
+                    Array.Sort(files2)
+                    '該当時間のファイルがあれば
+                    For i = 0 To files2.Length - 2
+                        If midtime >= Val(files2(i)) And midtime < Val(files2(i + 1)) Then
+                            If midtime - Val(files2(i)) < (60 * 60 * 24) Then
+                                '24時間以内のものならば
+                                targetfile = commentfolder & "\" & files2(i) & ".txt"
+                            End If
+                            Exit For
+                        End If
+                    Next
                 End If
-            Next
+            Catch ex As Exception
+                log1write("【エラー】NicoJKファイル一覧取得中にエラーが発生しました。" & ex.Message)
+            End Try
+        Else
+            log1write("コメントフォルダ" & commentfolder & "が存在しません")
         End If
 
         Return targetfile
