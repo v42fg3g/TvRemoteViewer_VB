@@ -260,6 +260,7 @@ TvRemoteViewer_VB v2.14
 				2: webclient
 				3: HttpWebRequest
 		例：WI_GET_HTML.html?temp=2,UTF-8,,http://www.google.co.jp/
+		注意：2ch.netのread.cgi,subback.html,bbsmenu.html以外は弾くようになっています
 
 
 	WI_GET_THUMBNAIL.html?temp=[作成ソース],[秒数指定],[幅],[縦]
@@ -330,3 +331,10 @@ TvRemoteViewer_VB v2.14
 
 	WI_GET_PROFILES.html
 		profile.txt内に記述されたプロファイル名一覧が返されます
+
+	WI_GET_VERSION.html?temp=[1,2,3,9]
+		バージョン情報を返す（1時間に1回更新されます）
+		temp	1 : 起動中のバージョン
+			2 : 非推奨バージョン
+			3 : 推奨バージョン
+			9 : 起動中バージョン,非推奨バージョン,推奨バージョン 
