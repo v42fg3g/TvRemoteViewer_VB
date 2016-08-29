@@ -1,6 +1,11 @@
 ﻿Imports System.IO
 
 Module モジュール_その他
+    'バージョン
+    Public TvRemoteViewer_VB_version As Double = 2.17
+    Public TvRemoteViewer_VB_notrecommend_version As Double = 0
+    Public TvRemoteViewer_VB_recommend_version As Double = 0
+
     'プロファイル　hlsApp,resolution,Audioモード
     Public profiletxt As String = ""
 

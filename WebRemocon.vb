@@ -4440,6 +4440,23 @@ Class WebRemocon
                                     Case "WI_GET_PROFILES"
                                         WI_cmd_reply = WI_GET_PROFILES()
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_VERSION"
+                                        If temp.Length > 0 Then
+                                            Select Case Val(Trim(temp))
+                                                Case 2
+                                                    WI_cmd_reply = TvRemoteViewer_VB_notrecommend_version.ToString '非推奨バージョン番号
+                                                Case 3
+                                                    WI_cmd_reply = TvRemoteViewer_VB_recommend_version.ToString '非推奨バージョン番号
+                                                Case 9
+                                                    'このバージョン,非推奨バージョン,推奨バージョン
+                                                    WI_cmd_reply = TvRemoteViewer_VB_version.ToString & "," & TvRemoteViewer_VB_notrecommend_version.ToString & "," & TvRemoteViewer_VB_recommend_version.ToString
+                                                Case Else
+                                                    WI_cmd_reply = TvRemoteViewer_VB_version.ToString 'このプログラムのバージョン番号
+                                            End Select
+                                        Else
+                                            WI_cmd_reply = TvRemoteViewer_VB_version.ToString 'このプログラムのバージョン番号
+                                        End If
+                                        WI_cmd_reply_force = 1
                                 End Select
                             End If
 

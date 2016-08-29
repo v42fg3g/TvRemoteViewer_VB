@@ -3,7 +3,6 @@ Imports System.IO
 Imports System.Threading
 
 Public Class Form1
-    Private version As String = "TvRemoteViewer_VB 2.16"
 
     '指定語句が含まれるBonDriverは無視する
     Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
@@ -95,7 +94,7 @@ Public Class Form1
 
             'ffmpeg.exeを使用している場合は、1分間に1回古いTSを削除する
             If OLDTS_NODELETE = 0 Then
-                If chk_timer1_deleteTS >= 60 And Me._worker.check_hlsApp_in_stream("ffmpeg,QSVEnc") = 1 Then
+                If chk_timer1_deleteTS >= 60 And Me._worker.check_hlsApp_in_stream("ffmpeg,QSVEnc,NVEnc") = 1 Then
                     delete_old_TS()
                     chk_timer1_deleteTS = 0
                 End If
@@ -110,16 +109,20 @@ Public Class Form1
                 s = "TvRemoteViewer_VB" & vbCrLf & "配信中：" & Trim(s)
             Else
                 LabelStream.Text = " " 'ついでにフォーム上にも表示
-                s = version '"TvRemoteViewer_VB"
+                s = "TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString '"TvRemoteViewer_VB"
             End If
             If s.Length > 60 Then
                 '64文字を超えるとエラーになる
                 s = s.Substring(0, 60) & ".."
             End If
+            'アップデートの必要性の有無
+            If TvRemoteViewer_VB_notrecommend_version > 0 And TvRemoteViewer_VB_version <= TvRemoteViewer_VB_notrecommend_version Then
+                s = "【警告】アップデートのお願い　非推奨バージョンです"
+            End If
             Try
                 NotifyIcon1.Text = s
             Catch ex As Exception
-                NotifyIcon1.Text = version '"TvRemoteViewer_VB"
+                NotifyIcon1.Text = "TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString '"TvRemoteViewer_VB"
             End Try
 
             'アイドル時間が指定分に達した場合は全て切断する
@@ -166,6 +169,13 @@ Public Class Form1
                         End If
                     Next
                 End If
+            End If
+
+            '1時間に1回バージョンチェック
+            Dim nowt As DateTime = Now()
+            If Minute(nowt) = 58 And Second(nowt) = 20 Then
+                check_version_multi() '邪魔にならないようマルチスレッドで確認
+                log1write("推奨バージョンチェックを行いました")
             End If
 
             chk_timer1 = 0
@@ -307,8 +317,70 @@ Public Class Form1
             Close()
         End If
 
-        log1write(version)
+        log1write("TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString)
+
+        'バージョンチェック
+        check_version()
+        If TvRemoteViewer_VB_notrecommend_version > 0 And TvRemoteViewer_VB_version <= TvRemoteViewer_VB_notrecommend_version Then
+            If TvRemoteViewer_VB_recommend_version > 0 Then
+                MsgBox("TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString & "は非推奨バージョンに指定されています" & vbCrLf & TvRemoteViewer_VB_recommend_version.ToString & "以上へアップデートしてください")
+            Else
+                MsgBox("TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString & "は非推奨バージョンに指定されています" & vbCrLf & "最新バージョンへアップデートしてください")
+            End If
+            '終了
+            Close()
+        End If
+        If TvRemoteViewer_VB_recommend_version > 0 And TvRemoteViewer_VB_version < TvRemoteViewer_VB_recommend_version Then
+            log1write("【お願い】TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString & "は推奨バージョン未満です。アップデートを推奨します")
+        End If
+
     End Sub
+
+    Private Sub check_version_multi()
+        Dim t As New System.Threading.Thread(New System.Threading.ThreadStart(AddressOf check_version))
+        'スレッドを開始する
+        t.Start()
+    End Sub
+
+    Private Function check_version() As Integer
+        Dim r As Integer = 0
+
+        Dim s As String = get_html_by_webclient("http://vb45wb5b.up.seesaa.net/image/version.txt", "shift_jis", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
+        If s.Length > 8 Then
+            Dim line() As String = Split(s, vbCrLf)
+            If line IsNot Nothing Then
+                For i As Integer = 0 To line.Length - 1
+                    Dim d() As String = line(i).Split("=")
+                    If d.Length = 2 Then
+                        Select Case Trim(d(0))
+                            Case "notrecommend"
+                                Try
+                                    TvRemoteViewer_VB_notrecommend_version = Double.Parse(Trim(d(1)))
+                                Catch ex As Exception
+                                    log1write("【エラー】非推奨バージョン番号が不正です。[" & Trim(d(1)) & "]")
+                                End Try
+                            Case "recommend"
+                                Try
+                                    TvRemoteViewer_VB_recommend_version = Double.Parse(Trim(d(1)))
+                                Catch ex As Exception
+                                    log1write("【エラー】推奨バージョン番号が不正です。[" & Trim(d(1)) & "]")
+                                End Try
+                        End Select
+                    End If
+                Next
+                If TvRemoteViewer_VB_notrecommend_version = 0 Then
+                    log1write("非推奨バージョンが取得できませんでした")
+                End If
+                If TvRemoteViewer_VB_recommend_version = 0 Then
+                    log1write("推奨バージョンが取得できませんでした")
+                End If
+            End If
+        Else
+            log1write("ネット上から推奨バージョン情報が取得出来ませんでした")
+        End If
+
+        Return r
+    End Function
 
     Private Function F_check_cmd() As Integer
         'とりあえずコマンドラインに「-dok」(二重起動OK）があるかどうかだけチェック

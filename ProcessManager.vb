@@ -1696,8 +1696,8 @@ Public Class ProcessManager
                     End If
                 End If
 
-                If n > 0 And stream_mode = 0 And check_hlsApp_in_stream("ffmpeg,QSVEnc") = 1 Then
-                    'ファイル再生＆HLSアプリがffmpeg,QSVEncならば
+                If n > 0 And stream_mode = 0 And check_hlsApp_in_stream("ffmpeg,QSVEnc,NVEnc") = 1 Then
+                    'ファイル再生＆HLSアプリがffmpeg,QSVEnc,NVEncならば
                     Dim s As String = ReadAllTexts(tempFile)
                     'm3u8に書かれている最初のファイル
                     Dim m As Integer = -1
