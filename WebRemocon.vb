@@ -4032,10 +4032,41 @@ Class WebRemocon
 
                     'MIME TYPE
                     Dim mimetype As String = get_mimetype(req.Url.LocalPath)
+                    Dim Url_ext As String = System.IO.Path.GetExtension(req.Url.LocalPath)
+                    If mimetype.Length > 0 Then
+                        'iniで指定されている場合値が設定されている
+                    ElseIf Me._MIME_TYPE_DEFAULT.Length > 0 Then
+                        'iniで標準mimetypeが指定されている場合
+                        mimetype = Me._MIME_TYPE_DEFAULT
+                    End If
+                    If mimetype.Length = 0 Then
+                        '指定が無い場合でも必ずmimetypeを返す
+                        Select Case Url_ext
+                            Case "", ".html", ".htm"
+                                mimetype = "text/html"
+                            Case ".js"
+                                mimetype = "text/javascript"
+                            Case ".css"
+                                mimetype = "text/css"
+                            Case ".m3u8", ".m3u"
+                                mimetype = "application/x-mpegURL"
+                            Case ".json"
+                                'mimetype = "application/json" '動作しない
+                                mimetype = "text/plain" 'これでOK
+                            Case ".png"
+                                mimetype = "image/png"
+                            Case ".jpg"
+                                mimetype = "image/jpg"
+                            Case ".gif"
+                                mimetype = "image/gif"
+                            Case ".ico"
+                                mimetype = "image/x-icon"
+                            Case Else
+                                mimetype = "text/plain"
+                        End Select
+                    End If
                     If mimetype.Length > 0 Then
                         res.ContentType = mimetype
-                    ElseIf Me._MIME_TYPE_DEFAULT.Length > 0 Then
-                        res.ContentType = Me._MIME_TYPE_DEFAULT
                     End If
 
                     Dim auth_ok As Integer = 0
@@ -4075,18 +4106,19 @@ Class WebRemocon
                             path = path & "index.html"
                         End If
 
-                        log1write(req.Url.LocalPath & "へのリクエストがありました。")
+                        Dim mtypestr As String = ""
                         If res.ContentType IsNot Nothing Then
                             If res.ContentType.Length > 0 Then
-                                log1write("MIME TYPE : " & res.ContentType)
+                                mtypestr = "(" & res.ContentType & ")"
                             End If
                         End If
+                        log1write(req.Url.LocalPath & "へのリクエストがありました。" & mtypestr)
 
                         'リクエストされたURL
                         Dim req_Url As String = req.Url.LocalPath
 
                         'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
-                        If path.IndexOf(".htm") > 0 Then
+                        If System.IO.Path.GetExtension(path).IndexOf(".htm") >= 0 Then
                             'HTMLなら
 
                             '最後に.htmlにアクセスがあった日時を記録
@@ -5056,6 +5088,13 @@ Class WebRemocon
                                 End If
                             End If
 
+                            Try
+                                res.AppendHeader("X-Content-Type-Options", "nosniff")
+                            Catch ex As Exception
+                                '問題無いはずだが念のため
+                                log1write("【エラー】レスポンスヘッダーの追加に失敗しました。" & ex.Message)
+                            End Try
+
                             If html_publish_method = 1 Then
                                 Try
                                     Dim sw As New StreamWriter(res.OutputStream, System.Text.Encoding.GetEncoding(HTML_OUT_CHARACTER_CODE))
@@ -5811,6 +5850,19 @@ Class WebRemocon
                 End If
                 sp = s.IndexOf("://", sp + 2)
             End While
+            '//もチェック
+            If ip_err = 0 Then
+                sp = s.IndexOf("//")
+                domainstr = ""
+                While sp >= 0
+                    domainstr = Instr_pickup(s, "//", "/", sp)
+                    If IsLocalIP(domainstr) = 0 Then
+                        ip_err = 1
+                        Exit While
+                    End If
+                    sp = s.IndexOf("//", sp + 2)
+                End While
+            End If
             If ip_err = 1 Then
                 fl_text = "[<ERROR>]"
                 log1write("【エラー】WI_FILE_OPE ローカルIPではありません。" & fl_cmd & " " & fl_file & " [" & domainstr & "]")
