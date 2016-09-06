@@ -4473,20 +4473,23 @@ Class WebRemocon
                                         WI_cmd_reply = WI_GET_PROFILES()
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_VERSION"
+                                        Dim ver_now As String = Format(TvRemoteViewer_VB_version, "0.00")
+                                        Dim ver_not As String = Format(TvRemoteViewer_VB_notrecommend_version, "0.00")
+                                        Dim ver_rec As String = Format(TvRemoteViewer_VB_recommend_version, "0.00")
                                         If temp.Length > 0 Then
                                             Select Case Val(Trim(temp))
                                                 Case 2
-                                                    WI_cmd_reply = TvRemoteViewer_VB_notrecommend_version.ToString '非推奨バージョン番号
+                                                    WI_cmd_reply = ver_not '非推奨バージョン番号
                                                 Case 3
-                                                    WI_cmd_reply = TvRemoteViewer_VB_recommend_version.ToString '非推奨バージョン番号
+                                                    WI_cmd_reply = ver_rec '推奨バージョン番号
                                                 Case 9
                                                     'このバージョン,非推奨バージョン,推奨バージョン
-                                                    WI_cmd_reply = TvRemoteViewer_VB_version.ToString & "," & TvRemoteViewer_VB_notrecommend_version.ToString & "," & TvRemoteViewer_VB_recommend_version.ToString
+                                                    WI_cmd_reply = ver_now & "," & ver_not & "," & ver_rec
                                                 Case Else
-                                                    WI_cmd_reply = TvRemoteViewer_VB_version.ToString 'このプログラムのバージョン番号
+                                                    WI_cmd_reply = ver_now 'このプログラムのバージョン番号
                                             End Select
                                         Else
-                                            WI_cmd_reply = TvRemoteViewer_VB_version.ToString 'このプログラムのバージョン番号
+                                            WI_cmd_reply = ver_now 'このプログラムのバージョン番号
                                         End If
                                         WI_cmd_reply_force = 1
                                 End Select
@@ -4597,6 +4600,9 @@ Class WebRemocon
                                     Dim waitmessage As String = ""
                                     If request_page = 1 Then
                                         waitmessage = "配信準備中です..(" & System.Math.Abs(check_m3u8_ts).ToString & ")"
+                                        If TvRemoteViewer_VB_version_NG = 1 Then
+                                            waitmessage &= " 【お願い】非推奨バージョンです。アップデートしてください。"
+                                        End If
                                     ElseIf request_page = 11 Then
                                         waitmessage = "配信されていません"
                                     ElseIf request_page = 14 Then

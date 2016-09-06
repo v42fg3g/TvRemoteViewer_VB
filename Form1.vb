@@ -118,6 +118,8 @@ Public Class Form1
             'アップデートの必要性の有無
             If TvRemoteViewer_VB_notrecommend_version > 0 And TvRemoteViewer_VB_version <= TvRemoteViewer_VB_notrecommend_version Then
                 s = "【警告】アップデートのお願い　非推奨バージョンです"
+                TvRemoteViewer_VB_version_NG = 1 'NGフラグON
+                LabelVersionWarning.Visible = True 'フォーム上に警告を表示
             End If
             Try
                 NotifyIcon1.Text = s
@@ -171,11 +173,13 @@ Public Class Form1
                 End If
             End If
 
-            '1時間に1回バージョンチェック
-            Dim nowt As DateTime = Now()
-            If Minute(nowt) = 58 And Second(nowt) = 20 Then
-                check_version_multi() '邪魔にならないようマルチスレッドで確認
-                log1write("推奨バージョンチェックを行いました")
+            '6時間に1回バージョンチェック
+            If TvRemoteViewer_VB_version_check_on = 1 Then
+                Dim nowt As DateTime = Now()
+                If (Hour(Now()) Mod 6) = 0 And Minute(nowt) = Minute(TvRemoteViewer_VB_version_check_datetime) And Second(nowt) = Second(TvRemoteViewer_VB_version_check_datetime) Then
+                    check_version_multi() '邪魔にならないようマルチスレッドで確認
+                    'log1write("推奨バージョンチェックを行いました") 'ログに表示しないようにした
+                End If
             End If
 
             chk_timer1 = 0
@@ -317,22 +321,8 @@ Public Class Form1
             Close()
         End If
 
-        log1write("TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString)
-
-        'バージョンチェック
-        check_version()
-        If TvRemoteViewer_VB_notrecommend_version > 0 And TvRemoteViewer_VB_version <= TvRemoteViewer_VB_notrecommend_version Then
-            If TvRemoteViewer_VB_recommend_version > 0 Then
-                MsgBox("TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString & "は非推奨バージョンに指定されています" & vbCrLf & TvRemoteViewer_VB_recommend_version.ToString & "以上へアップデートしてください")
-            Else
-                MsgBox("TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString & "は非推奨バージョンに指定されています" & vbCrLf & "最新バージョンへアップデートしてください")
-            End If
-            '終了
-            Close()
-        End If
-        If TvRemoteViewer_VB_recommend_version > 0 And TvRemoteViewer_VB_version < TvRemoteViewer_VB_recommend_version Then
-            log1write("【お願い】TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString & "は推奨バージョン未満です。アップデートを推奨します")
-        End If
+        Dim verstr As String = Format(TvRemoteViewer_VB_version, "0.00")
+        log1write("TvRemoteViewer_VB " & verstr)
 
     End Sub
 
@@ -374,6 +364,8 @@ Public Class Form1
                 If TvRemoteViewer_VB_recommend_version = 0 Then
                     log1write("推奨バージョンが取得できませんでした")
                 End If
+                TvRemoteViewer_VB_version_check_datetime = Now()
+                LabelVersionCheckDate.Text = TvRemoteViewer_VB_version_check_datetime
             End If
         Else
             log1write("ネット上から推奨バージョン情報が取得出来ませんでした")
@@ -441,6 +433,26 @@ Public Class Form1
         search_BonDriver()
         search_ServiceID()
         ComboBoxServiceID.Text = ServiceID_temp '前回終了時に選択していたものをセット
+
+        'バージョンチェック
+        If TvRemoteViewer_VB_version_check_on = 1 Then
+            check_version()
+            If TvRemoteViewer_VB_notrecommend_version > 0 And TvRemoteViewer_VB_version <= TvRemoteViewer_VB_notrecommend_version Then
+                If TvRemoteViewer_VB_recommend_version > 0 Then
+                    MsgBox("TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString & "は非推奨バージョンに指定されています" & vbCrLf & TvRemoteViewer_VB_recommend_version.ToString & "以上へアップデートしてください")
+                Else
+                    MsgBox("TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString & "は非推奨バージョンに指定されています" & vbCrLf & "最新バージョンへアップデートしてください")
+                End If
+                '終了
+                Close()
+            End If
+            log1write("アップデートチェックを行いました")
+            If TvRemoteViewer_VB_recommend_version > 0 And TvRemoteViewer_VB_version < TvRemoteViewer_VB_recommend_version Then
+                log1write("【お願い】TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString & "は推奨バージョン未満です。アップデートを推奨します")
+            End If
+        Else
+            log1write("【お願い】アップデートの有無をチェックしてください")
+        End If
 
         'httpサーバースタート
         log1write("httpサーバーを起動しています")
@@ -765,6 +777,8 @@ Public Class Form1
                             ffmpeg_seek_method_files = lr(1).Replace("\r\n", vbCrLf)
                         Case "ComboBoxVideoForce"
                             ComboBoxVideoForce.Text = lr(1)
+                        Case "CheckBoxVersionCheck"
+                            CheckBoxVersionCheck.Checked = lr(1)
                     End Select
                 ElseIf lr.Length > 2 And trim8(lr(0)) = "textBoxHlsOpt" Then
                     'VLC OPTION
@@ -847,6 +861,7 @@ Public Class Form1
         s &= "ComboBoxHLSorHTTP=" & ComboBoxHLSorHTTP.Text & vbCrLf
         s &= "ffmpeg_seek_method_files=" & ffmpeg_seek_method_files.Replace(vbCrLf, "\r\n") & vbCrLf
         s &= "ComboBoxVideoForce=" & ComboBoxVideoForce.Text & vbCrLf
+        s &= "CheckBoxVersionCheck=" & CheckBoxVersionCheck.Checked & vbCrLf
 
         'ステータスファイル書き込み
         str2file("form_status.txt", s)
@@ -1466,4 +1481,16 @@ Public Class Form1
         End If
     End Sub
 
+    Private Sub CheckBoxVersionCheck_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxVersionCheck.CheckedChanged
+        If CheckBoxVersionCheck.Checked = True Then
+            TvRemoteViewer_VB_version_check_on = 1
+            '前回より１分以上経過していればバージョンチェックする
+            If DateDiff("n", TvRemoteViewer_VB_version_check_datetime, Now) >= 1 And TvRemoteViewer_VB_Start = 1 Then
+                check_version()
+                log1write("アップデートチェックを行いました")
+            End If
+        Else
+            TvRemoteViewer_VB_version_check_on = 0
+        End If
+    End Sub
 End Class

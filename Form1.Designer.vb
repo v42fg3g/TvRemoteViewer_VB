@@ -91,6 +91,10 @@ Partial Class Form1
         Me.ComboBoxVideoForce = New System.Windows.Forms.ComboBox()
         Me.Button4 = New System.Windows.Forms.Button()
         Me.Button8 = New System.Windows.Forms.Button()
+        Me.Label16 = New System.Windows.Forms.Label()
+        Me.LabelVersionCheckDate = New System.Windows.Forms.Label()
+        Me.CheckBoxVersionCheck = New System.Windows.Forms.CheckBox()
+        Me.LabelVersionWarning = New System.Windows.Forms.Label()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -695,11 +699,58 @@ Partial Class Form1
         Me.Button8.Text = "profile.txt(*)"
         Me.Button8.UseVisualStyleBackColor = True
         '
+        'Label16
+        '
+        Me.Label16.AutoSize = True
+        Me.Label16.Location = New System.Drawing.Point(150, 690)
+        Me.Label16.Name = "Label16"
+        Me.Label16.Size = New System.Drawing.Size(90, 12)
+        Me.Label16.TabIndex = 106
+        Me.Label16.Text = "最終チェック日時："
+        '
+        'LabelVersionCheckDate
+        '
+        Me.LabelVersionCheckDate.AutoSize = True
+        Me.LabelVersionCheckDate.Location = New System.Drawing.Point(242, 690)
+        Me.LabelVersionCheckDate.Name = "LabelVersionCheckDate"
+        Me.LabelVersionCheckDate.Size = New System.Drawing.Size(13, 12)
+        Me.LabelVersionCheckDate.TabIndex = 107
+        Me.LabelVersionCheckDate.Text = "　"
+        '
+        'CheckBoxVersionCheck
+        '
+        Me.CheckBoxVersionCheck.AutoSize = True
+        Me.CheckBoxVersionCheck.Checked = True
+        Me.CheckBoxVersionCheck.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.CheckBoxVersionCheck.Location = New System.Drawing.Point(7, 689)
+        Me.CheckBoxVersionCheck.Name = "CheckBoxVersionCheck"
+        Me.CheckBoxVersionCheck.Size = New System.Drawing.Size(127, 16)
+        Me.CheckBoxVersionCheck.TabIndex = 108
+        Me.CheckBoxVersionCheck.TabStop = False
+        Me.CheckBoxVersionCheck.Text = "アップデートチェックする"
+        Me.CheckBoxVersionCheck.UseVisualStyleBackColor = True
+        '
+        'LabelVersionWarning
+        '
+        Me.LabelVersionWarning.AutoSize = True
+        Me.LabelVersionWarning.Font = New System.Drawing.Font("MS UI Gothic", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(128, Byte))
+        Me.LabelVersionWarning.ForeColor = System.Drawing.Color.Red
+        Me.LabelVersionWarning.Location = New System.Drawing.Point(377, 690)
+        Me.LabelVersionWarning.Name = "LabelVersionWarning"
+        Me.LabelVersionWarning.Size = New System.Drawing.Size(143, 12)
+        Me.LabelVersionWarning.TabIndex = 109
+        Me.LabelVersionWarning.Text = "アップデートを行ってください"
+        Me.LabelVersionWarning.Visible = False
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(530, 683)
+        Me.ClientSize = New System.Drawing.Size(530, 705)
+        Me.Controls.Add(Me.LabelVersionWarning)
+        Me.Controls.Add(Me.CheckBoxVersionCheck)
+        Me.Controls.Add(Me.LabelVersionCheckDate)
+        Me.Controls.Add(Me.Label16)
         Me.Controls.Add(Me.Button4)
         Me.Controls.Add(Me.Button8)
         Me.Controls.Add(Me.ComboBoxVideoForce)
@@ -761,7 +812,7 @@ Partial Class Form1
         Me.Controls.Add(Me.textHttpPortNumber)
         Me.Controls.Add(Me.labelPortNuber)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximumSize = New System.Drawing.Size(546, 722)
+        Me.MaximumSize = New System.Drawing.Size(546, 744)
         Me.Name = "Form1"
         Me.ShowInTaskbar = False
         Me.Text = "TvRemoteViewer_VB"
@@ -838,5 +889,9 @@ Partial Class Form1
     Friend WithEvents ComboBoxVideoForce As System.Windows.Forms.ComboBox
     Friend WithEvents Button4 As System.Windows.Forms.Button
     Friend WithEvents Button8 As System.Windows.Forms.Button
+    Private WithEvents Label16 As System.Windows.Forms.Label
+    Private WithEvents LabelVersionCheckDate As System.Windows.Forms.Label
+    Friend WithEvents CheckBoxVersionCheck As System.Windows.Forms.CheckBox
+    Private WithEvents LabelVersionWarning As System.Windows.Forms.Label
 
 End Class
