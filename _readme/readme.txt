@@ -112,7 +112,6 @@ TvRemoteViewer_VB v2.20
 	%rc-host%	"127.0.0.1:%UDPPORT%"に変換されます。
 	%NUM%		ストリームナンバー
 	%VIDEOFILE%	"ビデオファイル"に変換（実際は「-i %VIDEOFILE%」の決め打ちで-iの後ろの文字列がファイル名に変換）
-	%VIDEODURATION%	ビデオの長さ(秒)　不明な場合は0（任意）
 
 
 

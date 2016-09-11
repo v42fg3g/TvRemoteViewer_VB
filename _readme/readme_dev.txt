@@ -142,7 +142,8 @@ TvRemoteViewer_VB v2.14
 	%VIDEOSEEKSECONDS%		ファイル再生時にシークする秒数
 	%SELECTVIDEO%			ビデオファイル一覧HTML部品
 	%VIDEOFROMDATE%			ビデオファイル一覧を表示した際の一番古いファイルの更新日時「yyyy/MM/dd」
-	
+	%VIDEODURATION%	ビデオの長さ(秒)　不明な場合は0（任意）
+
 
 	・ViewTV[n].htmlのみで使用できる変数
 	%SELECTCH%			ViewTV.html内で番組を選択する<SELECT>を作成する
