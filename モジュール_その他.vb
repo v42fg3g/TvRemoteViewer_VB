@@ -2,7 +2,7 @@
 
 Module モジュール_その他
     'バージョン
-    Public TvRemoteViewer_VB_version As Double = 2.2
+    Public TvRemoteViewer_VB_version As Double = 2.21
     Public TvRemoteViewer_VB_notrecommend_version As Double = 0
     Public TvRemoteViewer_VB_recommend_version As Double = 0
     Public TvRemoteViewer_VB_version_check_datetime As DateTime = CDate("2000/01/01") '何分何秒にチェックするか　起動時に決定
@@ -130,12 +130,12 @@ Module モジュール_その他
 
     'ファイル名に含まれている,をエスケープ
     Public Function filename_escape_set(ByVal s As String) As String
-        Return s.Replace(",", "_，") 'エスケープ
+        Return s.Replace(",", "_，").Replace("'", "_’") 'エスケープ
     End Function
 
     'ファイル名に含まれている,を戻す
     Public Function filename_escape_recall(ByVal s As String) As String
-        Return s.Replace("_，", ",") 'エスケープしていた,を元に戻す
+        Return s.Replace("_，", ",").Replace("_’", "'") 'エスケープしていた,を元に戻す
     End Function
 
     '余計な改行等を削除
