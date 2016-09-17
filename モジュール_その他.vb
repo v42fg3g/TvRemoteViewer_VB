@@ -190,8 +190,7 @@ Module モジュール_その他
                     End Try
                 End While
             Catch ex As Exception
-                log1write("【エラー】ビデオフォルダ指定が不正です。path=" & path & "。" & ex.Message)
-                path = ""
+                '1文字のフォルダの可能性があるのでそのままスルー
             End Try
 
             Try
