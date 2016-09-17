@@ -1154,6 +1154,7 @@ Class WebRemocon
                                         ReDim Preserve Me._videopath_ini(clset.Length - 1)
                                         For j = 0 To clset.Length - 1
                                             Me._videopath_ini(j) = trim8(path_s2z(clset(j)))
+                                            Debug.Print("[" & Me._videopath_ini(j) & "]")
                                         Next
                                     End If
                                 End If

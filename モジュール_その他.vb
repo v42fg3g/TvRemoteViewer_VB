@@ -130,12 +130,12 @@ Module モジュール_その他
 
     'ファイル名に含まれている,をエスケープ
     Public Function filename_escape_set(ByVal s As String) As String
-        Return s.Replace(",", "_，").Replace("'", "_’") 'エスケープ
+        Return s.Replace(",", "_，").Replace("'", "_.’") 'エスケープ
     End Function
 
     'ファイル名に含まれている,を戻す
     Public Function filename_escape_recall(ByVal s As String) As String
-        Return s.Replace("_，", ",").Replace("_’", "'") 'エスケープしていた,を元に戻す
+        Return s.Replace("_，", ",").Replace("_.’", "'") 'エスケープしていた,を元に戻す
     End Function
 
     '余計な改行等を削除
@@ -181,13 +181,18 @@ Module モジュール_その他
 
             'http://dobon.net/vb/dotnet/file/getabsolutepath.html
 
-            While path.Substring(0, 2) = ".\"
-                Try
-                    path = path.Substring(2)
-                Catch ex As Exception
-                    path = ""
-                End Try
-            End While
+            Try
+                While path.Substring(0, 2) = ".\"
+                    Try
+                        path = path.Substring(2)
+                    Catch ex As Exception
+                        path = ""
+                    End Try
+                End While
+            Catch ex As Exception
+                log1write("【エラー】ビデオフォルダ指定が不正です。path=" & path & "。" & ex.Message)
+                path = ""
+            End Try
 
             Try
                 Dim filePath As String = path
@@ -206,7 +211,7 @@ Module モジュール_その他
                 Return absolutePath
             Catch ex As Exception
                 log1write("【エラー】相対→絶対パス変換エラー。" & ex.Message)
-                Return path
+                Return ""
             End Try
         End If
     End Function
