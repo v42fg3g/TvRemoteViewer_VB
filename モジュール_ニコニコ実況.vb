@@ -872,7 +872,7 @@ Module モジュール_ニコニコ実況
 
         If NicoJK_path.Length > 0 Then
             If file_exist(fullpathfilename) = 1 Then
-                If Path.GetExtension(fullpathfilename) = ".ts" Then
+                If Path.GetExtension(fullpathfilename).ToLower = ".ts" Then
                     log1write("NicoJKコメントファイル検索を開始します。" & nowt & " " & nowt.Millisecond)
                     'tsならば
                     filename = Path.GetFileName(fullpathfilename)

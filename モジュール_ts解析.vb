@@ -12,6 +12,14 @@ Module モジュール_ts解析
         Public duration As Integer '動画の長さ
         Public video_fps As Double 'ts以外の場合のフレームレート
         Public sid As Integer 'サービスID
+        'ISO用
+        Public ISO_RC As Integer
+        Public ISO_MAINTITLE As Integer
+        Public ISO_DURATION As Integer
+        Public ISO_AUDIO() As String
+        Public ISO_SUBFLG As Boolean
+        Public ISO_SUBLANG() As String
+        Public ISO_CHAPTER As String
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
             Dim pF As String = CType(obj, String) '検索内容を取得
@@ -73,6 +81,14 @@ Module モジュール_ts解析
             r.duration = TOT_cache(i).duration
             r.video_fps = TOT_cache(i).video_fps
             r.sid = TOT_cache(i).sid
+            'ISO
+            r.ISO_RC = TOT_cache(i).ISO_RC
+            r.ISO_MAINTITLE = TOT_cache(i).ISO_MAINTITLE
+            r.ISO_DURATION = TOT_cache(i).ISO_DURATION
+            r.ISO_AUDIO = TOT_cache(i).ISO_AUDIO
+            r.ISO_SUBFLG = TOT_cache(i).ISO_SUBFLG
+            r.ISO_SUBLANG = TOT_cache(i).ISO_SUBLANG
+            r.ISO_CHAPTER = TOT_cache(i).ISO_CHAPTER
             log1write(fullpathfilename & "の開始時間をキャッシュから取得しました")
         Else
             '新規登録
@@ -91,6 +107,14 @@ Module モジュール_ts解析
                 TOT_cache(TOT_cache_index).duration = r.duration
                 TOT_cache(TOT_cache_index).video_fps = r.video_fps
                 TOT_cache(TOT_cache_index).sid = r.sid
+                'ISO
+                TOT_cache(TOT_cache_index).ISO_RC = r.ISO_RC
+                TOT_cache(TOT_cache_index).ISO_MAINTITLE = r.ISO_MAINTITLE
+                TOT_cache(TOT_cache_index).ISO_DURATION = r.ISO_DURATION
+                TOT_cache(TOT_cache_index).ISO_AUDIO = r.ISO_AUDIO
+                TOT_cache(TOT_cache_index).ISO_SUBFLG = r.ISO_SUBFLG
+                TOT_cache(TOT_cache_index).ISO_SUBLANG = r.ISO_SUBLANG
+                TOT_cache(TOT_cache_index).ISO_CHAPTER = r.ISO_CHAPTER
                 log1write(fullpathfilename & "の開始時間をTOTと作成日時から取得しました")
             End If
         End If
@@ -102,7 +126,7 @@ Module モジュール_ts解析
     Public Function F_ts2tot(ByVal fullpathfilename As String, ByVal t2 As DateTime, ByVal t2_end As DateTime, ByVal ffmpeg_path As String) As tot_structure
         Dim r As tot_structure = Nothing
 
-        Dim ext As String = Path.GetExtension(fullpathfilename)
+        Dim ext As String = Path.GetExtension(fullpathfilename).ToLower
         If ext = ".ts" Then
             'TSの場合
             Try
@@ -332,6 +356,31 @@ Module モジュール_ts解析
                 r.start_time = unix2time(0)
                 r.err = 9
             End Try
+        ElseIf ext = ".iso" Then
+            'ISOの場合
+            'mplayerを使用してISO情報を取得
+            Dim resultInfo As Object = Nothing
+            resultInfo = DVDInfo(fullpathfilename)
+            If resultInfo("RC") = 0 Then
+                r.fullpathfilename = fullpathfilename
+                r.start_time = CDate("1980/01/01 00:00:00")
+                r.start_utime = time2unix(r.start_time)
+                r.duration = resultInfo("DURATION")
+                r.video_fps = 29.97
+                r.err = resultInfo("RC")
+                r.errstr = ""
+                'ISO用データ
+                r.ISO_AUDIO = resultInfo("AUDIO")
+                r.ISO_CHAPTER = resultInfo("CHAPTER")
+                r.ISO_DURATION = r.duration
+                r.ISO_MAINTITLE = resultInfo("MAINTITLE")
+                r.ISO_RC = resultInfo("RC")
+                r.ISO_SUBFLG = resultInfo("SUBFLG")
+                r.ISO_SUBLANG = resultInfo("SUBLANG")
+            Else
+                r.err = resultInfo("RC")
+                r.errstr = ""
+            End If
         Else
             'TS以外
             'ts以外の場合、ファイルの作成日時＆更新日時から推測することはできないため
@@ -401,19 +450,21 @@ Module モジュール_ts解析
                     psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
                     'psi.StandardOutputEncoding = Encoding.UTF8
 
-                    psi.Arguments = "/c ffprobe.exe """ & fullpathfilename & """"
+                    psi.Arguments = ncs("/c ffprobe.exe """ & fullpathfilename & """", 0)
 
-                    Dim p As System.Diagnostics.Process
-                    Try
-                        p = System.Diagnostics.Process.Start(psi)
-                        '出力を読み取る
-                        results = p.StandardError.ReadToEnd
-                        'WaitForExitはReadToEndの後である必要がある
-                        '(親プロセス、子プロセスでブロック防止のため)
-                        p.WaitForExit(10000)
-                    Catch ex As Exception
-                        log1write("【エラー】pprobe.exeの実行に失敗しました")
-                    End Try
+                    If psi.Arguments.Length > 3 Then
+                        Dim p As System.Diagnostics.Process
+                        Try
+                            p = System.Diagnostics.Process.Start(psi)
+                            '出力を読み取る
+                            results = p.StandardError.ReadToEnd
+                            'WaitForExitはReadToEndの後である必要がある
+                            '(親プロセス、子プロセスでブロック防止のため)
+                            p.WaitForExit(10000)
+                        Catch ex As Exception
+                            log1write("【エラー】pprobe.exeの実行に失敗しました")
+                        End Try
+                    End If
 
                     If results.IndexOf("Duration:") > 0 Then
                         Dim jifunbyou As String = Trim(Instr_pickup(results, "Duration:", ".", 0))

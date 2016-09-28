@@ -138,6 +138,7 @@
     <Compile Include="モジュール_crypt.vb" />
     <Compile Include="モジュール_GetHTTP.vb" />
     <Compile Include="モジュール_HTMLキャッシュ.vb" />
+    <Compile Include="モジュール_ISO.vb" />
     <Compile Include="モジュール_ts解析.vb" />
     <Compile Include="モジュール_VLC_httpストリーム.vb" />
     <Compile Include="モジュール_WhiteBrowser.vb" />

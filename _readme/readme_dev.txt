@@ -52,6 +52,12 @@ TvRemoteViewer_VB v2.14
 			例：hlsOptAdd=2,9,-hls_-_2,2,-map 0,0 -map 0,1	（-hls部分を削除した後に-map～を追加）
 		profile		任意の文字列（profile.txtに記入されたプロファイル名と連動）
 
+		・ISO再生オプション
+		i_startoffset	再生開始秒数（VideoSeekSecondsで指定しても良い）
+		i_audioLang	音声言語 ja やen　など
+		i_audioTrackNum	音声トラック　0～　AudioLangとどちらかの指定があれば良いが、そちらが指定されていればそちらを優先。両方していされていなければ何も指定せず起動。（デフォルト言語になる。）
+		i_subLang	字幕言語
+		i_subTrackNum	字幕トラック。SubLangが指定されていればそちらを優先。両方とも指定されていなければ指定なしで起動（字幕なし）。
 
 		例：
 		http://127.0.0.1:40003/StartTv.html?BonDriver=BonDriver_PT3_s0.dll&ServiceID=101&ChSpace=0&hlsAppSelect=QSVEnc

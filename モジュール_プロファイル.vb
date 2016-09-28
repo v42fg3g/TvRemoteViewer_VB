@@ -12,7 +12,7 @@ Module モジュール_プロファイル
 
     Public Function get_hlsApp_and_resolution_from_profiles(ByVal profile As String, ByVal StreamMode As Integer, ByVal hlsAppSelect As String, ByVal resolution As String, ByVal filename As String, ByVal voice As String, ByVal speed As String, ByVal hardsub_on As String, ByRef video_force_ffmpeg_temp As Integer) As String()
         'video_force_ffmpeg_tempはByRefで返す
-        Dim file_ext As String = Path.GetExtension(filename)
+        Dim file_ext As String = Path.GetExtension(filename).ToLower
         Dim file_instr As String = Path.GetFileName(filename)
         Dim hlsAppName As String = Path.GetFileName(hlsAppSelect)
 

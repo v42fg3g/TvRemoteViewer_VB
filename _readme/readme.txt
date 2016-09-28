@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.21
+TvRemoteViewer_VB v2.22
 
 
 
@@ -657,6 +657,11 @@ TvRemoteViewer_VB v2.21
 		チェック日時をクライアント毎にまちまちになるようにした
 	2.21	ファイル名にシングルコーテーションが含まれているとファイル再生に失敗していた不具合に対処
 		相対パス指定において1文字フォルダを受け付けなかったバグを修正
+	2.22	iniのVideoExtensionsの拡張子指定で大文字小文字の区別を無くした
+		iniのStop_NVEnc_at_StartEndが機能していなかったバグを修正
+		ISOファイル再生に対応
+		iniにISO再生に使用するVLCを指定する項目を追加（exepath_ISO_VLC）VLC-2.1.2推奨
+		ISOファイル再生に必要な古めのmplayer-ISO.exeを同梱（要プログラムフォルダにコピー）
 
 
 

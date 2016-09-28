@@ -478,76 +478,80 @@ Class WebRemocon
             If Me._videopath.Length > 0 Then
 
                 For i = 0 To Me._videopath.Length - 1
-                    If Me._videopath(i).Length > 0 Then
-                        Try
-                            Dim files As String() = System.IO.Directory.GetFiles(Me._videopath(i), "*")
-                            'For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
-                            For Each stFilePath As String In files
-                                Try
-                                    Dim fullpath As String = stFilePath
-                                    '拡張子を取得
-                                    Dim ext As String = System.IO.Path.GetExtension(fullpath)
-                                    '表示拡張子が指定されていれば該当するかチェックする
-                                    Dim chk As Integer = -2
-                                    If VideoExtensions IsNot Nothing And ext.Length > 0 Then
-                                        chk = Array.IndexOf(VideoExtensions, ext)
-                                    End If
-                                    'chk=-2 拡張子指定は無い
-                                    'chk>=0 拡張子指定が有り、一致した
-                                    'chk=-1 拡張子指定が有り、一致しなかった
-                                    If chk >= 0 Or (chk = -2 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass") Then
-                                        '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
-                                        Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
-                                        Dim datestr As String = modifytime.ToString("yyyyMMddHH")
-                                        Dim filename As String = System.IO.Path.GetFileName(fullpath)
-                                        'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
-                                        'UTF-8化で解決
-                                        'Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
-                                        Dim encstr As String = fullpath
+                    Try
+                        If Me._videopath(i).Length > 0 Then
+                            Try
+                                Dim files As String() = System.IO.Directory.GetFiles(Me._videopath(i), "*")
+                                'For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
+                                For Each stFilePath As String In files
+                                    Try
+                                        Dim fullpath As String = stFilePath
+                                        '拡張子を取得
+                                        Dim ext As String = System.IO.Path.GetExtension(fullpath).ToLower
+                                        '表示拡張子が指定されていれば該当するかチェックする
+                                        Dim chk As Integer = -2
+                                        If VideoExtensions IsNot Nothing And ext.Length > 0 Then
+                                            chk = Array.IndexOf(VideoExtensions, ext)
+                                        End If
+                                        'chk=-2 拡張子指定は無い
+                                        'chk>=0 拡張子指定が有り、一致した
+                                        'chk=-1 拡張子指定が有り、一致しなかった
+                                        If chk >= 0 Or (chk = -2 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass") Then
+                                            '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
+                                            Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
+                                            Dim datestr As String = modifytime.ToString("yyyyMMddHH")
+                                            Dim filename As String = System.IO.Path.GetFileName(fullpath)
+                                            'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
+                                            'UTF-8化で解決
+                                            'Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
+                                            Dim encstr As String = fullpath
 
-                                        '抽出
-                                        If videoexword.Length > 0 Then
-                                            videoexword = videoexword.Replace("　", " ")
-                                            Dim v() As String = videoexword.Split(" ")
-                                            '全てのワードに当てはまるかチェック
-                                            For j As Integer = 0 To v.Length - 1
-                                                'If filename.IndexOf(v(j)) < 0 Then
-                                                If encstr.IndexOf(v(j)) < 0 Then 'フォルダもフィルタに含めるようにした
-                                                    filename = ""
+                                            '抽出
+                                            If videoexword.Length > 0 Then
+                                                videoexword = videoexword.Replace("　", " ")
+                                                Dim v() As String = videoexword.Split(" ")
+                                                '全てのワードに当てはまるかチェック
+                                                For j As Integer = 0 To v.Length - 1
+                                                    'If filename.IndexOf(v(j)) < 0 Then
+                                                    If encstr.IndexOf(v(j)) < 0 Then 'フォルダもフィルタに含めるようにした
+                                                        filename = ""
+                                                    End If
+                                                Next
+                                            End If
+
+                                            If filename.Length > 0 Then
+                                                'ファイルのサイズを取得 fi.length
+                                                Dim flength As Long = 100
+                                                If VideoSizeCheck = 1 Then
+                                                    Dim fi As New System.IO.FileInfo(fullpath)
+                                                    flength = fi.Length
                                                 End If
-                                            Next
-                                        End If
-
-                                        If filename.Length > 0 Then
-                                            'ファイルのサイズを取得 fi.length
-                                            Dim flength As Long = 100
-                                            If VideoSizeCheck = 1 Then
-                                                Dim fi As New System.IO.FileInfo(fullpath)
-                                                flength = fi.Length
-                                            End If
-                                            If flength >= 100 Then
-                                                '登録
-                                                ReDim Preserve video2(cnt)
-                                                fullpath = filename_escape_set(fullpath) ',をエスケープ
-                                                video2(cnt).fullpathfilename = fullpath
-                                                filename = filename_escape_set(filename) ',をエスケープ
-                                                video2(cnt).filename = filename
-                                                encstr = filename_escape_set(encstr) ',をエスケープ
-                                                video2(cnt).encstr = encstr
-                                                video2(cnt).modifytime = modifytime
-                                                video2(cnt).datestr = datestr
-                                                cnt += 1
+                                                If flength >= 100 Then
+                                                    '登録
+                                                    ReDim Preserve video2(cnt)
+                                                    fullpath = filename_escape_set(fullpath) ',をエスケープ
+                                                    video2(cnt).fullpathfilename = fullpath
+                                                    filename = filename_escape_set(filename) ',をエスケープ
+                                                    video2(cnt).filename = filename
+                                                    encstr = filename_escape_set(encstr) ',をエスケープ
+                                                    video2(cnt).encstr = encstr
+                                                    video2(cnt).modifytime = modifytime
+                                                    video2(cnt).datestr = datestr
+                                                    cnt += 1
+                                                End If
                                             End If
                                         End If
-                                    End If
-                                Catch ex As Exception
-                                    log1write("ビデオフォルダ一覧作成中に" & stFilePath & "の処理に失敗しました。" & ex.Message)
-                                End Try
-                            Next stFilePath
-                        Catch ex As Exception
-                            log1write("ビデオフォルダ " & Me._videopath(i) & " の読み込みに失敗しました。" & ex.Message)
-                        End Try
-                    End If
+                                    Catch ex As Exception
+                                        log1write("ビデオフォルダ一覧作成中に" & stFilePath & "の処理に失敗しました。" & ex.Message)
+                                    End Try
+                                Next stFilePath
+                            Catch ex As Exception
+                                log1write("ビデオフォルダ " & Me._videopath(i) & " の読み込みに失敗しました。" & ex.Message)
+                            End Try
+                        End If
+                    Catch ex As Exception
+                        log1write("【エラー】ビデオリストリフレッシュ中に例外エラーが発生しました。" & ex.Message)
+                    End Try
                 Next
 
                 '並べ替え（日付の新しい順）
@@ -751,7 +755,7 @@ Class WebRemocon
             End If
             Try
                 For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
-                    If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
+                    If System.IO.Path.GetExtension(stFilePath).ToLower = ".dll" Then
                         Dim s As String = stFilePath
                         'フルパスファイル名がsに入る
                         'ファイル名だけを取り出す
@@ -1154,7 +1158,6 @@ Class WebRemocon
                                         ReDim Preserve Me._videopath_ini(clset.Length - 1)
                                         For j = 0 To clset.Length - 1
                                             Me._videopath_ini(j) = trim8(path_s2z(clset(j)))
-                                            Debug.Print("[" & Me._videopath_ini(j) & "]")
                                         Next
                                     End If
                                 End If
@@ -1314,7 +1317,7 @@ Class WebRemocon
                                             Else
                                                 ReDim Preserve VideoExtensions(VideoExtensions.Length)
                                             End If
-                                            VideoExtensions(VideoExtensions.Length - 1) = clset(j)
+                                            VideoExtensions(VideoExtensions.Length - 1) = clset(j).ToLower
                                         End If
                                     Next
                                 End If
@@ -1553,6 +1556,22 @@ Class WebRemocon
                                         exepath_NVEnc = ""
                                     End If
                                 End If
+                            Case "exepath_ISO_VLC"
+                                youso(1) = trim8(path_s2z((youso(1))))
+                                If youso(1).Length > 0 Then
+                                    If file_exist(youso(1)) = 1 Then
+                                        'mplayerチェック
+                                        If file_exist(System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer-ISO.exe") = 1 Then
+                                            exepath_ISO_VLC = youso(1).ToString
+                                            log1write("ISO再生用VLCとして" & exepath_ISO_VLC & "が指定されました")
+                                        Else
+                                            log1write("【エラー】ISO再生に使用するmplayer-ISO.exeが見つかりません。TvRemoteViewer_VB.exeと同じフォルダにコピーしてください")
+                                        End If
+                                    Else
+                                        log1write("【エラー】ISO再生用VLCが見つかりませんでした。" & exepath_NVEnc)
+                                        exepath_ISO_VLC = ""
+                                    End If
+                                End If
                             Case "PipeRun_ffmpeg_option"
                                 youso(1) = trim8(path_s2z((youso(1))))
                                 If youso(1).Length > 0 Then
@@ -1592,7 +1611,6 @@ Class WebRemocon
                 End Try
             Next
         End If
-
     End Sub
 
     'iniを元に設定したパラメータの整合性チェック
@@ -1688,7 +1706,7 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをffmpegファイル再生用に書き換える
-    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer, ByVal ass_file As String) As String
+    Private Function hlsopt_udp2file_ffmpeg(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer, ByVal ass_file As String, Optional ByVal ISO_on As Integer = 0) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
 
         filename = filename_escape_recall(filename) ',エスケープを元に戻す
@@ -1794,13 +1812,15 @@ Class WebRemocon
                 End If
             End If
 
-            'シーク秒数が指定されていれば「-ss 秒」を挿入
-            If VideoSeekSeconds > 0 And timeshift_old_flg = 0 Then
-                sp = hlsOpt.IndexOf("-i ")
-                hlsOpt = hlsOpt.Substring(0, sp) & "-ss " & VideoSeekSeconds & " " & hlsOpt.Substring(sp)
-            ElseIf VideoSeekSeconds > 0 And timeshift_old_flg = 1 Then
-                '古い方式でシフトするならば-iの後に挿入
-                hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-ss " & VideoSeekSeconds, 2, 4)
+            If ISO_on = 0 Then
+                'シーク秒数が指定されていれば「-ss 秒」を挿入
+                If VideoSeekSeconds > 0 And timeshift_old_flg = 0 Then
+                    sp = hlsOpt.IndexOf("-i ")
+                    hlsOpt = hlsOpt.Substring(0, sp) & "-ss " & VideoSeekSeconds & " " & hlsOpt.Substring(sp)
+                ElseIf VideoSeekSeconds > 0 And timeshift_old_flg = 1 Then
+                    '古い方式でシフトするならば-iの後に挿入
+                    hlsOpt = insert_str_in_hlsOpt(hlsOpt, "-ss " & VideoSeekSeconds, 2, 4)
+                End If
             End If
 
             '倍速指定があれば
@@ -1814,10 +1834,12 @@ Class WebRemocon
 
     'ファイル再生
     '現在のhlsOptをQSVEncファイル再生用に書き換える
-    Private Function hlsopt_udp2file_QSVEnc(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer, ByVal ass_file As String) As String
+    Private Function hlsopt_udp2file_QSVEnc(ByVal hlsApp As String, ByVal hlsOpt As String, ByVal filename As String, ByVal num As Integer, ByVal fileroot As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal margin1 As Integer, ByVal ass_file As String, Optional ByVal ISO_on As Integer = 0) As String
         'ffmpeg時のみ字幕ファイルがあれば挿入
 
         filename = filename_escape_recall(filename) ',エスケープを元に戻す
+
+        Dim filename_ext As String = Path.GetExtension(filename).ToLower
 
         'エラー防止
         If file_last_filename(num) Is Nothing Then
@@ -1885,12 +1907,14 @@ Class WebRemocon
                 hlsOpt = hlsOpt.Substring(0, sp) & "-i " & filename & opt_hardsub & hlsOpt.Substring(se)
             End If
 
-            'シーク秒数が指定されていれば「--seek フレーム数」を挿入
-            If VideoSeekSeconds > 0 Then
-                Dim hhmmss As String = sec2hhmmss(VideoSeekSeconds)
-                sp = hlsOpt.IndexOf("-i ")
-                If sp >= 0 And hhmmss.Length > 0 Then
-                    hlsOpt = hlsOpt.Substring(0, sp) & "--seek " & hhmmss & " " & hlsOpt.Substring(sp)
+            If ISO_on = 0 Then
+                'シーク秒数が指定されていれば「--seek フレーム数」を挿入
+                If VideoSeekSeconds > 0 Then
+                    Dim hhmmss As String = sec2hhmmss(VideoSeekSeconds)
+                    sp = hlsOpt.IndexOf("-i ")
+                    If sp >= 0 And hhmmss.Length > 0 Then
+                        hlsOpt = hlsOpt.Substring(0, sp) & "--seek " & hhmmss & " " & hlsOpt.Substring(sp)
+                    End If
                 End If
             End If
         Else
@@ -2276,8 +2300,37 @@ Class WebRemocon
     End Function
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String, ByVal profileSelect As String)
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String, ByVal profileSelect As String, Optional ByVal iso As Object = Nothing)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
+
+        'ISO再生関連パラメーターセット
+        Dim ISO_startoffset As Integer = VideoSeekSeconds
+        Dim ISO_audioLang = ""
+        Dim ISO_audioTrackNum As Integer = -1
+        Dim ISO_subLang = ""
+        Dim ISO_subTrackNum As Integer = -1
+        If iso IsNot Nothing Then
+            If iso.startoffset >= 0 Then
+                '指定があればiso.startoffsetを優先する
+                ISO_startoffset = iso.startoffset
+            End If
+            If ISO_audioLang.Length > 0 Then
+                '指定があれば
+                ISO_audioLang = iso.audioLang
+            End If
+            If iso.audioTrackNum >= 0 Then
+                '指定があれば
+                ISO_audioTrackNum = iso.audioTrackNum
+            End If
+            If ISO_subLang.Length > 0 Then
+                '指定があれば
+                ISO_subLang = iso.subLang
+            End If
+            If iso.subTrackNum >= 0 Then
+                '指定があれば
+                ISO_subTrackNum = iso.subTrackNum
+            End If
+        End If
 
         '再起動回数をリセット
         stream_reset_count(num) = 0
@@ -2299,6 +2352,14 @@ Class WebRemocon
         End If
 
         filename = filename_escape_recall(filename) ',を戻す
+        Dim filename_ext As String = "" '動画ファイルの拡張子
+        Dim ISO_on As Integer = 0 '.isoなら1
+        If filename.Length > 0 Then
+            filename_ext = Path.GetExtension(filename).ToLower
+            If filename_ext = ".iso" Then
+                ISO_on = 1
+            End If
+        End If
 
         'テスト　多重テストを違うexeファイルで行う
         Dim udpapp2 As String = change_exe_name(udpApp, num)
@@ -2398,7 +2459,9 @@ Class WebRemocon
                     If exist_nico_ass = 0 Then
                         'まだassファイルが見つかっていない場合
                         If (NicoJK_first = 0 And ass_file.Length = 0) Or NicoJK_first = 1 Then
-                            txt_file = search_NicoJKtxt_file(filename, hlsApp)
+                            If filename_ext <> ".iso" Then 'ISO再生の場合、NicoJKログから取得はあり得ない
+                                txt_file = search_NicoJKtxt_file(filename, hlsApp)
+                            End If
                         End If
                     End If
                 End If
@@ -2586,8 +2649,7 @@ Class WebRemocon
                 log1write("video_force_ffmpeg=2によりHLSアプリにPipeRunが指定されました") '後で書き換え
                 video_force_ffmpeg_temp = 2
             ElseIf video_force_ffmpeg = 3 And Stream_mode = 1 And filename.Length > 0 Then
-                Dim ext As String = Path.GetExtension(filename).ToLower
-                If ext <> ".ts" Or baisoku <> 1 Or hardsub_on = 1 Then
+                If filename_ext <> ".ts" Or baisoku <> 1 Or hardsub_on = 1 Then
                     hlsAppSelect = "ffmpeg"
                     log1write("video_force_ffmpeg=3によりHLSアプリにffmpegが指定されました")
                 Else
@@ -2596,8 +2658,7 @@ Class WebRemocon
                     video_force_ffmpeg_temp = 2
                 End If
             ElseIf video_force_ffmpeg = 4 And Stream_mode = 1 And filename.Length > 0 Then
-                Dim ext As String = Path.GetExtension(filename).ToLower
-                If ext <> ".ts" Or baisoku <> 1 Or hardsub_on = 1 Then
+                If filename_ext <> ".ts" Or baisoku <> 1 Or hardsub_on = 1 Then
                     hlsAppSelect = "ffmpeg"
                     log1write("video_force_ffmpeg=4によりHLSアプリにffmpegが指定されました")
                 End If
@@ -2938,35 +2999,152 @@ Class WebRemocon
                     hlsOpt = hlsopt_udp2file_VLC(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
                 ElseIf isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
                     'ffmpegのとき
-                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file, ISO_on)
                     'chapterをコピー
                     'copy_chapter_to_fileroot(num, filename, fileroot)
                 ElseIf isMatch_HLS(hlsApp, "qsvenc|nvenc") = 1 Then
                     'QSVEncまたはNVEncのとき
-                    hlsOpt = hlsopt_udp2file_QSVEnc(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
+                    hlsOpt = hlsopt_udp2file_QSVEnc(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file, ISO_on)
                 Else
                     'その他vlc
                     '今のところ未対応
                     stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                     Exit Sub
                 End If
+                If filename_ext = ".iso" Then
+                    If exepath_ISO_VLC.Length > 0 Then
+                        'ISOの場合の処理
+
+                        'hlsOpt内のファイルネームをパイプに変更
+                        hlsOpt = hlsOpt.Replace("""" & filename & """", "-")
+
+                        'mplayerを使用してISO情報を取得
+                        Dim resultInfo As tot_structure = Nothing
+                        resultInfo = TOT_read(filename, exepath_ffmpeg)
+
+                        If resultInfo.ISO_RC = 0 Then
+                            Dim vlcpath = exepath_ISO_VLC
+                            Dim trackID = resultInfo.ISO_MAINTITLE
+                            Dim startcommand = vlcpath
+                            Dim startTimeParam = ""
+                            If ISO_startoffset > 0 Then      '開始オフセットが定義されている場合セット
+                                startTimeParam = " --start-time " & ISO_startoffset
+                            End If
+                            Dim audioParam = ""         '音声が指定されていれば、言語コード→トラック番号の優先度でセット 
+                            Dim aaa = Array.IndexOf(resultInfo.ISO_AUDIO, "xxx")
+                            If ISO_audioLang <> "" And Array.IndexOf(resultInfo.ISO_AUDIO, ISO_audioLang) >= 0 Then
+                                audioParam = " --audio-language=" & ISO_audioLang
+                            ElseIf ISO_audioTrackNum >= 0 And ISO_audioTrackNum <= UBound(resultInfo.ISO_AUDIO) Then
+                                audioParam = " --audio-track=" & ISO_audioTrackNum
+                            End If
+                            Dim subParam = ""           '字幕が指定されていれば、言語コード→トラック番号の優先度でセット
+                            If resultInfo.ISO_SUBFLG Then '但しそもそも字幕トラックが無ければ何も指定しない。
+                                If ISO_subLang <> "" And Array.IndexOf(resultInfo.ISO_SUBLANG, ISO_subLang) >= 0 Then
+                                    subParam = " --sub-language=" & ISO_subLang
+                                ElseIf ISO_subTrackNum >= 0 And ISO_subTrackNum <= UBound(resultInfo.ISO_SUBLANG) Then
+                                    subParam = " --sub-track=" & ISO_subTrackNum
+                                End If
+                            End If
+                            Dim startparam = "-I dummy --dummy-quiet dvdsimple:///""" & filename & """/#" & trackID & startTimeParam & " --stop-time " & resultInfo.ISO_DURATION & " --no-repeat vlc://quit" & audioParam & subParam
+
+                            '追加
+                            startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}"
+
+                            'HLSオプションを整形
+                            If isMatch_HLS(hlsApp, "vlc") = 1 Then
+                                'VLCのとき
+                                '今のところ未対応
+                                log1write("【エラー】VLCでのISO再生には対応していません")
+                                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                                Exit Sub
+                            ElseIf isMatch_HLS(hlsApp, "ffmpeg") = 1 And exepath_ffmpeg.Length > 0 Then
+                                'ffmpegのとき
+                                'HLSアプリをVLCに変更しパイプ追加
+                                hlsApp = exepath_ISO_VLC
+                                hlsOpt = startparam & " | """ & exepath_ffmpeg & """ " & hlsOpt
+                            ElseIf isMatch_HLS(hlsApp, "qsvenc") = 1 And exepath_QSVEnc.Length > 0 Then
+                                'QSVEncのとき
+                                'HLSアプリをVLCに変更しパイプ追加
+                                hlsApp = exepath_ISO_VLC
+                                hlsOpt = startparam & " | """ & exepath_QSVEnc & """ " & hlsOpt
+                            ElseIf isMatch_HLS(hlsApp, "nvenc") = 1 And exepath_NVEnc.Length > 0 Then
+                                'NVEncのとき
+                                'HLSアプリをVLCに変更しパイプ追加
+                                hlsApp = exepath_ISO_VLC
+                                hlsOpt = startparam & " | """ & exepath_NVEnc & """ " & hlsOpt
+                            Else
+                                'その他vlc
+                                '今のところ未対応
+                                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                                Exit Sub
+                            End If
+
+                            'ffmpegかつ字幕有りの場合はオプション追加
+                            If hlsApp.IndexOf("ffmpeg.exe") > 0 And ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0 Then
+                                If hlsOpt.Length > 0 Then
+                                    'まず-vfを削る
+                                    If hlsOpt.IndexOf(" -vf ") > 0 Then
+                                        Dim stemp As String = Instr_pickup(hlsOpt, " -vf ", " -", 0)
+                                        If stemp.Length > 0 Then
+                                            hlsOpt = hlsOpt.Replace(" -vf " & stemp & " -", " -")
+                                        Else
+                                            'とりあえずはありえないはずなので無視（出力ファイルの直前ならありえる・・）
+                                            log1write("【エラー】-vfオプションの削除に失敗しました")
+                                        End If
+                                    End If
+                                    Dim fcstr As String = " -filter_complex ""[0:v]yadif=0[video];[video][0:s]overlay=0:H*2/9[v]"" -map [v] -map 0:a"
+                                    hlsOpt = Trim(hlsOpt)
+                                    Dim sp As Integer = hlsOpt.LastIndexOf(" ")
+                                    If sp > 0 Then
+                                        hlsOpt = hlsOpt.Substring(0, sp) & fcstr & hlsOpt.Substring(sp)
+                                    End If
+                                End If
+                            ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And nohsub = 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And ass_file.Length = 0 Then
+                                'If ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0 Then '字幕指定が無いときでも-vpp-subを付けても無害なのかよくわからない
+                                'ISO字幕　QSV ハードサブ G1840と6700では今のところ再生エラー QSVが落ちる
+                                hlsOpt = Trim(hlsOpt)
+                                Dim sp As Integer = hlsOpt.IndexOf(" --output-thread ")
+                                If sp > 0 Then
+                                    hlsOpt = hlsOpt.Substring(0, sp) & " --vpp-sub 1" & hlsOpt.Substring(sp)
+                                Else
+                                    sp = hlsOpt.LastIndexOf(" -o ")
+                                    If sp > 0 Then
+                                        hlsOpt = hlsOpt.Substring(0, sp) & " --vpp-sub 1" & hlsOpt.Substring(sp)
+                                    End If
+                                End If
+                                'End If
+                            End If
+
+                        Else
+                            log1write("【エラー】" & filename & "からのDVD情報取得に失敗しました")
+                            stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                            Exit Sub
+                        End If
+                    Else
+                        log1write("【エラー】ISO再生にはiniにexepath_ISO_VLCの設定が必要です")
+                        stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                        Exit Sub
+                    End If
+                End If
             End If
         End If
 
         If hlsOpt.Length > 0 Then
-            '音声切り替え
-            'hlsroot, hlsOptAdd はByRefで値が返ってくる
-            hlsOpt = modify_voice_option(udpOpt, hlsApp, hlsOpt, Stream_mode, NHK_dual_mono_mode_select, hlsroot, hlsOptAdd)
+            If filename_ext <> ".iso" Then
+                '音声切り替え
+                'hlsroot, hlsOptAdd はByRefで値が返ってくる
+                hlsOpt = modify_voice_option(udpOpt, hlsApp, hlsOpt, Stream_mode, NHK_dual_mono_mode_select, hlsroot, hlsOptAdd)
 
-            'QSVEnc パイプ使用指定があった場合
-            If isMatch_HLS(hlsApp, "qsvenc") = 1 And video_force_ffmpeg_temp = 2 And Stream_mode = 1 Then
-                hlsAppSelect = "PipeRun"
-                hlsApp = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\PipeRun.exe" 'ダミー
-                hlsroot = Path.GetDirectoryName(hlsApp)
-                log1write("PipeRun用にパラメータを修正します")
-                'ファイル再生はプロセスチェックをせず再起動しないのでhlsAppが変わっても問題ない
-                'パラメーター書き換え PipeRun_ffmpeg_QSVEnc.exe用
-                hlsOpt = hlsopt_udp2file_PipeRun(hlsOpt, VideoSeekSeconds)
+                'QSVEnc パイプ使用指定があった場合
+                If isMatch_HLS(hlsApp, "qsvenc") = 1 And video_force_ffmpeg_temp = 2 And Stream_mode = 1 Then
+                    hlsAppSelect = "PipeRun"
+                    hlsApp = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\PipeRun.exe" 'ダミー
+                    hlsroot = Path.GetDirectoryName(hlsApp)
+                    log1write("PipeRun用にパラメータを修正します")
+                    'ファイル再生はプロセスチェックをせず再起動しないのでhlsAppが変わっても問題ない
+                    'パラメーター書き換え PipeRun_ffmpeg_QSVEnc.exe用
+                    hlsOpt = hlsopt_udp2file_PipeRun(hlsOpt, VideoSeekSeconds)
+                End If
             End If
 
             '"%HLSROOT/../%"用
@@ -3965,7 +4143,7 @@ Class WebRemocon
                                 'ffmpeg HTTP ストリーム配信開始
                                 log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
                                 'context.Response.Headers("Content-Type") = "video/mpeg"
-                                Select Case Path.GetExtension(context.Request.RawUrl)
+                                Select Case Path.GetExtension(context.Request.RawUrl).ToLower
                                     Case ".webm"
                                         context.Response.Headers("Content-Type") = "video/webm"
                                     Case Else
@@ -4033,7 +4211,7 @@ Class WebRemocon
 
                     'MIME TYPE
                     Dim mimetype As String = get_mimetype(req.Url.LocalPath)
-                    Dim Url_ext As String = System.IO.Path.GetExtension(req.Url.LocalPath)
+                    Dim Url_ext As String = System.IO.Path.GetExtension(req.Url.LocalPath).ToLower
                     If mimetype.Length > 0 Then
                         'iniで指定されている場合値が設定されている
                     ElseIf Me._MIME_TYPE_DEFAULT.Length > 0 Then
@@ -4119,7 +4297,7 @@ Class WebRemocon
                         Dim req_Url As String = req.Url.LocalPath
 
                         'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
-                        If System.IO.Path.GetExtension(path).IndexOf(".htm") >= 0 Then
+                        If System.IO.Path.GetExtension(path).ToLower.IndexOf(".htm") >= 0 Then
                             'HTMLなら
 
                             '最後に.htmlにアクセスがあった日時を記録
@@ -4241,6 +4419,31 @@ Class WebRemocon
                                     vl_volume = -99
                                     vl_startdate = CDate("1980/01/01")
                                 End Try
+                            End If
+                            'ISO再生関連
+                            Dim iso As ISO_para_structure
+                            Dim isotemp As String = ""
+                            isotemp = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("i_startoffset") & ""
+                            If isotemp.Length > 0 Then
+                                iso.startoffset = Val(isotemp)
+                            Else
+                                iso.startoffset = -1 '指定無し
+                            End If
+                            iso.audioLang = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("i_audioLang") & ""
+                            iso.audioTrackNum = -1
+                            isotemp = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("i_audioTrackNum") & ""
+                            If isotemp.Length > 0 Then
+                                iso.audioTrackNum = Val(isotemp)
+                            Else
+                                iso.audioTrackNum = -1 '指定無し
+                            End If
+                            iso.subLang = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("i_subLang") & ""
+                            iso.subTrackNum = -1
+                            isotemp = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("i_subTrackNum") & ""
+                            If isotemp.Length > 0 Then
+                                iso.subTrackNum = Val(isotemp)
+                            Else
+                                iso.subTrackNum = -1 '指定無し
                             End If
 
                             'ハードサブ不許可
@@ -4555,7 +4758,7 @@ Class WebRemocon
                                     'ファイル再生
                                     waitingmessage_count(num) = 0
                                     waitingmessage_str(num) = ""
-                                    Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect)
+                                    Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect, iso)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 Else
@@ -5679,6 +5882,10 @@ Class WebRemocon
                 filepath = ""
                 filename = fl_file
             End If
+            If fl_file.IndexOf("*") >= 0 Or fl_file.IndexOf("?") >= 0 Then
+                Return r
+                Exit Function
+            End If
         End If
 
         Dim fullpath As String = ""
@@ -5966,7 +6173,7 @@ Class WebRemocon
     Public Function file_ope_allow_files(ByVal fl_cmd As String, ByVal fl_file As String, ByVal fullpathfilename As String)
         Dim r As Integer = 0
 
-        Dim ext As String = Path.GetExtension(fullpathfilename)
+        Dim ext As String = Path.GetExtension(fullpathfilename).ToLower
 
         If ext.Length > 0 Then
             If file_ope_allow_filelist IsNot Nothing Then
@@ -6168,7 +6375,7 @@ Class WebRemocon
                 'endif 'ファイル名での指定を廃止したのでend ifは下に移動
                 If trim8(d(0)).Length > 0 Then
                     'ファイル名で指定された場合
-                    Dim ext As String = Path.GetExtension(d(0))
+                    Dim ext As String = Path.GetExtension(d(0)).ToLower
                     If ext = ".chapter" Then
                         chapterfullpathfilename = d(0)
                     Else
@@ -6321,7 +6528,17 @@ Class WebRemocon
                 ffmpeg_path = exepath_ffmpeg
             End If
             Dim stream_folder As String = Me._fileroot
-            If ffmpeg_path.ToLower.IndexOf("ffmpeg.exe") >= 0 Then
+            If Path.GetExtension(video_path).ToLower = ".iso" Then
+                If exepath_ISO_VLC.Length > 0 Then
+                    'ISO再生
+                    'タイトルNo.を取得しないといけない
+                    Dim totdata As tot_structure
+                    totdata = TOT_read(video_path, "")
+                    If totdata.ISO_MAINTITLE >= 0 Then
+                        r = F_make_thumbnail(num, exepath_ISO_VLC, stream_folder, url_path, video_path, ss, w, h, totdata.ISO_MAINTITLE)
+                    End If
+                End If
+            ElseIf ffmpeg_path.ToLower.IndexOf("ffmpeg.exe") >= 0 Then
                 r = F_make_thumbnail(num, ffmpeg_path, stream_folder, url_path, video_path, ss, w, h)
             Else
                 log1write("【エラー】サムネイルを作成するためのffmpeg.exeが見つかりませんでした")

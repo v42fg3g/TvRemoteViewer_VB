@@ -515,7 +515,11 @@ Public Class ProcessManager
                 ElseIf stream_mode = 1 Or stream_mode = 3 Then
                     'ファイル再生
                     'フルパスファイル名を取得
-                    Dim fullpathfilename As String = trim8(Instr_pickup(hlsOpt, "-i """, """", 0)) 'ffmpeg限定
+                    Dim fullpathfilename As String = trim8(Instr_pickup(hlsOpt, "dvdsimple:///""", """", 0)) 'ISO
+                    If fullpathfilename.Length = 0 Then
+                        'ffmpegの可能性
+                        fullpathfilename = trim8(Instr_pickup(hlsOpt, "-i """, """", 0)) 'ffmpeg限定
+                    End If
                     If fullpathfilename.Length = 0 Then
                         'VLCの可能性
                         fullpathfilename = trim8(Instr_pickup(hlsOpt, "-I dummy """, """", 0))
@@ -625,6 +629,84 @@ Public Class ProcessManager
                             End Try
                             Try
                                 log1write("ffmpegプロセス=" & hlsProc2.Id.ToString)
+                            Catch ex As Exception
+                            End Try
+                        ElseIf Path.GetExtension(fullpathfilename).ToLower = ".iso" Then
+                            'ISO再生の場合
+                            '先に現在実行中のVLCとHLSアプリの全プロセスを記録
+                            Dim app1_name As String = "vlc"
+                            Dim app2_name As String = ""
+                            If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 Then
+                                app2_name = "ffmpeg"
+                            ElseIf hlsOpt.ToLower.IndexOf("qsvencc.exe") > 0 Then
+                                app2_name = "QSVEncC"
+                            ElseIf hlsOpt.ToLower.IndexOf("nvencc.exe") > 0 Then
+                                app2_name = "NVEncC"
+                            Else
+                                log1write("【エラー】ISO再生HLSアプリの指定が不正です。")
+                                Exit Sub
+                            End If
+
+                            Dim ps1a As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app1_name)
+                            Dim pstr1 As String = ":"
+                            For Each p1 As Process In ps1a
+                                pstr1 &= p1.Id.ToString & ":"
+                            Next p1
+                            Dim ps2a As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app2_name)
+                            Dim pstr2 As String = ":"
+                            For Each p2 As Process In ps2a
+                                pstr2 &= p2.Id.ToString & ":"
+                            Next p2
+
+                            'アプリケーションを起動する
+                            ISORUN_exe(hlsApp, hlsOpt)
+
+                            'バッチ実行後に増加したプロセスからプロセスを推定
+                            Dim chk As Integer = 30 * 10 '30秒
+                            Dim chk_hlsapp1 As Integer = 0
+                            Dim chk_hlsapp2 As Integer = 0
+                            While chk > 0
+                                If chk_hlsapp1 = 0 Then
+                                    Dim ps1b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app1_name)
+                                    For Each p11 As Process In ps1b
+                                        If pstr1.IndexOf(":" & p11.Id.ToString & ":") < 0 Then
+                                            hlsProc = p11
+                                            chk_hlsapp1 = 1
+                                            log1write("ISORUN内のバッチ処理で" & app1_name & "が起動されました。プロセスID=" & p11.Id.ToString)
+                                            Exit For
+                                        End If
+                                    Next
+                                End If
+                                If chk_hlsapp2 = 0 Then
+                                    Dim ps2b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app2_name)
+                                    For Each p22 As Process In ps2b
+                                        If pstr2.IndexOf(":" & p22.Id.ToString & ":") < 0 Then
+                                            hlsProc2 = p22
+                                            chk_hlsapp2 = 1
+                                            log1write("ISORUN内のバッチ処理で" & app2_name & "が起動されました。プロセスID=" & p22.Id.ToString)
+                                            Exit For
+                                        End If
+                                    Next
+                                End If
+                                If chk_hlsapp1 = 1 And chk_hlsapp2 = 1 Then
+                                    Exit While
+                                End If
+
+                                System.Threading.Thread.Sleep(100)
+                                chk -= 1
+                            End While
+
+                            If chk <= 0 Then
+                                '失敗
+                                log1write("【エラー】" & "ISORUNによるプロセス起動に失敗したようです。")
+                            End If
+
+                            Try
+                                log1write(app1_name & "プロセス=" & hlsProc.Id.ToString)
+                            Catch ex As Exception
+                            End Try
+                            Try
+                                log1write(app2_name & "プロセス=" & hlsProc2.Id.ToString)
                             Catch ex As Exception
                             End Try
                         Else
@@ -902,7 +984,14 @@ Public Class ProcessManager
                                         log1write("No.=" & Me._list(i)._num & "のVLCを終了しました")
                                         hls_stop = 1
                                     Else
-                                        log1write("No.=" & Me._list(i)._num & "のVLC終了に失敗しました")
+                                        '失敗したなら強制終了
+                                        proc.Kill()
+                                        If wait_stop_proc(proc) = 1 Then
+                                            log1write("No.=" & Me._list(i)._num & "のVLCを強制終了しました2")
+                                            hls_stop = 1
+                                        Else
+                                            log1write("No.=" & Me._list(i)._num & "のVLC終了に失敗しました")
+                                        End If
                                     End If
                                     proc.Close()
                                     proc.Dispose()
@@ -920,6 +1009,29 @@ Public Class ProcessManager
                                     proc.Close()
                                     proc.Dispose()
                                 End If
+
+                                'ISO再生の場合
+                                Try
+                                    Dim proc2 As System.Diagnostics.Process = Me._list(i).GetHlsProc2
+                                    If proc2 IsNot Nothing Then
+                                        If proc2 IsNot Nothing AndAlso Not proc2.HasExited Then
+                                            proc2.Kill()
+                                            If wait_stop_proc(proc2) = 1 Then
+                                                log1write("No.=" & Me._list(i)._num & "のISORUN経由第2HLSアプリを強制終了しました")
+                                            Else
+                                                log1write("No.=" & Me._list(i)._num & "のISORUN経由第2HLSアプリの強制終了に失敗しました")
+                                            End If
+                                            proc2.Close()
+                                            proc2.Dispose()
+                                        Else
+                                            log1write("No.=" & Me._list(i)._num & "のISORUN経由の第2HLSアプリは起動していないようです")
+                                        End If
+                                    Else
+                                        'log1write("No.=" & Me._list(i)._num & "のISORUN経由第2アプリは実行されていないようです")
+                                    End If
+                                Catch ex As Exception
+                                End Try
+
                             ElseIf isMatch_HLS(Me._list(i)._hlsApp, "piperun") = 1 Then
                                 'PipeRun QSVEncとffmpegも終了させる
                                 Dim stopchk As Integer = 0
@@ -1164,6 +1276,10 @@ Public Class ProcessManager
                     stopProcName("QSVEncC")
                     log1write("名前指定で全てのQSVEncのプロセスを停止しました")
                 End If
+                If Stop_NVEnc_at_StartEnd = 1 Then
+                    stopProcName("NVEncC")
+                    log1write("名前指定で全てのNVEncのプロセスを停止しました")
+                End If
                 If Stop_RecTask_at_StartEnd = 1 Then
                     If StopUdpAppName.ToLower.IndexOf("rectask.exe") >= 0 Then
                         stopProcName("RecTask")
@@ -1369,7 +1485,7 @@ Public Class ProcessManager
         Return r
     End Function
 
-    '現在稼働中のlist(i)._hlsAppの種類を取得 vlc=1 ffmpeg=2 QSVEnc=3
+    '現在稼働中のlist(i)._hlsAppの種類を取得 vlc=1 ffmpeg=2 QSVEnc=3 NVEnc=4
     Public Function get_live_hlsApp() As Object
         Dim r() As Integer = Nothing
         Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
@@ -1382,6 +1498,8 @@ Public Class ProcessManager
                     r(j) = 2
                 ElseIf isMatch_HLS(Me._list(j)._hlsApp, "qsvencc") = 1 Then
                     r(j) = 3
+                ElseIf isMatch_HLS(Me._list(j)._hlsApp, "nvencc") = 1 Then
+                    r(j) = 4
                 End If
             Next
         End If
@@ -1445,7 +1563,7 @@ Public Class ProcessManager
                 p = System.Diagnostics.Process.GetProcessById(inst.Id)
                 p.Kill()
             Catch ex As Exception
-                log1write(name & "の名前指定によるプロセス終了に失敗しました")
+                log1write(name & "の名前指定によるプロセス終了に失敗しました。" & ex.Message)
             End Try
         Next
     End Sub
@@ -2252,23 +2370,58 @@ Public Class ProcessManager
                 psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
                 'psi.StandardOutputEncoding = Encoding.UTF8
 
-                psi.Arguments = "/c " & pipeexestr
+                psi.Arguments = ncs("/c " & pipeexestr, 1)
 
-                Dim p As System.Diagnostics.Process
-                Try
-                    p = System.Diagnostics.Process.Start(psi)
-                    log1write("実行しました")
-                    '出力を読み取る
-                    'results = p.StandardError.ReadToEnd
-                    'WaitForExitはReadToEndの後である必要がある
-                    '(親プロセス、子プロセスでブロック防止のため)
-                    'p.WaitForExit(10000)
-                Catch ex As Exception
-                    log1write("【エラー】PipeRun実行中にエラーが発生しました。" & ex.Message)
-                End Try
+                If psi.Arguments.Length > 3 Then
+                    Dim p As System.Diagnostics.Process
+                    Try
+                        p = System.Diagnostics.Process.Start(psi)
+                        log1write("実行しました")
+                        '出力を読み取る
+                        'results = p.StandardError.ReadToEnd
+                        'WaitForExitはReadToEndの後である必要がある
+                        '(親プロセス、子プロセスでブロック防止のため)
+                        'p.WaitForExit(10000)
+                    Catch ex As Exception
+                        log1write("【エラー】PipeRun実行中にエラーが発生しました。" & ex.Message)
+                    End Try
+                End If
             End If
         Else
             log1write("パイプパラメータが不正です。" & cmd_str)
+        End If
+
+    End Sub
+
+    'ISO再生用VLC起動
+    Public Sub ISORUN_exe(ByVal hlsapp As String, ByVal cmd_str As String)
+        Dim pipeexestr As String = hlsapp & " " & cmd_str
+
+        Dim results As String = ""
+        Dim psi As New System.Diagnostics.ProcessStartInfo()
+
+        psi.FileName = System.Environment.GetEnvironmentVariable("ComSpec") 'ComSpecのパスを取得する
+        psi.RedirectStandardInput = True '出力を読み取れるようにする
+        psi.RedirectStandardError = False
+        psi.UseShellExecute = False
+        psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
+        'psi.StandardOutputEncoding = Encoding.UTF8
+
+        psi.Arguments = ncs("/c " & pipeexestr, 1)
+
+        If psi.Arguments.Length > 3 Then
+            Dim p As System.Diagnostics.Process
+            Try
+                p = System.Diagnostics.Process.Start(psi)
+                log1write("実行しました")
+                '出力を読み取る
+                'results = p.StandardError.ReadToEnd
+                'WaitForExitはReadToEndの後である必要がある
+                '(親プロセス、子プロセスでブロック防止のため)
+                'p.WaitForExit(10000)
+            Catch ex As Exception
+                log1write("【エラー】ISO再生開始中にエラーが発生しました。" & ex.Message)
+            End Try
         End If
 
     End Sub

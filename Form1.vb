@@ -631,7 +631,7 @@ Public Class Form1
                 Dim bchk As Integer = 0
                 Try
                     For Each stFilePath As String In System.IO.Directory.GetFiles(f_bondriver, "*.dll")
-                        If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
+                        If System.IO.Path.GetExtension(stFilePath).ToLower = ".dll" Then
                             Dim s As String = trim8(stFilePath)
                             Dim bonfile As String = IO.Path.GetFileName(s).ToLower 'ファイル名
                             '表示しないBonDriverかをチェック
@@ -903,7 +903,7 @@ Public Class Form1
         End If
         Try
             For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
-                If System.IO.Path.GetExtension(stFilePath) = ".dll" Then
+                If System.IO.Path.GetExtension(stFilePath).ToLower = ".dll" Then
                     Dim s As String = stFilePath
                     'フルパスファイル名がsに入る
                     'ファイル名だけを取り出す

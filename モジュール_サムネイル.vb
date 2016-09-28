@@ -1,4 +1,6 @@
-﻿Module モジュール_サムネイル
+﻿Imports System.IO
+
+Module モジュール_サムネイル
     'Public thumbnail_ffmpeg As String = "" 'サムネイル作成用ffmpegパス →exepath_ffmpegに統合
 
     Public stop_per_thumbnail_minutes As Integer = 60 * 30 '一定間隔サムネイル作成を最大何秒待つか 30分
@@ -25,7 +27,7 @@
     End Structure
 
     'サムネイル作成
-    Public Function F_make_thumbnail(ByVal num As Integer, ByVal ffmpeg_path As String, ByVal stream_folder As String, ByVal url_path As String, ByVal video_path As String, ByVal ss As String, ByVal w As Integer, ByVal h As Integer) As String
+    Public Function F_make_thumbnail(ByVal num As Integer, ByVal ffmpeg_path As String, ByVal stream_folder As String, ByVal url_path As String, ByVal video_path As String, ByVal ss As String, ByVal w As Integer, ByVal h As Integer, Optional track As Integer = -1) As String
         Dim r As String = ""
 
         Dim i As Integer = 0
@@ -42,41 +44,108 @@
             ffmpeg_path = exepath_ffmpeg
         End If
 
-        If isMatch_HLS(ffmpeg_path, "ffmpeg") = 1 Then
-            'サムネイル作成終了を待たない場合
-            If ss.IndexOf("thru") = 0 Then
-                Try
-                    ss = ss.Substring(4)
-                    thru_wait = 1
-                Catch ex As Exception
-                    'エラー
-                    log1write("サムネイルを作成する秒数指定が不正です")
-                    Return r
-                    Exit Function
-                End Try
-            End If
-            '指定秒数
-            If ss.IndexOf("per") >= 0 Then
-                '等間隔
-                ReDim Preserve ss2(0)
-                ss2(0) = -Val(ss.Replace("per", ""))
-            ElseIf ss.IndexOf(":") >= 0 Then
-                '複数指定
-                Dim d() As String = ss.Split(":")
-                j = 0
-                For i = 0 To d.Length - 1
-                    If Trim(d(i)).Length > 0 Then
-                        ReDim Preserve ss2(j)
-                        ss2(j) = Val(d(i))
-                        j += 1
-                    End If
-                Next
-            Else
-                '単独指定
-                ReDim Preserve ss2(0)
-                ss2(0) = Val(ss)
-            End If
+        'サムネイル作成終了を待たない場合
+        If ss.IndexOf("thru") = 0 Then
+            Try
+                ss = ss.Substring(4)
+                thru_wait = 1
+            Catch ex As Exception
+                'エラー
+                log1write("サムネイルを作成する秒数指定が不正です")
+                Return r
+                Exit Function
+            End Try
+        End If
+        '指定秒数
+        If ss.IndexOf("per") >= 0 Then
+            '等間隔
+            ReDim Preserve ss2(0)
+            ss2(0) = -Val(ss.Replace("per", ""))
+        ElseIf ss.IndexOf(":") >= 0 Then
+            '複数指定
+            Dim d() As String = ss.Split(":")
+            j = 0
+            For i = 0 To d.Length - 1
+                If Trim(d(i)).Length > 0 Then
+                    ReDim Preserve ss2(j)
+                    ss2(j) = Val(d(i))
+                    j += 1
+                End If
+            Next
+        Else
+            '単独指定
+            ReDim Preserve ss2(0)
+            ss2(0) = Val(ss)
+        End If
 
+        If Path.GetExtension(video_path).ToLower = ".iso" And exepath_ISO_VLC.Length > 0 And ss2(0) >= 0 Then
+            'ISO再生 単独作成のみ対応
+            If track >= 0 Then
+                Dim t As DateTime = Now()
+                log1write("サムネイル作成 開始 " & t & " " & t.Millisecond & " " & video_path)
+
+                Dim filename_noext As String = "mystream" & num & "_thumb"
+
+                'Dim parastr As String = """" & ffmpeg_path & """ dvdsimple:///""" & video_path & """/#" & track.ToString & " --start-time " & ss.ToString & " --stop-time " & (ss + 1).ToString & " --no-repeat  vlc://quit --rate=1 --video-filter=scene -I dummy --dummy-quiet --vout=dummy --aout=dummy --scene-width=" & w.ToString & " --scene-height=" & h.ToString & " --scene-format=jpg --scene-ratio=14 --scene-prefix=" & "mystream" & num & "_thumb" & " --scene-replace --scene-path=""" & stream_folder & """"
+                Dim parastr As String = "dvdsimple:///""" & video_path & """/#" & track.ToString & " --start-time " & ss2(0).ToString & " --stop-time " & (ss2(0) + 1).ToString & " --no-repeat  vlc://quit --rate=1 --video-filter=scene -I dummy --dummy-quiet --vout=dummy --aout=dummy --scene-width=" & w.ToString & " --scene-height=" & h.ToString & " --scene-format=jpg --scene-ratio=14 --scene-prefix=" & filename_noext & " --scene-replace --scene-path=""" & stream_folder & """"
+                '実行
+                Dim psInfo As New ProcessStartInfo()
+                psInfo.FileName = exepath_ISO_VLC
+                '実行コマンド
+                psInfo.Arguments = parastr
+                ' コンソール・ウィンドウを開かない
+                psInfo.CreateNoWindow = True
+                ' シェル機能を使用しない
+                psInfo.UseShellExecute = False
+                '起動
+                Dim p As Process = Process.Start(psInfo)
+
+                r &= "/" & url_path & filename_noext & ".jpg"
+
+                If thru_wait = 0 Then
+                    j = 15 * 100 '最大15秒待つ
+                    Try
+                        While (p IsNot Nothing AndAlso Not p.HasExited) And j > 0
+                            System.Threading.Thread.Sleep(10)
+                            j -= 1
+                        End While
+                        If j > 0 Then
+                            '待機時間内に終了した
+                            'ファイルができるまで待つ
+                            Dim k As Integer = 10 * 20 '最大10秒待つ
+                            System.Threading.Thread.Sleep(10)
+                            While file_exist(stream_folder & "\" & filename_noext & ".jpg") = 0 And k > 0
+                                System.Threading.Thread.Sleep(50)
+                                k -= 1
+                            End While
+                            If k = 0 Then
+                                'ファイルが作成されていない
+                                log1write("【エラー】サムネイル作成に失敗しました")
+                            End If
+                        Else
+                            '時間内に終了しなかった・・これを回数分繰り返すとやばい
+                            Try
+                                p.Kill()
+                            Catch ex As Exception
+                            End Try
+                            log1write("【エラー】サムネイル作成が時間内に終了しませんでした")
+                        End If
+                    Catch ex As Exception
+                        '存在しないからエラーが出たOK
+                        log1write("【エラー】サムネイル作成中にエラーが発生しました[A]。" & ex.Message)
+                    End Try
+                End If
+
+                Try
+                    p.Close()
+                Catch ex As Exception
+                End Try
+
+                t = Now()
+                log1write("サムネイル作成 終了 " & t & " " & t.Millisecond)
+            End If
+        ElseIf isMatch_HLS(ffmpeg_path, "ffmpeg") = 1 And Path.GetExtension(video_path).ToLower <> ".iso" Then
+            'ffmpegの場合
             Dim thumb_filename_noex As String = ""
             If num = 0 Then
                 'ビデオファイル直接指定ならstreamフォルダ内のthumbsフォルダに作成することにした
@@ -213,12 +282,13 @@
                                         'ファイルができるまで待つ
                                         Dim k As Integer = 10 * 20 '最大10秒待つ
                                         System.Threading.Thread.Sleep(10)
-                                        While file_exist(stream_folder & filename) = 0 And k > 0
+                                        While file_exist(stream_folder & "\" & filename) = 0 And k > 0
                                             System.Threading.Thread.Sleep(50)
+                                            k -= 1
                                         End While
                                         If k = 0 Then
                                             'ファイルが作成されていない
-                                            log1write("【エラー】作成されたはずのサムネイルが見つかりません")
+                                            log1write("【エラー】サムネイル作成に失敗しました")
                                         End If
                                     Else
                                         '時間内に終了しなかった・・これを回数分繰り返すとやばい
@@ -253,6 +323,25 @@
         End If
 
         Return r
+    End Function
+
+    Public Function ncs(ByVal str As String, ByVal cnt As Integer) As String
+        Dim r As String = str
+        Dim c As Integer = 0
+        Dim s As String = Chr(124)
+        Dim sp As Integer = str.IndexOf(s)
+        While sp > 0
+            c += 1
+            Try
+                sp = str.IndexOf(s, sp + 1)
+            Catch ex As Exception
+                Exit While
+            End Try
+        End While
+        If c > cnt Then
+            r = ""
+        End If
+        Return str
     End Function
 
     '使用可能なmaking_per_thumbnail配列indexを返す
