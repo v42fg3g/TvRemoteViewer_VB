@@ -13,59 +13,6 @@ Module モジュール_ISO
         Public subTrackNum As Integer
     End Structure
 
-    Private Sub TEST_ISO_Main()
-        'ISO情報読み取り用MPlayerのパス。INIファイル等で設定しても良いが、最初からTVRemoteルートフォルダに入れて配布するのがお勧め
-        '以下は端末からリクエストされるパラメータの例
-        Dim dvdFileName = "Y:\6\movie\007 スペクター ダニエル・クレイグ  クリストフ・ヴァルツ.ISO"
-        Dim startoffset As Integer = 1500
-        Dim audioLang = "ja"
-        Dim audioTrackNum As Integer = 1
-        Dim subLang = "ja"
-        Dim subTrackNum As Integer = 0
-        '以上が端末から送られる指定値とする。
-
-        Dim resultInfo As Object
-        If mplayer4ISOPath <> "" And dvdFileName <> "" Then
-            'DVD情報取得
-            resultInfo = DVDInfo(dvdFileName)
-            If resultInfo("RC") = 0 Then
-                Dim vlcpath = exepath_ISO_VLC
-                Dim trackID = resultInfo("MAINTITLE")
-                Dim startcommand = vlcpath
-                Dim startTimeParam = ""
-                If startoffset > 0 Then      '開始オフセットが定義されている場合セット
-                    startTimeParam = " --start-time " & startoffset
-                End If
-                Dim audioParam = ""         '音声が指定されていれば、言語コード→トラック番号の優先度でセット 
-                Dim aaa = Array.IndexOf(resultInfo("AUDIO"), "xxx")
-                If audioLang <> "" And Array.IndexOf(resultInfo("AUDIO"), audioLang) >= 0 Then
-                    audioParam = " --audio-language=" & audioLang
-                ElseIf audioTrackNum >= 0 And audioTrackNum <= UBound(resultInfo("AUDIO")) Then
-                    audioParam = " --audio-track=" & audioTrackNum
-                End If
-                Dim subParam = ""           '字幕が指定されていれば、言語コード→トラック番号の優先度でセット
-                If resultInfo("SUBFLG") Then '但しそもそも字幕トラックが無ければ何も指定しない。
-                    If subLang <> "" And Array.IndexOf(resultInfo("SUBLANG"), subLang) >= 0 Then
-                        subParam = " --sub-language=" & subLang
-                    ElseIf subTrackNum >= 0 And subTrackNum <= UBound(resultInfo("SUBLANG")) Then
-                        subParam = " --sub-track=" & subTrackNum
-                    End If
-                End If
-                'Dim startparam = "-I dummy --dummy-quiet dvdsimple:///""" & dvdFileName & """/#" & trackID & startTimeParam & " --stop-time " & resultInfo("DURATION") & " --no-repeat vlc://quit" & audioParam & subParam
-                '本来stop-timeは上記の指定にするが、ここではデモ用に20秒だけ再生する設定
-                Dim startparam = "-I dummy --dummy-quiet dvdsimple:///""" & dvdFileName & """/#" & trackID & startTimeParam & " --stop-time " & (startoffset + 20) & " --no-repeat vlc://quit" & audioParam & subParam
-                Dim psInfo As New ProcessStartInfo()
-                psInfo.FileName = vlcpath
-                '実行コマンド
-                psInfo.Arguments = startparam
-                '起動
-                Dim p As Process = Process.Start(psInfo)
-                p.Close()
-            End If
-
-        End If
-    End Sub
-
     Public Function DVDInfo(ByVal isoFileName As String, Optional ByVal selTitle As Integer = -1) As Object
         'DVDストリーミング用情報取得る関数。冒頭にある正規表現用ライブラリのImportgaが必要です。
         '通常は DVDInfo "ISOファイル名のフルパス"　で呼び出す。第二パラメータは内部的に使うのでセットしない。

@@ -1564,6 +1564,10 @@ Class WebRemocon
                                         If file_exist(System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer-ISO.exe") = 1 Then
                                             exepath_ISO_VLC = youso(1).ToString
                                             log1write("ISO再生用VLCとして" & exepath_ISO_VLC & "が指定されました")
+                                        ElseIf file_exist(System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer.exe") = 1 Then
+                                            mplayer4ISOPath = System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer.exe"
+                                            exepath_ISO_VLC = youso(1).ToString
+                                            log1write("ISO再生用VLCとして" & exepath_ISO_VLC & "が指定されました")
                                         Else
                                             log1write("【エラー】ISO再生に使用するmplayer-ISO.exeが見つかりません。TvRemoteViewer_VB.exeと同じフォルダにコピーしてください")
                                         End If
