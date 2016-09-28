@@ -661,7 +661,7 @@ TvRemoteViewer_VB v2.23
 		iniのStop_NVEnc_at_StartEndが機能していなかったバグを修正
 		ISOファイル再生に対応
 		iniにISO再生に使用するVLCを指定する項目を追加（exepath_ISO_VLC）VLC-2.1.2推奨
-		ISOファイル再生に必要な古めのmplayer-ISO.exeを同梱（要プログラムフォルダにコピー）
+		ISOファイル再生には古めのmplayerが必要です（要exeをプログラムフォルダにコピー）
 	2.23	mplayer-ISO.exeまたはmplayer.exeがプログラムフォルダにあれば認識するようにした
 
 
