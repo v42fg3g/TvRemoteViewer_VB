@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.14
+TvRemoteViewer_VB v2.23
 
 
 ※1　	%NUM%は配信番号を表します
