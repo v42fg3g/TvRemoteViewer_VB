@@ -7,6 +7,8 @@ Imports System.Runtime.Serialization
 '参照で.net System.Runtime.Serializationを追加
 
 Module モジュール_番組表
+    Public TvProgram_Force_NoRec As Integer = 0 'TvRock番組表の代わりにダミー番組表を表示する=1
+
     Public TvProgram_ch() As Integer '東京13等が複数配列で入る
     Public TvProgram_NGword() As String
     Public TvProgramEDCB_NGword() As String
@@ -95,6 +97,8 @@ Module モジュール_番組表
         Public hosokyoku As String
         Public html As String
         Public done As Integer
+        Public sid As Integer
+        Public title As String
     End Structure
 
     '地デジ番組表作成
@@ -110,7 +114,21 @@ Module モジュール_番組表
         Dim TvProgram_ch2() As Integer = Nothing
         If a = 0 Then
             '通常のインターネットから取得
-            TvProgram_ch2 = TvProgram_ch
+            If TvProgram_ch IsNot Nothing Then
+                TvProgram_ch2 = TvProgram_ch
+            End If
+        ElseIf a = 991 Or (TvProgram_Force_NoRec And a = 999) Then
+            'ネット番組表＋ダミー番組表
+            If TvProgram_ch IsNot Nothing Then
+                ReDim Preserve TvProgram_ch2(TvProgram_ch.Length)
+                For k As Integer = 0 To TvProgram_ch.Length - 1
+                    TvProgram_ch2(k) = TvProgram_ch(k)
+                Next
+                TvProgram_ch2(TvProgram_ch2.Length - 1) = 991
+            Else
+                ReDim Preserve TvProgram_ch2(0)
+                TvProgram_ch2(0) = 991
+            End If
         ElseIf a = 996 Then
             'Tvmaidから取得
             ReDim Preserve TvProgram_ch2(0)
@@ -138,6 +156,8 @@ Module モジュール_番組表
                         For Each p As TVprogramstructure In program
                             Dim html As String = ""
                             Dim hosokyoku As String = ""
+                            Dim sid As Integer = 0 'sid
+                            Dim title As String = "" '番組名
                             Dim s4 As String = StrConv(p.stationDispName, VbStrConv.Wide) & p.sid 'p.stationDispName
                             '最初の4文字で重複チェック　→廃止
                             'If s4.Length > 4 Then
@@ -150,6 +170,9 @@ Module モジュール_番組表
                                         Dim chk As Integer = 0
                                         If a = 0 Then
                                             'ネット番組表
+                                            chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
+                                        ElseIf a = 991 Or (TvProgram_Force_NoRec And a = 999) Then
+                                            'ダミー番組表　ネット番組表と同じ（手抜き）
                                             chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
                                         ElseIf a = 996 Then
                                             'Tvmaid
@@ -193,7 +216,8 @@ Module モジュール_番組表
                                                 html &= "<span class=""p_time"">　</span><br>"
                                             End If
                                             If p.programTitle.Length > 0 Or p.programContent.Length > 0 Then
-                                                html &= "<span class=""p_title"">" & escape_program_str(p.programTitle) & "</span><br>" & vbCrLf
+                                                title = escape_program_str(p.programTitle)
+                                                html &= "<span class=""p_title"">" & title & "</span><br>" & vbCrLf
                                                 html &= "<span class=""p_content"">" & escape_program_str(p.programContent) & "</span><br>" & vbCrLf
                                             Else
                                                 '放送されていない
@@ -248,6 +272,7 @@ Module モジュール_番組表
                                                 html &= bhtml & vbCrLf
                                                 html &= "%SELECTRESOLUTION%" & vbCrLf '解像度選択
                                                 html &= "<input type=""hidden"" name=""ServiceID"" value=""" & d(2) & """>" & vbCrLf
+                                                sid = Val(Trim(d(2)))
                                                 html &= "<input type=""hidden"" name=""ChSpace"" value=""" & d(3) & """>" & vbCrLf
                                                 html &= "<span class=""p_hosokyoku""> " & d(0) & " </span>" & vbCrLf
                                                 'NHK音声選択
@@ -273,11 +298,36 @@ Module モジュール_番組表
                             TvProgram_html(cnt).hosokyoku = hosokyoku
                             TvProgram_html(cnt).html = html
                             TvProgram_html(cnt).done = 0
+                            TvProgram_html(cnt).sid = sid
+                            TvProgram_html(cnt).title = title
                             cnt += 1
                         Next
                     End If
                 End If
             Next
+        End If
+
+        'ダミーの場合はネット放送局（番組情報有り）を残しダミー放送局を削除
+        If a = 991 Or (TvProgram_Force_NoRec And a = 999) Then
+            If TvProgram_html IsNot Nothing Then
+                For j As Integer = TvProgram_html.Length - 1 To 1 Step -1
+                    If TvProgram_html(j).title = "_" Then
+                        Dim d1 As Integer = TvProgram_html(j).sid
+                        If d1 > 0 Then
+                            For k As Integer = 0 To j - 1
+                                Dim d2 As Integer = TvProgram_html(k).sid
+                                If d2 > 0 Then
+                                    If d1 = d2 Then
+                                        'sidが一致
+                                        TvProgram_html(j).html = ""
+                                        Exit For
+                                    End If
+                                End If
+                            Next
+                        End If
+                    End If
+                Next
+            End If
         End If
 
         '並び替え
@@ -443,7 +493,10 @@ Module モジュール_番組表
     '地域番号から番組表を取得
     Public Function get_TVprogram_now(ByVal regionID As Integer, Optional ByVal getnext As Integer = 0) As Object
         Dim r() As TVprogramstructure = Nothing
-        If regionID = 996 Then
+        If regionID = 991 Or (TvProgram_Force_NoRec And regionID = 999) = 1 Then
+            'ダミー
+            r = get_NoRec_program()
+        ElseIf regionID = 996 Then
             'Tvmaid
             If TvmaidIsEX = 1 Then
                 r = get_TvmaidEX_program(getnext)
@@ -795,6 +848,8 @@ Module モジュール_番組表
         Dim chs() As String = Nothing
         If a = 0 Then
             chs = TvProgramD_channels
+        ElseIf a = 991 Or (TvProgram_Force_NoRec And a = 999) Then
+            chs = TvProgramD_channels
         ElseIf a = 998 Then
             chs = TvProgramEDCB_channels
         ElseIf a = 999 Then
@@ -881,7 +936,21 @@ Module モジュール_番組表
         Dim TvProgram_ch2() As Integer = Nothing
         If a = 0 Then
             '通常のインターネットから取得
-            TvProgram_ch2 = TvProgram_ch
+            If TvProgram_ch IsNot Nothing Then
+                TvProgram_ch2 = TvProgram_ch
+            End If
+        ElseIf a = 991 Or (TvProgram_Force_NoRec And a = 999) Then
+            'ネット番組表＋ダミー番組表
+            If TvProgram_ch IsNot Nothing Then
+                ReDim Preserve TvProgram_ch2(TvProgram_ch.Length)
+                For k As Integer = 0 To TvProgram_ch.Length - 1
+                    TvProgram_ch2(k) = TvProgram_ch(k)
+                Next
+                TvProgram_ch2(TvProgram_ch2.Length - 1) = 991
+            Else
+                ReDim Preserve TvProgram_ch2(0)
+                TvProgram_ch2(0) = 991
+            End If
         ElseIf a = 996 Then
             'Tvmaidから取得
             ReDim Preserve TvProgram_ch2(0)
@@ -908,6 +977,8 @@ Module モジュール_番組表
                         For Each p As TVprogramstructure In program
                             Dim html As String = ""
                             Dim hosokyoku As String = ""
+                            Dim sid As Integer = 0 'sid
+                            Dim title As String = "" '番組名
                             Dim s4 As String = StrConv(p.stationDispName, VbStrConv.Wide) & p.sid & "." & p.nextFlag 'p.stationDispName
                             If s4.Length > 0 Then
                                 If chkstr.IndexOf(":" & s4 & ":") < 0 Then '重複していないかチェック
@@ -921,6 +992,9 @@ Module モジュール_番組表
                                         If chk = 0 Then
                                             If a = 0 Then
                                                 'ネット番組表
+                                                chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
+                                            ElseIf a = 991 Or (TvProgram_Force_NoRec And a = 999) Then
+                                                'NoRecのNG処理はネット番組表と共有でいいかな（手抜き）
                                                 chk = isMATCHhosokyoku(TvProgram_NGword, p.stationDispName)
                                             ElseIf a = 996 Then
                                                 'Tvmaid
@@ -965,7 +1039,9 @@ Module モジュール_番組表
                                             If getnext = 2 And p.nextFlag = 1 Then
                                                 p.programTitle = "[Next]" & p.programTitle
                                             End If
-                                            html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & escape_program_str(p.programTitle) & "," & escape_program_str(p.programContent)
+                                            sid = d(2)
+                                            title = escape_program_str(p.programTitle)
+                                            html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & title & "," & escape_program_str(p.programContent)
                                             If getnext = 3 Then
                                                 html &= "," & p.nextFlag
                                             End If
@@ -982,11 +1058,34 @@ Module モジュール_番組表
                             TvProgram_html(cnt).hosokyoku = hosokyoku
                             TvProgram_html(cnt).html = html
                             TvProgram_html(cnt).done = 0
+                            TvProgram_html(cnt).sid = sid
+                            TvProgram_html(cnt).title = title
                             cnt += 1
                         Next
                     End If
                 End If
             Next
+        End If
+
+        'ダミーの場合はネット放送局（番組情報有り）を残しダミー放送局を削除
+        If a = 991 Or (TvProgram_Force_NoRec And a = 999) Then
+            If TvProgram_html IsNot Nothing Then
+                For j As Integer = TvProgram_html.Length - 1 To 1 Step -1
+                    If TvProgram_html(j).title = "_" Then
+                        Dim d1 As Integer = TvProgram_html(j).sid
+                        If d1 > 0 Then
+                            For k As Integer = 0 To j - 1
+                                Dim d2 As Integer = TvProgram_html(k).sid
+                                If d2 > 0 And d1 = d2 Then
+                                    'sidが一致
+                                    TvProgram_html(j).html = ""
+                                    Exit For
+                                End If
+                            Next
+                        End If
+                    End If
+                Next
+            End If
         End If
 
         '並び替え
@@ -1585,6 +1684,39 @@ Module モジュール_番組表
         'ptTimer_path = ""
         'End If
         'Return r
+    End Function
+
+    'NoRec番組表(TTRec等番組表データが無い時用）
+    Public Function get_NoRec_program() As Object
+        '全てダミー
+        Dim r() As TVprogramstructure = Nothing
+        If ch_list IsNot Nothing Then
+            Dim i As Integer = 0
+            Dim k As Integer = 0
+
+            For i = 0 To ch_list.Length - 1
+                Dim j As Integer = 0
+                If r Is Nothing Then
+                    j = 0
+                Else
+                    j = r.Length
+                End If
+                ReDim Preserve r(j)
+
+                'ダミー時刻　開始は現在時　終了は7時間後
+                Dim t1s As String = "1970/01/01 " & Hour(Now()).ToString & ":00"
+                Dim t2s As String = "1970/01/01 " & ((Hour(Now()) + 6) Mod 24).ToString & ":59"
+
+                r(j).stationDispName = ch_list(i).jigyousha
+                r(j).startDateTime = t1s
+                r(j).endDateTime = t2s
+                r(j).programTitle = "_"
+                r(j).programContent = ""
+                r(j).sid = ch_list(i).sid
+                r(j).tsid = ch_list(i).tsid
+            Next
+        End If
+        Return r
     End Function
 
     'EDCB番組表

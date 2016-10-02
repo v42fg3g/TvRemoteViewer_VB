@@ -436,6 +436,7 @@ Public Class Form1
 
         'バージョンチェック
         If TvRemoteViewer_VB_version_check_on = 1 Then
+            log1write("アップデートチェックを開始しました")
             check_version()
             If TvRemoteViewer_VB_notrecommend_version > 0 And TvRemoteViewer_VB_version <= TvRemoteViewer_VB_notrecommend_version Then
                 If TvRemoteViewer_VB_recommend_version > 0 Then

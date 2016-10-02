@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.23
+TvRemoteViewer_VB v2.24
 
 
 
@@ -663,6 +663,8 @@ TvRemoteViewer_VB v2.23
 		iniにISO再生に使用するVLCを指定する項目を追加（exepath_ISO_VLC）VLC-2.1.2推奨
 		ISOファイル再生には古めのmplayerが必要です（要exeをプログラムフォルダにコピー）
 	2.23	mplayer-ISO.exeまたはmplayer.exeがプログラムフォルダにあれば認識するようにした
+	2.24	TTRecまたは録画プログラムが起動しておらず、番組情報が取得できない環境用にダミー番組表機能を追加
+		iniにTvProgram_Force_NoRecを追加
 
 
 

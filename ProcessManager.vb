@@ -1926,11 +1926,16 @@ Public Class ProcessManager
                                         If e.Length >= 8 Then
                                             If Val(e(2)) = program_sid Then
                                                 r &= Me._list(i)._num.ToString & "," & d(j) & ",0" & vbCrLf
+                                                chk = 1
                                                 Exit For
                                             End If
                                         End If
                                     Next
                                 End If
+                            End If
+                            If chk = 0 Then
+                                '現在放送休止中
+                                r &= Me._list(i)._num.ToString & "," & "放送休止中" & ",0" & vbCrLf
                             End If
                         ElseIf stream_mode = 1 Or stream_mode = 3 Then
                             'ファイル再生

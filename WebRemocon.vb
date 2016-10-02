@@ -1251,6 +1251,12 @@ Class WebRemocon
                                     TvProgram_tvrock_url = TvProgram_tvrock_url.Substring(0, sp)
                                     log1write("TVROCK番組表チューナーに" & TvProgram_tvrock_tuner.ToString & "番を指定しました")
                                 End If
+                            Case "TvProgram_Force_NoRec"
+                                If Val(trim8(youso(1).ToString)) = 1 Then
+                                    TvProgram_Force_NoRec = 1
+                                    TvProgram_tvrock_url = "ForceNoRec" 'ダミー　何か入れておく
+                                    log1write("ダミー番組表をTVROCK番組表として表示するよう指定されました")
+                                End If
                             Case "TvProgram_EDCB_url"
                                 TvProgram_EDCB_url = trim8(youso(1).ToString)
                             Case "TvProgramD_channels"
