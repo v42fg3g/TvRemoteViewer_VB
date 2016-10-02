@@ -1039,7 +1039,7 @@ Module モジュール_番組表
                                             If getnext = 2 And p.nextFlag = 1 Then
                                                 p.programTitle = "[Next]" & p.programTitle
                                             End If
-                                            sid = d(2)
+                                            sid = Val(Trim(d(2)))
                                             title = escape_program_str(p.programTitle)
                                             html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & title & "," & escape_program_str(p.programContent)
                                             If getnext = 3 Then
