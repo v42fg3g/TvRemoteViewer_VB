@@ -195,6 +195,16 @@ TvRemoteViewer_VB v2.25
 
 
 
+■ISO再生のための準備
+1.最新版をダウンロードし解凍後TvRemoteViewer_VB.exeを上書きコピーします
+2.「mplayer-svn-35935.7z」というキーワードで検索のうえダウンロードしmplayer.exeをTvRemoteViewer_VB.exeと同じフォルダにコピーします
+　（新しすぎるものは日本語ファイル名でバグがあるそうです。mplayer-svn-35935.7zを教えてくださった方ありがとうございます）
+3.VLC-2.1.2をダウンロードして適当なフォルダに解凍します（今まで使用してきたものとは別フォルダ）
+　http://download.videolan.org/pub/videolan/vlc/2.1.2/
+4.TvRemoteViewer_VB.iniにexepath_ISO_VLC=(↑のvlc.exeへのパス)の記述を追加すればOKです
+
+
+
 ■修正したり追加したりして欲しいところ
 
 	・全般的にクラスというものがわかってない・・お～まいがっ
