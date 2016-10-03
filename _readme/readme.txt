@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.24
+TvRemoteViewer_VB v2.25
 
 
 
@@ -665,6 +665,7 @@ TvRemoteViewer_VB v2.24
 	2.23	mplayer-ISO.exeまたはmplayer.exeがプログラムフォルダにあれば認識するようにした
 	2.24	TTRecまたは録画プログラムが起動しておらず、番組情報が取得できない環境用にダミー番組表機能を追加
 		iniにTvProgram_Force_NoRecを追加
+	2.25	ISO再生指定において音声＆字幕指定が機能していなかったバグを修正
 
 
 

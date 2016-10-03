@@ -2324,7 +2324,7 @@ Class WebRemocon
                 '指定があればiso.startoffsetを優先する
                 ISO_startoffset = iso.startoffset
             End If
-            If ISO_audioLang.Length > 0 Then
+            If iso.audioLang.Length > 0 Then
                 '指定があれば
                 ISO_audioLang = iso.audioLang
             End If
@@ -2332,7 +2332,7 @@ Class WebRemocon
                 '指定があれば
                 ISO_audioTrackNum = iso.audioTrackNum
             End If
-            If ISO_subLang.Length > 0 Then
+            If iso.subLang.Length > 0 Then
                 '指定があれば
                 ISO_subLang = iso.subLang
             End If
