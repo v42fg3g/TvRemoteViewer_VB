@@ -3089,27 +3089,27 @@ Class WebRemocon
                                 Exit Sub
                             End If
 
-                            'ffmpegかつ字幕有りの場合はオプション追加
-                            If hlsApp.IndexOf("ffmpeg.exe") > 0 And ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0 Then
-                                If hlsOpt.Length > 0 Then
-                                    'まず-vfを削る
-                                    If hlsOpt.IndexOf(" -vf ") > 0 Then
-                                        Dim stemp As String = Instr_pickup(hlsOpt, " -vf ", " -", 0)
-                                        If stemp.Length > 0 Then
-                                            hlsOpt = hlsOpt.Replace(" -vf " & stemp & " -", " -")
-                                        Else
-                                            'とりあえずはありえないはずなので無視（出力ファイルの直前ならありえる・・）
-                                            log1write("【エラー】-vfオプションの削除に失敗しました")
-                                        End If
-                                    End If
-                                    Dim fcstr As String = " -filter_complex ""[0:v]yadif=0[video];[video][0:s]overlay=0:H*2/9[v]"" -map [v] -map 0:a"
-                                    hlsOpt = Trim(hlsOpt)
-                                    Dim sp As Integer = hlsOpt.LastIndexOf(" ")
-                                    If sp > 0 Then
-                                        hlsOpt = hlsOpt.Substring(0, sp) & fcstr & hlsOpt.Substring(sp)
+                            '字幕
+                            If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 And (ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0) Then
+                                'ffmpegかつ字幕有りの場合はオプション追加
+                                'まず-vfを削る
+                                If hlsOpt.IndexOf(" -vf ") > 0 Then
+                                    Dim stemp As String = Instr_pickup(hlsOpt, " -vf ", " -", 0)
+                                    If stemp.Length > 0 Then
+                                        hlsOpt = hlsOpt.Replace(" -vf " & stemp & " -", " -")
+                                    Else
+                                        'とりあえずはありえないはずなので無視（出力ファイルの直前ならありえる・・）
+                                        log1write("【エラー】-vfオプションの削除に失敗しました")
                                     End If
                                 End If
+                                Dim fcstr As String = " -filter_complex ""[0:v]yadif=0[video];[video][0:s]overlay=0:H*2/9[v]"" -map [v] -map 0:a"
+                                hlsOpt = Trim(hlsOpt)
+                                Dim sp As Integer = hlsOpt.LastIndexOf(" ")
+                                If sp > 0 Then
+                                    hlsOpt = hlsOpt.Substring(0, sp) & fcstr & hlsOpt.Substring(sp)
+                                End If
                             ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And nohsub = 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And ass_file.Length = 0 Then
+                                'QSVEncC,NVEncC かつ字幕有りの場合はオプション追加
                                 'If ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0 Then '字幕指定が無いときでも-vpp-subを付けても無害なのかよくわからない
                                 'ISO字幕　QSV ハードサブ G1840と6700では今のところ再生エラー QSVが落ちる
                                 hlsOpt = Trim(hlsOpt)
@@ -3136,7 +3136,7 @@ Class WebRemocon
                         Exit Sub
                     End If
                 End If
-            End If
+        End If
         End If
 
         If hlsOpt.Length > 0 Then
@@ -4931,7 +4931,15 @@ Class WebRemocon
                                 If File.Exists(path) Then
                                     s = ReadAllTexts(path)
                                 ElseIf path.IndexOf("ViewTV" & num.ToString & ".html") >= 0 Then
+                                    'ViewTV～.htmlが存在しない場合
                                     s = ReadAllTexts(path.Replace("ViewTV" & num.ToString & ".html", "ViewTV1.html"))
+                                    '加えて実際のファイルを作成するようにした
+                                    Try
+                                        System.IO.File.Copy(path.Replace("ViewTV" & num.ToString & ".html", "ViewTV1.html"), path)
+                                        log1write("ViewTV" & num.ToString & ".html" & "を作成しました")
+                                    Catch ex As Exception
+                                        log1write("【エラー】" & "ViewTV" & num.ToString & ".html" & "の作成に失敗しました")
+                                    End Try
                                 Else
                                     '存在しない
                                 End If
@@ -6351,19 +6359,29 @@ Class WebRemocon
     '録画ファイルのチャプターを返す
     Public Function WI_GET_CHAPTER(ByVal fullpathfilename As String) As String
         Dim r As String = ""
-        Dim chapterfullpathfilename As String = ""
-        Dim chapterpath As String = Path.GetDirectoryName(fullpathfilename)
-        Dim chapterfilename As String = Path.GetFileNameWithoutExtension(fullpathfilename) & ".chapter"
-        If chapterfilename.Length > 0 Then
-            If file_exist(chapterpath & "\" & chapterfilename) = 1 Then
-                chapterfullpathfilename = chapterpath & "\" & chapterfilename
-            ElseIf file_exist(chapterpath & "\chapters\" & chapterfilename) = 1 Then
-                chapterfullpathfilename = chapterpath & "\chapters\" & chapterfilename
+        fullpathfilename = filename_escape_recall(fullpathfilename) ',エスケープを元に戻す
+        Dim ext As String = Path.GetExtension(fullpathfilename).ToLower
+        If ext = ".iso" Then
+            'ISOならファイル情報キャッシュからchapter情報を取得
+            Dim n As tot_structure = TOT_read(fullpathfilename, exepath_ffmpeg)
+            If n.ISO_CHAPTER.Length > 0 Then
+                r = n.ISO_CHAPTER
             End If
-        End If
-        If chapterfullpathfilename.Length > 0 Then
-            '見つかれば取得
-            r = ReadAllTexts(chapterfullpathfilename)
+        Else
+            Dim chapterfullpathfilename As String = ""
+            Dim chapterpath As String = Path.GetDirectoryName(fullpathfilename)
+            Dim chapterfilename As String = Path.GetFileNameWithoutExtension(fullpathfilename) & ".chapter"
+            If chapterfilename.Length > 0 Then
+                If file_exist(chapterpath & "\" & chapterfilename) = 1 Then
+                    chapterfullpathfilename = chapterpath & "\" & chapterfilename
+                ElseIf file_exist(chapterpath & "\chapters\" & chapterfilename) = 1 Then
+                    chapterfullpathfilename = chapterpath & "\chapters\" & chapterfilename
+                End If
+            End If
+            If chapterfullpathfilename.Length > 0 Then
+                '見つかれば取得
+                r = ReadAllTexts(chapterfullpathfilename)
+            End If
         End If
         Return r
     End Function
