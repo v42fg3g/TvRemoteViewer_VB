@@ -108,6 +108,9 @@ TvRemoteViewer_VB v2.23
 		http://127.0.0.1:40003/WatchTV1.webm?resolution=960x540webm&VideoName=D:\test.ts
 		などとアクセスすれば再生されます。videoタグに埋め込み可
 
+		GitHub上にブラウザ上でのWebM配信テスト例をアップしました
+
+
 
 ■配信停止
 
