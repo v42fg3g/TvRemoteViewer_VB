@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.26
+TvRemoteViewer_VB v2.27
 
 
 
@@ -678,6 +678,9 @@ TvRemoteViewer_VB v2.26
 	2.25	ISO再生において音声＆字幕指定が機能していなかったバグを修正
 	2.26	ISO再生における字幕指定時のバグをを修正
 		ISO再生時のチャプターに対応
+	2.27	HTTP配信時にチャンネルを変更すればするほど重くなっていた現象を解消
+		WebM形式でブラウザ上でのストリーム配信に対応（低機能。主に放送視聴用）
+		HLS_option_ffmpeg_webm.txtを追加
 
 
 

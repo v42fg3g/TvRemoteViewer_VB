@@ -88,24 +88,23 @@ TvRemoteViewer_VB v2.23
 
 		※　HTTPストリームURLは手計算の他、配信準備完了後にWI_GET_LIVE_STREAM.htmlにアクセスすると取得できます
 
-	B：	【サーバー側のHTTP配信アプリ：ffmpeg】
-		・サーバー側のHTTP配信アプリがffmpegであることが必要です
+	B：	【ffmpegストリーム】
+		・サーバー側のHTTP配信アプリがVLCであってもffmpegが使用されます
 		WatchTV%NUM%.tsに直接アクセスして配信開始
 		WatchTV%NUM%.tsにGETでStartTv.htmlと同様のパラメーターを与える(numは省略可能）
-		VideoNameはURLエンコードしておく必要有り
 		例：
 		http://127.0.0.1:40003/WatchTV1.ts?BonDriver=BonDriver_Spinel_s0.dll&ServiceID=101&ChSpace=0
                 http://127.0.0.1:40003/WatchTV1.ts?VideoName=D:\test.ts&VideoSeekSeconds=30
 		ちなみに↑のURLをVLCのストリームを開くから参照すると配信が開始されます
 
-		WatchTV1.webmにアクセスすることによりwebmストリームをブラウザ上で再生することも可能
-		（実験してみたらできた程度）
-		resolution=に対応するオプションをHLS_option_ffmpeg_http.txtに記述
-		例：[960x540webm]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+		【WebM形式】
+		WatchTV～.webmにアクセスすることによりwebmストリームをブラウザ上で再生することも可能
+		resolution=に対応するオプションをHLS_option_ffmpeg_webm.txtに記述
+		例：[960x540]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1 -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
 		その後、VLCまたはブラウザで
-		http://127.0.0.1:40003/WatchTV1.webm?resolution=960x540webm&BonDriver=BonDriver_Spinel_s0.dll&ServiceID=101&ChSpace=0
+		http://127.0.0.1:40003/WatchTV1.webm?resolution=640x360&BonDriver=BonDriver_Spinel_s0.dll&ServiceID=101&ChSpace=0
 		や
-		http://127.0.0.1:40003/WatchTV1.webm?resolution=960x540webm&VideoName=D:\test.ts
+		http://127.0.0.1:40003/WatchTV1.webm?resolution=640x360&VideoName=D:\test.ts
 		などとアクセスすれば再生されます。videoタグに埋め込み可
 
 		GitHub上にブラウザ上でのWebM配信テスト例をアップしました

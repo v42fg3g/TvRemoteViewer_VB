@@ -69,6 +69,7 @@ Class WebRemocon
     Public ffmpeg_option() As HLSoptionstructure
     Public ffmpeg_file_option() As HLSoptionstructure
     Public ffmpeg_http_option() As HLSoptionstructure
+    Public ffmpeg_webm_option() As HLSoptionstructure
     Public QSVEnc_option() As HLSoptionstructure
     Public QSVEnc_file_option() As HLSoptionstructure
     Public NVEnc_option() As HLSoptionstructure
@@ -1014,6 +1015,7 @@ Class WebRemocon
         ffmpeg_option = set_hls_option("HLS_option_ffmpeg.txt")
         ffmpeg_file_option = set_hls_option("HLS_option_ffmpeg_file.txt")
         ffmpeg_http_option = set_hls_option("HLS_option_ffmpeg_http.txt")
+        ffmpeg_webm_option = set_hls_option("HLS_option_ffmpeg_webm.txt")
         QSVEnc_option = set_hls_option("HLS_option_QSVEnc.txt")
         QSVEnc_file_option = set_hls_option("HLS_option_QSVEnc_file.txt")
         NVEnc_option = set_hls_option("HLS_option_NVEnc.txt")
@@ -2310,7 +2312,7 @@ Class WebRemocon
     End Function
 
     '映像配信開始
-    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String, ByVal profileSelect As String, Optional ByVal iso As Object = Nothing)
+    Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String, ByVal profileSelect As String, ByVal httpApp As Integer, ByVal iso As Object)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
         'ISO再生関連パラメーターセット
@@ -2530,30 +2532,63 @@ Class WebRemocon
         'VLC http ストリーム用にhlsAppとhlsOptを入れ替える
         If Stream_mode = 2 Or Stream_mode = 3 Then
             'httpストリームアプリが指定されていれば
-            If HTTPSTREAM_App = 1 Then
-                'vlc指定
-                If exepath_VLC.Length > 0 Then
-                    If isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
-                        hlsApp = exepath_VLC
-                        hlsroot = Path.GetDirectoryName(hlsApp)
-                    End If
-                Else
-                    log1write("エラー：exepath_VLCが指定されていません")
+            Dim hlsApp_chk As Integer = 0
+            If httpApp = 1 And exepath_VLC.Length > 0 Then
+                hlsApp = exepath_VLC
+                hlsroot = Path.GetDirectoryName(hlsApp)
+                log1write("HTTP配信：パラメーター指定によりHLSアプリをVLCに設定しました")
+                hlsApp_chk = 1
+            ElseIf httpApp = 2 And exepath_ffmpeg.Length > 0 Then
+                hlsApp = exepath_ffmpeg
+                hlsroot = Path.GetDirectoryName(hlsApp)
+                log1write("HTTP配信：パラメーター指定によりHLSアプリをffmpegに設定しました")
+                hlsApp_chk = 1
+            ElseIf httpApp = 3 And exepath_ffmpeg.Length > 0 Then
+                hlsApp = exepath_ffmpeg
+                hlsroot = Path.GetDirectoryName(hlsApp)
+                log1write("HTTP配信：パラメーター指定によりHLSアプリをffmpeg(WebM)に設定しました")
+                hlsApp_chk = 1
+            ElseIf HTTPSTREAM_App = 1 And exepath_VLC.Length > 0 Then
+                hlsApp = exepath_VLC
+                hlsroot = Path.GetDirectoryName(hlsApp)
+                log1write("HTTP配信：ini指定によりHLSアプリをVLCに設定しました")
+                hlsApp_chk = 1
+            ElseIf HTTPSTREAM_App = 2 And exepath_ffmpeg.Length > 0 Then
+                hlsApp = exepath_ffmpeg
+                hlsroot = Path.GetDirectoryName(hlsApp)
+                log1write("HTTP配信：ini指定によりHLSアプリをffmpegに設定しました")
+                hlsApp_chk = 1
+            End If
+            If hlsApp_chk = 0 Then
+                If HTTPSTREAM_App = 1 And isMatch_HLS(Me._hlsApp, "ffmpeg") = 1 Then
+                    'VLCへの変更失敗
+                    log1write("【エラー】HTTP配信：VLCへのHLSアプリ変更に失敗しました")
                     stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                     Exit Sub
+                ElseIf HTTPSTREAM_App = 2 And isMatch_HLS(Me._hlsApp, "vlc") = 1 Then
+                    'ffmpegへの変更失敗
+                    log1write("【エラー】HTTP配信：ffmpegへのHLSアプリ変更に失敗しました")
+                    stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                    Exit Sub
+                Else
+                    'それ以外は Me._hlsAppが指定通りで問題無い
+                    log1write("HTTP配信：HLSアプリを" & Path.GetFileNameWithoutExtension(Me._hlsApp) & "に設定しました")
                 End If
-            ElseIf HTTPSTREAM_App = 2 Then
-                'ffmpeg指定
-                If isMatch_HLS(hlsApp, "vlc") = 1 Then
-                    'vlcからffmpegへの変換は未対応
-                    log1write("VLCからffmpegへの変更は対応していません。VLCのまま続行します")
-                End If
-            Else
-                log1write("【エラー】その他のHLSアプリケーションには対応していません")
             End If
 
             'hlsOptをHTTPストリーム用のものに入れ替える
-            If isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
+            If httpApp = 3 Then
+                'WebM
+                'hlsOptを置き換える
+                hlsOpt = translate_hls2http(2, hlsOpt2, resolution)
+                'ファイル再生
+                If filename.Length > 0 And Stream_mode = 3 Then
+                    'VLC httpストリームのとき
+                    hlsOpt = hlsopt_udp2file_ffmpeg(hlsApp, hlsOpt, filename, num, fileroot, VideoSeekSeconds, nohsub, baisoku, margin1, ass_file)
+                    'chapterをコピー
+                    'copy_chapter_to_fileroot(num, filename, fileroot)
+                End If
+            ElseIf isMatch_HLS(hlsApp, "ffmpeg") = 1 Then
                 'hlsOptを置き換える
                 hlsOpt = translate_hls2http(0, hlsOpt2, resolution)
 
@@ -2581,6 +2616,11 @@ Class WebRemocon
                     'VLC httpストリームのとき
                     hlsOpt = hlsopt_udp2file_VLC_http(hlsOpt, filename)
                 End If
+            End If
+            If hlsOpt.Length = 0 Then
+                log1write("【エラー】HTTP配信：HLSオプションが見つかりませんでした")
+                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                Exit Sub
             End If
         ElseIf Stream_mode = 0 Or Stream_mode = 1 Then
             'パラメータ内にHLSアプリ指定が埋め込まれている場合
@@ -3136,7 +3176,7 @@ Class WebRemocon
                         Exit Sub
                     End If
                 End If
-        End If
+            End If
         End If
 
         If hlsOpt.Length > 0 Then
@@ -3947,11 +3987,14 @@ Class WebRemocon
 
         'HLS_option.txtを読み込む
         Dim ho_vlc() As HLSoptionstructure = Nothing
-        If isVLC = 0 Then
-            ho_vlc = ffmpeg_http_option
-        Else
-            ho_vlc = vlc_http_option
-        End If
+        Select Case isVLC
+            Case 0
+                ho_vlc = ffmpeg_http_option
+            Case 1
+                ho_vlc = vlc_http_option
+            Case 2
+                ho_vlc = ffmpeg_webm_option
+        End Select
 
         If ho_vlc IsNot Nothing Then
             '解像度に合ったオプションを取り出す
@@ -3965,13 +4008,15 @@ Class WebRemocon
 
         'どうしてもエラーの場合は無変換
         If r.Length = 0 Then
-            'すでに読み込み済みのhls_optionから無変換を取り出す
-            For i = 0 To ho_vlc.Length - 1
-                If ho_vlc(i).opt = "無変換" Then
-                    r = ho_vlc(i).opt
-                    Exit For
-                End If
-            Next
+            If ho_vlc IsNot Nothing Then
+                'すでに読み込み済みのhls_optionから無変換を取り出す
+                For i = 0 To ho_vlc.Length - 1
+                    If ho_vlc(i).opt = "無変換" Then
+                        r = ho_vlc(i).opt
+                        Exit For
+                    End If
+                Next
+            End If
         End If
 
         ''カレントディレクトリを戻す
@@ -4043,7 +4088,10 @@ Class WebRemocon
 
             Dim context As HttpListenerContext = listener.EndGetContext(result)
             'D:\TvRemoteViewer\html\WatchTV1.tsが見つかりませんでした
-            If context.Request.RawUrl.IndexOf("/WatchTV") >= 0 And HTTPSTREAM_App = 2 Then
+            Dim rUrl As String = context.Request.RawUrl
+            Dim rUrl_ext As String = GetExtensionFromURL(rUrl)
+            If rUrl.IndexOf("/WatchTV") >= 0 Then
+                '★ffmpeg HTTPストリームモード
                 Dim auth_ok As Integer = 0
                 If Me._id.Length = 0 Or Me._pass.Length = 0 Then
                     'パスワード未設定は素通り
@@ -4060,12 +4108,10 @@ Class WebRemocon
                 End If
 
                 If auth_ok > 0 Then
-                    '★ffmpeg HTTPストリームモード
                     'numが<form>から渡されていなければURLから取得するwatch2.tsなら2
-                    Dim ffmpeg_num As Integer = Val(context.Request.RawUrl.Substring(context.Request.RawUrl.IndexOf("WatchTV") + "WatchTV".Length))
+                    Dim ffmpeg_num As Integer = Val(rUrl.Substring(rUrl.IndexOf("WatchTV") + "WatchTV".Length))
 
                     Dim http_err As Integer = 0
-                    Dim rUrl As String = context.Request.RawUrl
                     If rUrl.IndexOf("?") > 0 And rUrl.IndexOf("=") > 0 Then
                         'パラメーターがGETで渡されていればここで配信準備し直接配信する
                         log1write("ffmpeg HTTP ストリーム直接配信開始の要求がありました")
@@ -4118,10 +4164,21 @@ Class WebRemocon
                             h_baisoku = "1" '等速
                         End If
                         Dim h_hlsOptAdd As String = instr_pickup_para(rUrl, "hlsOptAdd=", "&", 0)
+                        'HTTP配信アプリの指定 1=vlc 2=ffmpeg
+                        Dim httpApp As Integer = Val(instr_pickup_para(rUrl, "httpApp=", "&", 0))
 
                         Dim h_stream_mode As Integer = 2
                         If h_videoname.Length > 0 Then
                             h_stream_mode = 3
+                        End If
+
+                        'WatchTV～要求があれば必ずffmpegにする
+                        If HTTPSTREAM_App = 1 Or httpApp = 1 Then
+                            httpApp = 2
+                            log1write("Watch要求なのでHTTP配信アプリをffmpegに設定しました")
+                        End If
+                        If rUrl_ext = ".webm" Then
+                            httpApp = 3 'webm
                         End If
 
                         If (h_stream_mode = 2 And h_bondriver.Length > 0 And Val(h_sid) > 0) Or (h_stream_mode = 3 And h_videoname.Length > 0) Then
@@ -4129,7 +4186,7 @@ Class WebRemocon
                             waitingmessage_count(ffmpeg_num) = 0
                             waitingmessage_str(ffmpeg_num) = ""
                             'start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer)
-                            Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1, "", "")
+                            Me.start_movie(ffmpeg_num, h_bondriver, h_sid, h_chspace, Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, h_videoname, h_NHK_dual_mono_mode_select, h_stream_mode, h_resolution, h_VideoSeekSeconds, h_nohsub, h_baisoku, h_hlsOptAdd, h_margin1, "", "", httpApp, Nothing)
                         Else
                             'パラメーターが不正
                             context.Response.Headers("Content-Type") = "text/plain"
@@ -4153,7 +4210,7 @@ Class WebRemocon
                                 'ffmpeg HTTP ストリーム配信開始
                                 log1write("ffmpeg HTTP ストリーム配信開始要求がありました")
                                 'context.Response.Headers("Content-Type") = "video/mpeg"
-                                Select Case Path.GetExtension(context.Request.RawUrl).ToLower
+                                Select Case rUrl_ext
                                     Case ".webm"
                                         context.Response.Headers("Content-Type") = "video/webm"
                                     Case Else
@@ -4173,7 +4230,7 @@ Class WebRemocon
                                 'Test String
                                 sw.Close()
                                 context.Response.Close()
-                                log1write(context.Request.RawUrl & "は不正なリクエストです")
+                                log1write(rUrl & "は不正なリクエストです")
                             End If
                         ElseIf ffmpeg_num_stopping > 0 Then
                             '終了処理中
@@ -4455,6 +4512,9 @@ Class WebRemocon
                             Else
                                 iso.subTrackNum = -1 '指定無し
                             End If
+
+                            'HTTPアプリ 1=vlc 2=ffmpeg
+                            Dim httpApp As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("httpApp") & "")
 
                             'ハードサブ不許可
                             Dim nohsub As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("nohsub") & "")
@@ -4761,14 +4821,14 @@ Class WebRemocon
                                     '正しければ配信スタート
                                     waitingmessage_count(num) = 0
                                     waitingmessage_str(num) = ""
-                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0, hlsAppSelect, profileSelect)
+                                    Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0, hlsAppSelect, profileSelect, httpApp, Nothing)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
                                     waitingmessage_count(num) = 0
                                     waitingmessage_str(num) = ""
-                                    Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect, iso)
+                                    Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect, httpApp, iso)
                                     'すぐさま視聴ページへリダイレクトする
                                     redirect = "ViewTV" & num & ".html"
                                 Else

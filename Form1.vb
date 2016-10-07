@@ -54,7 +54,7 @@ Public Class Form1
                     If s.Length = 3 Then
                         sid = Val(s(1))
                         Dim filename As String = "" 'UDP配信モード　フォームからはUDP配信モード限定
-                        Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP, resolution, 0, 0, "1", "", 0, "", "")
+                        Me._worker.start_movie(num, bondriver, sid, chspace, udpApp, hlsApp, hlsOpt1, hlsOpt2, wwwroot, fileroot, hlsroot, ShowConsole, udpOpt3, filename, NHK_dual_mono_mode_select, HLSorHTTP, resolution, 0, 0, "1", "", 0, "", "", 0, Nothing)
                     Else
                         MsgBox("サービスIDを指定してください")
                     End If
