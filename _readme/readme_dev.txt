@@ -86,6 +86,8 @@ TvRemoteViewer_VB v2.23
 		・サーバー側のHTTP配信アプリがffmpegの場合
 		　http://127.0.0.1:40003/WatchTV1.ts　（ストリーム2の場合はWatchTV2.ts、以下同様）
 
+		※　iniのサーバー側HTTP配信アプリ指定HTTPSTREAM_Appに係わらずStartTv.html呼び出し時にHLSアプリを指定できるオプションを追加
+			httpApp=2	1=VLC 2=ffmpeg
 		※　HTTPストリームURLは手計算の他、配信準備完了後にWI_GET_LIVE_STREAM.htmlにアクセスすると取得できます
 
 	B：	【ffmpegストリーム】
