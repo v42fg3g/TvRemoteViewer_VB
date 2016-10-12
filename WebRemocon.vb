@@ -6652,24 +6652,58 @@ Class WebRemocon
     End Function
 
     '壊れた2chThreads.jsonを修復する
+    '壊れた2chThreads.jsonを修復する
     Private Sub fix_2chTreads_json()
         Dim filename As String = Me._wwwroot & "\" & "2chThreads.json"
         Dim str As String = file2str(filename, "UTF-8")
         Dim str_org_len As Integer = str.Length
         Dim chk As Integer = 0
+
         If str.Length > 0 Then
-            Dim sp As Integer = str.IndexOf("""jkag"":", 0)
-            Dim sp2 As Integer = -1
-            If sp > 0 Then
-                sp2 = str.IndexOf("{", sp + 1)
-                sp = str.IndexOf("}", sp + 1)
-                If sp > 0 And (sp2 = -1 Or sp2 > sp) Then
-                    sp2 = str.IndexOf("{", sp + 1)
-                    sp = str.IndexOf("}", sp + 1)
-                    If sp > 0 And (sp2 = -1 Or sp2 > sp) Then
-                        sp2 = str.IndexOf("{", sp + 1)
-                        sp = str.IndexOf("}", sp + 1)
-                        If sp > 0 And (sp2 = -1 Or sp2 > sp) Then
+
+            'まず""と""で囲まれたところに{}が無いか確認
+            Dim sp As Integer = str.IndexOf("""", 0)
+            Dim temp As String = ""
+            While sp > 0
+                temp = Instr_pickup(str, """", """", sp)
+                If temp.IndexOf("{") >= 0 Or temp.IndexOf("}") >= 0 Then
+                    '"と"の間に{}が存在する場合は手に負えないので手動での更新を促す
+                    log1write("現在2chThreads.json内のスレタイに{}が含まれているので自動での修正ができません。もし2ちゃん実況がうまく動作しない場合は、TvRemoteFiles内の2chThreads.jsonを手動でTvRemoteViewer_VBの%WWWROOT%フォルダに上書きしてください")
+                    Exit Sub
+                End If
+                Try
+                    sp = str.IndexOf("""", sp + temp.Length + 2)
+                Catch ex As Exception
+                    Exit While
+                End Try
+            End While
+
+            sp = str.IndexOf("{", 0) '最初の{からスタート
+            Dim c_t As Integer = 1
+            If sp >= 0 Then
+                Try
+                    Dim c_s As Integer = 0
+                    Dim c_e As Integer = 0
+                    Dim s_s As Integer = str.IndexOf("{", sp + 1)
+                    Dim s_e As Integer = str.IndexOf("}", sp + 1)
+                    While s_s > 0 Or s_e > 0
+                        If s_s < s_e And s_s >= 0 Then
+                            sp = s_s
+                            c_t += 1
+                        ElseIf s_e < s_s And s_e >= 0 Then
+                            sp = s_e
+                            c_t -= 1
+                        ElseIf s_s < s_e And s_e >= 0 Then
+                            sp = s_e
+                            c_t -= 1
+                        ElseIf s_e < s_s And s_s >= 0 Then
+                            sp = s_s
+                            c_t += 1
+                        Else
+                            'ありえない
+                        End If
+                        If c_t <= 0 Then
+                            '終了
                             str = str.Substring(0, sp + 1)
                             If str.Length <> str_org_len Then
                                 If str2file(filename, str, "UTF-8") = 1 Then
@@ -6677,20 +6711,24 @@ Class WebRemocon
                                     chk = 1
                                 Else
                                     log1write("【エラー】2chThreads.jsonの書き込みに失敗しました")
+                                    chk = 1
                                 End If
                             Else
                                 '同一
                                 chk = 1
+                                'log1write("2chThreads.jsonは正常です")
                             End If
+                            Exit While
                         End If
-                    End If
-                End If
-                If chk = 0 Then
-                    '{}の数・並びがおかしい
-                    log1write("【エラー】2chTreads.jsonの内容が不正です。TvRemoteFiles添付の2chThreads.jsonを上書きコピーしてください")
-                End If
-            Else
-                '将来"jkag"が無くなる可能性有り そのときはもう問題になっていないはず。修正無し
+                        s_s = str.IndexOf("{", sp + 1)
+                        s_e = str.IndexOf("}", sp + 1)
+                    End While
+                Catch ex As Exception
+                    '範囲を超えた位置からIndexOfを行った（最後まで検索したということ）正常
+                End Try
+            End If
+            If chk = 0 Then
+                log1write("【エラー】2chTreads.jsonの内容が不正です。修正に失敗しました。TvRemoteFiles内の2chThreads.jsonを手動でTvRemoteViewer_VBの%WWWROOT%フォルダに上書きしてください")
             End If
         Else
             log1write("2chTreads.jsonが見つかりません。TvRemoteFilesを使用していない場合は問題ありません")
