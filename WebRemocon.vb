@@ -6655,6 +6655,7 @@ Class WebRemocon
     Private Sub fix_2chTreads_json()
         Dim filename As String = Me._wwwroot & "\" & "2chThreads.json"
         Dim str As String = file2str(filename, "UTF-8")
+        Dim str_org_len As Integer = str.Length
         Dim chk As Integer = 0
         If str.Length > 0 Then
             Dim sp As Integer = str.IndexOf("""jkag"":", 0)
@@ -6666,8 +6667,13 @@ Class WebRemocon
                         sp = str.IndexOf("}", sp + 1)
                         If sp > 0 Then
                             str = str.Substring(0, sp + 1)
-                            If str2file(filename, str, "UTF-8") = 1 Then
-                                log1write("2chThreads.jsonを修正しました")
+                            If str.Length <> str_org_len Then
+                                If str2file(filename, str, "UTF-8") = 1 Then
+                                    log1write("2chThreads.jsonを修正しました")
+                                    chk = 1
+                                End If
+                            Else
+                                '同一
                                 chk = 1
                             End If
                         End If
