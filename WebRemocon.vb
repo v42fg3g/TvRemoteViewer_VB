@@ -132,6 +132,9 @@ Class WebRemocon
 
         'ストリーム用インスタンス作成
         Me._procMan = New ProcessManager(udpPort, wwwroot, fileroot)
+
+        '2chThreads.json修復
+        fix_2chTreads_json()
     End Sub
 
     'urlからMIMETYPEを取得
@@ -6231,6 +6234,8 @@ Class WebRemocon
                             ip_chk = 1
                     End Select
                 End If
+            ElseIf (domainstr & "/").IndexOf(".2ch.net/") > 0 Then
+                '2chThreads.jsonの場合を考慮
             Else
                 '不正
                 ip_chk = 1
@@ -6646,6 +6651,36 @@ Class WebRemocon
         Return Me._procMan.check_hlsApp_in_stream(s)
     End Function
 
+    '壊れた2chThreads.jsonを修復する
+    Private Sub fix_2chTreads_json()
+        Dim filename As String = Me._wwwroot & "\" & "2chThreads.json"
+        Dim str As String = file2str(filename, "UTF-8")
+        Dim chk As Integer = 0
+        If str.Length > 0 Then
+            Dim sp As Integer = str.IndexOf("""jkag"":", 0)
+            If sp > 0 Then
+                sp = str.IndexOf("}", sp + 1)
+                If sp > 0 Then
+                    sp = str.IndexOf("}", sp + 1)
+                    If sp > 0 Then
+                        sp = str.IndexOf("}", sp + 1)
+                        If sp > 0 Then
+                            str = str.Substring(0, sp + 1)
+                            If str2file(filename, str, "UTF-8") = 1 Then
+                                log1write("2chThreads.jsonを修正しました")
+                                chk = 1
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+            If chk = 0 Then
+                log1write("【エラー】2chTreads.jsonの修正に失敗しました")
+            End If
+        Else
+            log1write("【エラー】2chTreads.jsonが見つかりません")
+        End If
+    End Sub
 End Class
 
 
