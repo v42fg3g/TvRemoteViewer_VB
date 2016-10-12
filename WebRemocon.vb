@@ -6659,13 +6659,17 @@ Class WebRemocon
         Dim chk As Integer = 0
         If str.Length > 0 Then
             Dim sp As Integer = str.IndexOf("""jkag"":", 0)
+            Dim sp2 As Integer = -1
             If sp > 0 Then
+                sp2 = str.IndexOf("{", sp + 1)
                 sp = str.IndexOf("}", sp + 1)
-                If sp > 0 Then
+                If sp > 0 And (sp2 = -1 Or sp2 > sp) Then
+                    sp2 = str.IndexOf("{", sp + 1)
                     sp = str.IndexOf("}", sp + 1)
-                    If sp > 0 Then
+                    If sp > 0 And (sp2 = -1 Or sp2 > sp) Then
+                        sp2 = str.IndexOf("{", sp + 1)
                         sp = str.IndexOf("}", sp + 1)
-                        If sp > 0 Then
+                        If sp > 0 And (sp2 = -1 Or sp2 > sp) Then
                             str = str.Substring(0, sp + 1)
                             If str.Length <> str_org_len Then
                                 If str2file(filename, str, "UTF-8") = 1 Then
@@ -6681,9 +6685,12 @@ Class WebRemocon
                         End If
                     End If
                 End If
-            End If
-            If chk = 0 Then
-                log1write("【エラー】2chTreads.jsonの修正に失敗しました")
+                If chk = 0 Then
+                    '{}の数・並びがおかしい
+                    log1write("【エラー】2chTreads.jsonの内容が不正です。TvRemoteFiles添付の2chThreads.jsonを上書きコピーしてください")
+                End If
+            Else
+                '将来"jkag"が無くなる可能性有り そのときはもう問題になっていないはず。修正無し
             End If
         Else
             log1write("2chTreads.jsonが見つかりません。TvRemoteFilesを使用していない場合は問題ありません")
