@@ -6671,6 +6671,8 @@ Class WebRemocon
                                 If str2file(filename, str, "UTF-8") = 1 Then
                                     log1write("2chThreads.jsonを修正しました")
                                     chk = 1
+                                Else
+                                    log1write("【エラー】2chThreads.jsonの書き込みに失敗しました")
                                 End If
                             Else
                                 '同一
@@ -6684,7 +6686,7 @@ Class WebRemocon
                 log1write("【エラー】2chTreads.jsonの修正に失敗しました")
             End If
         Else
-            log1write("【エラー】2chTreads.jsonが見つかりません")
+            log1write("2chTreads.jsonが見つかりません。TvRemoteFilesを使用していない場合は問題ありません")
         End If
     End Sub
 End Class
