@@ -3101,7 +3101,8 @@ Class WebRemocon
                             Dim startparam = "-I dummy --dummy-quiet dvdsimple:///""" & filename & """/#" & trackID & startTimeParam & " --stop-time " & resultInfo.ISO_DURATION & " --no-repeat vlc://quit" & audioParam & subParam
 
                             '追加
-                            startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}"
+                            'startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}"
+                            startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}"
 
                             'HLSオプションを整形
                             If isMatch_HLS(hlsApp, "vlc") = 1 Then
@@ -3133,7 +3134,7 @@ Class WebRemocon
                             End If
 
                             '字幕
-                            If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 And (ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0) Then
+                            If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 And subParam.Length > 0 Then
                                 'ffmpegかつ字幕有りの場合はオプション追加
                                 'まず-vfを削る
                                 If hlsOpt.IndexOf(" -vf ") > 0 Then
@@ -3151,18 +3152,27 @@ Class WebRemocon
                                 If sp > 0 Then
                                     hlsOpt = hlsOpt.Substring(0, sp) & fcstr & hlsOpt.Substring(sp)
                                 End If
-                            ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And nohsub = 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And ass_file.Length = 0 Then
+
+                                'ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And nohsub = 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And ass_file.Length = 0 And subParam.Length > 0 Then
+                            ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And subParam.Length > 0 Then
                                 'QSVEncC,NVEncC かつ字幕有りの場合はオプション追加
                                 'If ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0 Then '字幕指定が無いときでも-vpp-subを付けても無害なのかよくわからない
                                 'ISO字幕　QSV ハードサブ G1840と6700では今のところ再生エラー QSVが落ちる
                                 hlsOpt = Trim(hlsOpt)
-                                Dim sp As Integer = hlsOpt.IndexOf(" --output-thread ")
+                                Dim sp As Integer = hlsOpt.IndexOf("d.ts ")
                                 If sp > 0 Then
-                                    hlsOpt = hlsOpt.Substring(0, sp) & " --vpp-sub 1" & hlsOpt.Substring(sp)
+                                    'd.tsの後に追加
+                                    hlsOpt = hlsOpt.Substring(0, sp + "d.ts ".Length) & "--vpp-sub 1 " & hlsOpt.Substring(sp + "d.ts ".Length)
                                 Else
-                                    sp = hlsOpt.LastIndexOf(" -o ")
+                                    sp = hlsOpt.IndexOf(" --output-thread ")
                                     If sp > 0 Then
+                                        '--output-threadの前に追加
                                         hlsOpt = hlsOpt.Substring(0, sp) & " --vpp-sub 1" & hlsOpt.Substring(sp)
+                                    Else
+                                        sp = hlsOpt.LastIndexOf(" -o ")
+                                        If sp > 0 Then
+                                            hlsOpt = hlsOpt.Substring(0, sp) & " --vpp-sub 1" & hlsOpt.Substring(sp)
+                                        End If
                                     End If
                                 End If
                                 'End If

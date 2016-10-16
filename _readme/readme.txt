@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.29
+TvRemoteViewer_VB v2.30
 
 
 
@@ -683,6 +683,8 @@ TvRemoteViewer_VB v2.29
 		HLS_option_ffmpeg_webm.txtを追加
 	2.28	2ちゃん実況の板移転更新に失敗していたバグを修正
 	2.29	WebVTT(Nico2HLS)対応を復活（邪魔にはならないはず）
+	2.30	ISO再生の確実性を向上
+		ISO字幕指定時のバグを修正
 
 
 
