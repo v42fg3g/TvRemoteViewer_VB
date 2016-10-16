@@ -109,7 +109,7 @@ Public Class Form1
                 s = "TvRemoteViewer_VB" & vbCrLf & "配信中：" & Trim(s)
             Else
                 LabelStream.Text = " " 'ついでにフォーム上にも表示
-                s = "TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString '"TvRemoteViewer_VB"
+                s = "TvRemoteViewer_VB " & Format(TvRemoteViewer_VB_version, "0.00") '"TvRemoteViewer_VB"
             End If
             If s.Length > 60 Then
                 '64文字を超えるとエラーになる
@@ -124,7 +124,7 @@ Public Class Form1
             Try
                 NotifyIcon1.Text = s
             Catch ex As Exception
-                NotifyIcon1.Text = "TvRemoteViewer_VB " & TvRemoteViewer_VB_version.ToString '"TvRemoteViewer_VB"
+                NotifyIcon1.Text = "TvRemoteViewer_VB " & Format(TvRemoteViewer_VB_version, "0.00") '"TvRemoteViewer_VB"
             End Try
 
             'アイドル時間が指定分に達した場合は全て切断する
