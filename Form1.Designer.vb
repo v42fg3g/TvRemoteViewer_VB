@@ -813,6 +813,7 @@ Partial Class Form1
         Me.Controls.Add(Me.labelPortNuber)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MaximumSize = New System.Drawing.Size(546, 744)
+        Me.MinimumSize = New System.Drawing.Size(200, 50)
         Me.Name = "Form1"
         Me.ShowInTaskbar = False
         Me.Text = "TvRemoteViewer_VB"

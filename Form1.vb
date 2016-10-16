@@ -780,6 +780,17 @@ Public Class Form1
                             ComboBoxVideoForce.Text = lr(1)
                         Case "CheckBoxVersionCheck"
                             CheckBoxVersionCheck.Checked = lr(1)
+                        Case "WindowStatus"
+                            Dim d() As String = lr(1).Split(",")
+                            If d.Length = 4 Then
+                                If Val(d(2)) >= 50 And Val(d(3)) >= 50 Then
+                                    me_window_backup = Trim(lr(1))
+                                    Me.Left = Val(d(0))
+                                    Me.Top = Val(d(1))
+                                    Me.Width = Val(d(2))
+                                    Me.Height = Val(d(3))
+                                End If
+                            End If
                     End Select
                 ElseIf lr.Length > 2 And trim8(lr(0)) = "textBoxHlsOpt" Then
                     'VLC OPTION
@@ -834,7 +845,9 @@ Public Class Form1
 
     Private Sub Form1_FormClosed(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
         'ログをファイル出力
-        str2file("TvRemoteViewer_VB.log", log1, "UTF-8")
+        If log_path.Length > 0 Then
+            str2file(log_path, log1, "UTF-8")
+        End If
     End Sub
 
     Private Sub save_form_status()
@@ -863,6 +876,11 @@ Public Class Form1
         s &= "ffmpeg_seek_method_files=" & ffmpeg_seek_method_files.Replace(vbCrLf, "\r\n") & vbCrLf
         s &= "ComboBoxVideoForce=" & ComboBoxVideoForce.Text & vbCrLf
         s &= "CheckBoxVersionCheck=" & CheckBoxVersionCheck.Checked & vbCrLf
+        If me_top > -10 Then
+            s &= "WindowStatus=" & me_left & "," & me_top & "," & me_width & "," & me_height & vbCrLf
+        Else
+            s &= "WindowStatus=" & me_window_backup & vbCrLf 'タスクトレイのまま閉じられた場合は前回のものをそのまま引き継ぐ
+        End If
 
         'ステータスファイル書き込み
         str2file("form_status.txt", s)
@@ -1259,6 +1277,9 @@ Public Class Form1
     Private Sub Form1_Resize(sender As System.Object, e As System.EventArgs) Handles MyBase.Resize
         If Me.WindowState = FormWindowState.Minimized Then
             Me.Visible = False
+        Else
+            me_width = Me.Width
+            me_height = Me.Height
         End If
     End Sub
 
@@ -1492,6 +1513,13 @@ Public Class Form1
             End If
         Else
             TvRemoteViewer_VB_version_check_on = 0
+        End If
+    End Sub
+
+    Private Sub Form1_Move(sender As System.Object, e As System.EventArgs) Handles MyBase.Move
+        If Me.WindowState = FormWindowState.Minimized = False Then
+            me_left = Me.Left
+            me_top = Me.Top
         End If
     End Sub
 End Class

@@ -1602,6 +1602,8 @@ Class WebRemocon
                             Case "waitingmessage_slow_sec"
                                 waitingmessage_slow_sec = Val(youso(1).ToString)
                                 log1write("同じwaitingページが繰り返し表示された場合にrefreshを" & waitingmessage_slow_sec.ToString & "秒以上とするようセットしました")
+                            Case "log_path"
+                                log_path = Trim(youso(1))
 
 
 

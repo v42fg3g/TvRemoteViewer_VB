@@ -2,12 +2,22 @@
 
 Module モジュール_その他
     'バージョン
-    Public TvRemoteViewer_VB_version As Double = 2.3
+    Public TvRemoteViewer_VB_version As Double = 2.31
     Public TvRemoteViewer_VB_notrecommend_version As Double = 0
     Public TvRemoteViewer_VB_recommend_version As Double = 0
     Public TvRemoteViewer_VB_version_check_datetime As DateTime = CDate("2000/01/01") '何分何秒にチェックするか　起動時に決定
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
+
+    'LOGのPATH
+    Public log_path As String = "TvRemoteViewer_VB.log"
+
+    'Windowの状態
+    Public me_left As Integer = 0
+    Public me_top As Integer = -10
+    Public me_width As Integer = 0
+    Public me_height As Integer = 0
+    Public me_window_backup As String = ""
 
     'プロファイル　hlsApp,resolution,Audioモード
     Public profiletxt As String = ""

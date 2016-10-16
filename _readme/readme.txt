@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.30
+TvRemoteViewer_VB v2.31
 
 
 
@@ -685,6 +685,8 @@ TvRemoteViewer_VB v2.30
 	2.29	WebVTT(Nico2HLS)対応を復活（邪魔にはならないはず）
 	2.30	ISO再生の確実性を向上
 		ISO字幕指定時のバグを修正
+	2.31	設定ウィンドウの位置と大きさを記憶するようにした
+		iniでログの保存先を指定できるようにした（log_path）
 
 
 
