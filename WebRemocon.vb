@@ -4310,6 +4310,8 @@ Class WebRemocon
                                 mimetype = "image/gif"
                             Case ".ico"
                                 mimetype = "image/x-icon"
+                            Case ".vtt"
+                                mimetype = "text/vtt"
                             Case Else
                                 mimetype = "text/plain"
                         End Select
@@ -5284,19 +5286,19 @@ Class WebRemocon
                                             End If
                                         End While
 
-                                        'Nico2HLSが必要無くなったのでコメントアウト
-                                        'Dim vttfilename As String = Me._fileroot & "\mystream_s" & num.ToString & ".m3u8"
-                                        'If Me._procMan.get_stream_mode(num) = 0 Then
-                                        ''ストリームモードが0ならば
-                                        'If file_exist(vttfilename) = 1 Then
-                                        's = s.Replace("%SUBSTR%", "_s")
-                                        'Else
+                                        'Nico2HLSが必要無くなったのでコメントアウト → 復活
+                                        Dim vttfilename As String = Me._fileroot & "\mystream_s" & num.ToString & ".m3u8"
+                                        If Me._procMan.get_stream_mode(num) = 0 Then
+                                            'ストリームモードが0ならば
+                                            If file_exist(vttfilename) = 1 Then
+                                                s = s.Replace("%SUBSTR%", "_s")
+                                            Else
+                                                s = s.Replace("%SUBSTR%", "")
+                                            End If
+                                        Else
+                                            s = s.Replace("%SUBSTR%", "")
+                                        End If
                                         's = s.Replace("%SUBSTR%", "")
-                                        'End If
-                                        'Else
-                                        's = s.Replace("%SUBSTR%", "")
-                                        'End If
-                                        s = s.Replace("%SUBSTR%", "")
                                     End If
 
                                     '配信中簡易リスト
