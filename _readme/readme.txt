@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.28
+TvRemoteViewer_VB v2.29
 
 
 
@@ -682,6 +682,7 @@ TvRemoteViewer_VB v2.28
 		WebM形式でブラウザ上でのストリーム配信に試験対応（主に放送視聴用）
 		HLS_option_ffmpeg_webm.txtを追加
 	2.28	2ちゃん実況の板移転更新に失敗していたバグを修正
+	2.29	WebVTT(Nico2HLS)対応を復活（邪魔にはならないはず）
 
 
 
