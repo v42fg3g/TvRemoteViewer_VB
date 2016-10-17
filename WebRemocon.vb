@@ -3154,6 +3154,12 @@ Class WebRemocon
                                 If sp > 0 Then
                                     hlsOpt = hlsOpt.Substring(0, sp) & fcstr & hlsOpt.Substring(sp)
                                 End If
+                                '-analyzeduration 600M -probesize 600M 追加
+                                sp = hlsOpt.ToLower.IndexOf("ffmpeg.exe")
+                                sp = hlsOpt.IndexOf(" ", sp + "ffmpeg.exe".Length)
+                                If sp > 0 Then
+                                    hlsOpt = hlsOpt.Substring(0, sp) & " -analyzeduration 600M -probesize 600M" & hlsOpt.Substring(sp)
+                                End If
 
                                 'ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And nohsub = 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And ass_file.Length = 0 And subParam.Length > 0 Then
                             ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And subParam.Length > 0 Then
