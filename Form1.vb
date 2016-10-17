@@ -806,6 +806,13 @@ Public Class Form1
     End Sub
 
     Private Sub Form1_FormClosing(sender As System.Object, e As System.Windows.Forms.FormClosingEventArgs) Handles MyBase.FormClosing
+        '×で最小化
+        If close2min = 1 Then
+            e.Cancel = True
+            Me.WindowState = FormWindowState.Minimized
+            Exit Sub
+        End If
+
         Timer1.Enabled = False
 
         'カレントディレクトリ変更
@@ -1260,6 +1267,7 @@ Public Class Form1
             Case "SeekMethodList"
                 Form2.Show()
             Case "quit"
+                close2min = 0 'すんなり終了させる
                 'close()
                 Application.Exit()
         End Select
@@ -1522,4 +1530,5 @@ Public Class Form1
             me_top = Me.Top
         End If
     End Sub
+
 End Class

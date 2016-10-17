@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.32
+TvRemoteViewer_VB v2.33
 
 
 
@@ -688,6 +688,7 @@ TvRemoteViewer_VB v2.32
 	2.31	設定ウィンドウの位置と大きさを記憶するようにした
 		iniでログの保存先を指定できるようにした（log_path）
 	2.32	ISO字幕指定時の安定性向上
+	2.33	iniに×で最小化するオプションを追加（close2min）
 
 
 

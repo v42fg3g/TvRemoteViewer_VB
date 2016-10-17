@@ -511,7 +511,7 @@ Partial Class Form1
         Me.ContextMenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.SeekMethodList, Me.quit})
         Me.ContextMenuStrip1.Name = "ContextMenuStrip1"
         Me.ContextMenuStrip1.ShowImageMargin = False
-        Me.ContextMenuStrip1.Size = New System.Drawing.Size(265, 48)
+        Me.ContextMenuStrip1.Size = New System.Drawing.Size(265, 70)
         '
         'SeekMethodList
         '
