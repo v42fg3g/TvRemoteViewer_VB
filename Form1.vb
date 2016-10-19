@@ -807,7 +807,7 @@ Public Class Form1
 
     Private Sub Form1_FormClosing(sender As System.Object, e As System.Windows.Forms.FormClosingEventArgs) Handles MyBase.FormClosing
         '×で最小化
-        If close2min = 1 Then
+        If close2min = 1 And e.CloseReason.ToString = "UserClosing" Then
             e.Cancel = True
             Me.WindowState = FormWindowState.Minimized
             Exit Sub
