@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.33
+TvRemoteViewer_VB v2.34
 
 
 
@@ -689,6 +689,10 @@ TvRemoteViewer_VB v2.33
 		iniでログの保存先を指定できるようにした（log_path）
 	2.32	ISO字幕指定時の安定性向上
 	2.33	iniに×で最小化するオプションを追加（close2min）
+	2.34	起動時にViewTV1.htmlが更新されているかチェックし（最も番号の大きいViewTV～.htmlと比較）
+		ダイアログで他のViewTV.htmlを更新するか選択できるようにした
+		各ファイルは最も番号の大きいViewTV～.htmlと比較され、その内容と同一のものだけが更新されます
+		（例：実験的にViewTV5.htmlだけ一部変更していた場合にはViewTV5.htmlは更新されません）
 
 
 

@@ -6756,6 +6756,103 @@ Class WebRemocon
             log1write("2chTreads.jsonが見つかりません。TvRemoteFilesを使用していない場合は問題ありません")
         End If
     End Sub
+
+    Public Sub check_ViewTVhtml()
+        'ViewTV1.htmlが更新されていないかチェック　
+        '最も番号の大きいViewTV～.html１つだけをチェックする
+        Dim v1 As String = Me._wwwroot & "\ViewTV1.html"
+        Dim i As Integer = 0
+        If file_exist(v1) = 1 Then
+            Try
+                Dim v1modtime As DateTime = System.IO.File.GetLastWriteTime(v1)
+                Dim v100 As Integer = 0
+                Dim v100modtime As DateTime = CDate("1980/01/01")
+                Dim files As String() = System.IO.Directory.GetFiles(Me._wwwroot, "ViewTV*.html")
+                If files IsNot Nothing Then
+                    '並べ替え用
+                    Dim sf() As Integer = Nothing
+                    ReDim Preserve sf(files.Length - 1)
+                    For i = 0 To files.Length - 1
+                        sf(i) = Val(Instr_pickup(files(i), "\ViewTV", ".html", 0))
+                    Next
+                    Array.Sort(sf) '番号順に並び替える
+                    Dim chk As Integer = 0
+                    For i = sf.Length - 1 To 0 Step -1 '番号の大きいほうからチェック
+                        If sf(i) > 1 Then
+                            If chk = 0 Then
+                                log1write("ViewTV" & sf(i).ToString & ".html" & "がViewTV1.htmlと同一かチェックしています")
+                                chk = 1
+                                '最後のViewTV.html
+                                v100 = sf(i)
+                                v100modtime = System.IO.File.GetLastWriteTime(Me._wwwroot & "\ViewTV" & sf(i).ToString & ".html")
+                                If v1modtime > v100modtime Then
+                                    'ViewTV.htmlのほうが新しい
+                                    Dim result As DialogResult = MessageBox.Show("ViewTV1.htmlは更新されたようです（ViewTV" & v100.ToString & ".htmlより新しい）" & vbCrLf & "他のViewTV～.htmlも更新しますか？" & vbCrLf & "ViewTV" & v100.ToString & ".htmlと同一のものだけがViewTV1.htmlの内容で上書きされます", "TvRemoteViewer_VB", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+                                    If result = DialogResult.Yes Then
+                                        chk = 2
+                                    Else
+                                        Exit For
+                                    End If
+                                Else
+                                    Exit For
+                                End If
+                            End If
+                            If chk = 2 Then
+                                'ファイルコピー
+                                Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(Me._wwwroot & "\ViewTV" & sf(i).ToString & ".html")
+                                If modifytime < v1modtime Then
+                                    If modifytime = v100modtime Then
+                                        '古ければViewTV1.htmlをコピー
+                                        Try
+                                            System.IO.File.Copy(v1, Me._wwwroot & "\ViewTV" & sf(i).ToString & ".html", True)
+                                            log1write("ViewTV" & sf(i).ToString & ".html" & "を更新しました")
+                                        Catch ex As Exception
+                                            log1write("【エラー】" & "ViewTV" & sf(i).ToString & ".html" & "の更新に失敗しました")
+                                        End Try
+                                    Else
+                                        log1write("【注意】" & "ViewTV" & sf(i).ToString & ".htmlはViewTV" & v100.ToString & ".htmlと同一では無いようです。更新を見送りました")
+                                    End If
+                                ElseIf v1modtime = modifytime Then
+                                    log1write("ViewTV" & sf(i).ToString & "は更新の必要がありません")
+                                Else
+                                    log1write("【注意】" & "ViewTV" & sf(i).ToString & ".htmlはViewTV1.htmlより新しいようです。更新を見送りました")
+                                End If
+                            End If
+                        ElseIf sf(i) < 1 Then
+                            log1write("【エラー】" & "不正なファイルが検出されました。" & files(i))
+                            Exit For
+                        End If
+                    Next
+                End If
+            Catch ex As Exception
+                log1write("【エラー】ViewTV.html更新チェックでエラーが発生しました。" & ex.Message)
+            End Try
+        Else
+            log1write("【エラー】ViewTV1.htmlが見つかりません")
+        End If
+    End Sub
+
+    '未使用
+    Public Sub Copy_ViewTVhtml(ByVal s1 As Integer, ByVal t1 As Integer, ByVal t2 As Integer)
+        'ViewTV～.htmlコピー
+        If s1 > 0 And t1 > 0 And t2 > 0 And t2 >= t1 And (s1 < t1 Or t2 < s1) Then
+            Dim result As DialogResult = MessageBox.Show("ViewTV" & s1.ToString & ".htmlをViewTV" & t1.ToString & "～ViewTV" & t2.ToString & "にコピーしますか？", "コピーしますか？", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+            If result = DialogResult.Yes Then
+                Dim fs1 As String = Me._wwwroot & "\ViewTV" & s1.ToString & ".html"
+                For i As Integer = t1 To t2
+                    'ファイルコピー
+                    Try
+                        System.IO.File.Copy(fs1, fs1.Replace("\ViewTV" & s1.ToString & ".html", "\ViewTV" & i.ToString & ".html"), True)
+                        log1write("ViewTV" & i.ToString & ".html" & "にコピーしました")
+                    Catch ex As Exception
+                        log1write("【エラー】" & "ViewTV" & i.ToString & ".html" & "の更新に失敗しました")
+                    End Try
+                Next
+            End If
+        Else
+            MsgBox("【エラー】ViewTV.htmlの指定範囲が不正です")
+        End If
+    End Sub
 End Class
 
 

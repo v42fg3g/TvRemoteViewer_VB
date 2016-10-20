@@ -556,6 +556,9 @@ Public Class Form1
         'HLS_option.txtの内容との整合性チェック
         check_hls_option_txt()
 
+        'ViewTV～.htmlが更新されていないかチェック
+        Me._worker.check_ViewTVhtml()
+
         '無事起動
         TvRemoteViewer_VB_Start = 1
     End Sub
