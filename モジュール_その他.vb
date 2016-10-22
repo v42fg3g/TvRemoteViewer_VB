@@ -2,12 +2,15 @@
 
 Module モジュール_その他
     'バージョン
-    Public TvRemoteViewer_VB_version As Double = 2.34
+    Public TvRemoteViewer_VB_version As Double = 2.35
     Public TvRemoteViewer_VB_notrecommend_version As Double = 0
     Public TvRemoteViewer_VB_recommend_version As Double = 0
     Public TvRemoteViewer_VB_version_check_datetime As DateTime = CDate("2000/01/01") '何分何秒にチェックするか　起動時に決定
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
+
+    'リモコンで使用するドメイン
+    Public Remocon_Domains() As String = Nothing
 
     'LOGのPATH
     Public log_path As String = "TvRemoteViewer_VB.log"

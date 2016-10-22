@@ -1606,6 +1606,16 @@ Class WebRemocon
                                 log_path = Trim(youso(1))
                             Case "close2min"
                                 close2min = Val(youso(1).ToString)
+                            Case "Remocon_Domains"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                Dim clset() As String = youso(1).Split(",")
+                                If clset Is Nothing Then
+                                ElseIf clset.Length > 0 Then
+                                    ReDim Preserve Remocon_Domains(clset.Length - 1)
+                                    For j = 0 To clset.Length - 1
+                                        Remocon_Domains(j) = trim8(clset(j))
+                                    Next
+                                End If
 
 
 
@@ -6221,6 +6231,7 @@ Class WebRemocon
     Public Function IsLocalIP(ByVal domainstr As String) As Integer
         Dim r As Integer = 0
         Dim ip_chk As Integer = 0
+        Dim i As Integer = 0
 
         If domainstr.Length > 0 Then
             Dim e() As String = domainstr.Split(":")
@@ -6261,6 +6272,18 @@ Class WebRemocon
             Else
                 '不正
                 ip_chk = 1
+            End If
+
+            If ip_chk = 1 Then
+                'iniのRemocon_Domainsで指定されているならば許可する
+                If Remocon_Domains IsNot Nothing Then
+                    For i = 0 To Remocon_Domains.Length - 1
+                        If domainstr = Remocon_Domains(i) Then
+                            ip_chk = 0
+                            Exit For
+                        End If
+                    Next
+                End If
             End If
         Else
             '不正

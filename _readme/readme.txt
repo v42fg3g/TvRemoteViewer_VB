@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.34
+TvRemoteViewer_VB v2.35
 
 
 
@@ -693,6 +693,7 @@ TvRemoteViewer_VB v2.34
 		ダイアログで他のViewTV.htmlを更新するか選択できるようにした
 		各ファイルは最も番号の大きいViewTV～.htmlと比較され、その内容と同一のものだけが更新されます
 		（例：実験的にViewTV5.htmlだけ一部変更していた場合にはViewTV5.htmlは更新されません）
+	2.35	リモコン先にローカルIP以外を指定できるようにした（iniのRemocon_Domainsに記述）
 
 
 
