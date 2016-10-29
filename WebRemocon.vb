@@ -3075,6 +3075,7 @@ Class WebRemocon
                 Else
                     'その他vlc
                     '今のところ未対応
+                    log1write("【エラー】未対応のHLSアプリです。hlsApp=" & hlsApp)
                     stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                     Exit Sub
                 End If
@@ -3144,6 +3145,7 @@ Class WebRemocon
                                 'その他vlc
                                 '今のところ未対応
                                 stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                                log1write("【エラー】未対応のHLSアプリ、または各exepathが指定されていません。hlsApp=" & hlsApp)
                                 Exit Sub
                             End If
 
