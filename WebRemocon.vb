@@ -3126,26 +3126,15 @@ Class WebRemocon
                                 log1write("【エラー】VLCでのISO再生には対応していません")
                                 stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                                 Exit Sub
-                            ElseIf isMatch_HLS(hlsApp, "ffmpeg") = 1 And exepath_ffmpeg.Length > 0 Then
-                                'ffmpegのとき
+                            ElseIf isMatch_HLS(hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
                                 'HLSアプリをVLCに変更しパイプ追加
+                                hlsOpt = startparam & " | """ & hlsApp & """ " & hlsOpt
                                 hlsApp = exepath_ISO_VLC
-                                hlsOpt = startparam & " | """ & exepath_ffmpeg & """ " & hlsOpt
-                            ElseIf isMatch_HLS(hlsApp, "qsvenc") = 1 And exepath_QSVEnc.Length > 0 Then
-                                'QSVEncのとき
-                                'HLSアプリをVLCに変更しパイプ追加
-                                hlsApp = exepath_ISO_VLC
-                                hlsOpt = startparam & " | """ & exepath_QSVEnc & """ " & hlsOpt
-                            ElseIf isMatch_HLS(hlsApp, "nvenc") = 1 And exepath_NVEnc.Length > 0 Then
-                                'NVEncのとき
-                                'HLSアプリをVLCに変更しパイプ追加
-                                hlsApp = exepath_ISO_VLC
-                                hlsOpt = startparam & " | """ & exepath_NVEnc & """ " & hlsOpt
                             Else
-                                'その他vlc
+                                'その他
                                 '今のところ未対応
                                 stream_last_utime(num) = 0 '前回配信準備開始時間リセット
-                                log1write("【エラー】未対応のHLSアプリ、または各exepathが指定されていません。hlsApp=" & hlsApp)
+                                log1write("【エラー】未対応のHLSアプリが指定されています。hlsApp=" & hlsApp)
                                 Exit Sub
                             End If
 
