@@ -4393,8 +4393,10 @@ Class WebRemocon
                         If System.IO.Path.GetExtension(path).ToLower.IndexOf(".htm") >= 0 Then
                             'HTMLなら
 
-                            '最後に.htmlにアクセスがあった日時を記録
-                            STOP_IDLEMINUTES_LAST = Now()
+                            '最後にWI_以外の.htmlにアクセスがあった日時を記録
+                            If req_Url.IndexOf("/WI_") < 0 Or req_Url.IndexOf("WI_START_STREAM") >= 0 Or req_Url.IndexOf("WI_STOP_STREAM") >= 0 Then
+                                STOP_IDLEMINUTES_LAST = Now()
+                            End If
 
                             'ページが表示されないことがあるので
                             res.ContentType = "text/html"

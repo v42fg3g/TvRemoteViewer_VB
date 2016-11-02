@@ -132,7 +132,7 @@ Public Class Form1
                 If (Now() - STOP_IDLEMINUTES_LAST).Minutes >= STOP_IDLEMINUTES Then
                     STOP_IDLEMINUTES_LAST = CDate("2199/12/31 23:59:59")
                     log1write("アイドル時間が" & STOP_IDLEMINUTES.ToString & "分に達しましたので全切断します")
-                    Me._worker.stop_movie(-2)
+                    Me._worker.stop_movie(-3)
                 End If
             End If
 
@@ -493,7 +493,6 @@ Public Class Form1
         If STOP_IDLEMINUTES > 0 Then
             log1write("アイドル時間が" & STOP_IDLEMINUTES & "分に達すると全切断するようセットしました")
         End If
-        STOP_IDLEMINUTES_LAST = Now()
 
         'プロファイル読込
         If file_exist("profile.txt") = 1 Then
