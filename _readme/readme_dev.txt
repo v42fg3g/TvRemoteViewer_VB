@@ -60,8 +60,8 @@ TvRemoteViewer_VB v2.23
 		i_subTrackNum	字幕トラック。SubLangが指定されていればそちらを優先。両方とも指定されていなければ指定なしで起動（字幕なし）。
 
 		例：
-		http://127.0.0.1:40003/StartTv.html?BonDriver=BonDriver_PT3_s0.dll&ServiceID=101&ChSpace=0&hlsAppSelect=QSVEnc
-		http://127.0.0.1:40003/StartTv.html?VideoName=D:\test.ts&VideoSeekSeconds=30
+		http://127.0.0.1:40003/StartTv.html?num=1&BonDriver=BonDriver_PT3_s0.dll&ServiceID=101&ChSpace=0&hlsAppSelect=QSVEnc
+		http://127.0.0.1:40003/StartTv.html?num=1&VideoName=D:\test.ts&VideoSeekSeconds=30
 
 
 
