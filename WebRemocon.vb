@@ -4132,6 +4132,9 @@ Class WebRemocon
                 End If
 
                 If auth_ok > 0 Then
+                    '最後にアクセスがあった日時を記録
+                    STOP_IDLEMINUTES_LAST = Now()
+
                     'numが<form>から渡されていなければURLから取得するwatch2.tsなら2
                     Dim ffmpeg_num As Integer = Val(rUrl.Substring(rUrl.IndexOf("WatchTV") + "WatchTV".Length))
 
