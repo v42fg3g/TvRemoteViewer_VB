@@ -1,0 +1,41 @@
+﻿<html>
+<body>
+
+<script>
+/*
+	WebM配信テスト
+*/
+
+function changeVid() {
+	//解像度　テストとして640x360 VIDEOタグも同様
+	var prez = "640x360";
+
+	var pnums = document.getElementsByName('num');
+	var bonsidch = document.getElementById('SEL2').value;
+	var bonsidchs = bonsidch.split(",");
+	if (pnums.length > 0 && bonsidchs.length == 3) {
+		var pnum = pnums[0].value;
+		var pbon = bonsidchs[0];
+		var psid = bonsidchs[1];
+		var pch = bonsidchs[2];
+		
+		var pstr = "WatchTV.webm?num=" + pnum + "&resolution=" + prez + "&BonDriver=" + pbon + "&ServiceID=" + psid + "&ChSpace=" + pch;
+
+		var video = document.getElementById('video');
+		video.setAttribute("src",pstr);
+	}
+}
+
+</script>
+
+<!-- HTML -->
+
+<video width="640" height="360" id="video" src="" autoplay></video>
+<div>
+%SELECTNUM%
+%SELECTBONSIDCH%
+<input type=button value="視聴" onclick="changeVid();")
+</div>
+
+</body>
+</html>
