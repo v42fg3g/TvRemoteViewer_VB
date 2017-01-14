@@ -4149,8 +4149,19 @@ Class WebRemocon
                         End If
                         Dim h_resolution As String = instr_pickup_para(rUrl, "resolution=", "&", 0)
                         Dim h_bondriver As String = instr_pickup_para(rUrl, "BonDriver=", "&", 0)
-                        Dim h_sid As String = Val(instr_pickup_para(rUrl, "ServiceID=", "&", 0))
-                        Dim h_chspace As String = Val(instr_pickup_para(rUrl, "ChSpace=", "&", 0))
+                        Dim h_sid As String = instr_pickup_para(rUrl, "ServiceID=", "&", 0)
+                        Dim h_chspace As String = instr_pickup_para(rUrl, "ChSpace=", "&", 0)
+                        Dim h_bon_sid_ch_str As String = instr_pickup_para(rUrl, "Bon_Sid_Ch", "&", 0)
+                        If h_bon_sid_ch_str.Length > 0 Then
+                            h_bon_sid_ch_str = System.Web.HttpUtility.UrlDecode(h_bon_sid_ch_str) 'urlデコード
+                            Dim bon_sid_ch() As String = h_bon_sid_ch_str.Split(",")
+                            If bon_sid_ch.Length = 3 Then
+                                '個別に値が決まっていなければセット
+                                If h_bondriver.Length = 0 Then h_bondriver = Trim(bon_sid_ch(0))
+                                If h_sid.Length = 0 Then h_sid = Trim(bon_sid_ch(1))
+                                If h_chspace.Length = 0 Then h_chspace = Trim(bon_sid_ch(2))
+                            End If
+                        End If
                         'ファイル名はurlエンコードされて送られてくる
                         Dim h_videoname As String = instr_pickup_para(rUrl, "VideoName=", "&", 0)
                         h_videoname = System.Web.HttpUtility.UrlDecode(h_videoname) 'urlデコード

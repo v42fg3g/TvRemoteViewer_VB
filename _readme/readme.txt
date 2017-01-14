@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.35
+TvRemoteViewer_VB v2.36
 
 
 
@@ -694,6 +694,8 @@ TvRemoteViewer_VB v2.35
 		各ファイルは最も番号の大きいViewTV～.htmlと比較され、その内容と同一のものだけが更新されます
 		（例：実験的にViewTV5.htmlだけ一部変更していた場合にはViewTV5.htmlは更新されません）
 	2.35	リモコン先にローカルIP以外を指定できるようにした（iniのRemocon_Domainsに記述）
+	2.36	httpストリーム(WatchTV)アクセス時のパラメータ（Bon_Sid_Chが抜けていたので追加）
+		webm配信例としてwebm_sample.htmlを追加
 
 
 
