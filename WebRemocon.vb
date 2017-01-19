@@ -4808,6 +4808,40 @@ Class WebRemocon
                                             WI_cmd_reply = ver_now 'このプログラムのバージョン番号
                                         End If
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_JKNUM", "WI_GET_JKVALUE"
+                                        If num > 0 Then
+                                            'ストリーム番号で指定があった
+                                            'numから再生中の動画ファイル名を取得
+                                            Dim linestr As String = Me._procMan.WI_GET_LIVE_STREAM
+                                            Dim line() As String = Split(linestr, vbCrLf)
+                                            Dim chk As Integer = 0
+                                            For i = 0 To line.Length - 1
+                                                Dim d() As String = line(i).Split(",")
+                                                If d.Length >= 12 Then
+                                                    If Val(d(1)) = num Then
+                                                        WI_cmd_reply = sid2jk(Trim(d(4)), Trim(d(5)))
+                                                        chk = 1
+                                                        Exit For
+                                                    End If
+                                                End If
+                                            Next
+                                            If chk = 0 Then
+                                                WI_cmd_reply = "NoStream"
+                                            End If
+                                        ElseIf Val(temp) > 0 Then
+                                            'サービスIDで指定があった
+                                            WI_cmd_reply = sid2jk(Trim(Val(temp)), 0) 'chspaceは考慮されないので
+                                        End If
+                                        If WI_cmd_reply.Length = 0 Then
+                                            WI_cmd_reply = "NoMatch"
+                                        End If
+                                        '接続用文字列を返す
+                                        If WI_cmd = "WI_GET_JKVALUE" Then
+                                            If WI_cmd_reply.Substring(0, 2) = "jk" Then
+                                                WI_cmd_reply = get_nico_jkvalue(WI_cmd_reply)
+                                            End If
+                                        End If
+                                        WI_cmd_reply_force = 1
                                 End Select
                             End If
 
@@ -5061,7 +5095,7 @@ Class WebRemocon
                                     'ストリーム番号セレクト
                                     If s.IndexOf("%SELECTNUM%") >= 0 Then
                                         Dim selectnum_html As String = ""
-                                        selectnum_html &= "<select class=""c_sel_num"" name=""num"">" & vbCrLf
+                                        selectnum_html &= "<select class=""c_sel_num"" name=""num"" id=""i_num"">" & vbCrLf
                                         For ix = 1 To MAX_STREAM_NUMBER
                                             selectnum_html &= "<option>" & ix.ToString & "</option>" & vbCrLf
                                         Next

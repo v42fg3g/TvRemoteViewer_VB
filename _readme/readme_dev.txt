@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.23
+TvRemoteViewer_VB v2.37
 
 
 ※1　	%NUM%は配信番号を表します
@@ -351,3 +351,13 @@ TvRemoteViewer_VB v2.23
 			2 : 非推奨バージョン
 			3 : 推奨バージョン
 			9 : 起動中バージョン,非推奨バージョン,推奨バージョン 
+
+	WI_GET_JKNUM.html?(num=[ストリーム番号] || temp=[サービスID])
+		num指定された場合は配信中のニコニコ実況チャンネル
+		tempでサービスIDが指定された場合はサービスIDに対応するニコニコ実況チャンネル
+		返値：	例：jk8　該当実況チャンネルが無い場合は「NoMatch」
+			num指定で配信されていない場合は「NoStream」
+
+	WI_GET_JKVALUE.html?(num=[ストリーム番号] || temp=[サービスID])
+		返値：	num指定された場合は配信中のニコニコ実況接続用文字列
+			tempでサービスIDが指定された場合はサービスIDに対応するニコニコ実況接続用文字列

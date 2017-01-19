@@ -28,6 +28,28 @@ Module モジュール_ニコニコ実況
     'ffmpeg タイムシフト方式を変更するファイル名 vbcrlf区切り
     Public ffmpeg_seek_method_files As String = ""
 
+    Public jkcomment_web() As jkcommentwebstructure '最後に取得したコメントデータ(chat)
+    Public Structure jkcommentwebstructure
+        Public jkid As Integer
+        Public chat_str As String
+        Public jkvalue As String
+        Public lastdate As DateTime
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            'indexof用
+            Dim pF As String = CType(obj, String) '検索内容を取得
+
+            If pF = "" Then '空白である場合
+                Return False '対象外
+            Else
+                If Me.jkid = pF Then
+                    Return True '一致した
+                Else
+                    Return False '一致しない
+                End If
+            End If
+        End Function
+    End Structure
+
     Public jk_list() As sidstructure '放送局
     Public Structure sidstructure
         Public jkid As Integer

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.36
+TvRemoteViewer_VB v2.37
 
 
 
@@ -696,6 +696,8 @@ TvRemoteViewer_VB v2.36
 	2.35	リモコン先にローカルIP以外を指定できるようにした（iniのRemocon_Domainsに記述）
 	2.36	httpストリーム(WatchTV)アクセス時のパラメータ（Bon_Sid_Chが抜けていたので追加）
 		webm配信例としてwebm_sample.htmlを追加
+	2.37	WEBAPIを追加（WI_GET_JKNUM、WI_GET_JKVALUE）
+		ストリーム番号選択（%SELECTNUM%）タグにidを追加
 
 
 
