@@ -1,0 +1,16 @@
+;ISO再生時にVLCに与える追加オプションを指定できます
+;
+;ISO再生時にログに表示されるオプションの内、VLCに与える部分の--sout以降が追加できます
+;
+;2.29までのオプションは
+;--sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}
+;2.30以降のオプションは
+;--sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}
+;となっています
+;
+;無指定の場合は2.30以降のオプションが使用されます
+;
+;例：VLC_ISO_option = --sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}
+;
+
+VLC_ISO_option = 

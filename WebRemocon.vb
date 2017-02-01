@@ -3117,7 +3117,14 @@ Class WebRemocon
 
                             '追加
                             'startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}"
-                            startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}"
+                            'startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}"
+                            startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host%"
+                            If Trim(VLC_ISO_option).Length > 0 Then
+                                startparam &= " " & Trim(VLC_ISO_option)
+                            Else
+                                startparam &= " --sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}"
+                                log1write("指定が無かったのでVLC-ISO追加パラメータとして標準の--soutパラメータがセットされました")
+                            End If
 
                             'HLSオプションを整形
                             If isMatch_HLS(hlsApp, "vlc") = 1 Then
@@ -4404,7 +4411,8 @@ Class WebRemocon
                         Dim req_Url As String = req.Url.LocalPath
 
                         'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
-                        If System.IO.Path.GetExtension(path).ToLower.IndexOf(".htm") >= 0 Then
+                        Dim pext As String = System.IO.Path.GetExtension(path).ToLower
+                        If pext.IndexOf(".htm") >= 0 Or (path.IndexOf("WI_") >= 0 And pext = ".json") Then
                             'HTMLなら
 
                             '最後にWI_以外の.htmlにアクセスがあった日時を記録
@@ -4414,6 +4422,9 @@ Class WebRemocon
 
                             'ページが表示されないことがあるので
                             res.ContentType = "text/html"
+                            If pext = ".json" Then
+                                res.ContentType = "application/json"
+                            End If
 
                             'ToLower小文字で比較
                             Dim StartTv_param As Integer = 0 'StartTvパラメーターが正常かどうか
@@ -4605,7 +4616,7 @@ Class WebRemocon
                             Dim WI_cmd_reply_force As Integer = 0 '1ならwebページ処理へ向かわない
                             Dim WI_skip_html As Integer = 0
                             If req_Url.IndexOf("/WI_") >= 0 Then
-                                WI_cmd = "WI_" & instr_pickup_para(req_Url, "/WI_", ".html", 0)
+                                WI_cmd = "WI_" & instr_pickup_para(req_Url, "/WI_", ".", 0)
                                 Select Case WI_cmd
                                     Case "WI_GET_CHANNELS"
                                         'BonDriver, ServiceID, ch_space, チャンネル名
@@ -4838,9 +4849,23 @@ Class WebRemocon
                                         '接続用文字列を返す
                                         If WI_cmd = "WI_GET_JKVALUE" Then
                                             If WI_cmd_reply.Substring(0, 2) = "jk" Then
-                                                WI_cmd_reply = get_nico_jkvalue(WI_cmd_reply)
+                                                Dim n_jkvalue As String = get_nico_jkvalue(WI_cmd_reply)
+                                                If pext = ".json" Then
+                                                    'JSON形式で返す
+                                                    WI_cmd_reply = "{""thread_id"":""" & Instr_pickup(n_jkvalue, "thread_id=", "&", 0) & """," _
+                                                                   & """ms"":""" & Instr_pickup(n_jkvalue, "ms=", "&", 0) & """," _
+                                                                    & """http_port"":""" & Instr_pickup(n_jkvalue, "http_port=", "&", 0) & """," _
+                                                                    & """channel_no"":""" & Instr_pickup(n_jkvalue, "channel_no=", "&", 0) & """" _
+                                                                    & "}"
+                                                Else
+                                                    WI_cmd_reply = n_jkvalue
+                                                End If
                                             End If
                                         End If
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_GET_JKCOMMENT"
+                                        '返値はJSON形式
+                                        WI_cmd_reply = get_jkcomment_from_web(temp)
                                         WI_cmd_reply_force = 1
                                 End Select
                             End If
@@ -6917,6 +6942,257 @@ Class WebRemocon
             MsgBox("【エラー】ViewTV.htmlの指定範囲が不正です")
         End If
     End Sub
+
+    Public Function get_jkcomment_from_web(ByVal temp As String) As String
+        Dim r As String = ""
+
+        Dim i As Integer = 0
+        Dim j As Integer = 0
+
+        Dim nowutime As Integer = time2unix(Now())
+
+        Dim sn As Integer = 0 'ストリーム番号
+        Dim jk As String = "" 'jknum
+        Dim si As Integer = 0 'サービスID
+
+        Dim nm As Integer = 0 '以降のコメントNoを返す　またはマイナスで取得する直近のコメント数  0の場合はAUTO
+        Dim ms As Integer = 0 '現在時より最大何秒前のコメントを返すか
+
+        Dim d() As String = temp.Split(",")
+
+        'パラメータ取得
+        For i = 0 To d.Length - 1
+            Try
+                Select Case d(i).Substring(0, 2)
+                    Case "sn"
+                        sn = Val(d(i).Substring(2))
+                    Case "jk"
+                        jk = Trim(d(i))
+                    Case "si"
+                        si = Val(d(i).Substring(2))
+
+                    Case "nm"
+                        nm = Val(d(i).Substring(2))
+                    Case "ms"
+                        ms = Val(d(i).Substring(2))
+                End Select
+            Catch ex As Exception
+                log1write("【エラー】WI_GET_JKCOMMENTのパラメータが不正です。temp=" & temp)
+            End Try
+        Next
+
+        'どの放送局か判定
+        If sn > 0 Then
+            'ストリーム番号で指定があった
+            Dim linestr As String = Me._procMan.WI_GET_LIVE_STREAM
+            Dim line() As String = Split(linestr, vbCrLf)
+            Dim chk As Integer = 0
+            For i = 0 To line.Length - 1
+                d = line(i).Split(",")
+                If d.Length >= 12 Then
+                    If Val(d(1)) = sn Then
+                        jk = sid2jk(Trim(d(4)), Trim(d(5)))
+                        chk = 1
+                        Exit For
+                    End If
+                End If
+            Next
+        ElseIf si > 0 Then
+            jk = sid2jk(Trim(Val(si)), 0) 'chspaceは考慮されないので
+        End If
+
+        'ニコニコ接続用文字列を取得
+        Dim jkvalue As String = ""
+        Dim jcindex As Integer = -1
+        Dim jknum As Integer = Val(jk.Replace("jk", "")) 'jk8→8
+        If jknum > 0 Then
+            '取得状況記録配列のインデックスを取得
+            If jkcomment_web_lasttime IsNot Nothing Then
+                jcindex = Array.IndexOf(jkcomment_web_lasttime, jknum)
+            End If
+            If jcindex < 0 Then
+                '見つからなければ追加
+                If jkcomment_web_lasttime IsNot Nothing Then
+                    ReDim Preserve jkcomment_web_lasttime(jkcomment_web_lasttime.Length)
+                    jcindex = jkcomment_web_lasttime.Length - 1
+                Else
+                    ReDim Preserve jkcomment_web_lasttime(0)
+                    jcindex = 0
+                End If
+                '初期化
+                jkcomment_web_lasttime(jcindex).jkid = jknum
+                jkcomment_web_lasttime(jcindex).jkvalue_lastdate = CDate("1980/01/01")
+                jkcomment_web_lasttime(jcindex).jkvalue = ""
+            End If
+
+            'jkvalue取得　連続して何度も取得しないようにする
+            If jkcomment_web_lasttime(jcindex).jkvalue = "" Or (Hour(Now()) = 4 And DateDiff("n", jkcomment_web_lasttime(jcindex).jkvalue_lastdate, Now()) >= 3) Or DateDiff("h", jkcomment_web_lasttime(jcindex).jkvalue_lastdate, Now()) > 0 Then
+                'キャッシュが無い、4時台または時が変われば取得
+                jkcomment_web_lasttime(jcindex).jkvalue_lastdate = Now()
+                jkvalue = Trim(get_nico_jkvalue(jk))
+                jkcomment_web_lasttime(jcindex).jkvalue = jkvalue
+            Else
+                'キャッシュから取得
+                jkvalue = jkcomment_web_lasttime(jcindex).jkvalue
+            End If
+        End If
+
+        'ここまででjk番号等必要な情報が揃った
+
+        Dim last_thread As Integer = 0
+        If jkvalue.IndexOf("thread_id=") > 0 Then
+            '取得URL作成
+            Dim url As String = "http://" & Instr_pickup(jkvalue, "&ms=", "&", 0) & ":" & Instr_pickup(jkvalue, "&http_port=", "&", 0)
+            Dim res_from As Integer = 0
+
+            Dim thread_now As String = instr_pickup_para(jkvalue, "thread_id=", "&", 0)
+            If thread_now = jkcomment_web_lasttime(jcindex).thread Then
+                '前回とスレッドが同じなら
+                If nm < 0 Then
+                    res_from = nm 'マイナス値 遡って指定された場合は新規視聴と見なす
+                ElseIf nm > 0 Then
+                    'コメントNo指定
+                    res_from = nm
+                Else
+                    'nm=0 自動
+                    If jkcomment_web_lasttime(jcindex).out_last_no > 0 Then
+                        '最後に取得した記録があれば
+                        res_from = jkcomment_web_lasttime(jcindex).out_last_no + 1
+                    Else
+                        res_from = -40
+                    End If
+                End If
+            Else
+                'スレッドが変化していれば
+                res_from = -40
+                jkcomment_web_lasttime(jcindex).out_last_no = 0
+                jkcomment_web_lasttime(jcindex).out_last_unixtime = 0
+            End If
+            'スレッド番号記録
+            jkcomment_web_lasttime(jcindex).thread = thread_now
+
+            'ニコニコWEBからコメント取得
+            Dim api_str As String = "api.json" '"api.json" or "api"
+            url &= "/" & api_str & "/thread?version=20061206&thread=" & Instr_pickup(jkvalue, "&thread_id=", "&", 0) & "&res_from=" & res_from.ToString
+            Dim html As String = get_html_by_webclient(url & "", "UTF-8")
+
+            'htmlにコメント全文が入っている
+            Dim chat() As String = Split(html, "},{""chat"":{")
+            'chat()にhtmlを１行毎に分けたものが入っている
+
+            '最後のコメントのunixtimeとNo.を記録
+            For i = chat.Length - 1 To 0 Step -1
+                Dim n_date As Integer = Val(Instr_pickup(chat(i), """date"":", ",", 0))
+                Dim n_no = Val(Instr_pickup(chat(i), """no"":", ",", 0))
+                If n_date > 0 And n_no > 0 Then
+                    jkcomment_web_lasttime(jcindex).out_last_no = n_no
+                    jkcomment_web_lasttime(jcindex).out_last_unixtime = n_date
+                    Exit For
+                End If
+            Next
+
+            '直近何秒までのコメントを取得するか指定があれば
+            If ms > 0 Then
+                For i = 0 To i = chat.Length - 1
+                    Dim n_date As Integer = Val(Instr_pickup(chat(i), """date"":", ",", 0))
+                    If n_date < (nowutime - ms) Then
+                        chat(i) = ""
+                    Else
+                        '前後している可能性もあるが・・まぁいいか
+                        Exit For
+                    End If
+                Next
+            End If
+
+            '再結合
+            r = String.Join("},{""chat"":{", chat)
+        End If
+
+        '最初のコメントのNo.とunixtime
+        Dim first_no As Integer = Val(Instr_pickup(r, """no"":", ",", 0))
+        Dim first_date As Integer = Val(Instr_pickup(r, """date"":", ",", 0))
+
+        '秒毎の単純なJSONに変換
+        r = JSON_convert_every_sec(r)
+
+        '最初の行にコメントの情報を付け加える
+        'スレッドNo.,最初のコメントNo.,最初のunixtime,最後のコメントNo.,最後のunixtime
+        Dim para_str As String = ""
+        If r = "{""32400"":[""コメント無し""]}" Then
+            para_str = last_thread & "," _
+                        & "0" & "," _
+                        & "0" & "," _
+                        & "0" & "," _
+                        & "0" & "," _
+                        & jkcomment_web_lasttime(jcindex).out_last_no & "," _
+                        & jkcomment_web_lasttime(jcindex).out_last_unixtime
+            r = "{""32400"":[""" & para_str & """]}"
+        Else
+            para_str = last_thread & "," _
+                        & first_no & "," _
+                        & first_date & "," _
+                        & jkcomment_web_lasttime(jcindex).out_last_no & "," _
+                        & jkcomment_web_lasttime(jcindex).out_last_unixtime & "," _
+                        & jkcomment_web_lasttime(jcindex).out_last_no & "," _
+                        & jkcomment_web_lasttime(jcindex).out_last_unixtime
+            r = "{""32400"":[""" & para_str & """]," & r.Substring(1)
+        End If
+        Return r
+    End Function
+
+    'JKCOMMENTをJSONへ変換
+    Public Function JSON_convert_every_sec(ByRef html As String) As String
+        Dim r As String = ""
+
+        Dim i As Integer = 0
+
+        Dim lut As String = ""
+
+        If html.Length > 20 Then
+            Dim d() As String = Split(html, "},{""chat"":{") 'html.Split("},{""chat"":{")
+            Dim json(d.Length - 1) As String
+            Dim ji As Integer = 0
+
+            Dim te As String = ""
+            For i = 0 To d.Length - 1
+                Dim tmi As String = Instr_pickup(d(i), "date"":", ",", 0)
+                Dim cm As String = Instr_pickup(d(i), "content"":""", """}", 0)
+
+                If IsNumeric(tmi) = True And cm.Length > 0 Then
+                    If tmi <> lut Then
+                        json(ji) &= te
+                        lut = tmi
+                        json(ji) &= """" & tmi.ToString & """:["
+                        te = "],"
+                    End If
+
+                    'エスケープ
+                    cm = cm.Replace("\", "\\").Replace("""", "\""").Replace("/", "\/").Replace(vbTab, " ")
+
+                    json(ji) &= """" & cm & """"
+
+                    ji += 1
+                End If
+            Next
+
+            r &= String.Join(",", json)
+
+            '余計な「,]」と 末尾に「,,,,」が存在する
+            If ji < d.Length And ji > 0 Then
+                r = r.Substring(0, r.Length - (d.Length - ji))
+            End If
+            r = r.Replace(",]", "]")
+
+            r = "{" & r & "]}"
+        End If
+
+        If r.Length < 10 Then
+            r = "{""32400"":[""コメント無し""]}"
+        End If
+
+        Return r
+    End Function
+
 End Class
 
 

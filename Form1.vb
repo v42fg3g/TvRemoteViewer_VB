@@ -515,6 +515,9 @@ Public Class Form1
         'フォーム上の項目が正常かどうかチェック
         check_form_youso()
 
+        'ISO再生用VLCオプション読み込み
+        set_VLC_ISO_option()
+
         'プロセスクラッシュ監視等開始
         Timer1.Enabled = True
 

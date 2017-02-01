@@ -4,6 +4,9 @@ Imports System.Text.RegularExpressions      '文字列抽出のため正規表�
 Module モジュール_ISO
     Public mplayer4ISOPath As String = System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer-ISO.exe"
 
+    'VLC-ISOオプション　WebRemocon.vb:Start_Movieで使用
+    Public VLC_ISO_option As String = ""
+
     Public Structure ISO_para_structure
         Public enabled As Integer
         Public startoffset As Integer
@@ -201,4 +204,57 @@ Module モジュール_ISO
             DVDInfo = dic1
         End If
     End Function
+
+    Public Sub set_VLC_ISO_option()
+        'ISO再生用VLCオプション読み込み
+        VLC_ISO_option = ""
+
+        Dim errstr As String = ""
+        Dim line() As String = Nothing
+
+        'カレントディレクトリ変更
+        F_set_ppath4program()
+
+        If file_exist("VLC_ISO_option.txt") Then
+            line = file2line("VLC_ISO_option.txt")
+            log1write("VLC-ISO用追加オプションとして VLC_ISO_option.txt を読み込みました")
+        Else
+            Exit Sub
+        End If
+
+        Dim i, j As Integer
+
+        If line Is Nothing Then
+        ElseIf line.Length > 0 Then
+            '読み込み完了
+            For i = 0 To line.Length - 1
+                line(i) = trim8(line(i))
+                'コメント削除
+                If line(i).IndexOf(";") >= 0 Then
+                    line(i) = line(i).Substring(0, line(i).IndexOf(";"))
+                End If
+                Dim youso() As String = line(i).Split("=")
+                If youso.Length > 2 Then
+                    For j = 2 To youso.Length - 1
+                        youso(1) &= "=" & youso(j)
+                    Next
+                End If
+                Try
+                    If youso Is Nothing Then
+                    ElseIf youso.Length > 1 Then
+                        For j = 0 To youso.Length - 1
+                            youso(j) = Trim(youso(j))
+                        Next
+                        Select Case youso(0)
+                            Case "VLC_ISO_option"
+                                VLC_ISO_option = youso(1)
+                        End Select
+                    End If
+                Catch ex As Exception
+                    log1write("パラメーター " & youso(0) & " の読み込みに失敗しました。" & ex.Message)
+                End Try
+            Next
+        End If
+
+    End Sub
 End Module

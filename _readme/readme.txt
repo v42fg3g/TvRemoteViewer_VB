@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.37
+TvRemoteViewer_VB v2.38
 
 
 
@@ -698,6 +698,8 @@ TvRemoteViewer_VB v2.37
 		webm配信例としてwebm_sample.htmlを追加
 	2.37	WEBAPIを追加（WI_GET_JKNUM、WI_GET_JKVALUE）
 		ストリーム番号選択（%SELECTNUM%）タグにidを追加
+	2.38	WEBAPIを追加（WI_GET_JKCOMMENT）
+		ISO再生用VLCの追加オプションを指定できるようにした（VLC_ISO_option.txtを追加）
 
 
 
