@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.38
+TvRemoteViewer_VB v2.39
 
 
 
@@ -700,6 +700,8 @@ TvRemoteViewer_VB v2.38
 		ストリーム番号選択（%SELECTNUM%）タグにidを追加
 	2.38	WEBAPIを追加（WI_GET_JKCOMMENT）
 		ISO再生用VLCの追加オプションを指定できるようにした（VLC_ISO_option.txtを追加）
+	2.39	http配信方法の実験（iniにHTTPSTREAM_METHODを追加）
+			iniにアイドル抑止イベントを指定するSTOP_IDLEMINUTES_METHODを追加（2=2.35以前）
 
 
 

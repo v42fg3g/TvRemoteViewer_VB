@@ -1411,6 +1411,8 @@ Class WebRemocon
                                 'HTML_OUT_CHARACTER_CODE = trim8(youso(1).ToString)
                             Case "STOP_IDLEMINUTES"
                                 STOP_IDLEMINUTES = Val(youso(1).ToString)
+                            Case "STOP_IDLEMINUTES_METHOD"
+                                STOP_IDLEMINUTES_METHOD = Val(youso(1).ToString)
                             Case "VideoSeekDefault"
                                 VideoSeekDefault = Val(youso(1).ToString)
                             Case "VideoSizeCheck"
@@ -4422,7 +4424,9 @@ Class WebRemocon
                             'HTMLなら
 
                             '最後にWI_以外の.htmlにアクセスがあった日時を記録
-                            If req_Url.IndexOf("/WI_") < 0 Or req_Url.IndexOf("WI_START_STREAM") >= 0 Or req_Url.IndexOf("WI_STOP_STREAM") >= 0 Then
+                            If STOP_IDLEMINUTES_METHOD = 2 Then
+                                STOP_IDLEMINUTES_LAST = Now()
+                            ElseIf req_Url.IndexOf("/WI_") < 0 Or req_Url.IndexOf("WI_START_STREAM") >= 0 Or req_Url.IndexOf("WI_STOP_STREAM") >= 0 Then
                                 STOP_IDLEMINUTES_LAST = Now()
                             End If
 

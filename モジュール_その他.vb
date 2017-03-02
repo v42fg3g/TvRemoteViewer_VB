@@ -62,6 +62,7 @@ Module モジュール_その他
     'アイドルが指定分続くときは切断する
     Public STOP_IDLEMINUTES As Integer = 300
     Public STOP_IDLEMINUTES_LAST As DateTime '最後に.htmlにアクセスがあった日時
+    Public STOP_IDLEMINUTES_METHOD As Integer = 1 '1=WIアクセスのみ反応　2=WEBアクセス全てに反応
 
     'HTML入力文字コード（HTMLファイルの文字コード）
     Public HTML_IN_CHARACTER_CODE As String = "UTF-8" 'Shift_JIS
