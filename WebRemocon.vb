@@ -1616,7 +1616,13 @@ Class WebRemocon
                                         Remocon_Domains(j) = trim8(clset(j))
                                     Next
                                 End If
-
+                            Case "HTTPSTREAM_METHOD"
+                                HTTPSTREAM_METHOD = Val(youso(1).ToString)
+                                If HTTPSTREAM_METHOD = 0 Then
+                                    log1write("HTTPストリーム配信方式をREADBEGIN形式にセットしました（従来通り）")
+                                Else
+                                    log1write("HTTPストリーム配信方式をREAD形式にセットしました")
+                                End If
 
 
                                 'Case "video_force_ffmpeg"

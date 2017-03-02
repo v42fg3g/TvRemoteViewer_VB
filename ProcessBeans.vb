@@ -109,8 +109,16 @@ Class ProcessBean
             'ffmpeg HTTP配信開始に時間がかかる可能性があるので自動切断まで余裕を持たせるようにした
             Me._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'タイマーにより1秒毎に-1され100になったときに配信は停止される
 
-            Thread.Sleep(100) '900
-            Me._hlsProc.StandardOutput.BaseStream.BeginRead(Me._ffmpegBuf, 0, Me._ffmpegBuf.Length, AddressOf StreamReceive, output)
+            If HTTPSTREAM_METHOD = 0 Then
+                'BeginRead & ReadEnd
+                Thread.Sleep(100) '900
+                Me._hlsProc.StandardOutput.BaseStream.BeginRead(Me._ffmpegBuf, 0, Me._ffmpegBuf.Length, AddressOf StreamReceive, output)
+            ElseIf HTTPSTREAM_METHOD = 1 Then
+                'Read
+                Dim th As Thread = New Thread(New ParameterizedThreadStart(AddressOf stream_thread))
+                th.Start(output)
+            End If
+
             r = 1 '成功
             Me._stopping = 0 '100以上に設定したあったものを0に戻す
             'ログ表示
@@ -221,6 +229,92 @@ Class ProcessBean
                 End Try
             End Try
         End If
+    End Sub
+
+    'ffmpeg HTTPストリーム　Raad & Output
+    Public Sub stream_thread(ByVal o As Object)
+        Dim output As Stream = DirectCast(o, Stream)
+
+        Try
+            While Me._http_force_stop = 0
+                '上下どちらでも動くが結果はたいして変わらなかった
+                '停止処理＆エラー処理していない
+
+                'Dim result As IAsyncResult = Me._hlsProc.StandardOutput.BaseStream.BeginRead(Me._ffmpegBuf, 0, Me._ffmpegBuf.Length, Nothing, Nothing)
+                'Dim a As Integer = Me._hlsProc.StandardOutput.BaseStream.EndRead(result)
+                'If a > 0 Then
+                'If output IsNot Nothing Then
+                'output.Write(Me._ffmpegBuf, 0, a)
+                'End If
+                'Else
+                'Thread.Sleep(100)
+                'End If
+
+                Dim a As Integer = Me._hlsProc.StandardOutput.BaseStream.Read(Me._ffmpegBuf, 0, Me._ffmpegBuf.Length)
+                'バッファの大きさは関係無し
+                If a > 0 Then
+                    If output IsNot Nothing Then
+                        output.Write(Me._ffmpegBuf, 0, a)
+                    End If
+                Else
+                    Thread.Sleep(100)
+                End If
+            End While
+            '終了させる指令が来ていれば
+            Try
+                output.Close()
+                output.Dispose()
+            Catch ex As Exception
+            End Try
+        Catch ex As Exception
+            'クライアントから切断されるとここでエラー
+            Me._IsStart = False
+            'ffmpeg_http_stream_Stop() 'Me._stopping >= 100とすることでタイマーでアプリごと終了させる
+            log1write("ffmpeg HTTPストリーム受信に失敗しました。" & ex.Message)
+            'ストップした旨を知らせる
+            log1write("チャンネル変更が行われない場合は" & FFMPEG_HTTP_CUT_SECONDS & "秒後に配信を終了します。")
+            Me._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
+            Me._http_udp_changing = 1 '切断はチャンネル切り替え中かもしれない
+
+            '普通はffmpegプロセスは残っていないはずだが残っている場合は無くなるまで待機
+            Try
+                If Me._hlsProc IsNot Nothing And Me._hlsProc.HasExited = False Then
+                    log1write("HLSアプリのプロセスが残っているので終了を試みます")
+                    'HLS終了指令
+                    If isMatch_HLS(Me._hlsApp, "vlc") = 1 Then
+                        'VLC
+                        If Me.vlc_quit_VLC() = 0 Then
+                            Me._hlsProc.Kill()
+                        End If
+                    Else
+                        'ffmpeg等
+                        Me._hlsProc.Kill()
+                    End If
+                    Dim i As Integer = (FFMPEG_HTTP_CUT_SECONDS - 1) * 20
+                    Try
+                        While Me._hlsProc IsNot Nothing And Me._hlsProc.HasExited = False And i > 0
+                            'ffmpegが終了されるまで待つ
+                            Thread.Sleep(50)
+                            i -= 1
+                        End While
+                    Catch ex3 As Exception
+                    End Try
+                    If i > 0 Then
+                        log1write("HLSアプリを終了させました")
+                    Else
+                        log1write("HLSアプリの終了に失敗しました")
+                    End If
+                    'もう一回切断タイマーをリセット
+                    Me._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
+                End If
+            Catch ex2 As Exception
+            End Try
+            Try
+                output.Close()
+                output.Dispose()
+            Catch ex3 As Exception
+            End Try
+        End Try
     End Sub
 
     'TCPコマンドを送ってVLCを終了する

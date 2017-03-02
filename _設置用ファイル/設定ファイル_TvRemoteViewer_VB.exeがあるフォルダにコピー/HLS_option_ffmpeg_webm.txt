@@ -1,7 +1,7 @@
-[360x180]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 768k -quality realtime -cpu-used 2 -vf yadif=0:-1:1 -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-[480x270]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 1000k -quality realtime -cpu-used 2 -vf yadif=0:-1:1 -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-[640x360]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 1500k -quality realtime -cpu-used 2 -vf yadif=0:-1:1 -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-[720x480]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 2250k -quality realtime -cpu-used 2 -vf yadif=0:-1:1 -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-[960x540]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 3000k -quality realtime -cpu-used 2 -vf yadif=0:-1:1 -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-[1280x720]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 4500k -quality realtime -cpu-used 2 -vf yadif=0:-1:1 -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+[360x180]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 768k -quality realtime -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+[480x270]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 1000k -quality realtime -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+[640x360]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 1500k -quality realtime -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+[720x480]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 2250k -quality realtime -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+[960x540]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 3000k -quality realtime -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+[1280x720]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -vcodec libvpx -b 4500k -quality realtime -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
 [–³•ÏŠ·]-i udp://127.0.0.1:%UDPPORT%?pkt_size=262144&fifo_size=1000000&overrun_nonfatal=1 -acodec copy -vcodec copy -f webm -

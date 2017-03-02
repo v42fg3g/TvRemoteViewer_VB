@@ -16,4 +16,7 @@
 
     'ffmpegバッファ × MB
     Public HTTPSTREAM_FFMPEG_BUFFER As Integer = 32
+
+    'httpストリーム方法 従来の方式は0
+    Public HTTPSTREAM_METHOD As Integer = 0
 End Module
