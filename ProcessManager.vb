@@ -1199,20 +1199,24 @@ Public Class ProcessManager
 
                     '関連するファイルを削除
                     If hold_files = 0 Then
-                        delete_mystreamnum(Me._list(i)._num)
-                        If NoDeleteAss = 0 Then
-                            '古いsub%num%.assがあれば削除
-                            If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass") = 1 Then
-                                deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass")
+                        Try
+                            delete_mystreamnum(Me._list(i)._num)
+                            If NoDeleteAss = 0 Then
+                                '古いsub%num%.assがあれば削除
+                                If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass") = 1 Then
+                                    deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & ".ass")
+                                End If
+                                If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass") = 1 Then
+                                    deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass")
+                                End If
+                                'If file_exist(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter") = 1 Then
+                                'deletefile(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter")
+                                'End If
                             End If
-                            If file_exist(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass") = 1 Then
-                                deletefile(Me._fileroot & "\" & "sub" & Me._list(i)._num.ToString & "_nico.ass")
-                            End If
-                            'If file_exist(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter") = 1 Then
-                            'deletefile(Me._fileroot & "\" & "chapter" & Me._list(i)._num.ToString & ".chapter")
-                            'End If
-                        End If
-                        'サムネイル削除（mystream～ですでに削除済）
+                            'サムネイル削除（mystream～ですでに削除済）
+                        Catch ex As Exception
+                            log1write("【エラー】関連ファイル削除中にエラーが発生しました。" & ex.Message)
+                        End Try
                     End If
 
                     Try
@@ -1433,7 +1437,11 @@ Public Class ProcessManager
 
     '配信番号numののlist(i)._stream_modeを取得
     Public Function get_stream_mode(ByVal num As Integer) As Integer
-        Dim r As Integer = Me._list(num2i(num))._stream_mode
+        Dim r As Integer = -1
+        Dim i As Integer = num2i(num)
+        If i >= 0 Then
+            r = Me._list(num2i(num))._stream_mode
+        End If
         Return r
     End Function
 
