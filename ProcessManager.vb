@@ -1114,6 +1114,17 @@ Public Class ProcessManager
                                 End If
                                 proc.Close()
                                 proc.Dispose()
+                            ElseIf isMatch_HLS(Me._list(i)._hlsApp, "nvencc") = 1 Then
+                                'NVEnc
+                                proc.Kill()
+                                If wait_stop_proc(proc) = 1 Then
+                                    log1write("No.=" & Me._list(i)._num & "のNVEncを強制終了しました")
+                                    hls_stop = 1
+                                Else
+                                    log1write("No.=" & Me._list(i)._num & "のNVEnc強制終了に失敗しました")
+                                End If
+                                proc.Close()
+                                proc.Dispose()
                             Else
                                 '強制的に終了
                                 'proc.CloseMainWindow()
