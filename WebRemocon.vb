@@ -1625,6 +1625,9 @@ Class WebRemocon
                                 Else
                                     log1write("HTTPストリーム配信方式をREAD形式にセットしました")
                                 End If
+                            Case "TVRemoteFilesNEW"
+                                TVRemoteFilesNEW = Val(youso(1).ToString)
+
 
 
                                 'Case "video_force_ffmpeg"
@@ -1664,6 +1667,12 @@ Class WebRemocon
                     log1write("【エラー】exepath_ffmpegまたはexepath_QSVEncが指定されていません。video_force_ffmpegの設定は無効とされました")
                 End If
         End Select
+
+        If TVRemoteFilesNEW = 1 Then
+            log1write("【システム】TVRemoteFiles Ver1.82以降を使用することを前提としています")
+        Else
+            log1write("【システム】TVRemoteFiles Ver1.81以前を使用することを前提としています")
+        End If
     End Sub
 
     'パラメーターを,で区切って数値を配列で返す
@@ -4877,6 +4886,9 @@ Class WebRemocon
                                         '返値はJSON形式
                                         WI_cmd_reply = get_jkcomment_from_web(temp)
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_STATUS_NUM"
+                                        WI_cmd_reply = F_get_streamprep(num).ToString & "," & F_get_isoprep(num).ToString
+                                        WI_cmd_reply_force = 1
                                 End Select
                             End If
 
@@ -4891,36 +4903,6 @@ Class WebRemocon
                                 Dim s1 As Integer = req_Url.IndexOf(HTTPSTREAM_mode2_str & "_")
                                 req_Url = req_Url.Substring(0, s1) & req_Url.Substring(s1 + HTTPSTREAM_mode2_str.Length + 1)
                                 request_page = 19
-                            ElseIf req_Url.ToLower.IndexOf("/ViewTV".ToLower) >= 0 Then
-                                '通常視聴
-                                'numが<form>から渡されていなければURLから取得するViewTV2.htmlなら2
-                                If num = 0 Then
-                                    Dim num_url As String = Val(req_Url.ToLower.Substring(req_Url.ToLower.IndexOf("ViewTV".ToLower) + "ViewTV".Length))
-                                    If num_url > 0 Then
-                                        num = num_url
-                                    End If
-                                End If
-
-                                If stream_last_utime(num) > 0 Then
-                                    '配信準備中
-                                    request_page = 14
-                                Else
-                                    Dim gln As String = Me._procMan.get_live_numbers()
-                                    gln = gln.Replace("x", "")
-                                    If gln.IndexOf(" " & num.ToString & " ") >= 0 Then
-                                        check_m3u8_ts = check_m3u8_ts_status(num)
-                                        If check_m3u8_ts < Me._tsfile_wait Then
-                                            '準備ができていない
-                                            request_page = 1 'waiting表示
-                                        Else
-                                            'ViewTV.html用
-                                            chk_viewtv_ok = 1
-                                        End If
-                                    Else
-                                        '配信されていない
-                                        request_page = 11
-                                    End If
-                                End If
                             ElseIf req_Url.ToLower = ("/StartTv.html").ToLower Then
                                 '配信スタート
                                 'パラメーターが正しいかチェック
@@ -4934,16 +4916,62 @@ Class WebRemocon
                                     waitingmessage_str(num) = ""
                                     Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0, hlsAppSelect, profileSelect, httpApp, Nothing)
                                     'すぐさま視聴ページへリダイレクトする
-                                    redirect = "ViewTV" & num & ".html"
+                                    If TVRemoteFilesNEW = 0 Then
+                                        redirect = "ViewTV" & num & ".html"
+                                    End If
                                 ElseIf num > 0 And videoname.Length > 0 Then
                                     'ファイル再生
                                     waitingmessage_count(num) = 0
                                     waitingmessage_str(num) = ""
                                     Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect, httpApp, iso)
                                     'すぐさま視聴ページへリダイレクトする
-                                    redirect = "ViewTV" & num & ".html"
+                                    If TVRemoteFilesNEW = 0 Then
+                                        redirect = "ViewTV" & num & ".html"
+                                    End If
                                 Else
                                     StartTv_param = -1
+                                End If
+                                If TVRemoteFilesNEW = 1 Then
+                                    '新画面推移
+                                    'ViewTVへのアクセスとして扱う
+                                    chk_viewtv_ok = 1
+                                    path = path.ToLower.Replace("starttv.html", "ViewTV" & num.ToString & ".html")
+                                    req_Url = req_Url.Replace("starttv.html", "ViewTV" & num.ToString & ".html")
+                                End If
+                            ElseIf req_Url.ToLower.IndexOf("/ViewTV".ToLower) >= 0 Then
+                                'numが<form>から渡されていなければURLから取得するViewTV2.htmlなら2
+                                If num = 0 Then
+                                    Dim num_url As String = Val(req_Url.ToLower.Substring(req_Url.ToLower.IndexOf("ViewTV".ToLower) + "ViewTV".Length))
+                                    If num_url > 0 Then
+                                        num = num_url
+                                    End If
+                                End If
+
+                                If TVRemoteFilesNEW = 1 Then
+                                    '新画面推移
+                                    chk_viewtv_ok = 1
+                                Else
+                                    '通常視聴
+                                    If stream_last_utime(num) > 0 Then
+                                        '配信準備中
+                                        request_page = 14
+                                    Else
+                                        Dim gln As String = Me._procMan.get_live_numbers()
+                                        gln = gln.Replace("x", "")
+                                        If gln.IndexOf(" " & num.ToString & " ") >= 0 Then
+                                            check_m3u8_ts = check_m3u8_ts_status(num)
+                                            If check_m3u8_ts < Me._tsfile_wait Then
+                                                '準備ができていない
+                                                request_page = 1 'waiting表示
+                                            Else
+                                                'ViewTV.html用
+                                                chk_viewtv_ok = 1
+                                            End If
+                                        Else
+                                            '配信されていない
+                                            request_page = 11
+                                        End If
+                                    End If
                                 End If
                             ElseIf req_Url.ToLower = "/CloseTv.html".ToLower Then
                                 '配信停止
@@ -5405,6 +5433,13 @@ Class WebRemocon
                                             s = s.Replace("%SUBSTR%", "")
                                         End If
                                         's = s.Replace("%SUBSTR%", "")
+
+                                        If s.IndexOf("%STREAMPREP%") >= 0 Then
+                                            s = s.Replace("%STREAMPREP%", F_get_streamprep(num).ToString)
+                                        End If
+                                        If s.IndexOf("%ISOPREP%") >= 0 Then
+                                            s = s.Replace("%ISOPREP%", F_get_isoprep(num).ToString)
+                                        End If
                                     End If
 
                                     '配信中簡易リスト
@@ -5606,6 +5641,43 @@ Class WebRemocon
             log1write(ex.ToString())
         End Try
     End Sub
+
+    Public Function F_get_streamprep(ByVal num As Integer) As String
+        Dim r As Integer = -1
+        Dim gln As String = Me._procMan.get_live_numbers()
+        gln = gln.Replace("x", "")
+        If gln.IndexOf(" " & num.ToString & " ") >= 0 Then
+            Dim check_m3u8_ts As Integer = Math.Abs(check_m3u8_ts_status(num)) '絶対値
+            If check_m3u8_ts < Me._tsfile_wait Then
+                '準備ができていない
+                r = check_m3u8_ts
+            Else
+                '準備完了
+                r = 100
+            End If
+        Else
+            '配信されていない
+            r = -1
+        End If
+
+        Return r
+    End Function
+
+    Public Function F_get_isoprep(ByVal num As Integer) As String
+        Dim r As Integer = 0
+
+        'videoname取得
+        Dim videoname As String = Me._procMan.get_fullpathfilename(num)
+
+        If Path.GetExtension(videoname).ToLower = ".iso" Then
+            '■■■未実装
+            r = 101
+        Else
+            r = 200
+        End If
+
+        Return r
+    End Function
 
     'ファイル再生中の動画の長さ（秒）を取得
     Public Function F_get_file_duration(ByVal num As Integer) As Integer

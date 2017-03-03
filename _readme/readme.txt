@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.39
+TvRemoteViewer_VB v2.40
 
 
 
@@ -702,6 +702,7 @@ TvRemoteViewer_VB v2.39
 		ISO再生用VLCの追加オプションを指定できるようにした（VLC_ISO_option.txtを追加）
 	2.39	http配信方法の実験（iniにHTTPSTREAM_METHODを追加）
 			iniにアイドル抑止イベントを指定するSTOP_IDLEMINUTES_METHODを追加（2=2.35以前）
+	2.40	iniに画面推移方法を指定するTVRemoteFilesNEWを追加（TVRemoteFiles1.82以上）
 
 
 

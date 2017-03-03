@@ -1883,7 +1883,7 @@ Public Class ProcessManager
                 Dim program_sid As String = ""
 
                 If Me._list(i)._num = num Or num = 0 Then
-                    If stream_last_utime(Me._list(i)._num) > 0 Then
+                    If stream_last_utime(Me._list(i)._num) > 0 And TVRemoteFilesNEW = 0 Then
                         '配信準備中
                         r &= Me._list(i)._num.ToString & "," & "再生準備中,再生準備中,0,0,00:00,00:00,再生準備中,,0" & vbCrLf
                     Else
@@ -2160,7 +2160,7 @@ Public Class ProcessManager
         If d IsNot Nothing Then
             Array.Sort(d)
             For i As Integer = 0 To d.Length - 1
-                If stream_last_utime(d(i)) > 0 Then
+                If stream_last_utime(d(i)) > 0 And TVRemoteFilesNEW = 0 Then
                     '配信準備中
                     Dim sep As String = ", "
                     r &= "-1".ToString _
@@ -2209,7 +2209,7 @@ Public Class ProcessManager
                             hlsApp_name = hlsApp
                         End If
                         '配信準備中
-                        If stream_last_utime(num) > 0 Then
+                        If stream_last_utime(num) > 0 And TVRemoteFilesNEW = 0 Then
                             BonDriver = "配信準備中"
                         End If
                         '最後に文字列に追加
