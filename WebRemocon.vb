@@ -4433,7 +4433,7 @@ Class WebRemocon
                             'HTMLなら
 
                             '最後にWI_以外の.htmlにアクセスがあった日時を記録
-                            If STOP_IDLEMINUTES_METHOD = 2 Then
+                            If STOP_IDLEMINUTES_METHOD >= 2 Then
                                 STOP_IDLEMINUTES_LAST = Now()
                             ElseIf req_Url.IndexOf("/WI_") < 0 Or req_Url.IndexOf("WI_START_STREAM") >= 0 Or req_Url.IndexOf("WI_STOP_STREAM") >= 0 Then
                                 STOP_IDLEMINUTES_LAST = Now()
@@ -5565,6 +5565,9 @@ Class WebRemocon
                             End If
                         Else
                             'HTML以外なら
+                            If STOP_IDLEMINUTES_METHOD = 3 Then
+                                STOP_IDLEMINUTES_LAST = Now()
+                            End If
                             If File.Exists(path) Then
                                 ' ローカルファイルが存在すればレスポンス・ストリームに書き出す
                                 'm3u8、tsへの要求はこちらへ来る
