@@ -67,7 +67,7 @@ Public Class ProcessManager
         End If
     End Sub
 
-    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, ByVal VideoSeekSeconds As Integer)
+    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, ByVal VideoSeekSeconds As Integer, ByVal isoPara As String)
         Dim stopping As Integer = get_stopping_status(num)
         Dim i As Integer = num2i(num)
         Dim http_udp_changing As Integer = 0
@@ -414,7 +414,7 @@ Public Class ProcessManager
                                     Me._list.RemoveAt(i)
                                 End If
                                 '                                  ↓Processはまだ決まっていない
-                                Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing)
+                                Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing, "")
                                 Me._list.Add(pb)
 
                                 '1秒毎のプロセスチェックさせない
@@ -473,7 +473,7 @@ Public Class ProcessManager
                                 End If
 
                                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex_str)'↓再起動用にパラメーターを渡しておく
-                                Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing)
+                                Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing, "")
                                 Me._list.Add(pb)
                             End If
                         Else
@@ -549,7 +549,7 @@ Public Class ProcessManager
                         End If
                         'ProcessBeans作成
                         '                                  ↓Processはまだ決まっていない
-                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, Nothing)
+                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, Nothing, "")
                         Me._list.Add(pb)
 
                         '1秒毎のプロセスチェックさせない
@@ -558,9 +558,6 @@ Public Class ProcessManager
                         Me._list(num2i(num))._stopping = 100 + FFMPEG_HTTP_CUT_SECONDS 'チャンネル変更ならば数秒以内に処理されるかな。100になるFFMPEG_HTTP_CUT_SECONDS秒後にタイマーにより配信は停止される
                     Else
                         '★HLSソフトを実行
-                        'ログ表示
-                        log1write("No.=" & num & "HLS アプリ=" & hlsApp)
-                        log1write("No.=" & num & "HLS option=" & hlsOpt)
 
                         Dim hlsProc As System.Diagnostics.Process = Nothing
                         Dim hlsProc2 As System.Diagnostics.Process = Nothing
@@ -633,82 +630,174 @@ Public Class ProcessManager
                             End Try
                         ElseIf Path.GetExtension(fullpathfilename).ToLower = ".iso" Then
                             'ISO再生の場合
-                            '先に現在実行中のVLCとHLSアプリの全プロセスを記録
-                            Dim app1_name As String = "vlc"
-                            Dim app2_name As String = ""
-                            If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 Then
-                                app2_name = "ffmpeg"
-                            ElseIf hlsOpt.ToLower.IndexOf("qsvencc.exe") > 0 Then
-                                app2_name = "QSVEncC"
-                            ElseIf hlsOpt.ToLower.IndexOf("nvencc.exe") > 0 Then
-                                app2_name = "NVEncC"
+                            If ISOPlayNEW = 1 Then
+                                'DVD2　新再生方法
+                                Dim p_audioLang As String = ""
+                                Dim p_audioTrackNum As Integer = 0
+                                Dim p_subLang As String = ""
+                                Dim p_subTrackNum As Integer = 0
+                                Dim p_seek As Integer = 0
+                                Dim d() As String = isoPara.Split(",")
+                                If d.Length = 5 Then
+                                    p_audioLang = d(0)
+                                    p_audioTrackNum = Val(d(1))
+                                    If p_audioTrackNum < 0 Then
+                                        p_audioTrackNum = 0
+                                    End If
+                                    p_subLang = d(2)
+                                    p_subTrackNum = Val(d(3))
+                                    If p_subTrackNum < 0 Then
+                                        p_subTrackNum = 0
+                                    End If
+                                    p_seek = Val(d(4))
+                                End If
+                                'ISOファイル名dvdObject(num).dumpFileNameはすでに置き換わっているはず
+                                If Not System.IO.File.Exists(fullpathfilename) Then
+                                    log1write("【エラー】ファイル:" & fullpathfilename & "は存在しません。")
+                                Else
+                                    If dvdObject(num) Is Nothing Then
+                                        'コンストラクタ引数をセットしてNew
+                                        dvdObject(num) = New DVDClass(
+                                            isoFile:=fullpathfilename,
+                                            streamID:=num,
+                                            work:=ISO_DumpDirPath,
+                                            ffmpeg:=hlsApp,
+                                            mplayer:=mplayer4ISOPath,
+                                            hlsOpt_str:=hlsOpt,
+                                            audioLang_str:=p_audioLang,
+                                            audioTrackNum_str:=p_audioTrackNum,
+                                            subLang_str:=p_subLang,
+                                            subTrackNum_str:=p_subTrackNum,
+                                            seek_str:=p_seek
+                                            )
+                                    End If
+                                    If Not dvdObject(num).status Then  'プロパティ値 status がFalseなら作成に失敗している。
+                                        log1write("ストリーム" & num.ToString & "の" & "DVDオブジェクト生成に失敗しました。正常なDVD-ISOファイルではない可能性があります。（Blu-ray ISOは再生できません。）")
+                                        dvdObject(num) = Nothing
+                                    Else
+                                        log1write("ファイル:" & fullpathfilename & "　に関する、" & "ストリーム" & num.ToString & "の" & "DVDオブジェクトを生成しました。")
+                                        dvdObject(num).EncodeAfterDump = New Callback1(AddressOf Me.ISO_AfterDump)
+
+                                        'DUMP開始
+                                        If Not dvdObject(num) Is Nothing Then
+                                            'ストリーム登録
+                                            Dim pb_iso As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, isoPara)
+                                            Me._list.Add(pb_iso)
+                                            'シークまたはトラック等のパラメータを変更しての再読込
+                                            dvdObject(num).ISO_hlsOpt = hlsOpt
+                                            dvdObject(num).ISO_audioLang = p_audioLang
+                                            dvdObject(num).ISO_audioTrackNum = p_audioTrackNum
+                                            dvdObject(num).ISO_subLang = p_subLang
+                                            dvdObject(num).ISO_subTrackNum = p_subTrackNum
+                                            dvdObject(num).ISO_seek = p_seek
+                                            If dvdObject(num).dumpProgress >= 101 Then
+                                                log1write("ストリーム" & num.ToString & "の" & "DVDはダンプ済です。")
+                                                'dvdObject(num).Start()
+                                                StartConvertVOB2TS(dvdObject(num)) 'こちらのほうが高速な気がする
+                                            ElseIf dvdObject(num).dumpProgress > 0 Then
+                                                log1write("ストリーム" & num.ToString & "の" & "DVDのダンプ処理が既に進行中です。やり直す場合は一旦プロセス中断して再度実行してください。")
+                                                'dvdObject(num).Start() '必要無い
+                                            Else
+                                                'DUMP開始
+                                                DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump) '時間がかかるついでにVOB最大保持数チェック
+                                                dvdObject(num).AbortDump()
+                                                log1write("ストリーム" & num.ToString & "の" & "DVDのダンプ処理を開始します。")
+                                                dvdObject(num).Start()
+                                            End If
+                                        Else
+                                            log1write("ストリーム" & num.ToString & "の" & "DVDオブジェクトが未作成です。")
+                                            'まずありえない
+                                        End If
+
+                                        '現在稼働中のlist(i)._numをログに表示
+                                        Dim js_iso As String = get_live_numbers()
+                                        log1write("現在稼働中のNumber：" & js_iso)
+                                        '番組表用にライブストリームを記録
+                                        LIVE_STREAM_STR = WI_GET_LIVE_STREAM()
+
+                                        '再生手続きはDUMP終了後のコールバックで実行
+                                    End If
+                                End If
+                                Exit Sub '本来の道は通らず終了
                             Else
-                                log1write("【エラー】ISO再生HLSアプリの指定が不正です。")
-                                Exit Sub
+                                '旧方式
+                                '先に現在実行中のVLCとHLSアプリの全プロセスを記録
+                                Dim app1_name As String = "vlc"
+                                Dim app2_name As String = ""
+                                If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 Then
+                                    app2_name = "ffmpeg"
+                                ElseIf hlsOpt.ToLower.IndexOf("qsvencc.exe") > 0 Then
+                                    app2_name = "QSVEncC"
+                                ElseIf hlsOpt.ToLower.IndexOf("nvencc.exe") > 0 Then
+                                    app2_name = "NVEncC"
+                                Else
+                                    log1write("【エラー】ISO再生HLSアプリの指定が不正です。")
+                                    Exit Sub
+                                End If
+
+                                Dim ps1a As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app1_name)
+                                Dim pstr1 As String = ":"
+                                For Each p1 As Process In ps1a
+                                    pstr1 &= p1.Id.ToString & ":"
+                                Next p1
+                                Dim ps2a As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app2_name)
+                                Dim pstr2 As String = ":"
+                                For Each p2 As Process In ps2a
+                                    pstr2 &= p2.Id.ToString & ":"
+                                Next p2
+
+                                'アプリケーションを起動する
+                                ISORUN_exe(hlsApp, hlsOpt)
+
+                                'バッチ実行後に増加したプロセスからプロセスを推定
+                                Dim chk As Integer = 30 * 10 '30秒
+                                Dim chk_hlsapp1 As Integer = 0
+                                Dim chk_hlsapp2 As Integer = 0
+                                While chk > 0
+                                    If chk_hlsapp1 = 0 Then
+                                        Dim ps1b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app1_name)
+                                        For Each p11 As Process In ps1b
+                                            If pstr1.IndexOf(":" & p11.Id.ToString & ":") < 0 Then
+                                                hlsProc = p11
+                                                chk_hlsapp1 = 1
+                                                log1write("ISORUN内のバッチ処理で" & app1_name & "が起動されました。プロセスID=" & p11.Id.ToString)
+                                                Exit For
+                                            End If
+                                        Next
+                                    End If
+                                    If chk_hlsapp2 = 0 Then
+                                        Dim ps2b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app2_name)
+                                        For Each p22 As Process In ps2b
+                                            If pstr2.IndexOf(":" & p22.Id.ToString & ":") < 0 Then
+                                                hlsProc2 = p22
+                                                chk_hlsapp2 = 1
+                                                log1write("ISORUN内のバッチ処理で" & app2_name & "が起動されました。プロセスID=" & p22.Id.ToString)
+                                                Exit For
+                                            End If
+                                        Next
+                                    End If
+                                    If chk_hlsapp1 = 1 And chk_hlsapp2 = 1 Then
+                                        Exit While
+                                    End If
+
+                                    System.Threading.Thread.Sleep(100)
+                                    chk -= 1
+                                End While
+
+                                If chk <= 0 Then
+                                    '失敗
+                                    log1write("【エラー】" & "ISORUNによるプロセス起動に失敗したようです。")
+                                End If
+
+                                Try
+                                    log1write(app1_name & "プロセス=" & hlsProc.Id.ToString)
+                                Catch ex As Exception
+                                End Try
+                                Try
+                                    log1write(app2_name & "プロセス=" & hlsProc2.Id.ToString)
+                                Catch ex As Exception
+                                End Try
                             End If
-
-                            Dim ps1a As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app1_name)
-                            Dim pstr1 As String = ":"
-                            For Each p1 As Process In ps1a
-                                pstr1 &= p1.Id.ToString & ":"
-                            Next p1
-                            Dim ps2a As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app2_name)
-                            Dim pstr2 As String = ":"
-                            For Each p2 As Process In ps2a
-                                pstr2 &= p2.Id.ToString & ":"
-                            Next p2
-
-                            'アプリケーションを起動する
-                            ISORUN_exe(hlsApp, hlsOpt)
-
-                            'バッチ実行後に増加したプロセスからプロセスを推定
-                            Dim chk As Integer = 30 * 10 '30秒
-                            Dim chk_hlsapp1 As Integer = 0
-                            Dim chk_hlsapp2 As Integer = 0
-                            While chk > 0
-                                If chk_hlsapp1 = 0 Then
-                                    Dim ps1b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app1_name)
-                                    For Each p11 As Process In ps1b
-                                        If pstr1.IndexOf(":" & p11.Id.ToString & ":") < 0 Then
-                                            hlsProc = p11
-                                            chk_hlsapp1 = 1
-                                            log1write("ISORUN内のバッチ処理で" & app1_name & "が起動されました。プロセスID=" & p11.Id.ToString)
-                                            Exit For
-                                        End If
-                                    Next
-                                End If
-                                If chk_hlsapp2 = 0 Then
-                                    Dim ps2b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app2_name)
-                                    For Each p22 As Process In ps2b
-                                        If pstr2.IndexOf(":" & p22.Id.ToString & ":") < 0 Then
-                                            hlsProc2 = p22
-                                            chk_hlsapp2 = 1
-                                            log1write("ISORUN内のバッチ処理で" & app2_name & "が起動されました。プロセスID=" & p22.Id.ToString)
-                                            Exit For
-                                        End If
-                                    Next
-                                End If
-                                If chk_hlsapp1 = 1 And chk_hlsapp2 = 1 Then
-                                    Exit While
-                                End If
-
-                                System.Threading.Thread.Sleep(100)
-                                chk -= 1
-                            End While
-
-                            If chk <= 0 Then
-                                '失敗
-                                log1write("【エラー】" & "ISORUNによるプロセス起動に失敗したようです。")
-                            End If
-
-                            Try
-                                log1write(app1_name & "プロセス=" & hlsProc.Id.ToString)
-                            Catch ex As Exception
-                            End Try
-                            Try
-                                log1write(app2_name & "プロセス=" & hlsProc2.Id.ToString)
-                            Catch ex As Exception
-                            End Try
                         Else
                             '通常
                             'ProcessStartInfoオブジェクトを作成する
@@ -727,6 +816,10 @@ Public Class ProcessManager
                             hlsProc = System.Diagnostics.Process.Start(hlsPsi)
                         End If
 
+                        'ログ表示
+                        log1write("No.=" & num & "HLS アプリ=" & hlsApp)
+                        log1write("No.=" & num & "HLS option=" & hlsOpt)
+
                         Try
                             log1write("No.=" & num & "のHLSアプリを起動しました。handle=" & hlsProc.Handle.ToString)
                         Catch ex As Exception
@@ -734,7 +827,7 @@ Public Class ProcessManager
                         End Try
 
                         '                                                           ↓再起動用にパラメーターを渡しておく
-                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2)
+                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, "")
                         Me._list.Add(pb)
                     End If
                 End If
@@ -756,6 +849,108 @@ Public Class ProcessManager
 
         '番組表用にライブストリームを記録
         LIVE_STREAM_STR = WI_GET_LIVE_STREAM()
+    End Sub
+
+    'Dump後コールバック処理
+    Public Sub ISO_AfterDump(ByRef dvdInstance As DVDClass)
+        If dvdInstance.dumpProgress >= 101 Then
+            StartConvertVOB2TS(dvdInstance)
+        Else
+            log1write("ストリーム" & dvdInstance.streamNum & "の" & "DVDダンプが正常に生成できませんでした。処理を中断します。")
+        End If
+    End Sub
+
+    Public Sub StartConvertVOB2TS(ByVal dvdinstance As DVDClass)
+        Dim num As Integer = dvdinstance.streamNum
+        Dim d_dumpfilename As String = dvdObject(num).dumpFileName
+        Dim d_audioID As Integer = -1
+        If dvdinstance.ISO_audioTrackNum >= 0 Then
+            d_audioID = dvdObject(num).GetAudioID(dvdinstance.ISO_audioTrackNum)
+        ElseIf dvdinstance.ISO_audioLang.Length > 0 Then
+            d_audioID = dvdObject(num).GetAudioID(dvdinstance.ISO_audioLang)
+        End If
+        If d_audioID < 0 Then
+            d_audioID = 0 '標準
+        End If
+        Dim d_audioID1 As Integer = d_audioID + 1
+        Dim d_subID As Integer = -1
+        If dvdinstance.ISO_subTrackNum >= 0 Then
+            d_subID = dvdObject(num).GetSubID(dvdinstance.ISO_subTrackNum)
+        ElseIf dvdinstance.ISO_subLang.Length > 0 Then
+            d_subID = dvdObject(num).GetSubID(dvdinstance.ISO_subLang)
+        End If
+        Dim d_seek As Integer = dvdObject(num).ISO_seek
+
+        Dim hlsOpt As String = dvdinstance.ISO_hlsOpt
+        'パラメータ変換
+        'ファイル名→VOB
+        Dim filename As String = Instr_pickup(hlsOpt, """", """", 0)
+        If Path.GetExtension(filename).ToLower = ".iso" Then
+            hlsOpt = hlsOpt.Replace(filename, dvdinstance.dumpFileName)
+        Else
+            log1write("【エラー】ファイル名が不正です。" & filename)
+            Exit Sub
+        End If
+        hlsOpt = hlsOpt.Replace("%AUDIOID%", d_audioID)
+        hlsOpt = hlsOpt.Replace("%AUDIOID1%", d_audioID1)
+        hlsOpt = hlsOpt.Replace("%SUBID%", d_subID)
+        hlsOpt = hlsOpt.Replace("%SSEC%", d_seek)
+
+        log1write("hlsApp=" & dvdinstance.ffmpegPath)
+        log1write("hlsOpt=" & hlsOpt)
+
+        '★★★デバッグ用
+        log1write("=====================")
+        log1write("""" & dvdinstance.ffmpegPath & """ " & hlsOpt)
+        log1write("■デバッグ用=========")
+
+        '通常
+        'ProcessStartInfoオブジェクトを作成する
+        Dim hlsPsi As New System.Diagnostics.ProcessStartInfo()
+        '起動するファイルのパスを指定する
+        hlsPsi.FileName = dvdinstance.ffmpegPath
+        'コマンドライン引数を指定する
+        hlsPsi.Arguments = hlsOpt
+        ' コンソール・ウィンドウを開かない
+        hlsPsi.CreateNoWindow = True
+        ' シェル機能を使用しない
+        hlsPsi.UseShellExecute = False
+        'アプリケーションを起動する
+        Dim hlsProc As System.Diagnostics.Process = System.Diagnostics.Process.Start(hlsPsi)
+        Dim HLS_PRIORITY_STR As String = HLS_PRIORITY
+        Select Case HLS_PRIORITY
+            Case "Idle"
+                hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
+            Case "Normal"
+                hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
+            Case "High"
+                hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+            Case "RealTime"
+                hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.RealTime
+            Case Else
+                HLS_PRIORITY_STR = "無指定"
+                'hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
+        End Select
+
+        Dim i As Integer = num2i(num)
+        If i >= 0 Then
+            Me._list(i)._hlsProc = hlsProc
+        Else
+            '本体が終了後、戻ってきたとき
+            log1write("【警告】該当_list()が存在しません。HLSアプリの終了処理を行います")
+            Try
+                hlsProc.Kill()
+                If wait_stop_proc(hlsProc) = 1 Then
+                    log1write("No.=" & num & "のHLSアプリを強制終了しました2")
+                Else
+                    log1write("No.=" & num & "のHLSアプリ終了に失敗しました")
+                End If
+                hlsProc.Close()
+                hlsProc.Dispose()
+            Catch ex As Exception
+                log1write("【エラー】" & ex.Message)
+            End Try
+        End If
     End Sub
 
     'このプロセスがＮＨＫ関連かどうか調べる　■未使用
@@ -880,10 +1075,11 @@ Public Class ProcessManager
                                 Dim p9 As Integer = Me._list(i)._NHK_dual_mono_mode_select
                                 Dim p10 As String = Me._list(i)._resolution
                                 Dim p11 As Integer = Me._list(i)._VideoSeekSeconds
+                                Dim p12 As String = Me._list(i)._ISO_para
                                 'プロセスを停止
                                 stopProc(p5) 'startprocでも冒頭で停止処理をするので割愛と思ったが再起動時には停止しておいたほうが正常に動いた
                                 'プロセスを開始
-                                startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
+                                startProc(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12)
                                 log1write("No.=" & p5 & "のプロセスを再起動しました")
                             Else
                                 '起動失敗（何度も再起動）
@@ -908,41 +1104,46 @@ Public Class ProcessManager
                             End If
 
                             If Me._list(i)._chk_proc >= 1000 And stream_last_utime(Me._list(i)._num) = 0 Then 'プロセスが無いか10秒応答がなければ
-                                Me._list(i)._FileEncodeFinished = 1 'エンコード終了
+                                'tsファイルの数をチェックしてある程度できていればエンコード終了 できていなければ失敗
+                                If WI_GET_TSFILE_COUNT(Me._list(i)._num) >= 10 Then
+                                    '少なくとも10個のtsファイルが存在する
+                                    Me._list(i)._FileEncodeFinished = 1 'エンコード終了
 
-                                log1write("No.=" & Me._list(i)._num.ToString & " のエンコードが終了したようです")
-                                'm3u8をチェックして#EXT-X-ENDLISTが無ければ付加
-                                Dim m3u8filename As String = _fileroot & "\mystream" & Me._list(i)._num & ".m3u8"
-                                If file_exist(m3u8filename) = 1 Then
-                                    Dim str As String = ReadAllTexts(m3u8filename) 'file2str(m3u8filename, "UTF-8")
-                                    If str.Length > 0 And str.IndexOf("#EXT-X-ENDLIST") < 0 Then
-                                        '最後の改行を消す
-                                        Try
-                                            While str.Substring(str.Length - 2, 2) = vbCrLf
-                                                str = str.Substring(0, str.Length - 2)
-                                            End While
-                                        Catch ex As Exception
-                                        End Try
-                                        str &= vbCrLf & "#EXT-X-ENDLIST" & vbCrLf
-                                        If str2file(m3u8filename, str, "shift_jis") = 1 Then 'shift_jisのほうが余計なものがつかないかな
-                                            log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルに#EXT-X-ENDLISTを追記しました")
-                                        Else
-                                            log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルへの#EXT-X-ENDLIST追記に失敗しました")
+                                    log1write("No.=" & Me._list(i)._num.ToString & " のエンコードが終了したようです")
+                                    'm3u8をチェックして#EXT-X-ENDLISTが無ければ付加
+                                    Dim m3u8filename As String = _fileroot & "\mystream" & Me._list(i)._num & ".m3u8"
+                                    If file_exist(m3u8filename) = 1 Then
+                                        Dim str As String = ReadAllTexts(m3u8filename) 'file2str(m3u8filename, "UTF-8")
+                                        If str.Length > 0 And str.IndexOf("#EXT-X-ENDLIST") < 0 Then
+                                            '最後の改行を消す
+                                            Try
+                                                While str.Substring(str.Length - 2, 2) = vbCrLf
+                                                    str = str.Substring(0, str.Length - 2)
+                                                End While
+                                            Catch ex As Exception
+                                            End Try
+                                            str &= vbCrLf & "#EXT-X-ENDLIST" & vbCrLf
+                                            If str2file(m3u8filename, str, "shift_jis") = 1 Then 'shift_jisのほうが余計なものがつかないかな
+                                                log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルに#EXT-X-ENDLISTを追記しました")
+                                            Else
+                                                log1write("No.=" & Me._list(i)._num.ToString & " のm3u8ファイルへの#EXT-X-ENDLIST追記に失敗しました")
+                                            End If
                                         End If
-                                    End If
 
-                                    '復帰用ストリームデータ保存 同じものがStopProcにも有り
-                                    Dim list_txt As String = ""
-                                    list_txt &= Me._list(i)._num & "<,>"
-                                    list_txt &= Me._list(i)._hlsApp & "<,>"
-                                    list_txt &= Me._list(i)._hlsOpt & "<,>"
-                                    list_txt &= Me._list(i)._stream_mode & "<,>"
-                                    list_txt &= Me._list(i)._NHK_dual_mono_mode_select & "<,>"
-                                    list_txt &= Me._list(i)._resolution & "<,>"
-                                    list_txt &= Me._list(i)._fullpathfilename & "<,>"
-                                    list_txt &= Me._list(i)._VideoSeekSeconds
-                                    str2file(Me._fileroot & "\" & "mystream" & Me._list(i)._num.ToString & "_listdata.txt", list_txt, "UTF-8")
-                                    log1write("No.=" & Me._list(i)._num.ToString & " の復帰用データを記録しました")
+                                        '復帰用ストリームデータ保存 同じものがStopProcにも有り
+                                        Dim list_txt As String = ""
+                                        list_txt &= Me._list(i)._num & "<,>"
+                                        list_txt &= Me._list(i)._hlsApp & "<,>"
+                                        list_txt &= Me._list(i)._hlsOpt & "<,>"
+                                        list_txt &= Me._list(i)._stream_mode & "<,>"
+                                        list_txt &= Me._list(i)._NHK_dual_mono_mode_select & "<,>"
+                                        list_txt &= Me._list(i)._resolution & "<,>"
+                                        list_txt &= Me._list(i)._fullpathfilename & "<,>"
+                                        list_txt &= Me._list(i)._VideoSeekSeconds & "<,>"
+                                        list_txt &= Me._list(i)._ISO_para
+                                        str2file(Me._fileroot & "\" & "mystream" & Me._list(i)._num.ToString & "_listdata.txt", list_txt, "UTF-8")
+                                        log1write("No.=" & Me._list(i)._num.ToString & " の復帰用データを記録しました")
+                                    End If
                                 End If
                             End If
                         End If
@@ -953,6 +1154,28 @@ Public Class ProcessManager
             '終了時などに希に既に存在していないMe._list(i)へのアクセス
         End Try
     End Sub
+
+    'filerootに作成された.tsの数
+    Public Function WI_GET_TSFILE_COUNT(ByVal num As Integer) As Integer
+        Dim r As Integer = 0
+
+        Dim fileroot As String = Me._fileroot
+        If fileroot.Length = 0 Then
+            fileroot = Me._wwwroot
+        End If
+        fileroot &= "\"
+
+        ' 必要な変数を宣言する
+        Dim stPrompt As String = String.Empty
+
+        'tsチェック
+        Dim ts_count As Integer = 0
+        ts_count = System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "-*.ts").Length
+
+        r = ts_count
+
+        Return r
+    End Function
 
     '指定numberプロセスを停止する
     Public Sub stopProc(num As Integer, Optional ByVal hls_only As Integer = 0, Optional ByVal NoDeleteAss As Integer = 0)
@@ -1234,7 +1457,8 @@ Public Class ProcessManager
                                 list_txt &= Me._list(i)._NHK_dual_mono_mode_select & "<,>"
                                 list_txt &= Me._list(i)._resolution & "<,>"
                                 list_txt &= Me._list(i)._fullpathfilename & "<,>"
-                                list_txt &= Me._list(i)._VideoSeekSeconds
+                                list_txt &= Me._list(i)._VideoSeekSeconds & "<,>"
+                                list_txt &= Me._list(i)._ISO_para
                                 str2file(Me._fileroot & "\" & "mystream" & Me._list(i)._num.ToString & "_listdata.txt", list_txt, "UTF-8")
                                 log1write("No.=" & Me._list(i)._num.ToString & " の復帰用データを記録しました")
                                 log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
@@ -2331,7 +2555,12 @@ Public Class ProcessManager
                                 'If file_exist(Me._fileroot & "\mystream" & Val(d(0)).ToString & "-"
                                 'ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0)
                                 'stream_modeをマイナス値で与えるとファイル再生復帰
-                                Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)), Nothing)
+                                Dim isoPara As String = ""
+                                If d.Length >= 9 Then
+                                    '互換性のため配慮　ISOが復帰できるかは未検証
+                                    isoPara = d(8)
+                                End If
+                                Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)), Nothing, isoPara)
                                 Me._list.Add(pb)
                                 log1write("ストリーム" & Val(d(0)).ToString & "が復帰されました")
                             Else

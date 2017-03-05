@@ -542,7 +542,13 @@ Public Class Form1
             pttimer_pt2count = F_get_pt2count()
         End If
 
+        'DVD2 ISO再生用
+        ReDim dvdObject(MAX_STREAM_NUMBER)
+        '起動時クリーンアップ： 通常のDVDダンプのクリーンアップの他、作成途中のダンプ(.tmp)ファイルも削除する。
+        DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump, True)
+
         'エンコ済ファイル再生ストリーム復帰作業
+        '■■■ISO新方式に対応しないとかも（保存も）　後で考察
         Me._worker.resume_file_streams()
 
         'stream_last_utimeの再定義

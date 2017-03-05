@@ -2,6 +2,18 @@
 Imports System.Text.RegularExpressions      '文字列抽出のため正規表現を使う。
 
 Module モジュール_ISO
+    'DVD2
+    'ISO再生
+    Public dvdObject() As DVDClass
+    'ISO再生方法
+    Public ISOPlayNEW As Integer = -1
+    'データフォルダ
+    Public ISO_DumpDirPath As String = ""
+    Public ISO_ThumbPath As String = ""
+    Public ISO_ThumbForceM As Integer = 0 '1=forceMの値を無視してmplayerのみ使用
+    Public ISO_maxDump As Integer = 2
+
+    'mplayerパス
     Public mplayer4ISOPath As String = System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer-ISO.exe"
 
     'VLC-ISOオプション　WebRemocon.vb:Start_Movieで使用

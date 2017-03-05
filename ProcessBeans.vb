@@ -33,8 +33,10 @@ Class ProcessBean
     Public _ffmpegBuf As Byte() '= Nothing        'Public opt As String 'VLCオプション文字列
     Public _http_udp_changing As Integer
     Public _http_force_stop As Integer
+    'ISO用パラメータ
+    Public _ISO_para As String = ""
 
-    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId_str As String, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String, VideoSeekSeconds As Integer, hlsProc2 As Process)
+    Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId_str As String, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String, VideoSeekSeconds As Integer, hlsProc2 As Process, ByVal ISO_para_str As String)
         Me._udpProc = udpProc
         Me._hlsProc = hlsProc
         Me._hlsProc2 = hlsProc2
@@ -69,6 +71,9 @@ Class ProcessBean
         Me._http_udp_changing = 0
         '停止フラグ
         Me._http_force_stop = 0
+
+        'ISOパラメータ
+        Me._ISO_para = ISO_para_str
 
         stream_last_utime(Me._num) = 0 '直前配信履歴簡易記録クリア
     End Sub

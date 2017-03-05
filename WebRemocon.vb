@@ -631,10 +631,13 @@ Class WebRemocon
     End Function
 
     'ファイルのWEB用相対位置を返す
-    Public Function get_soutaiaddress_from_fileroot() As String
+    Public Function get_soutaiaddress_from_fileroot(Optional ByVal thumbPath As String = "") As String
         Dim fileroot As String = Me._fileroot
         If Me._fileroot.Length = 0 Then
             fileroot = Me._wwwroot
+        End If
+        If thumbPath.Length > 0 Then
+            fileroot = thumbPath
         End If
         If fileroot.IndexOf(Me._wwwroot) >= 0 Then
             'パスがwwwrootの子ディレクトリ
@@ -979,9 +982,7 @@ Class WebRemocon
 
         'tsチェック
         Dim ts_count As Integer = 0
-        For Each stFilePath As String In System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "-*.ts")
-            ts_count += 1
-        Next
+        ts_count = System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "-*.ts").Length
 
         r = exist_m3u8 * ts_count
 
@@ -1627,6 +1628,19 @@ Class WebRemocon
                                 End If
                             Case "TVRemoteFilesNEW"
                                 TVRemoteFilesNEW = Val(youso(1).ToString)
+                            Case "ISOPlayNEW"
+                                ISOPlayNEW = Val(youso(1).ToString)
+                            Case "ISO_DumpDirPath"
+                                ISO_DumpDirPath = youso(1)
+                            Case "ISO_ThumbPath"
+                                '無効　クライアントが未対応 streamフォルダに作成
+                                'ISO_ThumbPath = youso(1)
+                            Case "ISO_ThumbForceM"
+                                ISO_ThumbForceM = Val(youso(1).ToString)
+                                log1write("ISOサムネイル作成を強制的にMplayerで行います")
+                            Case "ISO_maxDump"
+                                ISO_maxDump = Val(youso(1).ToString)
+                                log1write("変換後ISOデータの最大保持数を" & ISO_maxDump & "にセットしました")
 
 
 
@@ -1672,6 +1686,37 @@ Class WebRemocon
             log1write("【システム】TVRemoteFiles Ver1.82以降を使用することを前提としています")
         Else
             log1write("【システム】TVRemoteFiles Ver1.81以前を使用することを前提としています")
+        End If
+
+        'DVD2
+        If ISO_DumpDirPath.length = 0 Or folder_exist(ISO_DumpDirPath) <= 0 Then
+            ISO_DumpDirPath = Me._fileroot
+        End If
+        log1write("ISO再生用 DUMPフォルダとして" & ISO_DumpDirPath & "を設定しました")
+        If ISO_ThumbPath.length = 0 Or folder_exist(ISO_ThumbPath) <= 0 Then
+            ISO_ThumbPath = Me._fileroot
+        End If
+        log1write("ISO再生用 サムネイルフォルダとして" & ISO_ThumbPath & "を設定しました")
+        If ISOPlayNEW = 1 And mplayer4ISOPath.Length = 0 Then
+            ISOPlayNEW = 0
+            log1write("【エラー】ISOPlayNEW=1にするためにはmplayer4ISOPathの設定が必須です。ISOPlayNEW=0にセットしました")
+        End If
+        If ISOPlayNEW < 0 Then
+            If TVRemoteFilesNEW = 1 Then
+                ISOPlayNEW = 1
+            Else
+                ISOPlayNEW = 0
+            End If
+        End If
+        If ISOPlayNEW = 1 Then
+            If TVRemoteFilesNEW = 1 Then
+                log1write("【システム】ISO再生をVOB方式に設定しました")
+            Else
+                ISOPlayNEW = 0
+                log1write("【エラー】ISOPlayNEW=1の場合はTVRemoteFilesNEW=1に設定してください。ISO再生方式を従来のものに設定しました")
+            End If
+        Else
+            log1write("【システム】ISO再生方式を従来のものに設定しました")
         End If
     End Sub
 
@@ -2377,6 +2422,7 @@ Class WebRemocon
                 ISO_subTrackNum = iso.subTrackNum
             End If
         End If
+        Dim ISO_para As String = ISO_audioLang & "," & ISO_audioTrackNum.ToString & "," & ISO_subLang & "," & ISO_subTrackNum.ToString & "," & ISO_startoffset.ToString
 
         '再起動回数をリセット
         stream_reset_count(num) = 0
@@ -2399,7 +2445,7 @@ Class WebRemocon
 
         filename = filename_escape_recall(filename) ',を戻す
         Dim filename_ext As String = "" '動画ファイルの拡張子
-        Dim ISO_on As Integer = 0 '.isoなら1
+        Dim ISO_on As Integer = 0 '.isoなら1　旧方式は2段階変換なのでHLSアプリではseek文字列追加をしない
         If filename.Length > 0 Then
             filename_ext = Path.GetExtension(filename).ToLower
             If filename_ext = ".iso" Then
@@ -3097,74 +3143,19 @@ Class WebRemocon
                     Exit Sub
                 End If
                 If filename_ext = ".iso" Then
-                    If exepath_ISO_VLC.Length > 0 Then
-                        'ISOの場合の処理
+                    If ISOPlayNEW = 1 Then
+                        'DVD2 ISO再生　新方式
+                        'ここではdvdObjectが作成されていないので情報が収集できずパラメータの設定ができないので%%のまま
+                        'ProcessManager.vbでのコールバックで対応
 
-                        'hlsOpt内のファイルネームをパイプに変更
-                        hlsOpt = hlsOpt.Replace("""" & filename & """", "-")
+                        If isMatch_HLS(hlsApp, "ffmpeg") Then
+                            'ffmpeg
+                            Dim fcstr As String = ""
+                            hlsOpt = Trim(hlsOpt)
+                            Dim sp As Integer = -1
 
-                        'mplayerを使用してISO情報を取得
-                        Dim resultInfo As tot_structure = Nothing
-                        resultInfo = TOT_read(filename, exepath_ffmpeg)
-
-                        If resultInfo.ISO_RC = 0 Then
-                            Dim vlcpath = exepath_ISO_VLC
-                            Dim trackID = resultInfo.ISO_MAINTITLE
-                            Dim startcommand = vlcpath
-                            Dim startTimeParam = ""
-                            If ISO_startoffset > 0 Then      '開始オフセットが定義されている場合セット
-                                startTimeParam = " --start-time " & ISO_startoffset
-                            End If
-                            Dim audioParam = ""         '音声が指定されていれば、言語コード→トラック番号の優先度でセット 
-                            Dim aaa = Array.IndexOf(resultInfo.ISO_AUDIO, "xxx")
-                            If ISO_audioLang <> "" And Array.IndexOf(resultInfo.ISO_AUDIO, ISO_audioLang) >= 0 Then
-                                audioParam = " --audio-language=" & ISO_audioLang
-                            ElseIf ISO_audioTrackNum >= 0 And ISO_audioTrackNum <= UBound(resultInfo.ISO_AUDIO) Then
-                                audioParam = " --audio-track=" & ISO_audioTrackNum
-                            End If
-                            Dim subParam = ""           '字幕が指定されていれば、言語コード→トラック番号の優先度でセット
-                            If resultInfo.ISO_SUBFLG Then '但しそもそも字幕トラックが無ければ何も指定しない。
-                                If ISO_subLang <> "" And Array.IndexOf(resultInfo.ISO_SUBLANG, ISO_subLang) >= 0 Then
-                                    subParam = " --sub-language=" & ISO_subLang
-                                ElseIf ISO_subTrackNum >= 0 And ISO_subTrackNum <= UBound(resultInfo.ISO_SUBLANG) Then
-                                    subParam = " --sub-track=" & ISO_subTrackNum
-                                End If
-                            End If
-                            Dim startparam = "-I dummy --dummy-quiet dvdsimple:///""" & filename & """/#" & trackID & startTimeParam & " --stop-time " & resultInfo.ISO_DURATION & " --no-repeat vlc://quit" & audioParam & subParam
-
-                            '追加
-                            'startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}"
-                            'startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}"
-                            startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host%"
-                            If Trim(VLC_ISO_option).Length > 0 Then
-                                startparam &= " " & Trim(VLC_ISO_option)
-                            Else
-                                startparam &= " --sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}"
-                                log1write("指定が無かったのでVLC-ISO追加パラメータとして標準の--soutパラメータがセットされました")
-                            End If
-
-                            'HLSオプションを整形
-                            If isMatch_HLS(hlsApp, "vlc") = 1 Then
-                                'VLCのとき
-                                '今のところ未対応
-                                log1write("【エラー】VLCでのISO再生には対応していません")
-                                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
-                                Exit Sub
-                            ElseIf isMatch_HLS(hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
-                                'HLSアプリをVLCに変更しパイプ追加
-                                hlsOpt = startparam & " | """ & hlsApp & """ " & hlsOpt
-                                hlsApp = exepath_ISO_VLC
-                            Else
-                                'その他
-                                '今のところ未対応
-                                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
-                                log1write("【エラー】未対応のHLSアプリが指定されています。hlsApp=" & hlsApp)
-                                Exit Sub
-                            End If
-
-                            '字幕
-                            If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 And subParam.Length > 0 Then
-                                'ffmpegかつ字幕有りの場合はオプション追加
+                            If ISO_subLang.Length = 0 And ISO_subTrackNum < 0 Then
+                                '字幕無し
                                 'まず-vfを削る
                                 If hlsOpt.IndexOf(" -vf ") > 0 Then
                                     Dim stemp As String = Instr_pickup(hlsOpt, " -vf ", " -", 0)
@@ -3175,53 +3166,205 @@ Class WebRemocon
                                         log1write("【エラー】-vfオプションの削除に失敗しました")
                                     End If
                                 End If
-                                Dim fcstr As String = " -filter_complex ""[0:v]yadif=0[video];[video][0:s]overlay=0:H*2/9[v]"" -map [v] -map 0:a"
-                                hlsOpt = Trim(hlsOpt)
-                                Dim sp As Integer = hlsOpt.LastIndexOf(" ")
+                                'シーク
+                                If ISO_startoffset > 0 Then
+                                    hlsOpt = hlsOpt.Replace("-i ", "-ss %SSEC% -i ")
+                                End If
+                                '字幕指定
+                                fcstr = " -map 0:v -map 0:a:%AUDIOID%"
+                                sp = hlsOpt.LastIndexOf(" ") '最後の空白位置
                                 If sp > 0 Then
                                     hlsOpt = hlsOpt.Substring(0, sp) & fcstr & hlsOpt.Substring(sp)
                                 End If
-                                '-analyzeduration 600M -probesize 600M 追加
-                                sp = hlsOpt.ToLower.IndexOf("ffmpeg.exe")
-                                sp = hlsOpt.IndexOf(" ", sp + "ffmpeg.exe".Length)
-                                If sp > 0 Then
-                                    hlsOpt = hlsOpt.Substring(0, sp) & " -analyzeduration 600M -probesize 600M" & hlsOpt.Substring(sp)
-                                End If
-
-                                'ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And nohsub = 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And ass_file.Length = 0 And subParam.Length > 0 Then
-                            ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And subParam.Length > 0 Then
-                                'QSVEncC,NVEncC かつ字幕有りの場合はオプション追加
-                                'If ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0 Then '字幕指定が無いときでも-vpp-subを付けても無害なのかよくわからない
-                                'ISO字幕　QSV ハードサブ G1840と6700では今のところ再生エラー QSVが落ちる
-                                hlsOpt = Trim(hlsOpt)
-                                Dim sp As Integer = hlsOpt.IndexOf("d.ts ")
-                                If sp > 0 Then
-                                    'd.tsの後に追加
-                                    hlsOpt = hlsOpt.Substring(0, sp + "d.ts ".Length) & "--vpp-sub 1 " & hlsOpt.Substring(sp + "d.ts ".Length)
-                                Else
-                                    sp = hlsOpt.IndexOf(" --output-thread ")
-                                    If sp > 0 Then
-                                        '--output-threadの前に追加
-                                        hlsOpt = hlsOpt.Substring(0, sp) & " --vpp-sub 1" & hlsOpt.Substring(sp)
+                            Else
+                                '字幕有り
+                                'まず-vfを削る
+                                If hlsOpt.IndexOf(" -vf ") > 0 Then
+                                    Dim stemp As String = Instr_pickup(hlsOpt, " -vf ", " -", 0)
+                                    If stemp.Length > 0 Then
+                                        hlsOpt = hlsOpt.Replace(" -vf " & stemp & " -", " -")
                                     Else
-                                        sp = hlsOpt.LastIndexOf(" -o ")
-                                        If sp > 0 Then
-                                            hlsOpt = hlsOpt.Substring(0, sp) & " --vpp-sub 1" & hlsOpt.Substring(sp)
-                                        End If
+                                        'とりあえずはありえないはずなので無視（出力ファイルの直前ならありえる・・）
+                                        log1write("【エラー】-vfオプションの削除に失敗しました")
                                     End If
                                 End If
-                                'End If
+                                'シーク
+                                Dim st_temp As String = ""
+                                If ISO_startoffset > 0 Then
+                                    st_temp = "-ss %SSEC% "
+                                End If
+                                hlsOpt = hlsOpt.Replace("-i ", "-analyzeduration 600M -probesize 600M " _
+                                                        & st_temp _
+                                                        & "-palette ""202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc""" _
+                                                        & "-i ")
+                                '字幕＆音声指定
+                                fcstr = " -filter_complex ""[0:v]yadif=0[video];[video][0:s:%SUBID%]overlay[v]"" -map [v] -map 0:a:%AUDIOID%"
+                                sp = hlsOpt.LastIndexOf(" ") '最後の空白位置
+                                If sp > 0 Then
+                                    hlsOpt = hlsOpt.Substring(0, sp) & fcstr & hlsOpt.Substring(sp)
+                                End If
                             End If
-
+                        ElseIf isMatch_HLS(hlsApp, "qsvenc|nvenc") Then
+                            'QSVEnc , NVEnc
+                            hlsOpt = Trim(hlsOpt).Replace("  ", " ")
+                            Dim sp As Integer = -1
+                            If hlsOpt.IndexOf("--audio-stream") < 0 Then
+                                sp = hlsOpt.IndexOf("--audio-codec ")
+                                If sp >= 0 Then
+                                    sp += "--audio-codec ".Length
+                                    sp = hlsOpt.IndexOf(" ", sp) 'aacの次の空白
+                                    If sp > 0 Then
+                                        hlsOpt = hlsOpt.Substring(0, sp) & " --audio-stream %AUDIOID1%?:stereo" & hlsOpt.Substring(sp)
+                                    End If
+                                End If
+                            End If
+                            hlsOpt = hlsOpt.Replace("--audio-codec ", "--audio-codec %AUDIOID1%?")
+                            hlsOpt = hlsOpt.Replace("--audio-samplerate ", "--audio-samplerate %AUDIOID1%?")
+                            hlsOpt = hlsOpt.Replace("--audio-bitrate ", "--audio-bitrate %AUDIOID1%?")
+                            'シーク＆字幕
+                            Dim seekstr As String = ""
+                            If ISO_startoffset > 0 Then
+                                seekstr = "--seek %SSEC% "
+                            End If
+                            sp = hlsOpt.IndexOf("d.ts ") + "d.ts ".Length
+                            If ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0 Then
+                                '字幕有り
+                                seekstr &= "--vpp-sub %SUBID% "
+                            End If
+                            hlsOpt = hlsOpt.Substring(0, sp) & seekstr & hlsOpt.Substring(sp)
                         Else
-                            log1write("【エラー】" & filename & "からのDVD情報取得に失敗しました")
+                            log1write("【エラー】ISO再生には使用できないHLSソフトです。" & hlsApp)
                             stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                             Exit Sub
                         End If
                     Else
-                        log1write("【エラー】ISO再生にはiniにexepath_ISO_VLCの設定が必要です")
-                        stream_last_utime(num) = 0 '前回配信準備開始時間リセット
-                        Exit Sub
+                        '旧方式
+                        If exepath_ISO_VLC.Length > 0 Then
+                            'ISOの場合の処理
+
+                            'hlsOpt内のファイルネームをパイプに変更
+                            hlsOpt = hlsOpt.Replace("""" & filename & """", "-")
+
+                            'mplayerを使用してISO情報を取得
+                            Dim resultInfo As tot_structure = Nothing
+                            resultInfo = TOT_read(filename, exepath_ffmpeg)
+
+                            If resultInfo.ISO_RC = 0 Then
+                                Dim vlcpath = exepath_ISO_VLC
+                                Dim trackID = resultInfo.ISO_MAINTITLE
+                                Dim startcommand = vlcpath
+                                Dim startTimeParam = ""
+                                If ISO_startoffset > 0 Then      '開始オフセットが定義されている場合セット
+                                    startTimeParam = " --start-time " & ISO_startoffset
+                                End If
+                                Dim audioParam = ""         '音声が指定されていれば、言語コード→トラック番号の優先度でセット 
+                                Dim aaa = Array.IndexOf(resultInfo.ISO_AUDIO, "xxx")
+                                If ISO_audioLang <> "" And Array.IndexOf(resultInfo.ISO_AUDIO, ISO_audioLang) >= 0 Then
+                                    audioParam = " --audio-language=" & ISO_audioLang
+                                ElseIf ISO_audioTrackNum >= 0 And ISO_audioTrackNum <= UBound(resultInfo.ISO_AUDIO) Then
+                                    audioParam = " --audio-track=" & ISO_audioTrackNum
+                                End If
+                                Dim subParam = ""           '字幕が指定されていれば、言語コード→トラック番号の優先度でセット
+                                If resultInfo.ISO_SUBFLG Then '但しそもそも字幕トラックが無ければ何も指定しない。
+                                    If ISO_subLang <> "" And Array.IndexOf(resultInfo.ISO_SUBLANG, ISO_subLang) >= 0 Then
+                                        subParam = " --sub-language=" & ISO_subLang
+                                    ElseIf ISO_subTrackNum >= 0 And ISO_subTrackNum <= UBound(resultInfo.ISO_SUBLANG) Then
+                                        subParam = " --sub-track=" & ISO_subTrackNum
+                                    End If
+                                End If
+                                Dim startparam = "-I dummy --dummy-quiet dvdsimple:///""" & filename & """/#" & trackID & startTimeParam & " --stop-time " & resultInfo.ISO_DURATION & " --no-repeat vlc://quit" & audioParam & subParam
+
+                                '追加
+                                'startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}"
+                                'startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host% --sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}"
+                                startparam &= " --intf=""rc"" --rc-quiet --rc-host=%rc-host%"
+                                If Trim(VLC_ISO_option).Length > 0 Then
+                                    startparam &= " " & Trim(VLC_ISO_option)
+                                Else
+                                    startparam &= " --sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}"
+                                    log1write("指定が無かったのでVLC-ISO追加パラメータとして標準の--soutパラメータがセットされました")
+                                End If
+
+                                'HLSオプションを整形
+                                If isMatch_HLS(hlsApp, "vlc") = 1 Then
+                                    'VLCのとき
+                                    '今のところ未対応
+                                    log1write("【エラー】VLCでのISO再生には対応していません")
+                                    stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                                    Exit Sub
+                                ElseIf isMatch_HLS(hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
+                                    'HLSアプリをVLCに変更しパイプ追加
+                                    hlsOpt = startparam & " | """ & hlsApp & """ " & hlsOpt
+                                    hlsApp = exepath_ISO_VLC
+                                Else
+                                    'その他
+                                    '今のところ未対応
+                                    stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                                    log1write("【エラー】未対応のHLSアプリが指定されています。hlsApp=" & hlsApp)
+                                    Exit Sub
+                                End If
+
+                                '字幕
+                                If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 And subParam.Length > 0 Then
+                                    'ffmpegかつ字幕有りの場合はオプション追加
+                                    'まず-vfを削る
+                                    If hlsOpt.IndexOf(" -vf ") > 0 Then
+                                        Dim stemp As String = Instr_pickup(hlsOpt, " -vf ", " -", 0)
+                                        If stemp.Length > 0 Then
+                                            hlsOpt = hlsOpt.Replace(" -vf " & stemp & " -", " -")
+                                        Else
+                                            'とりあえずはありえないはずなので無視（出力ファイルの直前ならありえる・・）
+                                            log1write("【エラー】-vfオプションの削除に失敗しました")
+                                        End If
+                                    End If
+                                    Dim fcstr As String = " -filter_complex ""[0:v]yadif=0[video];[video][0:s]overlay=0:H*2/9[v]"" -map [v] -map 0:a"
+                                    hlsOpt = Trim(hlsOpt)
+                                    Dim sp As Integer = hlsOpt.LastIndexOf(" ")
+                                    If sp > 0 Then
+                                        hlsOpt = hlsOpt.Substring(0, sp) & fcstr & hlsOpt.Substring(sp)
+                                    End If
+                                    '-analyzeduration 600M -probesize 600M 追加
+                                    sp = hlsOpt.ToLower.IndexOf("ffmpeg.exe")
+                                    sp = hlsOpt.IndexOf(" ", sp + "ffmpeg.exe".Length)
+                                    If sp > 0 Then
+                                        hlsOpt = hlsOpt.Substring(0, sp) & " -analyzeduration 600M -probesize 600M" & hlsOpt.Substring(sp)
+                                    End If
+
+                                    'ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And nohsub = 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And ass_file.Length = 0 And subParam.Length > 0 Then
+                                ElseIf hlsOpt.ToLower.IndexOf("vencc.exe") > 0 And hlsOpt.IndexOf("--vpp-sub") < 0 And subParam.Length > 0 Then
+                                    'QSVEncC,NVEncC かつ字幕有りの場合はオプション追加
+                                    'If ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0 Then '字幕指定が無いときでも-vpp-subを付けても無害なのかよくわからない
+                                    'ISO字幕　QSV ハードサブ G1840と6700では今のところ再生エラー QSVが落ちる
+                                    hlsOpt = Trim(hlsOpt)
+                                    Dim sp As Integer = hlsOpt.IndexOf("d.ts ")
+                                    If sp > 0 Then
+                                        'd.tsの後に追加
+                                        hlsOpt = hlsOpt.Substring(0, sp + "d.ts ".Length) & "--vpp-sub 1 " & hlsOpt.Substring(sp + "d.ts ".Length)
+                                    Else
+                                        sp = hlsOpt.IndexOf(" --output-thread ")
+                                        If sp > 0 Then
+                                            '--output-threadの前に追加
+                                            hlsOpt = hlsOpt.Substring(0, sp) & " --vpp-sub 1" & hlsOpt.Substring(sp)
+                                        Else
+                                            sp = hlsOpt.LastIndexOf(" -o ")
+                                            If sp > 0 Then
+                                                hlsOpt = hlsOpt.Substring(0, sp) & " --vpp-sub 1" & hlsOpt.Substring(sp)
+                                            End If
+                                        End If
+                                    End If
+                                    'End If
+                                End If
+
+                            Else
+                                log1write("【エラー】" & filename & "からのDVD情報取得に失敗しました")
+                                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                                Exit Sub
+                            End If
+                        Else
+                            log1write("【エラー】ISO再生にはiniにexepath_ISO_VLCの設定が必要です")
+                            stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                            Exit Sub
+                        End If
                     End If
                 End If
             End If
@@ -3282,7 +3425,7 @@ Class WebRemocon
                 Exit Sub
             End Try
             '★プロセスを起動
-            Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, Stream_mode, NHK_dual_mono_mode_select, resolution, VideoSeekSeconds)
+            Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, Stream_mode, NHK_dual_mono_mode_select, resolution, VideoSeekSeconds, ISO_para)
         Else
             log1write("【エラー】HLSオプションが指定されていません。解像度を指定するかフォーム上のHLSオプションを記入してください")
             stream_last_utime(num) = 0 '前回配信準備開始時間リセット
@@ -4584,6 +4727,8 @@ Class WebRemocon
                             Else
                                 iso.subTrackNum = -1 '指定無し
                             End If
+                            'ISO用サムネイル作成方法
+                            Dim forceM As Integer = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("forceM") & "")
 
                             'HTTPアプリ 1=vlc 2=ffmpeg
                             Dim httpApp As String = Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("httpApp") & "")
@@ -4785,7 +4930,7 @@ Class WebRemocon
                                                 Next
                                             End If
                                             If d.Length >= 4 Then
-                                                WI_cmd_reply = Me.WI_GET_THUMBNAIL(d(0), d(1), Val(d(2)), Val(d(3)))
+                                                WI_cmd_reply = Me.WI_GET_THUMBNAIL(d(0), d(1), Val(d(2)), Val(d(3)), forceM)
                                                 WI_cmd_reply_force = 1
                                             End If
                                         End If
@@ -5673,8 +5818,18 @@ Class WebRemocon
         Dim videoname As String = Me._procMan.get_fullpathfilename(num)
 
         If Path.GetExtension(videoname).ToLower = ".iso" Then
-            '■■■未実装
-            r = 101
+            If ISOPlayNEW = 0 Then
+                '旧方式
+                r = 101
+            Else
+                '新方式
+                If Not dvdObject(num) Is Nothing Then
+                    r = dvdObject(num).dumpProgress
+                Else
+                    log1write("【エラー】ストリーム" & num.ToString & "の" & "DVDオブジェクトが未作成です。")
+                    r = 0
+                End If
+            End If
         Else
             r = 200
         End If
@@ -5902,26 +6057,7 @@ Class WebRemocon
     'filerootに作成された.tsの数
     Public Function WI_GET_TSFILE_COUNT(ByVal num As Integer) As Integer
         Dim r As Integer = 0
-
-        Dim fileroot As String = Me._fileroot
-        If fileroot.Length = 0 Then
-            fileroot = Me._wwwroot
-        End If
-        fileroot &= "\"
-
-        ' 必要な変数を宣言する
-        Dim stPrompt As String = String.Empty
-        Dim s As String
-
-        'tsチェック
-        Dim ts_count As Integer = 0
-        For Each stFilePath As String In System.IO.Directory.GetFiles(fileroot, "mystream" & num.ToString & "-*.ts")
-            s = stFilePath
-            ts_count += 1
-        Next
-
-        r = ts_count
-
+        r = Me._procMan.WI_GET_TSFILE_COUNT(num)
         Return r
     End Function
 
@@ -6780,7 +6916,7 @@ Class WebRemocon
     End Function
 
     'サムネイルを取得（ss=何秒目 w=幅 h=縦）
-    Public Function WI_GET_THUMBNAIL(ByVal num_str As String, ByVal ss As String, ByVal w As Integer, ByVal h As Integer) As String
+    Public Function WI_GET_THUMBNAIL(ByVal num_str As String, ByVal ss As String, ByVal w As Integer, ByVal h As Integer, ByVal forceM As Integer) As String
         Dim r As String = ""
 
         Dim i As Integer = 0
@@ -6818,13 +6954,54 @@ Class WebRemocon
             End If
             Dim stream_folder As String = Me._fileroot
             If Path.GetExtension(video_path).ToLower = ".iso" Then
-                If exepath_ISO_VLC.Length > 0 Then
-                    'ISO再生
-                    'タイトルNo.を取得しないといけない
-                    Dim totdata As tot_structure
-                    totdata = TOT_read(video_path, "")
-                    If totdata.ISO_MAINTITLE >= 0 Then
-                        r = F_make_thumbnail(num, exepath_ISO_VLC, stream_folder, url_path, video_path, ss, w, h, totdata.ISO_MAINTITLE)
+                If ISOPlayNEW = 1 Then
+                    'DVD2 mplayerを使用したサムネイル作成
+                    Dim thumbName As String = "mystream" & num.ToString & "_thumb.jpg"
+                    If Not dvdObject(num) Is Nothing Then
+                        If ISO_ThumbPath = "" Then
+                            log1write("【エラー】サムネイル作成フォルダが指定されていません。")
+                        Else
+                            Dim it As Integer = 0
+                            If DVDClass.IsInt(ss) Then
+                                it = ss
+                            Else
+                                it = 0
+                            End If
+                            '既存のサムネイルの削除を試みる
+                            'deletefile(ISO_ThumbPath & "\" & thumbName)
+                            'サムネイル作成実施 （シングルスレッド）
+                            dvdObject(num).DVDThumb2(
+                                    time:=it,
+                                    dir:=ISO_ThumbPath,
+                                    filename:=thumbName,
+                                    w:=320,
+                                    h:=180,
+                                    forceM:=forceM)
+                            If dvdObject(num).statusThumb = -1 Then
+                                log1write("【エラー】ストリーム" & num.ToString & "の" & "DVDファイルが存在していません。")
+                            Else
+                                If file_exist(ISO_ThumbPath & "\" & thumbName) = 1 Then
+                                    r = "/" & get_soutaiaddress_from_fileroot(ISO_ThumbPath) & thumbName
+                                Else
+                                    '失敗
+                                    r = ""
+                                    log1write("【エラー】サムネイル" & thumbName & "の作成に失敗しました")
+                                End If
+                            End If
+                        End If
+                    Else
+                        log1write("【エラー】ストリーム" & num.ToString & "の" & "DVDオブジェクトが未作成です。")
+                    End If
+                Else
+                    '旧方式
+                    If exepath_ISO_VLC.Length > 0 Then
+                        'ISO再生
+                        'タイトルNo.を取得しないといけない
+                        Dim totdata As tot_structure
+                        totdata = TOT_read(video_path, "")
+                        If totdata.ISO_MAINTITLE >= 0 Then
+                            r = F_make_thumbnail(num, exepath_ISO_VLC, stream_folder, url_path, video_path, ss, w, h, totdata.ISO_MAINTITLE)
+                        End If
                     End If
                 End If
             ElseIf ffmpeg_path.ToLower.IndexOf("ffmpeg.exe") >= 0 Then

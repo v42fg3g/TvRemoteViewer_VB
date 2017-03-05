@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.40
+TvRemoteViewer_VB v2.41
 
 
 
@@ -703,6 +703,8 @@ TvRemoteViewer_VB v2.40
 	2.39	http配信方法の実験（iniにHTTPSTREAM_METHODを追加）
 			iniにアイドル抑止イベントを指定するSTOP_IDLEMINUTES_METHODを追加（2=2.35以前）
 	2.40	iniに画面推移方法を指定するTVRemoteFilesNEWを追加（TVRemoteFiles1.82以上）
+	2.41	新しいISO再生方式に対応（TVRemoteFiles1.82以上）テスト段階
+			iniに（ISOPlayNEW、ISO_DumpDirPath、ISO_maxDump、ISO_ThumbForceMを追加）
 
 
 
