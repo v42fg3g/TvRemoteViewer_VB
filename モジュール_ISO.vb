@@ -10,7 +10,7 @@ Module モジュール_ISO
     'データフォルダ
     Public ISO_DumpDirPath As String = ""
     Public ISO_ThumbPath As String = ""
-    Public ISO_ThumbForceM As Integer = 0 '1=forceMの値を無視してmplayerのみ使用
+    'Public ISO_ThumbForceM As Integer = 0 '1=forceMの値を無視してmplayerのみ使用 →　廃止
     Public ISO_maxDump As Integer = 2
 
     'mplayerパス

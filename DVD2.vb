@@ -716,7 +716,8 @@ Public Class DVDClass
 
         statusThumb = 0
         '直接取得の場合(MPlayerを使う)
-        If Not useDump Or ISO_ThumbForceM = 1 Then
+        'If Not useDump Or ISO_ThumbForceM = 1 Then
+        If Not useDump Then
             '実行ファイル = MPlayerを指定
             p2.StartInfo.FileName = mplayePath
             '出力先フォルダはカレントフォルダ固定なので、コマンドのカレントフォルダを出力先に指定する。、

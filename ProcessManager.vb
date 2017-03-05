@@ -641,36 +641,28 @@ Public Class ProcessManager
                                 If d.Length = 5 Then
                                     p_audioLang = d(0)
                                     p_audioTrackNum = Val(d(1))
-                                    If p_audioTrackNum < 0 Then
-                                        p_audioTrackNum = 0
-                                    End If
                                     p_subLang = d(2)
                                     p_subTrackNum = Val(d(3))
-                                    If p_subTrackNum < 0 Then
-                                        p_subTrackNum = 0
-                                    End If
                                     p_seek = Val(d(4))
                                 End If
                                 'ISOファイル名dvdObject(num).dumpFileNameはすでに置き換わっているはず
                                 If Not System.IO.File.Exists(fullpathfilename) Then
                                     log1write("【エラー】ファイル:" & fullpathfilename & "は存在しません。")
                                 Else
-                                    If dvdObject(num) Is Nothing Then
-                                        'コンストラクタ引数をセットしてNew
-                                        dvdObject(num) = New DVDClass(
-                                            isoFile:=fullpathfilename,
-                                            streamID:=num,
-                                            work:=ISO_DumpDirPath,
-                                            ffmpeg:=hlsApp,
-                                            mplayer:=mplayer4ISOPath,
-                                            hlsOpt_str:=hlsOpt,
-                                            audioLang_str:=p_audioLang,
-                                            audioTrackNum_str:=p_audioTrackNum,
-                                            subLang_str:=p_subLang,
-                                            subTrackNum_str:=p_subTrackNum,
-                                            seek_str:=p_seek
-                                            )
-                                    End If
+                                    'コンストラクタ引数をセットしてNew
+                                    dvdObject(num) = New DVDClass(
+                                        isoFile:=fullpathfilename,
+                                        streamID:=num,
+                                        work:=ISO_DumpDirPath,
+                                        ffmpeg:=hlsApp,
+                                        mplayer:=mplayer4ISOPath,
+                                        hlsOpt_str:=hlsOpt,
+                                        audioLang_str:=p_audioLang,
+                                        audioTrackNum_str:=p_audioTrackNum,
+                                        subLang_str:=p_subLang,
+                                        subTrackNum_str:=p_subTrackNum,
+                                        seek_str:=p_seek
+                                        )
                                     If Not dvdObject(num).status Then  'プロパティ値 status がFalseなら作成に失敗している。
                                         log1write("ストリーム" & num.ToString & "の" & "DVDオブジェクト生成に失敗しました。正常なDVD-ISOファイルではない可能性があります。（Blu-ray ISOは再生できません。）")
                                         dvdObject(num) = Nothing
@@ -681,19 +673,16 @@ Public Class ProcessManager
                                         'DUMP開始
                                         If Not dvdObject(num) Is Nothing Then
                                             'ストリーム登録
+                                            '★★★デバッグ用
+                                            log1write("■デバッグ用　変換前=========")
+                                            log1write("""" & hlsApp & """ " & hlsOpt)
+                                            log1write("=============================")
                                             Dim pb_iso As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, isoPara)
                                             Me._list.Add(pb_iso)
                                             'シークまたはトラック等のパラメータを変更しての再読込
-                                            dvdObject(num).ISO_hlsOpt = hlsOpt
-                                            dvdObject(num).ISO_audioLang = p_audioLang
-                                            dvdObject(num).ISO_audioTrackNum = p_audioTrackNum
-                                            dvdObject(num).ISO_subLang = p_subLang
-                                            dvdObject(num).ISO_subTrackNum = p_subTrackNum
-                                            dvdObject(num).ISO_seek = p_seek
                                             If dvdObject(num).dumpProgress >= 101 Then
                                                 log1write("ストリーム" & num.ToString & "の" & "DVDはダンプ済です。")
-                                                'dvdObject(num).Start()
-                                                StartConvertVOB2TS(dvdObject(num)) 'こちらのほうが高速な気がする
+                                                dvdObject(num).Start()
                                             ElseIf dvdObject(num).dumpProgress > 0 Then
                                                 log1write("ストリーム" & num.ToString & "の" & "DVDのダンプ処理が既に進行中です。やり直す場合は一旦プロセス中断して再度実行してください。")
                                                 'dvdObject(num).Start() '必要無い
@@ -705,7 +694,7 @@ Public Class ProcessManager
                                                 dvdObject(num).Start()
                                             End If
                                         Else
-                                            log1write("ストリーム" & num.ToString & "の" & "DVDオブジェクトが未作成です。")
+                                            log1write("【エラー】ストリーム" & num.ToString & "の" & "DVDオブジェクトが未作成です。")
                                             'まずありえない
                                         End If
 
@@ -864,27 +853,48 @@ Public Class ProcessManager
         Dim num As Integer = dvdinstance.streamNum
         Dim d_dumpfilename As String = dvdObject(num).dumpFileName
         Dim d_audioID As Integer = -1
-        If dvdinstance.ISO_audioTrackNum >= 0 Then
-            d_audioID = dvdObject(num).GetAudioID(dvdinstance.ISO_audioTrackNum)
-        ElseIf dvdinstance.ISO_audioLang.Length > 0 Then
+        If dvdinstance.ISO_audioLang.Length > 0 Then
             d_audioID = dvdObject(num).GetAudioID(dvdinstance.ISO_audioLang)
+            log1write("■音声 %AUDIOID% = dvdObject(" & num & ").GetAudioID(" & dvdinstance.ISO_audioLang & ") = " & d_audioID)
+        ElseIf dvdinstance.ISO_audioTrackNum >= 0 Then
+            d_audioID = dvdObject(num).GetAudioID(dvdinstance.ISO_audioTrackNum)
+            log1write("■音声 %AUDIOID% = dvdObject(" & num & ").GetAudioID(" & dvdinstance.ISO_audioTrackNum & ") = " & d_audioID)
         End If
         If d_audioID < 0 Then
             d_audioID = 0 '標準
+            log1write("■音声指定無しがなかったので %AUDIOID% = 0 としました")
         End If
         Dim d_audioID1 As Integer = d_audioID + 1
+        log1write("■音声 QSV用 %AUDIOID1% = " & d_audioID1)
         Dim d_subID As Integer = -1
-        If dvdinstance.ISO_subTrackNum >= 0 Then
-            d_subID = dvdObject(num).GetSubID(dvdinstance.ISO_subTrackNum)
-        ElseIf dvdinstance.ISO_subLang.Length > 0 Then
+        If dvdinstance.ISO_subLang.Length > 0 Then
             d_subID = dvdObject(num).GetSubID(dvdinstance.ISO_subLang)
+            log1write("■字幕 %SUBID% = dvdObject(" & num & ").GetSubID(" & dvdinstance.ISO_subLang & ") = " & d_subID)
+        ElseIf dvdinstance.ISO_subTrackNum >= 0 Then
+            d_subID = dvdObject(num).GetSubID(dvdinstance.ISO_subTrackNum)
+            log1write("■字幕 %SUBID% = dvdObject(" & num & ").GetSubID(" & dvdinstance.ISO_subTrackNum & ") = " & d_subID)
+        Else
+            log1write("■字幕指定無し")
         End If
         Dim d_seek As Integer = dvdObject(num).ISO_seek
 
         Dim hlsOpt As String = dvdinstance.ISO_hlsOpt
         'パラメータ変換
         'ファイル名→VOB
-        Dim filename As String = Instr_pickup(hlsOpt, """", """", 0)
+        Dim filename As String = ""
+        Dim sp As Integer = hlsOpt.ToLower.IndexOf(".iso""")
+        If sp > 0 Then
+            sp = hlsOpt.LastIndexOf("""", sp)
+            If sp > 0 Then
+                filename = Instr_pickup(hlsOpt, """", """", sp)
+            Else
+                '実際はエラー
+                filename = Instr_pickup(hlsOpt, """", """", 0)
+            End If
+        Else
+            '実際はエラー
+            filename = Instr_pickup(hlsOpt, """", """", 0)
+        End If
         If Path.GetExtension(filename).ToLower = ".iso" Then
             hlsOpt = hlsOpt.Replace(filename, dvdinstance.dumpFileName)
         Else
@@ -899,10 +909,12 @@ Public Class ProcessManager
         log1write("hlsApp=" & dvdinstance.ffmpegPath)
         log1write("hlsOpt=" & hlsOpt)
 
+        '_listにも変換後を登録・・まぁしないでいいか
+
         '★★★デバッグ用
-        log1write("=====================")
+        log1write("■デバッグ用　変換後=========")
         log1write("""" & dvdinstance.ffmpegPath & """ " & hlsOpt)
-        log1write("■デバッグ用=========")
+        log1write("=============================")
 
         '通常
         'ProcessStartInfoオブジェクトを作成する

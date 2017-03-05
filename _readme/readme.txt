@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.41
+TvRemoteViewer_VB v2.42
 
 
 
@@ -705,6 +705,10 @@ TvRemoteViewer_VB v2.41
 	2.40	iniに画面推移方法を指定するTVRemoteFilesNEWを追加（TVRemoteFiles1.82以上）
 	2.41	新しいISO再生方式に対応（TVRemoteFiles1.82以上）テスト段階
 			iniに（ISOPlayNEW、ISO_DumpDirPath、ISO_maxDump、ISO_ThumbForceMを追加）
+	2.42	新しいISO再生方式のバグ修正
+			　ffmpegで字幕が指定されたときのエラーを修正
+			　サムネイル作成で大きさ指定が無視されていたバグを修正
+			　iniのISO_ThumbForceMを廃止
 
 
 

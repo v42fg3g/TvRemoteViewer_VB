@@ -1636,8 +1636,9 @@ Class WebRemocon
                                 '無効　クライアントが未対応 streamフォルダに作成
                                 'ISO_ThumbPath = youso(1)
                             Case "ISO_ThumbForceM"
-                                ISO_ThumbForceM = Val(youso(1).ToString)
-                                log1write("ISOサムネイル作成を強制的にMplayerで行います")
+                                '廃止
+                                'ISO_ThumbForceM = Val(youso(1).ToString)
+                                'log1write("ISOサムネイル作成を強制的にMplayerで行います")
                             Case "ISO_maxDump"
                                 ISO_maxDump = Val(youso(1).ToString)
                                 log1write("変換後ISOデータの最大保持数を" & ISO_maxDump & "にセットしました")
@@ -3195,7 +3196,7 @@ Class WebRemocon
                                 End If
                                 hlsOpt = hlsOpt.Replace("-i ", "-analyzeduration 600M -probesize 600M " _
                                                         & st_temp _
-                                                        & "-palette ""202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc""" _
+                                                        & "-palette ""202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc,202020,cccccc"" " _
                                                         & "-i ")
                                 '字幕＆音声指定
                                 fcstr = " -filter_complex ""[0:v]yadif=0[video];[video][0:s:%SUBID%]overlay[v]"" -map [v] -map 0:a:%AUDIOID%"
@@ -6974,8 +6975,8 @@ Class WebRemocon
                                     time:=it,
                                     dir:=ISO_ThumbPath,
                                     filename:=thumbName,
-                                    w:=320,
-                                    h:=180,
+                                    w:=w,
+                                    h:=h,
                                     forceM:=forceM)
                             If dvdObject(num).statusThumb = -1 Then
                                 log1write("【エラー】ストリーム" & num.ToString & "の" & "DVDファイルが存在していません。")
