@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.42
+TvRemoteViewer_VB v2.43
 
 
 
@@ -709,6 +709,8 @@ TvRemoteViewer_VB v2.42
 			　ffmpegで字幕が指定されたときのエラーを修正
 			　サムネイル作成で大きさ指定が無視されていたバグを修正
 			　iniのISO_ThumbForceMを廃止
+	2.43	VLC_ISO_option.txtの廃止
+			iniにVLC_ISO_optionを追加
 
 
 

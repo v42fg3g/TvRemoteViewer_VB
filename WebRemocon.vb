@@ -1143,13 +1143,20 @@ Class WebRemocon
                 If line(i).IndexOf(";") >= 0 Then
                     line(i) = line(i).Substring(0, line(i).IndexOf(";"))
                 End If
-                If line(i).IndexOf("#") >= 0 Then
-                    line(i) = line(i).Substring(0, line(i).IndexOf("#"))
-                End If
+                'If line(i).IndexOf("#") >= 0 Then
+                'line(i) = line(i).Substring(0, line(i).IndexOf("#"))
+                'End If
                 Dim youso() As String = line(i).Split("=")
                 Try
                     If youso Is Nothing Then
                     ElseIf youso.Length > 1 Then
+                        Dim url_text As String = youso(1) '=以降がURLの場合(=が途中に入っている可能性を考慮）
+                        If youso.Length > 2 Then
+                            For j = 2 To youso.Length - 1
+                                url_text &= "=" & youso(j)
+                            Next
+                        End If
+                        url_text = trim8(url_text)
                         For j = 0 To youso.Length - 1
                             youso(j) = trim8(youso(j))
                         Next
@@ -1642,6 +1649,9 @@ Class WebRemocon
                             Case "ISO_maxDump"
                                 ISO_maxDump = Val(youso(1).ToString)
                                 log1write("変換後ISOデータの最大保持数を" & ISO_maxDump & "にセットしました")
+                            Case "VLC_ISO_option"
+                                VLC_ISO_option = url_text
+                                log1write("VLC_ISO_option:" & VLC_ISO_option)
 
 
 
