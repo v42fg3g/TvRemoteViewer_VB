@@ -259,6 +259,7 @@ Module モジュール_ISO
                             Select Case youso(0)
                                 Case "VLC_ISO_option"
                                     VLC_ISO_option = youso(1)
+                                    log1write("VLC_ISO_option:" & VLC_ISO_option)
                             End Select
                         End If
                     Catch ex As Exception
