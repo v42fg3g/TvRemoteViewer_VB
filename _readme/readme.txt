@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.44
+TvRemoteViewer_VB v2.45
 
 
 
@@ -712,6 +712,7 @@ TvRemoteViewer_VB v2.44
 	2.43	VLC_ISO_option.txtの廃止
 			iniにVLC_ISO_optionを追加
 	2.44	新ISO再生終了指令時にVOB数のチェックを行うようにした(ISO_maxDumpは1以上推奨）
+	2.45	新ISO再生に失敗した場合にしばらく同ストリームが使用できなくなるバグを修正
 
 
 

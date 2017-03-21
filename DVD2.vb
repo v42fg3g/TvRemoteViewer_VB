@@ -66,11 +66,11 @@ Public Class DVDClass
     '■修正　Public Sub New(ByVal isoFile As String, ByVal ffmpeg As String, ByVal mplayer As String, ByVal streamID As Integer, ByVal work As String)
     Public Sub New(ByVal isoFile As String, ByVal ffmpeg As String, ByVal mplayer As String, ByVal streamID As Integer, ByVal work As String, ByVal hlsOpt_str As String, ByVal audioLang_str As String, ByVal audioTrackNum_str As Integer, ByVal subLang_str As String, ByVal subTrackNum_str As Integer, ByVal seek_str As Integer)
         status = True
-        isoFileName = isoFile.Trim("""", " ")
-        ffmpegPath = ffmpeg.Trim("""", " ")
-        mplayePath = mplayer.Trim("""", " ")
+        isoFileName = isoFile '.Trim("""", " ")
+        ffmpegPath = ffmpeg '.Trim("""", " ")
+        mplayePath = mplayer '.Trim("""", " ")
         streamNum = streamID
-        dumpPath = work.Trim("""", " ").TrimEnd("\")
+        dumpPath = work '.Trim("""", " ").TrimEnd("\")
         If (isoFileName = "") Or (ffmpegPath = "") Or (mplayePath = "") Or (streamNum < 1) Or (dumpPath = "") Then
             status = False
             Return

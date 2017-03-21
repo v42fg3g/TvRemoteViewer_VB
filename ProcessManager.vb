@@ -645,67 +645,72 @@ Public Class ProcessManager
                                     p_subTrackNum = Val(d(3))
                                     p_seek = Val(d(4))
                                 End If
+                                '■テスト
+                                log1write("■デバッグ　ISOファイル:「" & fullpathfilename & "」")
                                 'ISOファイル名dvdObject(num).dumpFileNameはすでに置き換わっているはず
                                 If file_exist(fullpathfilename) <= 0 Then
-                                    'QSV使用時にエラーが出るらしいので警告にとどめてみることにした
-                                    log1write("【警告:デバッグ】ファイル:" & fullpathfilename & "は存在しません。")
-                                End If
-                                'コンストラクタ引数をセットしてNew
-                                dvdObject(num) = New DVDClass(
-                                    isoFile:=fullpathfilename,
-                                    streamID:=num,
-                                    work:=ISO_DumpDirPath,
-                                    ffmpeg:=hlsApp,
-                                    mplayer:=mplayer4ISOPath,
-                                    hlsOpt_str:=hlsOpt,
-                                    audioLang_str:=p_audioLang,
-                                    audioTrackNum_str:=p_audioTrackNum,
-                                    subLang_str:=p_subLang,
-                                    subTrackNum_str:=p_subTrackNum,
-                                    seek_str:=p_seek
-                                    )
-                                If Not dvdObject(num).status Then  'プロパティ値 status がFalseなら作成に失敗している。
-                                    log1write("ストリーム" & num.ToString & "の" & "DVDオブジェクト生成に失敗しました。正常なDVD-ISOファイルではない可能性があります。（Blu-ray ISOは再生できません。）")
-                                    dvdObject(num) = Nothing
+                                    stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                                    log1write("【エラー】ファイル:" & fullpathfilename & "は存在しません。")
                                 Else
-                                    log1write("ファイル:" & fullpathfilename & "　に関する、" & "ストリーム" & num.ToString & "の" & "DVDオブジェクトを生成しました。")
-                                    dvdObject(num).EncodeAfterDump = New Callback1(AddressOf Me.ISO_AfterDump)
-
-                                    'DUMP開始
-                                    If Not dvdObject(num) Is Nothing Then
-                                        'ストリーム登録
-                                        '★★★デバッグ用
-                                        log1write("■デバッグ用　変換前=========")
-                                        log1write("""" & hlsApp & """ " & hlsOpt)
-                                        log1write("=============================")
-                                        Dim pb_iso As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, isoPara)
-                                        Me._list.Add(pb_iso)
-                                        'シークまたはトラック等のパラメータを変更しての再読込
-                                        If dvdObject(num).dumpProgress >= 101 Then
-                                            log1write("ストリーム" & num.ToString & "の" & "DVDはダンプ済です。")
-                                            dvdObject(num).Start()
-                                        ElseIf dvdObject(num).dumpProgress > 0 Then
-                                            log1write("ストリーム" & num.ToString & "の" & "DVDのダンプ処理が既に進行中です。やり直す場合は一旦プロセス中断して再度実行してください。")
-                                            'dvdObject(num).Start() '必要無い
-                                        Else
-                                            'DUMP開始
-                                            DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump) '時間がかかるついでにVOB最大保持数チェック
-                                            dvdObject(num).AbortDump()
-                                            log1write("ストリーム" & num.ToString & "の" & "DVDのダンプ処理を開始します。")
-                                            dvdObject(num).Start()
-                                        End If
+                                    'コンストラクタ引数をセットしてNew
+                                    dvdObject(num) = New DVDClass(
+                                        isoFile:=fullpathfilename,
+                                        streamID:=num,
+                                        work:=ISO_DumpDirPath,
+                                        ffmpeg:=hlsApp,
+                                        mplayer:=mplayer4ISOPath,
+                                        hlsOpt_str:=hlsOpt,
+                                        audioLang_str:=p_audioLang,
+                                        audioTrackNum_str:=p_audioTrackNum,
+                                        subLang_str:=p_subLang,
+                                        subTrackNum_str:=p_subTrackNum,
+                                        seek_str:=p_seek
+                                        )
+                                    If Not dvdObject(num).status Then  'プロパティ値 status がFalseなら作成に失敗している。
+                                        log1write("ストリーム" & num.ToString & "の" & "DVDオブジェクト生成に失敗しました。正常なDVD-ISOファイルではない可能性があります。（Blu-ray ISOは再生できません。）")
+                                        stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                                        dvdObject(num) = Nothing
                                     Else
-                                        log1write("【エラー】ストリーム" & num.ToString & "の" & "DVDオブジェクトが未作成です。")
-                                        'まずありえない
+                                        log1write("ファイル:" & fullpathfilename & "　に関する、" & "ストリーム" & num.ToString & "の" & "DVDオブジェクトを生成しました。")
+                                        dvdObject(num).EncodeAfterDump = New Callback1(AddressOf Me.ISO_AfterDump)
+
+                                        'DUMP開始
+                                        If Not dvdObject(num) Is Nothing Then
+                                            'ストリーム登録
+                                            '★★★デバッグ用
+                                            log1write("■デバッグ用　変換前=========")
+                                            log1write("""" & hlsApp & """ " & hlsOpt)
+                                            log1write("=============================")
+                                            Dim pb_iso As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, isoPara)
+                                            Me._list.Add(pb_iso)
+                                            'シークまたはトラック等のパラメータを変更しての再読込
+                                            If dvdObject(num).dumpProgress >= 101 Then
+                                                log1write("ストリーム" & num.ToString & "の" & "DVDはダンプ済です。")
+                                                dvdObject(num).Start()
+                                            ElseIf dvdObject(num).dumpProgress > 0 Then
+                                                log1write("ストリーム" & num.ToString & "の" & "DVDのダンプ処理が既に進行中です。やり直す場合は一旦プロセス中断して再度実行してください。")
+                                                'dvdObject(num).Start() '必要無い
+                                            Else
+                                                'DUMP開始
+                                                DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump) '時間がかかるついでにVOB最大保持数チェック
+                                                dvdObject(num).AbortDump()
+                                                log1write("ストリーム" & num.ToString & "の" & "DVDのダンプ処理を開始します。")
+                                                dvdObject(num).Start()
+                                            End If
+                                        Else
+                                            log1write("【エラー】ストリーム" & num.ToString & "の" & "DVDオブジェクトが未作成です。")
+                                            stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                                            'まずありえない
+                                        End If
+
+                                        '現在稼働中のlist(i)._numをログに表示
+                                        Dim js_iso As String = get_live_numbers()
+                                        log1write("現在稼働中のNumber：" & js_iso)
+                                        '番組表用にライブストリームを記録
+                                        LIVE_STREAM_STR = WI_GET_LIVE_STREAM()
+
+                                        '再生手続きはDUMP終了後のコールバックで実行
                                     End If
-
-                                    '現在稼働中のlist(i)._numをログに表示
-                                    Dim js_iso As String = get_live_numbers()
-                                    log1write("現在稼働中のNumber：" & js_iso)
-                                    '番組表用にライブストリームを記録
-                                    LIVE_STREAM_STR = WI_GET_LIVE_STREAM()
-
-                                    '再生手続きはDUMP終了後のコールバックで実行
                                 End If
                                 Exit Sub '本来の道は通らず終了
                             Else
