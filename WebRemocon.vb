@@ -1649,6 +1649,9 @@ Class WebRemocon
                             Case "ISO_maxDump"
                                 ISO_maxDump = Val(youso(1).ToString)
                                 log1write("変換後ISOデータの最大保持数を" & ISO_maxDump & "にセットしました")
+                                If ISO_maxDump = 0 Then
+                                    log1write("【警告】ISO_maxDump=0にセットされましたが、新ISO再生のシーク時にいちいちVOB変換を行うようになります。1以上推奨です")
+                                End If
                             Case "VLC_ISO_option"
                                 VLC_ISO_option = url_text
                                 log1write("VLC_ISO_option:" & VLC_ISO_option)
