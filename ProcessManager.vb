@@ -1546,6 +1546,9 @@ Public Class ProcessManager
             End If
         End If
 
+        'ISO再生に使用したVOBファイルをチェック
+        DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump) '時間がかかるついでにVOB最大保持数チェック
+
         '現在稼働中のlist(i)._numをログに表示
         Dim js As String = get_live_numbers()
         log1write("現在稼働中のNumber：" & js)

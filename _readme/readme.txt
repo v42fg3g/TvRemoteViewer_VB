@@ -711,6 +711,7 @@ TvRemoteViewer_VB v2.43
 			　iniのISO_ThumbForceMを廃止
 	2.43	VLC_ISO_option.txtの廃止
 			iniにVLC_ISO_optionを追加
+	2.44	新ISO再生終了指令時にVOB数のチェックを行うようにした
 
 
 
