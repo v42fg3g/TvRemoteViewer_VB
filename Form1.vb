@@ -191,9 +191,8 @@ Public Class Form1
                 'log_size文字以上になったらカット
                 log1 = log1.Substring(0, log_size)
             End If
-            TextBoxLog.Text = log1
             log1_dummy = log1
-            TextBoxLog.Refresh()
+            show_log() 'フォーム上へ表示
         End If
 
         'ファイル一覧　最後の更新から10秒経ったらファイル一覧更新
@@ -209,6 +208,55 @@ Public Class Form1
         End If
 
     End Sub
+
+    'ログ表示
+    Private Sub show_log()
+        If Me.WindowState <> FormWindowState.Minimized And (CheckBoxLogReq.Checked = False Or CheckBoxLogWI.Checked = False Or CheckBoxLogETC.Checked = False) Then
+            '手の込んだログ表示
+            TextBoxLog.Text = edit_log(log1)
+            TextBoxLog.Refresh()
+        Else
+            TextBoxLog.Text = log1
+            TextBoxLog.Refresh()
+        End If
+    End Sub
+
+    'ログ整形
+    Private Function edit_log(ByVal log1 As String) As String
+        Dim vlog1 As String = ""
+        Dim line() As String = Split(log1, vbCrLf)
+        Dim i As Integer = 0
+        For Each s As String In line
+            If s.IndexOf("リクエストがありました") > 0 Then
+                If CheckBoxLogWI.Checked = False And s.IndexOf("/WI_") >= 0 Then
+                    s = ""
+                End If
+                If CheckBoxLogReq.Checked = False And s.IndexOf("/WI_") < 0 Then
+                    s = ""
+                End If
+            ElseIf CheckBoxLogETC.Checked = False Then
+                s = ""
+            End If
+            If s.Length > 0 Then
+                line(i) = s
+                i += 1
+            End If
+        Next
+        If i > 0 Then
+            '余計な行を削除
+            If i < line.Length Then
+                For j As Integer = i To line.Length - 1
+                    line(j) = ""
+                Next
+            End If
+            vlog1 = String.Join(vbCrLf, line) '結合
+            vlog1 = System.Text.RegularExpressions.Regex.Replace(vlog1, "[\r\n]+$", "") & vbCrLf '余計な改行を削除
+        Else
+            vlog1 = ""
+        End If
+
+        Return vlog1
+    End Function
 
     '古いTSファイルを削除する　ffmpeg用
     Private Sub delete_old_TS()
@@ -707,7 +755,7 @@ Public Class Form1
         Dim fileroot As String = path_s2z(TextBoxFILEROOT.Text.ToString)
         If fileroot.Length > 0 Then
             Dim sp As Integer = fileroot.LastIndexOf("\")
-            If sp > 0 Then
+            If sp > 1 Then
                 Dim s As String = fileroot.Substring(0, sp)
                 'フォルダが存在するか確認し、無ければ作成
                 Try
@@ -717,10 +765,11 @@ Public Class Form1
                         System.IO.Directory.CreateDirectory(fileroot)
                     End If
                 Catch ex As Exception
+                    log1write("【エラー】フォルダ作成に失敗しました。" & fileroot)
                 End Try
             ElseIf fileroot.IndexOf(":") >= 0 Then
                 log1write("【エラー】%FILEROOT%にドライブそのものを指定することはできません。ドライブ内フォルダを指定してください")
-            ElseIf fileroot = "\\" Then
+            ElseIf fileroot.IndexOf("\\") = 0 Then
                 log1write("【エラー】%FILEROOT%にネットワークドライブそのものを指定することはできません。ネットワークドライブ内フォルダを指定してください")
             Else
                 log1write("【エラー】%FILEROOT%が不正です")
@@ -791,6 +840,12 @@ Public Class Form1
                             ComboBoxVideoForce.Text = lr(1)
                         Case "CheckBoxVersionCheck"
                             CheckBoxVersionCheck.Checked = lr(1)
+                        Case "CheckBoxLogReq"
+                            CheckBoxLogReq.Checked = lr(1)
+                        Case "CheckBoxLogWI"
+                            CheckBoxLogWI.Checked = lr(1)
+                        Case "CheckBoxLogETC"
+                            CheckBoxLogETC.Checked = lr(1)
                         Case "WindowStatus"
                             Dim d() As String = lr(1).Split(",")
                             If d.Length = 4 Then
@@ -857,15 +912,26 @@ Public Class Form1
         Catch ex As Exception
         End Try
 
+        'ログをファイル出力
+        If log_path.Length > 0 Then
+            str2file(log_path, log1, "UTF-8")
+            '整形済みログをTvRemoteViewer_VB_edited.logに出力
+            Dim log_path2 As String = ""
+            Dim ext As String = Path.GetExtension(log_path)
+            If ext.Length > 0 Then
+                Dim sp As Integer = log_path.LastIndexOf(ext)
+                If sp > 0 Then
+                    log_path2 = log_path.Substring(0, sp) & "_edited" & ext
+                    str2file(log_path2, edit_log(log1), "UTF-8")
+                End If
+            End If
+        End If
+
         NotifyIcon1.Visible = False
         NotifyIcon1.Dispose()
     End Sub
 
     Private Sub Form1_FormClosed(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
-        'ログをファイル出力
-        If log_path.Length > 0 Then
-            str2file(log_path, log1, "UTF-8")
-        End If
     End Sub
 
     Private Sub save_form_status()
@@ -894,6 +960,9 @@ Public Class Form1
         s &= "ffmpeg_seek_method_files=" & ffmpeg_seek_method_files.Replace(vbCrLf, "\r\n") & vbCrLf
         s &= "ComboBoxVideoForce=" & ComboBoxVideoForce.Text & vbCrLf
         s &= "CheckBoxVersionCheck=" & CheckBoxVersionCheck.Checked & vbCrLf
+        s &= "CheckBoxLogReq=" & CheckBoxLogReq.Checked & vbCrLf
+        s &= "CheckBoxLogWI=" & CheckBoxLogWI.Checked & vbCrLf
+        s &= "CheckBoxLogETC=" & CheckBoxLogETC.Checked & vbCrLf
         If me_top > -10 Then
             s &= "WindowStatus=" & me_left & "," & me_top & "," & me_width & "," & me_height & vbCrLf
         Else
@@ -1299,6 +1368,7 @@ Public Class Form1
         Else
             me_width = Me.Width
             me_height = Me.Height
+            show_log()
         End If
     End Sub
 
@@ -1397,7 +1467,9 @@ Public Class Form1
     Private Sub ButtonCopy2Clipboard_Click(sender As System.Object, e As System.EventArgs) Handles ButtonCopy2Clipboard.Click
         Try
             'クリップボードに文字列をコピーする
-            Clipboard.SetText(TextBoxLog.Text.ToString)
+            Dim s As String = edit_log(TextBoxLog.Text.ToString)
+            Clipboard.SetText(s)
+            log1write("ログをクリップボードへコピーしました。")
         Catch ex As Exception
             log1write("ログのクリップボードへのコピーに失敗しました。" & ex.Message)
         End Try
@@ -1542,4 +1614,15 @@ Public Class Form1
         End If
     End Sub
 
+    Private Sub CheckBoxLogReq_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxLogReq.CheckedChanged
+        show_log()
+    End Sub
+
+    Private Sub CheckBoxLogWI_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxLogWI.CheckedChanged
+        show_log()
+    End Sub
+
+    Private Sub CheckBoxLogETC_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxLogETC.CheckedChanged
+        show_log()
+    End Sub
 End Class

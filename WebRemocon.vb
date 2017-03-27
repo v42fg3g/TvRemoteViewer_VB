@@ -2408,6 +2408,16 @@ Class WebRemocon
     Public Sub start_movie(ByVal num As Integer, ByVal bondriver As String, ByVal sid As Integer, ByVal ChSpace As Integer, ByVal udpApp As String, ByVal hlsApp As String, hlsOpt1 As String, ByVal hlsOpt2 As String, ByVal wwwroot As String, ByVal fileroot As String, ByVal hlsroot As String, ByVal ShowConsole As Boolean, ByVal udpOpt3 As String, ByVal filename As String, ByVal NHK_dual_mono_mode_select As Integer, ByVal Stream_mode As Integer, ByVal resolution As String, ByVal VideoSeekSeconds As Integer, ByVal nohsub As Integer, ByVal baisoku As String, ByVal hlsOptAdd As String, ByVal margin1 As Integer, ByVal hlsAppSelect As String, ByVal profileSelect As String, ByVal httpApp As Integer, ByVal iso As Object)
         'resolutionの指定が無ければフォーム上のHLSオプションを使用する
 
+        'filerootフォルダ存在チェック
+        Try
+            If System.IO.Directory.Exists(fileroot) = False Then
+                log1write("【フォルダ作成】%FILEROOT%が存在しません。" & fileroot & " を作成しました")
+                System.IO.Directory.CreateDirectory(fileroot)
+            End If
+        Catch ex As Exception
+            log1write("【エラー】フォルダ作成に失敗しました。" & fileroot)
+        End Try
+
         'ISO再生関連パラメーターセット
         Dim ISO_startoffset As Integer = VideoSeekSeconds
         Dim ISO_audioLang = ""
@@ -4579,10 +4589,18 @@ Class WebRemocon
                                 mtypestr = "(" & res.ContentType & ")"
                             End If
                         End If
-                        log1write(req.Url.LocalPath & "へのリクエストがありました。" & mtypestr)
 
                         'リクエストされたURL
                         Dim req_Url As String = req.Url.LocalPath
+
+                        'リクエスト元
+                        Dim ipstr As String = req.RemoteEndPoint.ToString
+                        Try
+                            ipstr = ipstr.Substring(0, ipstr.IndexOf(":"))
+                        Catch ex As Exception
+                        End Try
+
+                        log1write(req_Url & "へのリクエストがありました。" & mtypestr & "[" & ipstr & "]")
 
                         'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
                         Dim pext As String = System.IO.Path.GetExtension(path).ToLower

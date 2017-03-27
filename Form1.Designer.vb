@@ -95,6 +95,9 @@ Partial Class Form1
         Me.LabelVersionCheckDate = New System.Windows.Forms.Label()
         Me.CheckBoxVersionCheck = New System.Windows.Forms.CheckBox()
         Me.LabelVersionWarning = New System.Windows.Forms.Label()
+        Me.CheckBoxLogReq = New System.Windows.Forms.CheckBox()
+        Me.CheckBoxLogWI = New System.Windows.Forms.CheckBox()
+        Me.CheckBoxLogETC = New System.Windows.Forms.CheckBox()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -511,7 +514,7 @@ Partial Class Form1
         Me.ContextMenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.SeekMethodList, Me.quit})
         Me.ContextMenuStrip1.Name = "ContextMenuStrip1"
         Me.ContextMenuStrip1.ShowImageMargin = False
-        Me.ContextMenuStrip1.Size = New System.Drawing.Size(265, 70)
+        Me.ContextMenuStrip1.Size = New System.Drawing.Size(265, 48)
         '
         'SeekMethodList
         '
@@ -640,7 +643,7 @@ Partial Class Form1
         'ButtonCopy2Clipboard
         '
         Me.ButtonCopy2Clipboard.Font = New System.Drawing.Font("MS UI Gothic", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(128, Byte))
-        Me.ButtonCopy2Clipboard.Location = New System.Drawing.Point(407, 668)
+        Me.ButtonCopy2Clipboard.Location = New System.Drawing.Point(407, 667)
         Me.ButtonCopy2Clipboard.Name = "ButtonCopy2Clipboard"
         Me.ButtonCopy2Clipboard.Size = New System.Drawing.Size(104, 17)
         Me.ButtonCopy2Clipboard.TabIndex = 99
@@ -742,11 +745,53 @@ Partial Class Form1
         Me.LabelVersionWarning.Text = "アップデートを行ってください"
         Me.LabelVersionWarning.Visible = False
         '
+        'CheckBoxLogReq
+        '
+        Me.CheckBoxLogReq.AutoSize = True
+        Me.CheckBoxLogReq.Checked = True
+        Me.CheckBoxLogReq.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.CheckBoxLogReq.Location = New System.Drawing.Point(271, 668)
+        Me.CheckBoxLogReq.Name = "CheckBoxLogReq"
+        Me.CheckBoxLogReq.Size = New System.Drawing.Size(44, 16)
+        Me.CheckBoxLogReq.TabIndex = 110
+        Me.CheckBoxLogReq.TabStop = False
+        Me.CheckBoxLogReq.Text = "Req"
+        Me.CheckBoxLogReq.UseVisualStyleBackColor = True
+        '
+        'CheckBoxLogWI
+        '
+        Me.CheckBoxLogWI.AutoSize = True
+        Me.CheckBoxLogWI.Checked = True
+        Me.CheckBoxLogWI.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.CheckBoxLogWI.Location = New System.Drawing.Point(322, 668)
+        Me.CheckBoxLogWI.Name = "CheckBoxLogWI"
+        Me.CheckBoxLogWI.Size = New System.Drawing.Size(36, 16)
+        Me.CheckBoxLogWI.TabIndex = 111
+        Me.CheckBoxLogWI.TabStop = False
+        Me.CheckBoxLogWI.Text = "WI"
+        Me.CheckBoxLogWI.UseVisualStyleBackColor = True
+        '
+        'CheckBoxLogETC
+        '
+        Me.CheckBoxLogETC.AutoSize = True
+        Me.CheckBoxLogETC.Checked = True
+        Me.CheckBoxLogETC.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.CheckBoxLogETC.Location = New System.Drawing.Point(363, 668)
+        Me.CheckBoxLogETC.Name = "CheckBoxLogETC"
+        Me.CheckBoxLogETC.Size = New System.Drawing.Size(42, 16)
+        Me.CheckBoxLogETC.TabIndex = 112
+        Me.CheckBoxLogETC.TabStop = False
+        Me.CheckBoxLogETC.Text = "etc."
+        Me.CheckBoxLogETC.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(530, 705)
+        Me.Controls.Add(Me.CheckBoxLogETC)
+        Me.Controls.Add(Me.CheckBoxLogWI)
+        Me.Controls.Add(Me.CheckBoxLogReq)
         Me.Controls.Add(Me.LabelVersionWarning)
         Me.Controls.Add(Me.CheckBoxVersionCheck)
         Me.Controls.Add(Me.LabelVersionCheckDate)
@@ -894,5 +939,8 @@ Partial Class Form1
     Private WithEvents LabelVersionCheckDate As System.Windows.Forms.Label
     Friend WithEvents CheckBoxVersionCheck As System.Windows.Forms.CheckBox
     Private WithEvents LabelVersionWarning As System.Windows.Forms.Label
+    Friend WithEvents CheckBoxLogReq As System.Windows.Forms.CheckBox
+    Friend WithEvents CheckBoxLogWI As System.Windows.Forms.CheckBox
+    Friend WithEvents CheckBoxLogETC As System.Windows.Forms.CheckBox
 
 End Class

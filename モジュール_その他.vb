@@ -2,7 +2,7 @@
 
 Module モジュール_その他
     'バージョン
-    Public TvRemoteViewer_VB_version As Double = 2.45
+    Public TvRemoteViewer_VB_version As Double = 2.46
     Public TvRemoteViewer_VB_notrecommend_version As Double = 0
     Public TvRemoteViewer_VB_recommend_version As Double = 0
     Public TvRemoteViewer_VB_version_check_datetime As DateTime = CDate("2000/01/01") '何分何秒にチェックするか　起動時に決定
