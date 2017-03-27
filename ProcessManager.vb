@@ -692,7 +692,11 @@ Public Class ProcessManager
                                                 'dvdObject(num).Start() '必要無い
                                             Else
                                                 'DUMP開始
-                                                DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump) '時間がかかるついでにVOB最大保持数チェック
+                                                Try
+                                                    DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump) '時間がかかるついでにVOB最大保持数チェック
+                                                Catch ex As Exception
+                                                    log1write("【エラー】DVDダンプフォルダチェックに失敗しました[Start]。" & ex.Message)
+                                                End Try
                                                 dvdObject(num).AbortDump()
                                                 log1write("ストリーム" & num.ToString & "の" & "DVDのダンプ処理を開始します。")
                                                 dvdObject(num).Start()
@@ -1552,7 +1556,12 @@ Public Class ProcessManager
         End If
 
         '新ISO再生用VOB数チェック
-        DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump)
+        Try
+            DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump)
+        Catch ex As Exception
+            'filerootが存在しない場合にエラーになる
+            log1write("【エラー】DVDダンプフォルダチェックに失敗しました[Stop]。" & ex.Message)
+        End Try
 
         '現在稼働中のlist(i)._numをログに表示
         Dim js As String = get_live_numbers()

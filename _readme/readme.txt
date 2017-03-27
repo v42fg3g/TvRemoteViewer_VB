@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.45
+TvRemoteViewer_VB v2.47
 
 
 
@@ -713,6 +713,11 @@ TvRemoteViewer_VB v2.45
 			iniにVLC_ISO_optionを追加
 	2.44	新ISO再生終了指令時にVOB数のチェックを行うようにした(ISO_maxDumpは1以上推奨）
 	2.45	新ISO再生に失敗した場合にしばらく同ストリームが使用できなくなるバグを修正
+	2.46	フォーム上でログに出力する項目を選択できるようにした
+			クライアントIPをログに表示
+			終了時のログ出力に表示項目適用TvRemoteViewer_VB_edited.logを追加
+			配信開始時に%FILEROOT%フォルダの存在を確認するようにした
+	2.47	%FILEROOT%フォルダが消失した場合に例外エラーが起こる不具合に対処
 
 
 
