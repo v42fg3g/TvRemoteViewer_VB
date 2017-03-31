@@ -1629,4 +1629,11 @@ Public Class Form1
     Private Sub CheckBoxLogETC_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxLogETC.CheckedChanged
         show_log()
     End Sub
+
+    Private Sub CheckBoxWriteLog_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxWriteLog.CheckedChanged
+        Try
+            Me._worker._writeLog = CheckBoxWriteLog.Checked
+        Catch ex As Exception
+        End Try
+    End Sub
 End Class

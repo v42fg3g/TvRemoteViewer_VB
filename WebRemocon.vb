@@ -44,6 +44,7 @@ Class WebRemocon
     Public _ShowConsole As Boolean = Nothing
     Public _id As String
     Public _pass As String
+    Public _writeLog As Boolean = Nothing
 
     '変更されたら再起動が必要なパラメーター
     Private _udpPort As Integer = Nothing
@@ -3439,6 +3440,15 @@ Class WebRemocon
 
             '純粋な解像度のみを取り出して記録する
             resolution = get_resolution_from_resolution(resolution) '取得できなければ送った解像度インデックスが返ってくる
+
+            'QSVEncC,NVEncCログ記録
+            If Me._writeLog = True Then
+                If isMatch_HLS(hlsApp, "qsvenc|nvenc") = 1 Then
+                    Dim logfile As String = Path.GetFileNameWithoutExtension(hlsApp)
+                    hlsOpt = hlsOpt.Replace(" -o ", " --log " & logfile & ".log -o ")
+                    log1write(logfile & "のログをストリームフォルダに出力しました。" & fileroot & "\" & logfile & ".log")
+                End If
+            End If
 
             Try
                 Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更

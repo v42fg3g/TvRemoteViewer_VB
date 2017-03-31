@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.47
+TvRemoteViewer_VB v2.48
 
 
 
@@ -718,6 +718,7 @@ TvRemoteViewer_VB v2.47
 			終了時のログ出力に表示項目適用TvRemoteViewer_VB_edited.logを追加
 			配信開始時に%FILEROOT%フォルダの存在を確認するようにした
 	2.47	%FILEROOT%フォルダが消失した場合に例外エラーが起こる不具合に対処
+	2.48	フォーム上にQSV,NVログ出力チェックを設置した（ストリームフォルダに出力されます）
 
 
 
