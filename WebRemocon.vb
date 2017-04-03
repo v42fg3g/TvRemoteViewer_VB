@@ -2531,6 +2531,7 @@ Class WebRemocon
 
         '★HLSオプションの生成
         Dim hlsOpt As String = ""
+        Dim hlsOptNoSub As String = ""
 
         'video_force_ffmpeg
         Dim video_force_ffmpeg_temp As Integer = video_force_ffmpeg
@@ -3178,29 +3179,32 @@ Class WebRemocon
                             Dim fcstr As String = ""
                             hlsOpt = Trim(hlsOpt)
                             Dim sp As Integer = -1
-
+                            '字幕無効の場合に備えて、字幕無しバージョンのパラメータを先に作成。 
+                            hlsOptNoSub = hlsOpt
+                            'まず-vfを削る 
+                            If hlsOptNoSub.IndexOf(" -vf ") > 0 Then
+                                Dim stemp As String = Instr_pickup(hlsOptNoSub, " -vf ", " -", 0)
+                                If stemp.Length > 0 Then
+                                    hlsOptNoSub = hlsOptNoSub.Replace(" -vf " & stemp & " -", " -")
+                                Else
+                                    'とりあえずはありえないはずなので無視（出力ファイルの直前ならありえる・・） 
+                                    log1write("【エラー】-vfオプションの削除に失敗しました")
+                                End If
+                            End If
+                            'シーク 
+                            If ISO_startoffset > 0 Then
+                                hlsOptNoSub = hlsOptNoSub.Replace("-i ", "-ss %SSEC% -i ")
+                            End If
+                            '字幕指定 
+                            fcstr = " -map 0:v -map 0:a:%AUDIOID%"
+                            sp = hlsOptNoSub.LastIndexOf(" ") '最後の空白位置 
+                            If sp > 0 Then
+                                hlsOptNoSub = hlsOptNoSub.Substring(0, sp) & fcstr & hlsOptNoSub.Substring(sp)
+                            End If
+                            '字幕が指定されている場合は字幕有りバージョンも作る。 
                             If ISO_subLang.Length = 0 And ISO_subTrackNum < 0 Then
                                 '字幕無し
-                                'まず-vfを削る
-                                If hlsOpt.IndexOf(" -vf ") > 0 Then
-                                    Dim stemp As String = Instr_pickup(hlsOpt, " -vf ", " -", 0)
-                                    If stemp.Length > 0 Then
-                                        hlsOpt = hlsOpt.Replace(" -vf " & stemp & " -", " -")
-                                    Else
-                                        'とりあえずはありえないはずなので無視（出力ファイルの直前ならありえる・・）
-                                        log1write("【エラー】-vfオプションの削除に失敗しました")
-                                    End If
-                                End If
-                                'シーク
-                                If ISO_startoffset > 0 Then
-                                    hlsOpt = hlsOpt.Replace("-i ", "-ss %SSEC% -i ")
-                                End If
-                                '字幕指定
-                                fcstr = " -map 0:v -map 0:a:%AUDIOID%"
-                                sp = hlsOpt.LastIndexOf(" ") '最後の空白位置
-                                If sp > 0 Then
-                                    hlsOpt = hlsOpt.Substring(0, sp) & fcstr & hlsOpt.Substring(sp)
-                                End If
+                                hlsOpt = hlsOptNoSub
                             Else
                                 '字幕有り
                                 'まず-vfを削る
@@ -3231,7 +3235,8 @@ Class WebRemocon
                             End If
                         ElseIf isMatch_HLS(hlsApp, "qsvenc|nvenc") Then
                             'QSVEnc , NVEnc
-                            hlsOpt = Trim(hlsOpt).Replace("  ", " ")
+                            'hlsOpt = Trim(hlsOpt).Replace("  ", " ")
+                            hlsOpt = Trim(hlsOpt)
                             Dim sp As Integer = -1
                             If hlsOpt.IndexOf("--audio-stream") < 0 Then
                                 sp = hlsOpt.IndexOf("--audio-codec ")
@@ -3252,6 +3257,8 @@ Class WebRemocon
                                 seekstr = "--seek %SSEC% "
                             End If
                             sp = hlsOpt.IndexOf("d.ts ") + "d.ts ".Length
+                            '字幕無効の場合に備えて、字幕無しバージョンのパラメータを先に作成。
+                            hlsOptNoSub = hlsOpt.Substring(0, sp) & seekstr & hlsOpt.Substring(sp)
                             If ISO_subLang.Length > 0 Or ISO_subTrackNum >= 0 Then
                                 '字幕有り
                                 seekstr &= "--vpp-sub %SUBID% "
@@ -3429,6 +3436,17 @@ Class WebRemocon
             hlsOpt = hlsOpt.Replace("%HLSROOT%", hlsroot)
             hlsOpt = hlsOpt.Replace("%HLSROOT/../%", hlsroot2)
             hlsOpt = hlsOpt.Replace("%rc-host%", "127.0.0.1:" & udpPortNumber.ToString)
+            If hlsOptNoSub <> "" Then
+                hlsOptNoSub = hlsOptNoSub.Replace("%UDPPORT%", udpPortNumber.ToString)
+                hlsOptNoSub = hlsOptNoSub.Replace("mystream.", "mystream" & num.ToString & ".") 'ffmpeg,m3u8 無くしたいが互換性のため
+                hlsOptNoSub = hlsOptNoSub.Replace("mystream-", "mystream" & num.ToString & "-") 'vlc 無くしたいが互換性のため
+                hlsOptNoSub = hlsOptNoSub.Replace("%NUM%", num.ToString)
+                hlsOptNoSub = hlsOptNoSub.Replace("%WWWROOT%", wwwroot)
+                hlsOptNoSub = hlsOptNoSub.Replace("%FILEROOT%", fileroot)
+                hlsOptNoSub = hlsOptNoSub.Replace("%HLSROOT%", hlsroot)
+                hlsOptNoSub = hlsOptNoSub.Replace("%HLSROOT/../%", hlsroot2)
+                hlsOptNoSub = hlsOptNoSub.Replace("%rc-host%", "127.0.0.1:" & udpPortNumber.ToString)
+            End If
             'VLC HTTPストリーム用　UDPポート
             If HTTPSTREAM_VLC_port > 0 Then
                 '指定があれば
@@ -3459,7 +3477,7 @@ Class WebRemocon
                 Exit Sub
             End Try
             '★プロセスを起動
-            Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, Stream_mode, NHK_dual_mono_mode_select, resolution, VideoSeekSeconds, ISO_para)
+            Me._procMan.startProc(udpApp, udpOpt, hlsApp, hlsOpt, num, udpPortNumber, ShowConsole, Stream_mode, NHK_dual_mono_mode_select, resolution, VideoSeekSeconds, ISO_para, hlsOptNoSub)
         Else
             log1write("【エラー】HLSオプションが指定されていません。解像度を指定するかフォーム上のHLSオプションを記入してください")
             stream_last_utime(num) = 0 '前回配信準備開始時間リセット

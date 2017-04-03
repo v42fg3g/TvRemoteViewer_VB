@@ -39,6 +39,7 @@ Public Class DVDClass
 
     '■追加　コールバック時にパラメータを置換するため
     Public ISO_hlsOpt As String
+    Public ISO_hlsOptNoSub As String
     Public ISO_audioLang As String
     Public ISO_audioTrackNum As Integer
     Public ISO_subLang As String
@@ -64,7 +65,7 @@ Public Class DVDClass
     Private forceM As Integer       '1ならDumpが存在していてもISOからMPlayerでサムネイルを作成する。
     'コンストラクタ
     '■修正　Public Sub New(ByVal isoFile As String, ByVal ffmpeg As String, ByVal mplayer As String, ByVal streamID As Integer, ByVal work As String)
-    Public Sub New(ByVal isoFile As String, ByVal ffmpeg As String, ByVal mplayer As String, ByVal streamID As Integer, ByVal work As String, ByVal hlsOpt_str As String, ByVal audioLang_str As String, ByVal audioTrackNum_str As Integer, ByVal subLang_str As String, ByVal subTrackNum_str As Integer, ByVal seek_str As Integer)
+    Public Sub New(ByVal isoFile As String, ByVal ffmpeg As String, ByVal mplayer As String, ByVal streamID As Integer, ByVal work As String, ByVal hlsOpt_str As String, ByVal hlsOptNoSub_str As String, ByVal audioLang_str As String, ByVal audioTrackNum_str As Integer, ByVal subLang_str As String, ByVal subTrackNum_str As Integer, ByVal seek_str As Integer)
         status = True
         isoFileName = isoFile '.Trim("""", " ")
         ffmpegPath = ffmpeg '.Trim("""", " ")
@@ -86,6 +87,7 @@ Public Class DVDClass
         status = DVDInfo(Me)
         '■追加
         ISO_hlsOpt = hlsOpt_str
+        ISO_hlsOptNoSub = hlsOptNoSub_str
         ISO_audioLang = audioLang_str
         ISO_audioTrackNum = audioTrackNum_str
         ISO_subLang = subLang_str

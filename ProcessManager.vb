@@ -67,7 +67,7 @@ Public Class ProcessManager
         End If
     End Sub
 
-    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, ByVal VideoSeekSeconds As Integer, ByVal isoPara As String)
+    Public Sub startProc(udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, num As Integer, udpPort As Integer, ShowConsole As Integer, stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, ByVal VideoSeekSeconds As Integer, ByVal isoPara As String, Optional ByVal hlsOptNoSub As String = "")
         Dim stopping As Integer = get_stopping_status(num)
         Dim i As Integer = num2i(num)
         Dim http_udp_changing As Integer = 0
@@ -660,6 +660,7 @@ Public Class ProcessManager
                                         ffmpeg:=hlsApp,
                                         mplayer:=mplayer4ISOPath,
                                         hlsOpt_str:=hlsOpt,
+                                        hlsOptNoSub_str:=hlsOptNoSub,
                                         audioLang_str:=p_audioLang,
                                         audioTrackNum_str:=p_audioTrackNum,
                                         subLang_str:=p_subLang,
@@ -888,6 +889,10 @@ Public Class ProcessManager
         Dim d_seek As Integer = dvdObject(num).ISO_seek
 
         Dim hlsOpt As String = dvdinstance.ISO_hlsOpt
+        If (d_subID < 0) And (dvdinstance.ISO_hlsOptNoSub <> "") Then
+            '字幕指定が無効なら字幕無しパラメータに入れ替える
+            hlsOpt = dvdinstance.ISO_hlsOptNoSub
+        End If
         'パラメータ変換
         'ファイル名→VOB
         Dim filename As String = ""
