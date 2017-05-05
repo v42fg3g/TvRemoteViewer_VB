@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.49
+TvRemoteViewer_VB v2.50
 
 
 
@@ -721,6 +721,7 @@ TvRemoteViewer_VB v2.49
 	2.48	フォーム上にQSV,NVログ出力チェックを設置した（ストリームフォルダに出力されます）
 	2.49	新ISO再生：一部日本語ISOファイルがQSVで再生できない事への対処
 			新ISO再生：字幕指定が無効の時に起動失敗していたものを、字幕なしで起動するためのロジック変更
+	2.50	旧ISO再生においてiniで指定されたQSVEncCやNVEncCがx64だった場合にエラーになっていたバグを修正
 
 
 

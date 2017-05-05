@@ -723,17 +723,21 @@ Public Class ProcessManager
                                 '先に現在実行中のVLCとHLSアプリの全プロセスを記録
                                 Dim app1_name As String = "vlc"
                                 Dim app2_name As String = ""
+                                Dim qsvencc_pname As String = Path.GetFileNameWithoutExtension(exepath_QSVEnc)
+                                Dim nvencc_pname As String = Path.GetFileNameWithoutExtension(exepath_NVEnc)
                                 If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 Then
                                     app2_name = "ffmpeg"
-                                ElseIf hlsOpt.ToLower.IndexOf("qsvencc.exe") > 0 Then
-                                    app2_name = "QSVEncC"
-                                ElseIf hlsOpt.ToLower.IndexOf("nvencc.exe") > 0 Then
-                                    app2_name = "NVEncC"
+                                ElseIf hlsOpt.ToLower.IndexOf(qsvencc_pname.ToLower & ".exe") > 0 Then
+                                    app2_name = qsvencc_pname
+                                ElseIf hlsOpt.ToLower.IndexOf(nvencc_pname.ToLower & ".exe") > 0 Then
+                                    app2_name = nvencc_pname
                                 Else
                                     log1write("【エラー】ISO再生HLSアプリの指定が不正です。")
+                                    stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                                     Exit Sub
                                 End If
 
+                                '起動前のプロセスを記録
                                 Dim ps1a As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app1_name)
                                 Dim pstr1 As String = ":"
                                 For Each p1 As Process In ps1a
