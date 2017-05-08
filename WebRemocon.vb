@@ -1636,6 +1636,7 @@ Class WebRemocon
                                 End If
                             Case "TVRemoteFilesNEW"
                                 TVRemoteFilesNEW = Val(youso(1).ToString)
+                                log1write("画面推移方式を設定しました。TVRemoteFilesNEW=" & TVRemoteFilesNEW.ToString)
                             Case "ISOPlayNEW"
                                 ISOPlayNEW = Val(youso(1).ToString)
                             Case "ISO_DumpDirPath"
