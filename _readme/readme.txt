@@ -725,6 +725,7 @@ TvRemoteViewer_VB v2.52
 	2.51	ISO再生が可能かどうかチェックを厳しくした
 			iniでmplayer.exeへのパスを指定できるようにした（無指定は従来通りプログラムフォルダを探す）
 	2.52	ISO再生用デバッグ機能追加（フォーム上のDebugチェックボックス）
+			HLS_option_NVEnc_file.txtを修正（「-m hls_list_size:」を0に修正）
 
 
 
