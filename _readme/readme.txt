@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.50
+TvRemoteViewer_VB v2.51
 
 
 
@@ -722,6 +722,8 @@ TvRemoteViewer_VB v2.50
 	2.49	新ISO再生：一部日本語ISOファイルがQSVで再生できない事への対処
 			新ISO再生：字幕指定が無効の時に起動失敗していたものを、字幕なしで起動するためのロジック変更
 	2.50	旧ISO再生においてiniで指定されたQSVEncCやNVEncCがx64だった場合にエラーになっていたバグを修正
+	2.51	ISO再生が可能かどうかチェックを厳しくした
+			iniでmplayer.exeへのパスを指定できるようにした（無指定は従来通りプログラムフォルダを探す）
 
 
 

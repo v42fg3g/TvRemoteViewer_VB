@@ -1582,20 +1582,22 @@ Class WebRemocon
                                 youso(1) = trim8(path_s2z((youso(1))))
                                 If youso(1).Length > 0 Then
                                     If file_exist(youso(1)) = 1 Then
-                                        'mplayerチェック
-                                        If file_exist(System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer-ISO.exe") = 1 Then
-                                            exepath_ISO_VLC = youso(1).ToString
-                                            log1write("ISO再生用VLCとして" & exepath_ISO_VLC & "が指定されました")
-                                        ElseIf file_exist(System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer.exe") = 1 Then
-                                            mplayer4ISOPath = System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer.exe"
-                                            exepath_ISO_VLC = youso(1).ToString
-                                            log1write("ISO再生用VLCとして" & exepath_ISO_VLC & "が指定されました")
-                                        Else
-                                            log1write("【エラー】ISO再生に使用するmplayer-ISO.exeが見つかりません。TvRemoteViewer_VB.exeと同じフォルダにコピーしてください")
-                                        End If
+                                        exepath_ISO_VLC = youso(1).ToString
+                                        log1write("ISO再生用VLCとして" & exepath_ISO_VLC & "が指定されました")
                                     Else
-                                        log1write("【エラー】ISO再生用VLCが見つかりませんでした。" & exepath_NVEnc)
+                                        log1write("【エラー】ISO再生用VLCが見つかりませんでした。" & exepath_ISO_VLC)
                                         exepath_ISO_VLC = ""
+                                    End If
+                                End If
+                            Case "exepath_mplayer"
+                                youso(1) = trim8(path_s2z((youso(1))))
+                                If youso(1).Length > 0 Then
+                                    If file_exist(youso(1)) = 1 Then
+                                        mplayer4ISOPath = youso(1).ToString
+                                        log1write("ISO再生用mplayerとして" & mplayer4ISOPath & "が指定されました")
+                                    Else
+                                        log1write("【エラー】ISO再生用mplayerが見つかりませんでした。" & mplayer4ISOPath)
+                                        mplayer4ISOPath = ""
                                     End If
                                 End If
                             Case "PipeRun_ffmpeg_option"
@@ -1704,35 +1706,88 @@ Class WebRemocon
             log1write("【システム】TVRemoteFiles Ver1.81以前を使用することを前提としています")
         End If
 
+
+        'mplayerチェック
+        If mplayer4ISOPath.Length = 0 Then
+            If file_exist(System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer-ISO.exe") = 1 Then
+                mplayer4ISOPath = System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer-ISO.exe"
+            ElseIf file_exist(System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer.exe") = 1 Then
+                mplayer4ISOPath = System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer.exe"
+            End If
+        End If
+        If mplayer4ISOPath.Length > 0 Then
+            If file_exist(mplayer4ISOPath) = 1 Then
+                log1write("ISO再生支援用mplayerとして" & mplayer4ISOPath & "が指定されました")
+            Else
+                mplayer4ISOPath = ""
+            End If
+        Else
+            mplayer4ISOPath = ""
+        End If
         'DVD2
-        If ISO_DumpDirPath.length = 0 Or folder_exist(ISO_DumpDirPath) <= 0 Then
+        '作業フォルダ
+        If ISO_DumpDirPath.Length = 0 Or folder_exist(ISO_DumpDirPath) <= 0 Then
+            log1write("DVD新再生方式用作業フォルダが指定されていないか見つかりません")
             ISO_DumpDirPath = Me._fileroot
         End If
         log1write("ISO再生用 DUMPフォルダとして" & ISO_DumpDirPath & "を設定しました")
+        'ISO用サムネイルフォルダ
         If ISO_ThumbPath.length = 0 Or folder_exist(ISO_ThumbPath) <= 0 Then
+            log1write("DVD用サムネイルフォルダが指定されていないか見つかりません")
             ISO_ThumbPath = Me._fileroot
         End If
         log1write("ISO再生用 サムネイルフォルダとして" & ISO_ThumbPath & "を設定しました")
-        If ISOPlayNEW = 1 And mplayer4ISOPath.Length = 0 Then
-            ISOPlayNEW = 0
-            log1write("【エラー】ISOPlayNEW=1にするためにはmplayer4ISOPathの設定が必須です。ISOPlayNEW=0にセットしました")
-        End If
-        If ISOPlayNEW < 0 Then
-            If TVRemoteFilesNEW = 1 Then
-                ISOPlayNEW = 1
-            Else
-                ISOPlayNEW = 0
+        'ISO再生可能かチェック
+        If mplayer4ISOPath.Length > 0 Then
+            'mplayerはOK
+            If ISOPlayNEW < 0 Then
+                'iniで指定されていなければ自動的に新方式を優先
+                If TVRemoteFilesNEW = 1 Then
+                    ISOPlayNEW = 1
+                Else
+                    ISOPlayNEW = 0
+                End If
             End If
-        End If
-        If ISOPlayNEW = 1 Then
-            If TVRemoteFilesNEW = 1 Then
-                log1write("【システム】ISO再生をVOB方式に設定しました")
+            If ISOPlayNEW = 0 Then
+                '旧方式
+                If exepath_ISO_VLC.Length = 0 Then
+                    If exepath_VLC.Length > 0 Then
+                        exepath_ISO_VLC = exepath_VLC
+                        log1write("【警告】ISO再生旧方式に使用するVLCとしてexepath_VLC指定のものが使用するよう設定しました")
+                    Else
+                        ISOPlayNEW = -1
+                        log1write("【エラー】ISO再生旧方式の場合はexepath_ISO_VLCの指定が必要です")
+                    End If
+                End If
+            ElseIf ISOPlayNEW = 1 Then
+                If TVRemoteFilesNEW = 0 Then
+                    log1write("【エラー】ISOPlayNEW=1の場合はTVRemoteFilesNEW=1に設定してください（要：TVRemoteFiles Ver1.82以降）")
+                    If exepath_ISO_VLC.Length = 0 Then
+                        If exepath_VLC.Length > 0 Then
+                            exepath_ISO_VLC = exepath_VLC
+                            log1write("【警告】ISO再生旧方式に使用するVLCとしてexepath_VLC指定のものが使用するよう設定しました")
+                        End If
+                    End If
+                    If exepath_ISO_VLC.Length > 0 Then
+                        ISOPlayNEW = 0
+                        log1write("【警告】ISO再生方式を旧式に修正しました")
+                    Else
+                        ISOPlayNEW = -1
+                    End If
+                End If
+            End If
+            '最終結果
+            If ISOPlayNEW = 1 Then
+                log1write("【システム】ISO再生方式を新方式(VOB)に設定しました")
+            ElseIf ISOPlayNEW = 0 Then
+                log1write("【システム】ISO再生方式を従来のものに設定しました")
             Else
-                ISOPlayNEW = 0
-                log1write("【エラー】ISOPlayNEW=1の場合はTVRemoteFilesNEW=1に設定してください。ISO再生方式を従来のものに設定しました")
+                log1write("【エラー】ISO再生に対応できません")
             End If
         Else
-            log1write("【システム】ISO再生方式を従来のものに設定しました")
+            'ISO再生不可
+            ISOPlayNEW = -1
+            log1write("【エラー】ISO再生に使用するmplayer.exeが見つかりません。TvRemoteViewer_VB.exeと同じフォルダにコピーしてください。ISO再生に対応できません")
         End If
     End Sub
 
@@ -3270,7 +3325,7 @@ Class WebRemocon
                             stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                             Exit Sub
                         End If
-                    Else
+                    ElseIf ISOPlayNEW = 0 Then
                         '旧方式
                         If exepath_ISO_VLC.Length > 0 Then
                             'ISOの場合の処理
@@ -3398,6 +3453,10 @@ Class WebRemocon
                             stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                             Exit Sub
                         End If
+                    Else
+                        log1write("【エラー】ISO再生に対応していません")
+                        stream_last_utime(num) = 0 '前回配信準備開始時間リセット
+                        Exit Sub
                     End If
                 End If
             End If
@@ -5882,7 +5941,7 @@ Class WebRemocon
             If ISOPlayNEW = 0 Then
                 '旧方式
                 r = 101
-            Else
+            ElseIf ISOPlayNEW = 1 Then
                 '新方式
                 If Not dvdObject(num) Is Nothing Then
                     r = dvdObject(num).dumpProgress
@@ -5890,6 +5949,9 @@ Class WebRemocon
                     log1write("【エラー】ストリーム" & num.ToString & "の" & "DVDオブジェクトが未作成です。")
                     r = 0
                 End If
+            Else
+                'ISO再生に対応できていない
+                r = 0
             End If
         Else
             r = 200
@@ -6820,10 +6882,12 @@ Class WebRemocon
         fullpathfilename = filename_escape_recall(fullpathfilename) ',エスケープを元に戻す
         Dim ext As String = Path.GetExtension(fullpathfilename).ToLower
         If ext = ".iso" Then
-            'ISOならファイル情報キャッシュからchapter情報を取得
-            Dim n As tot_structure = TOT_read(fullpathfilename, exepath_ffmpeg)
-            If n.ISO_CHAPTER.Length > 0 Then
-                r = n.ISO_CHAPTER
+            If ISOPlayNEW >= 0 Then
+                'ISOならファイル情報キャッシュからchapter情報を取得
+                Dim n As tot_structure = TOT_read(fullpathfilename, exepath_ffmpeg)
+                If n.ISO_CHAPTER.Length > 0 Then
+                    r = n.ISO_CHAPTER
+                End If
             End If
         Else
             Dim chapterfullpathfilename As String = ""
@@ -7053,7 +7117,7 @@ Class WebRemocon
                     Else
                         log1write("【エラー】ストリーム" & num.ToString & "の" & "DVDオブジェクトが未作成です。")
                     End If
-                Else
+                ElseIf ISOPlayNEW = 0 Then
                     '旧方式
                     If exepath_ISO_VLC.Length > 0 Then
                         'ISO再生
@@ -7064,6 +7128,8 @@ Class WebRemocon
                             r = F_make_thumbnail(num, exepath_ISO_VLC, stream_folder, url_path, video_path, ss, w, h, totdata.ISO_MAINTITLE)
                         End If
                     End If
+                Else
+                    log1write("【エラー】ISO再生に対応していません。サムネイルを作成に失敗しました")
                 End If
             ElseIf ffmpeg_path.ToLower.IndexOf("ffmpeg.exe") >= 0 Then
                 r = F_make_thumbnail(num, ffmpeg_path, stream_folder, url_path, video_path, ss, w, h)

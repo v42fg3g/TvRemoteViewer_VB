@@ -14,7 +14,7 @@ Module モジュール_ISO
     Public ISO_maxDump As Integer = 2
 
     'mplayerパス
-    Public mplayer4ISOPath As String = System.AppDomain.CurrentDomain.BaseDirectory & "\mplayer-ISO.exe"
+    Public mplayer4ISOPath As String = ""
 
     'VLC-ISOオプション　WebRemocon.vb:Start_Movieで使用
     Public VLC_ISO_option As String = ""

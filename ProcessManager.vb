@@ -718,7 +718,7 @@ Public Class ProcessManager
                                     End If
                                 End If
                                 Exit Sub '本来の道は通らず終了
-                            Else
+                            ElseIf ISOPlayNEW = 0 Then
                                 '旧方式
                                 '先に現在実行中のVLCとHLSアプリの全プロセスを記録
                                 Dim app1_name As String = "vlc"
@@ -800,6 +800,9 @@ Public Class ProcessManager
                                     log1write(app2_name & "プロセス=" & hlsProc2.Id.ToString)
                                 Catch ex As Exception
                                 End Try
+                            Else
+                                log1write("【エラー】" & "ISO再生に対応していません")
+                                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                             End If
                         Else
                             '通常
