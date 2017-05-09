@@ -2,12 +2,30 @@
 
 Module モジュール_その他
     'バージョン
-    Public TvRemoteViewer_VB_version As Double = 2.51
+    Public TvRemoteViewer_VB_version As Double = 2.52
     Public TvRemoteViewer_VB_notrecommend_version As Double = 0
     Public TvRemoteViewer_VB_recommend_version As Double = 0
     Public TvRemoteViewer_VB_version_check_datetime As DateTime = CDate("2000/01/01") '何分何秒にチェックするか　起動時に決定
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
+
+    'debug
+    Public log_debug As Integer = 0
+    Public Sub write_log_debug(ByVal title As String, ByVal value As String)
+        If log_debug = 1 Then
+            log1 = "　" & vbCrLf & "　" & vbCrLf & log1
+            If title.Length > 0 Then
+                If StrConv(title.Substring(title.Length - 1, 1), VbStrConv.Wide) = "：" Then
+                    log1 = "■■■ 【DEBUG】 " & title & value & vbCrLf & log1
+                    log1 = "　" & vbCrLf & "　" & vbCrLf & log1
+                    Exit Sub
+                End If
+            End If
+            log1 = value & vbCrLf & log1
+            log1 = "■■■ 【DEBUG】 " & title & vbCrLf & log1
+            log1 = "　" & vbCrLf & "　" & vbCrLf & log1
+        End If
+    End Sub
 
     'TvRemoteFilesスタイル
     Public TVRemoteFilesNEW As Integer = 0 '1なら新しい画面推移方法

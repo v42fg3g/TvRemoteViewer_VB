@@ -3205,6 +3205,9 @@ Class WebRemocon
 
             'ファイル再生か？
             If Stream_mode = 1 And hlsOpt.Length > 0 Then
+                If filename_ext = ".iso" Then
+                    write_log_debug("ISO再生 hlsOpt(1) txtからオプション取得後", hlsOpt)
+                End If
                 'hlsオプションを書き換える
                 If isMatch_HLS(hlsApp, "vlc") = 1 Then
                     'VLCのとき
@@ -3225,6 +3228,7 @@ Class WebRemocon
                     Exit Sub
                 End If
                 If filename_ext = ".iso" Then
+                    write_log_debug("ISO再生 hlsOpt(2) ファイル再生用に変換後", hlsOpt)
                     If ISOPlayNEW = 1 Then
                         'DVD2 ISO再生　新方式
                         'ここではdvdObjectが作成されていないので情報が収集できずパラメータの設定ができないので%%のまま
@@ -3458,6 +3462,7 @@ Class WebRemocon
                         stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                         Exit Sub
                     End If
+                    write_log_debug("ISO再生 hlsOpt(3) シーク・字幕・音声変換後", hlsOpt)
                 End If
             End If
         End If
@@ -3528,6 +3533,9 @@ Class WebRemocon
                 End If
             End If
 
+            If filename_ext = ".iso" Then
+                write_log_debug("ISO再生 hlsOpt(4) 基本変数変換後", hlsOpt)
+            End If
             Try
                 Directory.SetCurrentDirectory(fileroot) 'カレントディレクトリ変更
             Catch ex As Exception

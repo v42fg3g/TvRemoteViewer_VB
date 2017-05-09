@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.51
+TvRemoteViewer_VB v2.52
 
 
 
@@ -724,6 +724,7 @@ TvRemoteViewer_VB v2.51
 	2.50	旧ISO再生においてiniで指定されたQSVEncCやNVEncCがx64だった場合にエラーになっていたバグを修正
 	2.51	ISO再生が可能かどうかチェックを厳しくした
 			iniでmplayer.exeへのパスを指定できるようにした（無指定は従来通りプログラムフォルダを探す）
+	2.52	ISO再生用デバッグ機能追加（フォーム上のDebugチェックボックス）
 
 
 

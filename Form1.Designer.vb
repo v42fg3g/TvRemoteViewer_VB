@@ -99,6 +99,7 @@ Partial Class Form1
         Me.CheckBoxLogWI = New System.Windows.Forms.CheckBox()
         Me.CheckBoxLogETC = New System.Windows.Forms.CheckBox()
         Me.CheckBoxWriteLog = New System.Windows.Forms.CheckBox()
+        Me.CheckBoxLogDebug = New System.Windows.Forms.CheckBox()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -796,11 +797,23 @@ Partial Class Form1
         Me.CheckBoxWriteLog.Text = "QSV, NV ログ出力"
         Me.CheckBoxWriteLog.UseVisualStyleBackColor = True
         '
+        'CheckBoxLogDebug
+        '
+        Me.CheckBoxLogDebug.AutoSize = True
+        Me.CheckBoxLogDebug.Location = New System.Drawing.Point(206, 668)
+        Me.CheckBoxLogDebug.Name = "CheckBoxLogDebug"
+        Me.CheckBoxLogDebug.Size = New System.Drawing.Size(56, 16)
+        Me.CheckBoxLogDebug.TabIndex = 114
+        Me.CheckBoxLogDebug.TabStop = False
+        Me.CheckBoxLogDebug.Text = "Debug"
+        Me.CheckBoxLogDebug.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(530, 705)
+        Me.Controls.Add(Me.CheckBoxLogDebug)
         Me.Controls.Add(Me.CheckBoxWriteLog)
         Me.Controls.Add(Me.CheckBoxLogETC)
         Me.Controls.Add(Me.CheckBoxLogWI)
@@ -956,5 +969,6 @@ Partial Class Form1
     Friend WithEvents CheckBoxLogWI As System.Windows.Forms.CheckBox
     Friend WithEvents CheckBoxLogETC As System.Windows.Forms.CheckBox
     Friend WithEvents CheckBoxWriteLog As System.Windows.Forms.CheckBox
+    Friend WithEvents CheckBoxLogDebug As System.Windows.Forms.CheckBox
 
 End Class

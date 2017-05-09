@@ -850,6 +850,8 @@ Public Class Form1
                             CheckBoxLogWI.Checked = lr(1)
                         Case "CheckBoxLogETC"
                             CheckBoxLogETC.Checked = lr(1)
+                        Case "CheckBoxLogDebug"
+                            CheckBoxLogDebug.Checked = lr(1)
                         Case "WindowStatus"
                             Dim d() As String = lr(1).Split(",")
                             If d.Length = 4 Then
@@ -967,6 +969,7 @@ Public Class Form1
         s &= "CheckBoxLogReq=" & CheckBoxLogReq.Checked & vbCrLf
         s &= "CheckBoxLogWI=" & CheckBoxLogWI.Checked & vbCrLf
         s &= "CheckBoxLogETC=" & CheckBoxLogETC.Checked & vbCrLf
+        s &= "CheckBoxLogDebug=" & CheckBoxLogDebug.Checked & vbCrLf
         If me_top > -10 Then
             s &= "WindowStatus=" & me_left & "," & me_top & "," & me_width & "," & me_height & vbCrLf
         Else
@@ -1635,5 +1638,13 @@ Public Class Form1
             Me._worker._writeLog = CheckBoxWriteLog.Checked
         Catch ex As Exception
         End Try
+    End Sub
+
+    Private Sub CheckBoxLogDebug_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxLogDebug.CheckedChanged
+        If CheckBoxLogDebug.Checked = True Then
+            log_debug = 1
+        Else
+            log_debug = 0
+        End If
     End Sub
 End Class

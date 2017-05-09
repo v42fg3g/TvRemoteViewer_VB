@@ -645,8 +645,7 @@ Public Class ProcessManager
                                     p_subTrackNum = Val(d(3))
                                     p_seek = Val(d(4))
                                 End If
-                                '■テスト
-                                log1write("■デバッグ　ISOファイル:「" & fullpathfilename & "」")
+                                write_log_debug("ISO再生 ISOファイル：", fullpathfilename)
                                 'ISOファイル名dvdObject(num).dumpFileNameはすでに置き換わっているはず
                                 If file_exist(fullpathfilename) <= 0 Then
                                     stream_last_utime(num) = 0 '前回配信準備開始時間リセット
@@ -678,10 +677,7 @@ Public Class ProcessManager
                                         'DUMP開始
                                         If Not dvdObject(num) Is Nothing Then
                                             'ストリーム登録
-                                            '★★★デバッグ用
-                                            log1write("■デバッグ用　変換前=========")
-                                            log1write("""" & hlsApp & """ " & hlsOpt)
-                                            log1write("=============================")
+                                            write_log_debug("ISO再生 hlsOpt(5) DVD用変数変換前", hlsOpt)
                                             Dim pb_iso As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, isoPara)
                                             Me._list.Add(pb_iso)
                                             'シークまたはトラック等のパラメータを変更しての再読込
@@ -932,10 +928,7 @@ Public Class ProcessManager
 
         '_listにも変換後を登録・・まぁしないでいいか
 
-        '★★★デバッグ用
-        log1write("■デバッグ用　変換後=========")
-        log1write("""" & dvdinstance.ffmpegPath & """ " & hlsOpt)
-        log1write("=============================")
+        write_log_debug("ISO再生 hlsOpt(6) DVD用変数変換後", hlsOpt)
 
         '通常
         'ProcessStartInfoオブジェクトを作成する
