@@ -2149,7 +2149,7 @@ Public Class ProcessManager
     '===========================================================
 
     '配信中の番組を返す
-    Public Function WI_GET_PROGRAM_NUM(ByVal num As Integer) As String
+    Public Function WI_GET_PROGRAM_NUM(ByVal num As Integer, ByVal getnext As Integer) As String
         Dim r As String = ""
 
         Dim i As Integer = 0
@@ -2172,13 +2172,13 @@ Public Class ProcessManager
                             Dim str As String = ""
                             'まずはBS・CSで番組を探す
                             If TvProgram_tvrock_url.Length > 0 Then
-                                str = program_translate4WI(999)
+                                str = program_translate4WI(999, getnext, 0)
                             ElseIf TvProgram_EDCB_url.Length > 0 Then
-                                str = program_translate4WI(998)
+                                str = program_translate4WI(998, getnext, 0)
                             ElseIf ptTimer_path.Length > 0 Then
-                                str = program_translate4WI(997)
+                                str = program_translate4WI(997, getnext, 0)
                             ElseIf Tvmaid_url.Length > 0 Then
-                                str = program_translate4WI(996)
+                                str = program_translate4WI(996, getnext, 0)
                             End If
                             If str.Length > 0 Then
                                 Dim d() As String = Split(str, vbCrLf)
@@ -2195,7 +2195,7 @@ Public Class ProcessManager
                             End If
                             If chk = 0 Then
                                 'ネット番組表
-                                str = program_translate4WI(0)
+                                str = program_translate4WI(0, getnext, 0)
                                 If str.Length > 0 Then
                                     Dim d() As String = Split(str, vbCrLf)
                                     For j As Integer = 0 To d.Length - 1

@@ -518,6 +518,8 @@ Public Class Form1
         Me._worker.read_videopath()
         'iniを元に設定したパラメータの整合性チェック
         Me._worker.check_ini_parameter()
+        'クライアントiniを読み込み
+        Me._worker.read_client_ini()
 
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止

@@ -48,7 +48,7 @@ Class WebRemocon
 
     '変更されたら再起動が必要なパラメーター
     Private _udpPort As Integer = Nothing
-    Private _wwwroot As String = Nothing
+    Public _wwwroot As String = Nothing
     Private _fileroot As String = Nothing
     Private _wwwport As Integer = Nothing
     Private _BonDriver_NGword As String() = Nothing
@@ -1788,6 +1788,99 @@ Class WebRemocon
             'ISO再生不可
             ISOPlayNEW = -1
             log1write("【エラー】ISO再生に使用するmplayer.exeが見つかりません。TvRemoteViewer_VB.exeと同じフォルダにコピーしてください。ISO再生に対応できません")
+        End If
+
+    End Sub
+
+    'クライアントの設定を読み込むclient.ini
+    Public Sub read_client_ini()
+        Dim i, j, k, n As Integer
+
+        '標準
+        ReDim Preserve client_allowDomains(1)
+        client_allowDomains(0) = ".2ch.net"
+        client_allowDomains(1) = ".nicovideo.jp"
+        log1write("【クライアント設定 標準】.2ch.net/と.nicovideo.jp/へのWEBアクセスを許可します")
+
+        'カレントディレクトリ変更
+        F_set_ppath4program()
+        Dim files As String() = System.IO.Directory.GetFiles(Me._wwwroot, "client*.ini", SearchOption.TopDirectoryOnly)
+        If files IsNot Nothing Then
+            For k = 0 To files.Length - 1
+                Dim line() As String = file2line(files(k))
+                If line Is Nothing Then
+                ElseIf line.Length > 0 Then
+                    '読み込み完了
+                    For i = 0 To line.Length - 1
+                        line(i) = trim8(line(i))
+                        'コメント削除
+                        If line(i).IndexOf(";") >= 0 Then
+                            line(i) = line(i).Substring(0, line(i).IndexOf(";"))
+                        End If
+                        Dim youso() As String = line(i).Split("=")
+                        Try
+                            If youso Is Nothing Then
+                            ElseIf youso.Length > 1 Then
+                                Dim url_text As String = youso(1) '=以降がURLの場合(=が途中に入っている可能性を考慮）
+                                If youso.Length > 2 Then
+                                    For j = 2 To youso.Length - 1
+                                        url_text &= "=" & youso(j)
+                                    Next
+                                End If
+                                url_text = trim8(url_text)
+                                For j = 0 To youso.Length - 1
+                                    youso(j) = trim8(youso(j))
+                                Next
+                                Select Case youso(0)
+                                    Case "allowDomains"
+                                        'アクセス許可ドメイン
+                                        youso(1) = youso(1).Replace("{", "").Replace("}", "")
+                                        If trim8(youso(1)).Length > 0 Then
+                                            Dim clset() As String = youso(1).Split(",")
+                                            If clset Is Nothing Then
+                                            ElseIf clset.Length > 0 Then
+                                                'client_allowDomainsに追加
+                                                For j = 0 To clset.Length - 1
+                                                    If Array.IndexOf(client_allowDomains, trim8(clset(j))) < 0 Then
+                                                        n = client_allowDomains.Length
+                                                        ReDim Preserve client_allowDomains(n)
+                                                        client_allowDomains(n) = trim8(clset(j))
+                                                        log1write("【クライアント設定】" & client_allowDomains(n) & "へのWEBアクセスを許可します")
+                                                    End If
+                                                Next
+                                            End If
+                                        End If
+                                    Case "allowFiles"
+                                        'アクセス許可ドメイン
+                                        youso(1) = youso(1).Replace("{", "").Replace("}", "")
+                                        If trim8(youso(1)).Length > 0 Then
+                                            Dim clset() As String = youso(1).Split(",")
+                                            If clset Is Nothing Then
+                                            ElseIf clset.Length > 0 Then
+                                                For j = 0 To clset.Length - 1
+                                                    If client_allowFiles Is Nothing Then
+                                                        n = 0
+                                                        ReDim Preserve client_allowFiles(n)
+                                                        client_allowFiles(n) = trim8(clset(j))
+                                                        log1write("【クライアント設定】" & client_allowFiles(n) & "へのWEBアクセスを許可します")
+                                                    ElseIf Array.IndexOf(client_allowFiles, trim8(clset(j))) < 0 Then
+                                                        n = client_allowFiles.Length
+                                                        ReDim Preserve client_allowFiles(n)
+                                                        client_allowFiles(n) = trim8(clset(j))
+                                                        log1write("【クライアント設定】" & client_allowFiles(n) & "へのWEBアクセスを許可します")
+                                                    End If
+                                                Next
+                                            End If
+                                        End If
+                                End Select
+                            End If
+                        Catch ex As Exception
+                            log1write("【エラー】クライアント設定パラメーター : " & youso(0) & " の読み込みに失敗しました。" & ex.Message)
+                        End Try
+                    Next
+                    log1write("クライアント設定：" & files(k) & "を読み込みました")
+                End If
+            Next
         End If
     End Sub
 
@@ -4909,6 +5002,39 @@ Class WebRemocon
                             Dim WI_skip_html As Integer = 0
                             If req_Url.IndexOf("/WI_") >= 0 Then
                                 WI_cmd = "WI_" & instr_pickup_para(req_Url, "/WI_", ".", 0)
+                                If WI_cmd.IndexOf("WI_GET_PROGRAM_") = 0 Then
+                                    '番組表取得
+                                    Dim d() As String = temp.Split(",")
+                                    Dim getnext As Integer = Val(Trim(d(0)))
+                                    Dim template As Integer = 0
+                                    If d.Length = 2 Then
+                                        template = Val(Trim(d(1)))
+                                    End If
+                                    Debug.Print("getnext=" & getnext)
+                                    Debug.Print("template=" & template)
+                                    Select Case WI_cmd
+                                        Case "WI_GET_PROGRAM_D"
+                                            '地デジ番組表取得
+                                            WI_cmd_reply = Me.WI_GET_PROGRAM_D(getnext, template)
+                                            WI_cmd_reply_force = 1
+                                        Case "WI_GET_PROGRAM_TVMAID"
+                                            'Tvmaid番組表取得
+                                            WI_cmd_reply = Me.WI_GET_PROGRAM_TVMAID(getnext, template)
+                                            WI_cmd_reply_force = 1
+                                        Case "WI_GET_PROGRAM_PTTIMER"
+                                            'EDCB番組表取得
+                                            WI_cmd_reply = Me.WI_GET_PROGRAM_PTTIMER(getnext, template)
+                                            WI_cmd_reply_force = 1
+                                        Case "WI_GET_PROGRAM_EDCB"
+                                            'EDCB番組表取得
+                                            WI_cmd_reply = Me.WI_GET_PROGRAM_EDCB(getnext, template)
+                                            WI_cmd_reply_force = 1
+                                        Case "WI_GET_PROGRAM_TVROCK"
+                                            'TVROCK番組表取得
+                                            WI_cmd_reply = Me.WI_GET_PROGRAM_TVROCK(getnext, template)
+                                            WI_cmd_reply_force = 1
+                                    End Select
+                                End If
                                 Select Case WI_cmd
                                     Case "WI_GET_CHANNELS"
                                         'BonDriver, ServiceID, ch_space, チャンネル名
@@ -4931,29 +5057,9 @@ Class WebRemocon
                                             req_Url = "/StopAll.html"
                                             path = path.Replace("WI_STOP_STREAM.html", "StopAll.html")
                                         End If
-                                    Case "WI_GET_PROGRAM_D"
-                                        '地デジ番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_D()
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_PROGRAM_TVMAID"
-                                        'Tvmaid番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_TVMAID(Val(temp))
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_PROGRAM_PTTIMER"
-                                        'EDCB番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_PTTIMER(Val(temp))
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_PROGRAM_EDCB"
-                                        'EDCB番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_EDCB(Val(temp))
-                                        WI_cmd_reply_force = 1
-                                    Case "WI_GET_PROGRAM_TVROCK"
-                                        'TVROCK番組表取得
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_TVROCK(Val(temp))
-                                        WI_cmd_reply_force = 1
                                     Case "WI_GET_PROGRAM_NUM"
                                         '放送中の番組
-                                        WI_cmd_reply = Me.WI_GET_PROGRAM_NUM(num)
+                                        WI_cmd_reply = Me.WI_GET_PROGRAM_NUM(num, Val(temp))
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_LIVE_STREAM"
                                         '現在配信中のストリーム
@@ -6193,37 +6299,37 @@ Class WebRemocon
     End Function
 
     '地デジ番組表取得
-    Public Function WI_GET_PROGRAM_D() As String
+    Public Function WI_GET_PROGRAM_D(ByVal getnext As Integer, ByVal template As Integer) As String
         Dim r As String = ""
-        r = program_translate4WI(0)
+        r = program_translate4WI(0, getnext, template)
         Return r
     End Function
 
     'Tvmaid番組表取得
-    Public Function WI_GET_PROGRAM_TVMAID(Optional ByVal getnext As Integer = 0) As String
+    Public Function WI_GET_PROGRAM_TVMAID(ByVal getnext As Integer, ByVal template As Integer) As String
         Dim r As String = ""
-        r = program_translate4WI(996, getnext)
+        r = program_translate4WI(996, getnext, template)
         Return r
     End Function
 
     'ptTimer番組表取得
-    Public Function WI_GET_PROGRAM_PTTIMER(Optional ByVal getnext As Integer = 0) As String
+    Public Function WI_GET_PROGRAM_PTTIMER(ByVal getnext As Integer, ByVal template As Integer) As String
         Dim r As String = ""
-        r = program_translate4WI(997, getnext)
+        r = program_translate4WI(997, getnext, template)
         Return r
     End Function
 
     'EDCB番組表取得
-    Public Function WI_GET_PROGRAM_EDCB(Optional ByVal getnext As Integer = 0) As String
+    Public Function WI_GET_PROGRAM_EDCB(ByVal getnext As Integer, ByVal template As Integer) As String
         Dim r As String = ""
-        r = program_translate4WI(998, getnext)
+        r = program_translate4WI(998, getnext, template)
         Return r
     End Function
 
     'TVROCK番組表取得
-    Public Function WI_GET_PROGRAM_TVROCK(Optional ByVal getnext As Integer = 0) As String
+    Public Function WI_GET_PROGRAM_TVROCK(ByVal getnext As Integer, ByVal template As Integer) As String
         Dim r As String = ""
-        r = program_translate4WI(999, getnext)
+        r = program_translate4WI(999, getnext, template)
         Return r
     End Function
 
@@ -6443,20 +6549,6 @@ Class WebRemocon
             fullpathfilename = Me._wwwroot & "\" & filepath & "\" & filename
         End If
 
-        'フォルダが存在しなければ作成
-        If fl_cmd.IndexOf("write") >= 0 Then
-            If folder_exist(fullpath) < 1 And fullpath.IndexOf("..") < 0 Then
-                Try
-                    System.IO.Directory.CreateDirectory(fullpath)
-                Catch ex As Exception
-                    r = "2,フォルダ作成に失敗しました。" & ex.Message & vbCrLf
-                    log1write("【エラー】フォルダ作成に失敗しました。" & fullpath)
-                    Return r
-                    Exit Function
-                End Try
-            End If
-        End If
-
         fl_text = check_fl_text(fl_cmd, fl_file, fl_text) 'エラーならば"[<ERROR>]"が返ってくる
 
         If fullpath.IndexOf("..") >= 0 Then
@@ -6506,6 +6598,18 @@ Class WebRemocon
                 Case "write" '新規・上書き
                     If filename.Length > 0 Then
                         If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
+                            'フォルダが存在しなければ作成
+                            If folder_exist(fullpath) < 1 And fullpath.IndexOf("..") < 0 Then
+                                Try
+                                    System.IO.Directory.CreateDirectory(fullpath)
+                                Catch ex As Exception
+                                    r = "2,フォルダ作成に失敗しました。" & ex.Message & vbCrLf
+                                    log1write("【エラー】フォルダ作成に失敗しました。" & fullpath)
+                                    Return r
+                                    Exit Function
+                                End Try
+                            End If
+
                             If str2file(fullpathfilename, fl_text, "UTF-8") = 1 Then
                                 '新規・上書き成功
                                 r = "0,SUCCESS" & vbCrLf
@@ -6523,6 +6627,18 @@ Class WebRemocon
                 Case "write_add" '追記
                     If filename.Length > 0 Then
                         If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
+                            'フォルダが存在しなければ作成
+                            If folder_exist(fullpath) < 1 And fullpath.IndexOf("..") < 0 Then
+                                Try
+                                    System.IO.Directory.CreateDirectory(fullpath)
+                                Catch ex As Exception
+                                    r = "2,フォルダ作成に失敗しました。" & ex.Message & vbCrLf
+                                    log1write("【エラー】フォルダ作成に失敗しました。" & fullpath)
+                                    Return r
+                                    Exit Function
+                                End Try
+                            End If
+
                             Try
                                 Dim sw As New System.IO.StreamWriter(fullpathfilename, True, System.Text.Encoding.GetEncoding("UTF-8"))
                                 '内容を追加モードで書き込む
@@ -6730,11 +6846,42 @@ Class WebRemocon
                 End If
             End If
 
-            Select Case ext
-                Case ".json", ".m3u", ".txt"
-                    'jsonとm3uとtxtだけ許可
-                    r = 1
-            End Select
+            'クライアント設定
+            If client_allowFiles IsNot Nothing Then
+                Dim f As String = Path.GetFileName(fullpathfilename)
+                Dim f_ext As String = Path.GetExtension(fullpathfilename)
+                For i As Integer = 0 To client_allowFiles.Length - 1
+                    If Trim(client_allowFiles(i)).Length > 0 Then
+                        If client_allowFiles(i).IndexOf("*.") = 0 Then
+                            '拡張子
+                            If f_ext = "." & client_allowFiles(i).Replace("*.", "") Then
+                                r = 1
+                                Exit For
+                            End If
+                        ElseIf client_allowFiles(i).LastIndexOf("\") = client_allowFiles(i).Length - 1 And client_allowFiles(i).Replace("\", "").Length > 0 Then
+                            '末尾\ならばフォルダ指定
+                            If fullpathfilename.IndexOf(client_allowFiles(i)) >= 0 Then
+                                r = 1
+                                Exit For
+                            End If
+                        ElseIf client_allowFiles(i) = f Then
+                            'ファイルそのもの
+                            r = 1
+                            Exit For
+                        ElseIf fullpathfilename.IndexOf(client_allowFiles(i)) = fullpathfilename.Length - client_allowFiles(i).Length And client_allowFiles(i).Replace("\", "").Length > 0 Then
+                            '末尾がパスも含めてのファイルそのもの
+                            r = 1
+                            Exit For
+                        End If
+                    End If
+                Next
+            Else
+                Select Case ext
+                    Case ".json", ".m3u", ".txt"
+                        'jsonとm3uとtxtだけ許可
+                        r = 1
+                End Select
+            End If
         End If
 
         If r = 0 Then
@@ -6841,8 +6988,8 @@ Class WebRemocon
     End Function
 
     '　本体はProcessManager.vbに
-    Public Function WI_GET_PROGRAM_NUM(ByVal num As Integer) As String
-        Return Me._procMan.WI_GET_PROGRAM_NUM(num)
+    Public Function WI_GET_PROGRAM_NUM(ByVal num As Integer, ByVal getnext As Integer) As String
+        Return Me._procMan.WI_GET_PROGRAM_NUM(num, getnext)
     End Function
 
     '倍速ファイル再生のために逆数の分数を求める
@@ -7009,25 +7156,40 @@ Class WebRemocon
                 Next
 
                 '.2ch.net以外ははじく
-                Dim chk As Integer = 0
+                Dim chk As Integer = -1
                 Dim sp As Integer = url.IndexOf("://")
-                If sp = 4 Or sp = 5 Then
-                    Dim domain_str As String = Instr_pickup(url, "://", "/", 0)
-                    Dim dsi As Integer = domain_str.IndexOf(".2ch.net")
-                    '更に厳密に接続先が.2ch.netであることを調べるようにした
-                    If domain_str.Length - ".2ch.net".Length = dsi Then
-                        If url.IndexOf("/read.cgi/") > 0 Or url.IndexOf("/subback.html") > 0 Or url.IndexOf("/bbsmenu.html") > 0 Then
-                            '正常
-                            chk = 1
+                '許可するドメインはallowDomains()に入っている
+                If client_allowDomains IsNot Nothing Then
+                    If sp = 4 Or sp = 5 Then
+                        Dim domain_str As String = Instr_pickup(url, "://", "/", 0) & "/"
+                        For i = 0 To client_allowDomains.Length - 1
+                            If client_allowDomains(i).IndexOf("/") < 0 Then
+                                'ドメイン指定
+                                If domain_str.IndexOf(client_allowDomains(i) & "/") > 0 Then
+                                    chk = i
+                                    Exit For
+                                End If
+                            Else
+                                'その他
+                                If url.IndexOf(client_allowDomains(i)) = 0 Then
+                                    chk = i
+                                    Exit For
+                                End If
+                            End If
+                        Next
+                        If chk >= 0 Then
+                            '2chの場合は更にチェック
+                            If domain_str.IndexOf(".2ch.net") > 0 Then
+                                If url.IndexOf("/read.cgi/") < 0 And url.IndexOf(".html") < 0 Then
+                                    chk = -1
+                                End If
+                            End If
                         End If
                     End If
                 End If
-                If chk = 0 Then
-                    '2ch以外
+                If chk < 0 Then
                     log1write("【警告】" & url & " へのアクセスを拒否しました")
-                End If
-
-                If chk = 1 Then
+                Else
                     log1write("HTMLを取得します。" & url)
                     Select Case method
                         Case 1

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.38
+TvRemoteViewer_VB v2.53
 
 
 ※1　	%NUM%は配信番号を表します
@@ -251,7 +251,7 @@ TvRemoteViewer_VB v2.38
 		返値：　存在すれば1、存在しなければ空白
 
 
-	WI_GET_PROGRAM_[TVROCK,EDCB,PTTIMER,TVMAID].html(?temp=1～3)
+	WI_GET_PROGRAM_[D,TVROCK,EDCB,PTTIMER,TVMAID].html(?temp=1～3)
 		TVROCK,EDCBから現在時刻の番組表を取得
 		オプション temp=1～3 を指定することにより次番組が存在すれば併せて取得
 		1:返値の各番組情報記述は従来通り
@@ -259,6 +259,8 @@ TvRemoteViewer_VB v2.38
 		3:返値の各番組情報末尾に現番組「,0」か次番組「,1」かを付加
 		4以上:番組終了までtemp分以内しか残っていない場合は現番組の詳細欄に次番組情報を表示（データは無指定と同じ）
 		結果：	放送局名,サービスID,ChSpace,開始時:分,終了時:分,番組タイトル,番組内容(次番組)
+		【2.53】tempに,区切りで1を与えると番組内容に続いてジャンル数値を付加するようにした
+				例：temp=3,1
 
 
 	WI_GET_CHAPTER.html?temp=録画ファイルフルパス
@@ -273,7 +275,9 @@ TvRemoteViewer_VB v2.38
 				2: webclient
 				3: HttpWebRequest
 		例：WI_GET_HTML.html?temp=2,UTF-8,,http://www.google.co.jp/
-		注意：2ch.netのread.cgi,subback.html,bbsmenu.html以外は弾くようになっています
+		注意：nicovideo.jpと2ch.netのread.cgi,subback.html,bbsmenu.html以外は弾くようになっています
+			  client*.iniの設置によりクライアントが個別に解除指定できるようになっています
+			  client_sample.iniを参考にしてください
 
 
 	WI_GET_THUMBNAIL.html?temp=[作成ソース],[秒数指定],[幅],[縦]

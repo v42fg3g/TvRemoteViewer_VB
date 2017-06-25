@@ -51,6 +51,28 @@ Module モジュール_番組表
     'EDCBの管理するチャンネルの取得方法
     Public EDCB_GetCh_method As Integer = 0 '1=旧方式
 
+    Public pcache() As TVprogram_cache_structure
+    Public Structure TVprogram_cache_structure
+        Public get_utime As Integer
+        Public min_utime As Integer
+        Public max_utime As Integer
+        Public str As String
+        Public value() As TVprogramstructure
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            'indexof用
+            Dim pF As String = CType(obj, String) '検索内容を取得
+            If pF = "" Then '空白である場合
+                Return False '対象外
+            Else
+                If Me.str = pF Then '放送局名と一致するか
+                    Return True '一致した
+                Else
+                    Return False '一致しない
+                End If
+            End If
+        End Function
+    End Structure
+
     Public TvProgram_list() As TVprogramstructure
     Public Structure TVprogramstructure
         Implements IComparable
@@ -62,6 +84,7 @@ Module モジュール_番組表
         Public programContent As String
         Public sid As Integer
         Public tsid As Integer
+        Public genre As Integer '番組ジャンル　nibble1 * 256 + nibble2
         Public nextFlag As Integer '次の番組なら1
         Public Function CompareTo(ByVal obj As Object) As Integer Implements IComparable.CompareTo
             '並べ替え用 sid,nextFlag
@@ -491,8 +514,17 @@ Module モジュール_番組表
     End Function
 
     '地域番号から番組表を取得
-    Public Function get_TVprogram_now(ByVal regionID As Integer, Optional ByVal getnext As Integer = 0) As Object
+    Public Function get_TVprogram_now(ByVal regionID As Integer, ByVal getnext As Integer) As Object
         Dim r() As TVprogramstructure = Nothing
+
+        '同一分のものはキャッシュから返す
+        r = pcache_search(regionID, getnext)
+        If r IsNot Nothing Then
+            log1write("番組情報取得：キャッシュから取得しました。" & region2softname(regionID))
+            Return r
+            Exit Function
+        End If
+
         If regionID = 991 Or (TvProgram_Force_NoRec And regionID = 999) = 1 Then
             'ダミー
             r = get_NoRec_program()
@@ -512,143 +544,10 @@ Module モジュール_番組表
             'r = get_EDCB_program_old(getnext) '旧方式
         ElseIf regionID = 999 Then
             'TvRock
-            Try
-                If TvProgram_tvrock_tuner >= 0 Then
-                    'チャンネル取得前にチューナーを指定する
-                    log1write("TVROCKのチューナーを" & TvProgram_tvrock_tuner.ToString & "番にセットしています")
-                    Dim wc As WebClient = New WebClient()
-                    Dim st As Stream = wc.OpenRead(TvProgram_tvrock_url & "?md=2&d=" & TvProgram_tvrock_tuner.ToString)
-                    Dim enc As Encoding = Encoding.GetEncoding("Shift_JIS")
-                    Dim sr As StreamReader = New StreamReader(st, enc)
-                    Dim html As String = sr.ReadToEnd()
-                    If html.IndexOf(")"">チューナー") > 0 And html.IndexOf(">録画<") > 0 Then
-                        log1write("TVROCKのチューナーを" & TvProgram_tvrock_tuner.ToString & "番にセットしました")
-                    ElseIf TvProgram_tvrock_tuner = 0 And html.IndexOf(")"">チューナー") > 0 Then
-                        log1write("TVROCKのチューナー指定をリセットしました")
-                    Else
-                        log1write("【エラー】TVROCKのチューナーをセット出来ませんでした。チューナー番号を確認してください")
-                    End If
-                    sr.Close()
-                    st.Close()
-                End If
-
-                If TvProgram_tvrock_url.Length > 0 Then
-                    Dim wc As WebClient = New WebClient()
-                    Dim st As Stream = wc.OpenRead(TvProgram_tvrock_url)
-                    Dim enc As Encoding = Encoding.GetEncoding("Shift_JIS")
-                    Dim sr As StreamReader = New StreamReader(st, enc)
-                    Dim html As String = sr.ReadToEnd()
-
-                    '<small>ＮＨＫＢＳ１ <small><i> のようになっている
-                    Dim sp2 As Integer = html.IndexOf(" <small><i>")
-                    Dim sp As Integer = html.LastIndexOf("><small>", sp2 + 1)
-                    While sp > 0
-                        Dim j As Integer = 0
-                        If r Is Nothing Then
-                            j = 0
-                        Else
-                            j = r.Length
-                        End If
-                        ReDim Preserve r(j)
-                        r(j).stationDispName = Instr_pickup(html, "<small>", " <small>", sp)
-                        If r(j).stationDispName.LastIndexOf(")""><small>") > 0 Then
-                            '番組表データが無いチャンネルが混じっていることがある
-                            r(j).stationDispName = r(j).stationDispName.Substring(r(j).stationDispName.IndexOf(")""><small>") + ")""><small>".Length)
-                        End If
-                        r(j).stationDispName = Trim(r(j).stationDispName)
-                        r(j).stationDispName = Trim(delete_tag(r(j).stationDispName))
-                        r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<small><i>", "～", sp)))
-                        r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
-                        r(j).programTitle = Trim(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
-                        Dim sp3 As Integer = html.IndexOf("</b></small>", sp)
-                        sp3 = html.IndexOf("<font color=", sp3)
-                        r(j).programContent = Trim(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
-
-                        'サービスIDを取得
-                        sp3 = html.IndexOf("javascript:reserv(", sp3)
-                        r(j).sid = Val(Instr_pickup(html, ",", ",", sp3))
-
-                        '次の番組を取得
-                        If getnext > 0 Then
-                            sp = html.IndexOf("><small><i>", sp2 + 1)
-                            Dim se As Integer = html.IndexOf(" <small><i>", sp2 + 1)
-                            If sp > 0 And sp < se Then
-                                '次の番組があれば
-                                j = r.Length
-                                ReDim Preserve r(j)
-                                r(j).stationDispName = r(j - 1).stationDispName
-                                r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<small><i>", "～", sp)))
-                                r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
-                                r(j).programTitle = Trim(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
-                                r(j).programContent = ""
-                                r(j).sid = r(j - 1).sid
-
-                                '次の番組であることを記録
-                                r(j).nextFlag = 1
-                            End If
-                        End If
-
-                        sp2 = html.IndexOf(" <small><i>", sp2 + 1)
-                        sp = html.LastIndexOf("><small>", sp2 + 1)
-                    End While
-
-                    sr.Close()
-                    st.Close()
-
-                End If
-            Catch ex As Exception
-                log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)
-            End Try
+            r = get_TvRock_program(getnext)
         ElseIf regionID > 0 Then
             'ネットから地域の番組表を取得
-            Try
-                Dim url As String = "http://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=10&stationAreaId=" & regionID.ToString
-
-                'ネットから地域の番組表を取得
-                Dim wc As WebClient = New WebClient()
-                Dim st As Stream = wc.OpenRead(url)
-                Dim enc As Encoding = Encoding.GetEncoding("UTF-8")
-                Dim sr As StreamReader = New StreamReader(st, enc)
-                Dim html As String = sr.ReadToEnd()
-
-                Dim hosokyoku As String = ""
-                Dim programtitle As String = ""
-                Dim jikoku1 As String = ""
-                Dim jikoku2 As String = ""
-                Dim sp As Integer = html.IndexOf("</channel>", 0)
-                sp = html.IndexOf("<title>", sp + 1)
-                While sp >= 0
-                    programtitle = Instr_pickup(html, "<title>", "</title>", sp)
-                    Dim dn As Integer = html.IndexOf("<description>", sp)
-                    hosokyoku = Instr_pickup(html, "[", "(", dn)
-                    jikoku1 = "1970/01/01 " & Instr_pickup(html, " ", "～", dn)
-                    jikoku2 = "1970/01/01 " & Instr_pickup(html, "～", " [", dn)
-
-                    If hosokyoku.Length > 0 Then
-                        Dim j As Integer = 0
-                        If r Is Nothing Then
-                            j = 0
-                        Else
-                            j = r.Length
-                        End If
-                        ReDim Preserve r(j)
-                        r(j).stationDispName = hosokyoku
-                        r(j).startDateTime = jikoku1
-                        r(j).endDateTime = jikoku2
-                        r(j).programTitle = programtitle
-                        'r(j).programSubTitle = CType(program("programSubTitle"), String) '空白
-                        r(j).programContent = "" '空白
-                        'r(j).programxplanation = CType(program("programExplanation"), String) '空白
-                    End If
-
-                    sp = html.IndexOf("<title>", sp + 1)
-                End While
-
-                sr.Close()
-                st.Close()
-            Catch ex As Exception
-                log1write("インターネットからの番組表取得に失敗しました。" & ex.Message)
-            End Try
+            r = get_D_program(regionID, getnext)
         End If
 
         '終了までgetnext分以内なら詳細に次の番組情報を転写
@@ -700,12 +599,255 @@ Module モジュール_番組表
                         k += 1
                     End If
                 Next
+                If r IsNot Nothing Then
+                    pcache_set(regionID, r2, getnext)
+                End If
+                log1write("番組情報取得：取得作業を行いました。" & region2softname(regionID))
                 Return r2
             End If
         End If
 
+        If r IsNot Nothing Then
+            pcache_set(regionID, r, getnext)
+        End If
+        log1write("番組情報取得：取得作業を行いました。" & region2softname(regionID))
+
         Return r
     End Function
+
+    Private Function get_D_program(ByVal regionID As Integer, ByVal getnext As Integer) As TVprogramstructure()
+        Dim r() As TVprogramstructure = Nothing
+        Try
+            Dim url As String = "http://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=10&stationAreaId=" & regionID.ToString
+
+            'ネットから地域の番組表を取得
+            Dim html As String = get_html_by_webclient(url, "UTF-8")
+
+            Dim hosokyoku As String = ""
+            Dim programtitle As String = ""
+            Dim jikoku1 As String = ""
+            Dim jikoku2 As String = ""
+            Dim sp As Integer = html.IndexOf("</channel>", 0)
+            sp = html.IndexOf("<title>", sp + 1)
+            While sp >= 0
+                programtitle = Instr_pickup(html, "<title>", "</title>", sp)
+                Dim dn As Integer = html.IndexOf("<description>", sp)
+                hosokyoku = Instr_pickup(html, "[", "(", dn)
+                jikoku1 = "1970/01/01 " & Instr_pickup(html, " ", "～", dn)
+                jikoku2 = "1970/01/01 " & Instr_pickup(html, "～", " [", dn)
+
+                If hosokyoku.Length > 0 Then
+                    Dim j As Integer = 0
+                    If r Is Nothing Then
+                        j = 0
+                    Else
+                        j = r.Length
+                    End If
+                    ReDim Preserve r(j)
+                    r(j).stationDispName = hosokyoku
+                    r(j).startDateTime = jikoku1
+                    r(j).endDateTime = jikoku2
+                    r(j).programTitle = programtitle
+                    'r(j).programSubTitle = CType(program("programSubTitle"), String) '空白
+                    r(j).programContent = "" '空白
+                    'r(j).programxplanation = CType(program("programExplanation"), String) '空白
+                    r(j).genre = -1
+                End If
+
+                sp = html.IndexOf("<title>", sp + 1)
+            End While
+        Catch ex As Exception
+            log1write("インターネットからの番組表取得に失敗しました。" & ex.Message)
+        End Try
+        Return r
+    End Function
+
+    Private Function get_TvRock_program(ByVal getnext As Integer) As TVprogramstructure()
+        Dim r() As TVprogramstructure = Nothing
+        Try
+            If TvProgram_tvrock_tuner >= 0 Then
+                'チャンネル取得前にチューナーを指定する
+                log1write("TVROCKのチューナーを" & TvProgram_tvrock_tuner.ToString & "番にセットしています")
+                Dim html As String = get_html_by_webclient(TvProgram_tvrock_url & "?md=2&d=" & TvProgram_tvrock_tuner.ToString, "Shift_JIS")
+                If html.IndexOf(")"">チューナー") > 0 And html.IndexOf(">録画<") > 0 Then
+                    log1write("TVROCKのチューナーを" & TvProgram_tvrock_tuner.ToString & "番にセットしました")
+                ElseIf TvProgram_tvrock_tuner = 0 And html.IndexOf(")"">チューナー") > 0 Then
+                    log1write("TVROCKのチューナー指定をリセットしました")
+                Else
+                    log1write("【エラー】TVROCKのチューナーをセット出来ませんでした。チューナー番号を確認してください")
+                End If
+            End If
+
+            If TvProgram_tvrock_url.Length > 0 Then
+                Dim html As String = get_html_by_webclient(TvProgram_tvrock_url, "Shift_JIS")
+
+                '<small>ＮＨＫＢＳ１ <small><i> のようになっている
+                Dim sp2 As Integer = html.IndexOf(" <small><i>")
+                Dim sp As Integer = html.LastIndexOf("><small>", sp2 + 1)
+                While sp > 0
+                    Dim j As Integer = 0
+                    If r Is Nothing Then
+                        j = 0
+                    Else
+                        j = r.Length
+                    End If
+                    ReDim Preserve r(j)
+                    r(j).stationDispName = Instr_pickup(html, "<small>", " <small>", sp)
+                    If r(j).stationDispName.LastIndexOf(")""><small>") > 0 Then
+                        '番組表データが無いチャンネルが混じっていることがある
+                        r(j).stationDispName = r(j).stationDispName.Substring(r(j).stationDispName.IndexOf(")""><small>") + ")""><small>".Length)
+                    End If
+                    r(j).stationDispName = Trim(r(j).stationDispName)
+                    r(j).stationDispName = Trim(delete_tag(r(j).stationDispName))
+                    r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<small><i>", "～", sp)))
+                    r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
+                    r(j).programTitle = Trim(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
+                    Dim sp3 As Integer = html.IndexOf("</b></small>", sp)
+                    sp3 = html.IndexOf("<font color=", sp3)
+                    r(j).programContent = Trim(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
+                    r(j).genre = -1
+
+                    'サービスIDを取得
+                    sp3 = html.IndexOf("javascript:reserv(", sp3)
+                    r(j).sid = Val(Instr_pickup(html, ",", ",", sp3))
+
+                    '次の番組を取得
+                    If getnext > 0 Then
+                        sp = html.IndexOf("><small><i>", sp2 + 1)
+                        Dim se As Integer = html.IndexOf(" <small><i>", sp2 + 1)
+                        If sp > 0 And sp < se Then
+                            '次の番組があれば
+                            j = r.Length
+                            ReDim Preserve r(j)
+                            r(j).stationDispName = r(j - 1).stationDispName
+                            r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<small><i>", "～", sp)))
+                            r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
+                            r(j).programTitle = Trim(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
+                            r(j).programContent = ""
+                            r(j).sid = r(j - 1).sid
+                            r(j).genre = -1
+
+                            '次の番組であることを記録
+                            r(j).nextFlag = 1
+                        End If
+                    End If
+
+                    sp2 = html.IndexOf(" <small><i>", sp2 + 1)
+                    sp = html.LastIndexOf("><small>", sp2 + 1)
+                End While
+            End If
+        Catch ex As Exception
+            log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)
+        End Try
+        Return r
+    End Function
+
+    Private Function region2softname(ByVal regionID As Integer) As String
+        Dim r As String = ""
+
+        Select Case regionID
+            Case 991
+                r = "ダミー"
+            Case 996
+                r = "TVMaid"
+            Case 997
+                r = "ptTimer"
+            Case 998
+                r = "EDCB"
+            Case 999
+                r = "TvRock"
+            Case Else
+                r = "地デジ(" & regionID & ")"
+        End Select
+
+        Return r
+    End Function
+
+    'キャッシュから
+    Public Function pcache_search(ByVal str As String, ByVal getnext As Integer) As TVprogramstructure()
+        str = str & "-" & getnext.ToString 'templateも含めた識別
+        Dim i2 As Integer = -1
+        If pcache IsNot Nothing Then
+            i2 = Array.IndexOf(pcache, str)
+        End If
+        If i2 >= 0 Then
+            Dim chk As Integer = 0
+            If Minute(Now()) = Minute(unix2time(pcache(i2).get_utime)) Then
+                '同じ分ならキャッシュを利用
+                Return pcache(i2).value
+                Exit Function
+            End If
+
+            '波風の無い時間帯かどうか
+            If getnext < 4 Then
+                getnext = 0
+            End If
+            Dim ut As Integer = time2unix(Now())
+            'Next調査期間4分はキャッシュを使用しない
+            If pcache(i2).min_utime <= ut And ut < (pcache(i2).max_utime - getnext) Then
+                '最小時間帯をはみ出してなければキャッシュを利用
+                Return pcache(i2).value
+                Exit Function
+            ElseIf (pcache(i2).max_utime - getnext + 3) < ut And ut < pcache(i2).max_utime Then
+                'Nextを調べる時間帯～次の番組までの短い間（NEXT期間4分間は実際に調べる）
+                Return pcache(i2).value
+                Exit Function
+            End If
+        End If
+        Return Nothing
+    End Function
+
+    'キャッシュに格納
+    Public Sub pcache_set(ByVal str As String, ByVal value As TVprogramstructure(), ByVal getnext As Integer)
+        str = str & "-" & getnext.ToString 'templateも含めた識別
+        Dim pindex As Integer = -1
+        Dim k As Integer = 0
+        If pcache IsNot Nothing Then
+            pindex = Array.IndexOf(pcache, str)
+            k = pcache.Length
+        End If
+        If pindex < 0 Then
+            '同条件が見つからない場合
+            ReDim Preserve pcache(k)
+            pindex = k
+        End If
+        '一番遅い開始時間と一番早い終了時間を求める
+        Dim p_start As Integer = 0
+        Dim p_end As Integer = C_INTMAX - (3600 * 9)
+        Dim t As DateTime = Now()
+        If value IsNot Nothing Then
+            For j As Integer = 0 To value.Length - 1
+                If value(j).nextFlag = 0 Then
+                    Try
+                        Dim s1 As DateTime = CDate(t.ToString("yyyy/MM/dd ") & Trim(value(j).startDateTime.Substring(11)))
+                        Dim s2 As DateTime = CDate(t.ToString("yyyy/MM/dd ") & Trim(value(j).endDateTime.Substring(11)))
+                        If s1 > s2 Then
+                            If Hour(t) < 12 Then
+                                s1 = DateAdd(DateInterval.Day, -1, s1)
+                            Else
+                                s2 = DateAdd(DateInterval.Day, 1, s2)
+                            End If
+                        End If
+                        Dim u1 As Integer = time2unix(s1)
+                        Dim u2 As Integer = time2unix(s2)
+                        If u1 > p_start Then
+                            p_start = u1
+                        End If
+                        If u2 < p_end Then
+                            p_end = u2
+                        End If
+                    Catch ex As Exception
+                    End Try
+                End If
+            Next
+        End If
+        '記録
+        pcache(pindex).get_utime = time2unix(Now())
+        pcache(pindex).min_utime = p_start
+        pcache(pindex).max_utime = p_end
+        pcache(pindex).str = str
+        pcache(pindex).value = value
+    End Sub
 
     '配列から要素を削除　■未使用
     Public Sub title_ArrayRemove(ByRef TargetArray As TVprogramstructure(), ByVal deleteIndex As Integer)
@@ -918,7 +1060,7 @@ Module モジュール_番組表
     End Function
 
     'WEBインターフェース用　データを整形して返す
-    Public Function program_translate4WI(ByVal a As Integer, Optional ByVal getnext As Integer = 0) As String
+    Public Function program_translate4WI(ByVal a As Integer, ByVal getnext As Integer, ByVal template As Integer) As String
         'a=0 通常のインターネットから取得　 a=998 EDCBから取得　 a=999 tvrockから取得
         Dim chkstr As String = ":" '重複防止用
         Dim html_all As String = ""
@@ -1042,6 +1184,9 @@ Module モジュール_番組表
                                             sid = Val(Trim(d(2)))
                                             title = escape_program_str(p.programTitle)
                                             html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & title & "," & escape_program_str(p.programContent)
+                                            If template = 1 Then
+                                                html &= "," & Val(p.genre)
+                                            End If
                                             If getnext = 3 Then
                                                 html &= "," & p.nextFlag
                                             End If
@@ -1124,7 +1269,7 @@ Module モジュール_番組表
     End Function
 
     '番組表で使えない文字をエスケープ
-    Public Function escape_program_str(ByVal s As String) As String
+    Public Function escape_program_str(ByVal s As String, Optional ByVal m As Integer = 0) As String
         Dim r As String = ""
         '念のため
         s = s.Replace("&lt;", "＜")
@@ -1136,9 +1281,19 @@ Module モジュール_番組表
         s = s.Replace(">", "＞")
         s = s.Replace("&", "＆")
         '改行をエスケープ
-        s = s.Replace(vbCrLf, " ")
-        s = s.Replace(vbLf, " ")
-        s = s.Replace(vbCr, " ")
+        '改行をエスケープ
+        Select Case m
+            Case 0
+                '従来通り
+                s = s.Replace(vbCrLf, " ")
+                s = s.Replace(vbLf, " ")
+                s = s.Replace(vbCr, " ")
+                s = s.Replace("\n", " ")
+            Case 1
+                s = s.Replace(vbCrLf, "\n")
+                s = s.Replace(vbLf, "\n")
+                s = s.Replace(vbCr, "\n")
+        End Select
         'trim
         s = Trim(s)
         Return s
@@ -1522,9 +1677,9 @@ Module モジュール_番組表
                 Dim ut As Integer = time2unix(nowtime) '現在のunixtime
 
                 If nextsec = 0 Then
-                    msql = """SELECT sid, eid, stime, length, title, texts FROM t_event WHERE stime <= " & ut & " AND (stime + length) > " & ut & " ORDER BY sid"""
+                    msql = """SELECT sid, eid, stime, length, title, texts, gen1 FROM t_event WHERE stime <= " & ut & " AND (stime + length) > " & ut & " ORDER BY sid"""
                 Else
-                    msql = """SELECT sid, eid, stime, length, title, texts FROM t_event WHERE (stime <= " & ut & " AND (stime + length) > " & ut & ") OR (stime <= " & ut + nextsec & " AND stime > " & ut & ") ORDER BY sid,stime"""
+                    msql = """SELECT sid, eid, stime, length, title, texts, gen1 FROM t_event WHERE (stime <= " & ut & " AND (stime + length) > " & ut & ") OR (stime <= " & ut + nextsec & " AND stime > " & ut & ") ORDER BY sid,stime"""
                 End If
                 psi.Arguments = "/c sqlite3.exe """ & db_name & """ -separator " & "//_//" & " " & msql
 
@@ -1624,6 +1779,7 @@ Module モジュール_番組表
                                                 r(i).endDateTime = t2s
                                                 r(i).programTitle = title
                                                 r(i).programContent = texts
+                                                r(i).genre = -1 'Val(youso(6)) '内容がいまいち掴めないのでスルー 0=ニュース 112=アニメ
                                                 '次番組かどうかチェック
                                                 If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
                                                     '2回目の場合は次番組であろう
@@ -1714,6 +1870,7 @@ Module モジュール_番組表
                 r(j).programContent = ""
                 r(j).sid = ch_list(i).sid
                 r(j).tsid = ch_list(i).tsid
+                r(j).genre = -1
             Next
         End If
         Return r
@@ -1854,6 +2011,9 @@ Module モジュール_番組表
                                                     End If
                                                     r(j).sid = ch_list(i).sid
                                                     r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+                                                    '番組ジャンル
+                                                    Dim jnr As CtrlCmdCLI.Def.EpgContentInfo = info.eventList.Item(k).ContentInfo
+                                                    r(j).genre = jnr.nibbleList(0).content_nibble_level_1 * 256 + jnr.nibbleList(0).content_nibble_level_2
 
                                                     '次番組を探すための開始時間
                                                     t2next = t2
@@ -1910,6 +2070,9 @@ Module モジュール_番組表
                                                         End If
                                                         r(j).sid = ch_list(i).sid
                                                         r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+                                                        '番組ジャンル
+                                                        Dim gnr As CtrlCmdCLI.Def.EpgContentInfo = info.eventList.Item(k).ContentInfo
+                                                        r(j).genre = gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2
 
                                                         '次の番組であることを記録
                                                         r(j).nextFlag = 1
@@ -1936,6 +2099,7 @@ Module モジュール_番組表
                                         r(j).programContent = ""
                                         r(j).sid = ch_list(i).sid
                                         r(j).tsid = ch_list(i).tsid
+                                        r(j).genre = -1
                                     End If
                                 ElseIf chk_j = 2 Then
                                     'ダミー
@@ -1953,6 +2117,7 @@ Module モジュール_番組表
                                     r(j).programContent = ""
                                     r(j).sid = ch_list(i).sid
                                     r(j).tsid = ch_list(i).tsid
+                                    r(j).genre = -1
                                 End If
                             End If
                         Next
@@ -2109,6 +2274,7 @@ Module モジュール_番組表
                                         'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
                                         r(j).sid = ch_list(i).sid
                                         r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+                                        r(j).genre = -1
 
                                         chk = 1
                                         If getnext > 0 Then
@@ -2132,6 +2298,7 @@ Module モジュール_番組表
                                                 'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
                                                 r(j).sid = ch_list(i).sid
                                                 r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+                                                r(j).genre = -1
 
                                                 '次の番組であることを記録
                                                 r(j).nextFlag = 1
@@ -2162,6 +2329,7 @@ Module モジュール_番組表
                                 r(j).programContent = ""
                                 r(j).sid = ch_list(i).sid
                                 r(j).tsid = ch_list(i).tsid
+                                r(j).genre = -1
                             End If
 
                             sr.Close()
@@ -2183,6 +2351,7 @@ Module モジュール_番組表
                             r(j).programContent = ""
                             r(j).sid = ch_list(i).sid
                             r(j).tsid = ch_list(i).tsid
+                            r(j).genre = -1
                         End If
                     Next
                 End If
@@ -2217,9 +2386,9 @@ Module モジュール_番組表
                 Dim utn_b As Long = DateTime.Parse(nowtime_n).ToBinary
                 Dim url As String = Tvmaid_url & "/webapi?api=GetTable&sql="
                 If nextsec = 0 Then
-                    url &= "SELECT fsid,start,end,duration,title,desc from event WHERE start <= " & ut_b & " AND end > " & ut_b & " ORDER BY fsid"
+                    url &= "SELECT fsid,start,end,duration,title,desc,genre,subgenre from event WHERE start <= " & ut_b & " AND end > " & ut_b & " ORDER BY fsid"
                 Else
-                    url &= "SELECT fsid,start,end,duration,title,desc from event WHERE (start <= " & ut_b & " AND end > " & ut_b & ") OR (start <= " & utn_b & " AND start > " & ut_b & ") ORDER BY fsid,start"
+                    url &= "SELECT fsid,start,end,duration,title,desce,genre,subgenre from event WHERE (start <= " & ut_b & " AND end > " & ut_b & ") OR (start <= " & utn_b & " AND start > " & ut_b & ") ORDER BY fsid,start"
                 End If
                 url = url.Replace("//webapi?api", "/webapi?api")
 
@@ -2290,6 +2459,8 @@ Module モジュール_番組表
                             Dim deltastr As String = deltastr_time & ":" & deltastr_minute & ":" & deltastr_sec
                             '内容
                             Dim texts As String = Trim(tr.Data1(i)(5))
+                            'ジャンル
+                            Dim genre As Integer = Val(tr.Data1(i)(6)) * 256 + Val(tr.Data1(i)(7))
 
                             '放送局名
                             Dim station As String
@@ -2326,6 +2497,7 @@ Module モジュール_番組表
                                     r(i).endDateTime = t2s
                                     r(i).programTitle = title
                                     r(i).programContent = texts
+                                    r(i).genre = genre
                                     '次番組かどうかチェック
                                     If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
                                         '2回目の場合は次番組であろう
@@ -2380,9 +2552,9 @@ Module モジュール_番組表
                 Dim utn_b As Long = DateTime.Parse(nowtime_n).ToBinary
                 Dim url As String = Tvmaid_url & "/webapi/GetTable?sql="
                 If nextsec = 0 Then
-                    url &= "SELECT fsid,start,end,duration,title,desc from event WHERE start <= " & ut_b & " AND end > " & ut_b & " ORDER BY fsid"
+                    url &= "SELECT fsid,start,end,duration,title,desc,genre,subgenre from event WHERE start <= " & ut_b & " AND end > " & ut_b & " ORDER BY fsid"
                 Else
-                    url &= "SELECT fsid,start,end,duration,title,desc from event WHERE (start <= " & ut_b & " AND end > " & ut_b & ") OR (start <= " & utn_b & " AND start > " & ut_b & ") ORDER BY fsid,start"
+                    url &= "SELECT fsid,start,end,duration,title,desc,genre,subgenre from event WHERE (start <= " & ut_b & " AND end > " & ut_b & ") OR (start <= " & utn_b & " AND start > " & ut_b & ") ORDER BY fsid,start"
                 End If
                 url = url.Replace("//webapi/", "/webapi/")
 
@@ -2454,6 +2626,8 @@ Module モジュール_番組表
                             '内容
                             Dim texts As String = Trim(tr.data1(i)(5))
                             '改行（\u000d\u000a）が入ることがあるのかな・・
+                            'ジャンル
+                            Dim genre As Integer = Val(tr.data1(i)(6)) * 256 + Val(tr.data1(i)(7))
 
                             '放送局名
                             Dim station As String
@@ -2490,6 +2664,7 @@ Module モジュール_番組表
                                     r(i).endDateTime = t2s
                                     r(i).programTitle = title
                                     r(i).programContent = texts
+                                    r(i).genre = genre
                                     '次番組かどうかチェック
                                     If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
                                         '2回目の場合は次番組であろう

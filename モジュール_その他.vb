@@ -2,7 +2,7 @@
 
 Module モジュール_その他
     'バージョン
-    Public TvRemoteViewer_VB_version As Double = 2.52
+    Public TvRemoteViewer_VB_version As Double = 2.53
     Public TvRemoteViewer_VB_notrecommend_version As Double = 0
     Public TvRemoteViewer_VB_recommend_version As Double = 0
     Public TvRemoteViewer_VB_version_check_datetime As DateTime = CDate("2000/01/01") '何分何秒にチェックするか　起動時に決定
@@ -26,6 +26,10 @@ Module モジュール_その他
             log1 = "　" & vbCrLf & "　" & vbCrLf & log1
         End If
     End Sub
+
+    'クライアント設定
+    Public client_allowDomains() As String 'アクセス許可するドメイン
+    Public client_allowFiles() As String 'アクセス許可するファイル
 
     'TvRemoteFilesスタイル
     Public TVRemoteFilesNEW As Integer = 0 '1なら新しい画面推移方法

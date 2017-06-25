@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.52
+TvRemoteViewer_VB v2.53
 
 
 
@@ -726,6 +726,9 @@ TvRemoteViewer_VB v2.52
 			iniでmplayer.exeへのパスを指定できるようにした（無指定は従来通りプログラムフォルダを探す）
 	2.52	ISO再生用デバッグ機能追加（フォーム上のDebugチェックボックス）
 			HLS_option_NVEnc_file.txtを修正（「-m hls_list_size:」を0に修正）
+	2.53	将来的に外部プログラムへ提供できるようWI番組表にジャンル記入等の機能追加
+			クライアントによるnicovideo.jpへのアクセス許可を追加
+			番組表データをキャッシュすることによるページ表示速度の向上
 
 
 

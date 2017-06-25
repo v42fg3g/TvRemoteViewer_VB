@@ -6,13 +6,21 @@ Imports System.IO
 Imports System.Runtime.InteropServices
 
 Module モジュール_GetHTTP
-    Public Function get_html_by_WebBrowser(ByVal url As String, Optional ByVal enc_str As String = "UTF-8", Optional ByVal user_agent As String = "") As String
+    <DllImport("urlmon.dll", CharSet:=CharSet.Ansi)> _
+    Private Function UrlMkSetSessionOption(ByVal intOption As Integer, ByVal str As String, ByVal intLength As Integer, ByVal intReserved As Integer) As Integer
+    End Function
+    Private Const URLMON_OPTION_USERAGENT As Integer = &H10000001
+
+    Public Function get_html_by_WebBrowser(ByVal url As String, Optional ByVal enc_str As String = "UTF-8", Optional ByVal user_agent As String = "", Optional ByVal inner_html As Integer = 0) As String
         Dim r As String = ""
 
         Try
             Dim WebBrowser1 As New WebBrowser '←！！！ここで即座にエラー！！！
             'エラー内容　'System.Threading.ThreadStateException' の初回例外が System.Windows.Forms.dll で発生しました。
-            WebBrowser1.ScriptErrorsSuppressed = False 'スクリプトエラー非表示
+            WebBrowser1.ScriptErrorsSuppressed = True 'スクリプトエラー非表示
+            If user_agent.Length > 0 Then
+                UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, user_agent, user_agent.Length, 0)
+            End If
             WebBrowser1.Navigate(url)
 
             '読み込み完了まで待つ
@@ -23,7 +31,11 @@ Module モジュール_GetHTTP
                 Application.DoEvents()
             Loop While WebBrowser1.IsBusy Or WebBrowser1.ReadyState <> WebBrowserReadyState.Complete
 
-            r = WebBrowser1.Document.Body.OuterHtml
+            If inner_html = 1 Then
+                r = WebBrowser1.Document.Body.InnerHtml
+            Else
+                r = WebBrowser1.Document.Body.OuterHtml
+            End If
 
             WebBrowser1.Dispose()
         Catch ex As Exception
@@ -44,6 +56,8 @@ Module モジュール_GetHTTP
             Dim enc As Encoding = Encoding.GetEncoding(enc_str)
             Dim sr As StreamReader = New StreamReader(st, enc)
             r = sr.ReadToEnd()
+            sr.Close()
+            st.Close()
             wc.Dispose()
         Catch ex As Exception
             log1write("【エラー】HTML取得に失敗しました[2]。" & ex.Message)
