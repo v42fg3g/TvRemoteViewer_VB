@@ -1659,6 +1659,11 @@ Class WebRemocon
                             Case "VLC_ISO_option"
                                 VLC_ISO_option = url_text
                                 log1write("VLC_ISO_option:" & VLC_ISO_option)
+                            Case "NoUseProgramCache"
+                                NoUseProgramCache = Val(youso(1).ToString)
+                                If NoUseProgramCache = 1 Then
+                                    log1write("【システム】番組表のキャッシュを作成しないよう設定しました")
+                                End If
 
 
 
@@ -5010,8 +5015,6 @@ Class WebRemocon
                                     If d.Length = 2 Then
                                         template = Val(Trim(d(1)))
                                     End If
-                                    Debug.Print("getnext=" & getnext)
-                                    Debug.Print("template=" & template)
                                     Select Case WI_cmd
                                         Case "WI_GET_PROGRAM_D"
                                             '地デジ番組表取得
@@ -5590,38 +5593,48 @@ Class WebRemocon
                                     s = s.Replace("%VIDEOFROMDATE%", VIDEOFROMDATE.ToString("yyyy/MM/dd"))
 
                                     '地デジ番組表（通常のネットから取得）
-                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
-                                        s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
-                                    Else
-                                        s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
+                                    If s.IndexOf("%TVPROGRAM-D%") >= 0 Then
+                                        If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
+                                            s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, Me._NHK_dual_mono_mode))
+                                        Else
+                                            s = s.Replace("%TVPROGRAM-D%", make_TVprogram_html_now(0, -1))
+                                        End If
                                     End If
 
                                     'TvRock番組表
-                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
-                                        s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
-                                    Else
-                                        s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
+                                    If s.IndexOf("%TVPROGRAM-TVROCK%") >= 0 Then
+                                        If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
+                                            s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, Me._NHK_dual_mono_mode))
+                                        Else
+                                            s = s.Replace("%TVPROGRAM-TVROCK%", make_TVprogram_html_now(999, -1))
+                                        End If
                                     End If
 
                                     'EDCB番組表
-                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
-                                        s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
-                                    Else
-                                        s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
+                                    If s.IndexOf("%TVPROGRAM-EDCB%") >= 0 Then
+                                        If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
+                                            s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, Me._NHK_dual_mono_mode))
+                                        Else
+                                            s = s.Replace("%TVPROGRAM-EDCB%", make_TVprogram_html_now(998, -1))
+                                        End If
                                     End If
 
                                     'ptTimer番組表
-                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
-                                        s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, Me._NHK_dual_mono_mode))
-                                    Else
-                                        s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, -1))
+                                    If s.IndexOf("%TVPROGRAM-PTTIMER%") >= 0 Then
+                                        If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
+                                            s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, Me._NHK_dual_mono_mode))
+                                        Else
+                                            s = s.Replace("%TVPROGRAM-PTTIMER%", make_TVprogram_html_now(997, -1))
+                                        End If
                                     End If
 
                                     'Tvmaid番組表
-                                    If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
-                                        s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, Me._NHK_dual_mono_mode))
-                                    Else
-                                        s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, -1))
+                                    If s.IndexOf("%TVPROGRAM-TVMAID%") >= 0 Then
+                                        If isMatch_HLS(Me._hlsApp, "ffmpeg|qsvenc|nvenc") = 1 Then
+                                            s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, Me._NHK_dual_mono_mode))
+                                        Else
+                                            s = s.Replace("%TVPROGRAM-TVMAID%", make_TVprogram_html_now(996, -1))
+                                        End If
                                     End If
 
                                     'ニコニコ実況用jkチャンネル変換

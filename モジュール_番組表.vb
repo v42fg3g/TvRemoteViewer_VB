@@ -51,6 +51,7 @@ Module モジュール_番組表
     'EDCBの管理するチャンネルの取得方法
     Public EDCB_GetCh_method As Integer = 0 '1=旧方式
 
+    Public NoUseProgramCache As Integer = 0 'キャッシュを使用しない場合は1
     Public pcache() As TVprogram_cache_structure
     Public Structure TVprogram_cache_structure
         Public get_utime As Integer
@@ -518,9 +519,14 @@ Module モジュール_番組表
         Dim r() As TVprogramstructure = Nothing
 
         '同一分のものはキャッシュから返す
-        r = pcache_search(regionID, getnext)
+        Dim msg As String = ""
+        r = pcache_search(regionID, getnext, msg) 'msgはByRefで返ってくる
         If r IsNot Nothing Then
-            log1write("番組情報取得：キャッシュから取得しました。" & region2softname(regionID))
+            Dim route As Integer = 1
+            If getnext >= 4 Then
+                route = 2
+            End If
+            log1write("【番組表】番組情報をキャッシュから取得しました" & msg & " " & p_r_s(regionID, route, getnext))
             Return r
             Exit Function
         End If
@@ -551,17 +557,18 @@ Module モジュール_番組表
         End If
 
         '終了までgetnext分以内なら詳細に次の番組情報を転写
-        If getnext >= 4 Then
-            Dim uptonext As Integer = getnext
-            Dim t As DateTime = Now() '現在時刻
-            Dim ts As Integer = Hour(t) * 100 + Minute(t) '現在時刻4桁の分秒
-            Dim tend As DateTime = DateAdd(DateInterval.Minute, uptonext, t) 'この時刻を越えていたら次の番組を詳細に転写
-            Dim te As Integer = Hour(tend) * 100 + Minute(tend) 'この時刻を越えていたら次の番組を詳細に転写　4桁分秒
-            If te < ts Then
-                '日付またぎしていれば
-                te += 2400
-            End If
-            If r IsNot Nothing Then
+        If r IsNot Nothing Then
+            If getnext >= 4 Then
+                Dim uptonext As Integer = getnext
+                Dim t As DateTime = Now() '現在時刻
+                Dim ts As Integer = Hour(t) * 100 + Minute(t) '現在時刻4桁の分秒
+                Dim tend As DateTime = DateAdd(DateInterval.Minute, uptonext, t) 'この時刻を越えていたら次の番組を詳細に転写
+                Dim te As Integer = Hour(tend) * 100 + Minute(tend) 'この時刻を越えていたら次の番組を詳細に転写　4桁分秒
+                If te < ts Then
+                    '日付またぎしていれば
+                    te += 2400
+                End If
+
                 For i = 0 To r.Length - 2
                     If r(i).nextFlag = 0 Then
                         Try
@@ -599,18 +606,16 @@ Module モジュール_番組表
                         k += 1
                     End If
                 Next
-                If r IsNot Nothing Then
-                    pcache_set(regionID, r2, getnext)
+                If r2 IsNot Nothing Then
+                    pcache_set(regionID, r2, 2, getnext) '記録経路B
+                    log1write("【番組表】番組情報取得作業を行いました。" & region2softname(regionID) & "-B(" & getnext.ToString & ")")
                 End If
-                log1write("番組情報取得：取得作業を行いました。" & region2softname(regionID))
                 Return r2
+            Else
+                pcache_set(regionID, r, 1, getnext) '記録経路A
+                log1write("【番組表】番組情報取得作業を行いました。" & region2softname(regionID) & "-A(" & getnext.ToString & ")")
             End If
         End If
-
-        If r IsNot Nothing Then
-            pcache_set(regionID, r, getnext)
-        End If
-        log1write("番組情報取得：取得作業を行いました。" & region2softname(regionID))
 
         Return r
     End Function
@@ -764,90 +769,141 @@ Module モジュール_番組表
     End Function
 
     'キャッシュから
-    Public Function pcache_search(ByVal str As String, ByVal getnext As Integer) As TVprogramstructure()
-        str = str & "-" & getnext.ToString 'templateも含めた識別
-        Dim i2 As Integer = -1
-        If pcache IsNot Nothing Then
-            i2 = Array.IndexOf(pcache, str)
-        End If
-        If i2 >= 0 Then
-            Dim chk As Integer = 0
-            If Minute(Now()) = Minute(unix2time(pcache(i2).get_utime)) Then
-                '同じ分ならキャッシュを利用
-                Return pcache(i2).value
-                Exit Function
+    Public Function pcache_search(ByVal RegionID As Integer, ByVal getnext As Integer, ByRef msg As String) As TVprogramstructure()
+        If NoUseProgramCache = 0 Then
+            Dim route As Integer = 1 '経路Aで記録されたものを探す
+            If getnext >= 4 Then
+                route = 2 '経路Bで記録されたものを探す
             End If
 
-            '波風の無い時間帯かどうか
-            If getnext < 4 Then
-                getnext = 0
+            Dim str As String = RegionID.ToString & "-" & route.ToString '記録経路も含めた識別
+            Dim i2 As Integer = -1
+            If pcache IsNot Nothing Then
+                i2 = Array.IndexOf(pcache, str)
             End If
-            Dim ut As Integer = time2unix(Now())
-            'Next調査期間4分はキャッシュを使用しない
-            If pcache(i2).min_utime <= ut And ut < (pcache(i2).max_utime - getnext) Then
-                '最小時間帯をはみ出してなければキャッシュを利用
-                Return pcache(i2).value
-                Exit Function
-            ElseIf (pcache(i2).max_utime - getnext + 3) < ut And ut < pcache(i2).max_utime Then
-                'Nextを調べる時間帯～次の番組までの短い間（NEXT期間4分間は実際に調べる）
-                Return pcache(i2).value
-                Exit Function
+            If i2 >= 0 Then
+                Dim t As DateTime = Now()
+                Dim ut As Integer = time2unix(t)
+
+                'log1write("【番組表】キャッシュが見つかりました。" & p_r_s(RegionID, route, getnext))
+                Dim chk As Integer = 0
+                If Minute(t) = Minute(unix2time(pcache(i2).get_utime)) Then
+                    '同じ分ならキャッシュを利用
+                    msg = "[same minutes]"
+                    Return pcache(i2).value
+                    Exit Function
+                ElseIf pcache(i2).get_utime < ut - (3600 * 2) Then
+                    '2時間以上前のキャッシュなら
+                    log1write("【番組表】新しいキャッシュが存在しませんでした。" & p_r_s(RegionID, route, getnext))
+                    Return Nothing
+                    Exit Function
+                End If
+
+                Dim g As Integer = getnext
+                If g < 4 Then
+                    g = 0
+                End If
+
+                '波風の無い時間帯かどうか
+                If pcache(i2).min_utime > time2unix(DateAdd(DateInterval.Day, -1, t)) And pcache(i2).max_utime < time2unix(DateAdd(DateInterval.Day, 1, t)) Then
+                    'おかしな値でなければ続行
+                    'Next調査期間4分はキャッシュを使用しない
+                    If pcache(i2).min_utime <= ut And ut < (pcache(i2).max_utime - (g * 60)) Then
+                        '最小時間帯をはみ出してなければキャッシュを利用
+                        log1write("【番組表】" & unix2time(pcache(i2).min_utime) & " <= " & t.ToString & " < " & unix2time(pcache(i2).max_utime - (g * 60)))
+                        msg = "[In a range 1]"
+                        Return pcache(i2).value
+                        Exit Function
+                    ElseIf (pcache(i2).max_utime - ((g + 3) * 60)) < ut And ut < pcache(i2).max_utime Then
+                        'Nextを調べる時間帯～次の番組までの短い間（NEXT期間4分間は実際に調べる）
+                        log1write("【番組表】" & unix2time(pcache(i2).max_utime - ((g + 3) * 60)) & " < " & t.ToString & " < " & unix2time(pcache(i2).max_utime))
+                        msg = "[In a range 2]"
+                        Return pcache(i2).value
+                        Exit Function
+                        log1write("【番組表】有効範囲内のキャッシュが存在しませんでした。" & p_r_s(RegionID, route, getnext))
+                    End If
+                Else
+                    log1write("【エラー】番組表キャッシュが不正です。" & p_r_s(RegionID, route, getnext) & " " & "：" & unix2time(pcache(i2).min_utime) & " > " & unix2time(pcache(i2).max_utime))
+                End If
+            Else
+                log1write("【番組表】キャッシュが見つかりませんでした。" & p_r_s(RegionID, route, getnext))
             End If
         End If
         Return Nothing
     End Function
 
     'キャッシュに格納
-    Public Sub pcache_set(ByVal str As String, ByVal value As TVprogramstructure(), ByVal getnext As Integer)
-        str = str & "-" & getnext.ToString 'templateも含めた識別
-        Dim pindex As Integer = -1
-        Dim k As Integer = 0
-        If pcache IsNot Nothing Then
-            pindex = Array.IndexOf(pcache, str)
-            k = pcache.Length
-        End If
-        If pindex < 0 Then
-            '同条件が見つからない場合
-            ReDim Preserve pcache(k)
-            pindex = k
-        End If
-        '一番遅い開始時間と一番早い終了時間を求める
-        Dim p_start As Integer = 0
-        Dim p_end As Integer = C_INTMAX - (3600 * 9)
-        Dim t As DateTime = Now()
-        If value IsNot Nothing Then
-            For j As Integer = 0 To value.Length - 1
-                If value(j).nextFlag = 0 Then
-                    Try
-                        Dim s1 As DateTime = CDate(t.ToString("yyyy/MM/dd ") & Trim(value(j).startDateTime.Substring(11)))
-                        Dim s2 As DateTime = CDate(t.ToString("yyyy/MM/dd ") & Trim(value(j).endDateTime.Substring(11)))
-                        If s1 > s2 Then
-                            If Hour(t) < 12 Then
-                                s1 = DateAdd(DateInterval.Day, -1, s1)
-                            Else
-                                s2 = DateAdd(DateInterval.Day, 1, s2)
+    Public Sub pcache_set(ByVal RegionID As Integer, ByVal value As TVprogramstructure(), ByVal route As Integer, ByVal getnext As Integer)
+        If NoUseProgramCache = 0 Then
+            Dim str As String = RegionID.ToString & "-" & route.ToString '記録経路も含めた識別
+            Dim pindex As Integer = -1
+            Dim k As Integer = 0
+            If pcache IsNot Nothing Then
+                pindex = Array.IndexOf(pcache, str)
+                k = pcache.Length
+            End If
+            If pindex < 0 Then
+                '同条件が見つからない場合
+                ReDim Preserve pcache(k)
+                pindex = k
+            End If
+            '一番遅い開始時間と一番早い終了時間を求める
+            Dim p_start As Integer = 0
+            Dim p_end As Integer = C_INTMAX - (3600 * 9)
+            Dim t As DateTime = Now()
+            If value IsNot Nothing Then
+                For j As Integer = 0 To value.Length - 1
+                    If value(j).nextFlag = 0 Then
+                        Try
+                            Dim s1 As DateTime = CDate(t.ToString("yyyy/MM/dd ") & Trim(value(j).startDateTime.Substring(11)))
+                            Dim s2 As DateTime = CDate(t.ToString("yyyy/MM/dd ") & Trim(value(j).endDateTime.Substring(11)))
+                            If s1 > s2 Then
+                                If Hour(t) < 12 Then
+                                    s1 = DateAdd(DateInterval.Day, -1, s1)
+                                Else
+                                    s2 = DateAdd(DateInterval.Day, 1, s2)
+                                End If
                             End If
-                        End If
-                        Dim u1 As Integer = time2unix(s1)
-                        Dim u2 As Integer = time2unix(s2)
-                        If u1 > p_start Then
-                            p_start = u1
-                        End If
-                        If u2 < p_end Then
-                            p_end = u2
-                        End If
-                    Catch ex As Exception
-                    End Try
+                            If s1 < s2 Then
+                                Dim u1 As Integer = time2unix(s1)
+                                Dim u2 As Integer = time2unix(s2)
+                                If u1 > p_start Then
+                                    p_start = u1
+                                End If
+                                If u2 < p_end Then
+                                    p_end = u2
+                                End If
+                            Else
+                                log1write("【エラー】番組時間解析に失敗しました。" & p_r_s(RegionID, route, getnext) & "：" & s1.ToString & " - " & s2.ToString)
+                            End If
+                        Catch ex As Exception
+                        End Try
+                    End If
+                Next
+
+                'おかしな値でないかチェック
+                If p_start > time2unix(DateAdd(DateInterval.Day, -1, t)) And p_end < time2unix(DateAdd(DateInterval.Day, 1, t)) Then
+                    '記録
+                    pcache(pindex).get_utime = time2unix(t)
+                    pcache(pindex).min_utime = p_start
+                    pcache(pindex).max_utime = p_end
+                    pcache(pindex).str = str
+                    pcache(pindex).value = value
+                    'log1write("【番組表】番組情報をキャッシュに記録しました。[" & p_r_s(RegionID, route, getnext) & "]")
+                Else
+                    log1write("【エラー】番組表の内容が不正です。" & p_r_s(RegionID, route, getnext) & "：" & unix2time(p_start) & " > " & unix2time(p_end))
                 End If
-            Next
+            End If
         End If
-        '記録
-        pcache(pindex).get_utime = time2unix(Now())
-        pcache(pindex).min_utime = p_start
-        pcache(pindex).max_utime = p_end
-        pcache(pindex).str = str
-        pcache(pindex).value = value
     End Sub
+
+    Private Function p_r_s(ByVal regionID As Integer, ByVal route As Integer, ByVal getnext As Integer) As String
+        Dim route2 As String = "A"
+        If route = 2 Then
+            route2 = "B"
+        End If
+        Return region2softname(regionID) & "-" & route2.ToString & "(" & getnext.ToString & ")"
+    End Function
 
     '配列から要素を削除　■未使用
     Public Sub title_ArrayRemove(ByRef TargetArray As TVprogramstructure(), ByVal deleteIndex As Integer)
