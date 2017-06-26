@@ -85,7 +85,7 @@ Module モジュール_番組表
         Public programContent As String
         Public sid As Integer
         Public tsid As Integer
-        Public genre As Integer '番組ジャンル　nibble1 * 256 + nibble2
+        Public genre As String '番組ジャンル　nibble1 * 256 + nibble2 次番組があれば:区切りで続けて記入
         Public nextFlag As Integer '次の番組なら1
         Public Function CompareTo(ByVal obj As Object) As Integer Implements IComparable.CompareTo
             '並べ替え用 sid,nextFlag
@@ -582,6 +582,7 @@ Module モジュール_番組表
                                 If te >= re Then
                                     '次番組があれば
                                     r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & "-" & Trim(r(i + 1).endDateTime.Substring(r(i + 1).endDateTime.IndexOf(" "))) & " " & r(i + 1).programTitle
+                                    r(i).genre &= ":" & r(i + 1).genre
                                 End If
                             End If
                         Catch ex As Exception
@@ -656,7 +657,7 @@ Module モジュール_番組表
                     'r(j).programSubTitle = CType(program("programSubTitle"), String) '空白
                     r(j).programContent = "" '空白
                     'r(j).programxplanation = CType(program("programExplanation"), String) '空白
-                    r(j).genre = -1
+                    r(j).genre = "-1"
                 End If
 
                 sp = html.IndexOf("<title>", sp + 1)
@@ -710,7 +711,7 @@ Module モジュール_番組表
                     Dim sp3 As Integer = html.IndexOf("</b></small>", sp)
                     sp3 = html.IndexOf("<font color=", sp3)
                     r(j).programContent = Trim(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
-                    r(j).genre = -1
+                    r(j).genre = "-1"
 
                     'サービスIDを取得
                     sp3 = html.IndexOf("javascript:reserv(", sp3)
@@ -730,7 +731,7 @@ Module モジュール_番組表
                             r(j).programTitle = Trim(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
                             r(j).programContent = ""
                             r(j).sid = r(j - 1).sid
-                            r(j).genre = -1
+                            r(j).genre = "-1"
 
                             '次の番組であることを記録
                             r(j).nextFlag = 1
@@ -1241,7 +1242,7 @@ Module モジュール_番組表
                                             title = escape_program_str(p.programTitle)
                                             html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & title & "," & escape_program_str(p.programContent)
                                             If template = 1 Then
-                                                html &= "," & Val(p.genre)
+                                                html &= "," & p.genre
                                             End If
                                             If getnext = 3 Then
                                                 html &= "," & p.nextFlag
@@ -1835,7 +1836,7 @@ Module モジュール_番組表
                                                 r(i).endDateTime = t2s
                                                 r(i).programTitle = title
                                                 r(i).programContent = texts
-                                                r(i).genre = -1 'Val(youso(6)) '内容がいまいち掴めないのでスルー 0=ニュース 112=アニメ
+                                                r(i).genre = "-1" 'Val(youso(6)) '内容がいまいち掴めないのでスルー 0=ニュース 112=アニメ
                                                 '次番組かどうかチェック
                                                 If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
                                                     '2回目の場合は次番組であろう
@@ -1926,7 +1927,7 @@ Module モジュール_番組表
                 r(j).programContent = ""
                 r(j).sid = ch_list(i).sid
                 r(j).tsid = ch_list(i).tsid
-                r(j).genre = -1
+                r(j).genre = "-1"
             Next
         End If
         Return r
@@ -2069,7 +2070,7 @@ Module モジュール_番組表
                                                     r(j).tsid = ch_list(i).tsid '一致しない可能性がある
                                                     '番組ジャンル
                                                     Dim jnr As CtrlCmdCLI.Def.EpgContentInfo = info.eventList.Item(k).ContentInfo
-                                                    r(j).genre = jnr.nibbleList(0).content_nibble_level_1 * 256 + jnr.nibbleList(0).content_nibble_level_2
+                                                    r(j).genre = (jnr.nibbleList(0).content_nibble_level_1 * 256 + jnr.nibbleList(0).content_nibble_level_2).ToString
 
                                                     '次番組を探すための開始時間
                                                     t2next = t2
@@ -2128,7 +2129,7 @@ Module モジュール_番組表
                                                         r(j).tsid = ch_list(i).tsid '一致しない可能性がある
                                                         '番組ジャンル
                                                         Dim gnr As CtrlCmdCLI.Def.EpgContentInfo = info.eventList.Item(k).ContentInfo
-                                                        r(j).genre = gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2
+                                                        r(j).genre = (gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2).ToString
 
                                                         '次の番組であることを記録
                                                         r(j).nextFlag = 1
@@ -2155,7 +2156,7 @@ Module モジュール_番組表
                                         r(j).programContent = ""
                                         r(j).sid = ch_list(i).sid
                                         r(j).tsid = ch_list(i).tsid
-                                        r(j).genre = -1
+                                        r(j).genre = "-1"
                                     End If
                                 ElseIf chk_j = 2 Then
                                     'ダミー
@@ -2173,7 +2174,7 @@ Module モジュール_番組表
                                     r(j).programContent = ""
                                     r(j).sid = ch_list(i).sid
                                     r(j).tsid = ch_list(i).tsid
-                                    r(j).genre = -1
+                                    r(j).genre = "-1"
                                 End If
                             End If
                         Next
@@ -2330,7 +2331,7 @@ Module モジュール_番組表
                                         'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
                                         r(j).sid = ch_list(i).sid
                                         r(j).tsid = ch_list(i).tsid '一致しない可能性がある
-                                        r(j).genre = -1
+                                        r(j).genre = "-1"
 
                                         chk = 1
                                         If getnext > 0 Then
@@ -2354,7 +2355,7 @@ Module モジュール_番組表
                                                 'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
                                                 r(j).sid = ch_list(i).sid
                                                 r(j).tsid = ch_list(i).tsid '一致しない可能性がある
-                                                r(j).genre = -1
+                                                r(j).genre = "-1"
 
                                                 '次の番組であることを記録
                                                 r(j).nextFlag = 1
@@ -2385,7 +2386,7 @@ Module モジュール_番組表
                                 r(j).programContent = ""
                                 r(j).sid = ch_list(i).sid
                                 r(j).tsid = ch_list(i).tsid
-                                r(j).genre = -1
+                                r(j).genre = "-1"
                             End If
 
                             sr.Close()
@@ -2407,7 +2408,7 @@ Module モジュール_番組表
                             r(j).programContent = ""
                             r(j).sid = ch_list(i).sid
                             r(j).tsid = ch_list(i).tsid
-                            r(j).genre = -1
+                            r(j).genre = "-1"
                         End If
                     Next
                 End If
@@ -2553,7 +2554,7 @@ Module モジュール_番組表
                                     r(i).endDateTime = t2s
                                     r(i).programTitle = title
                                     r(i).programContent = texts
-                                    r(i).genre = genre
+                                    r(i).genre = genre.ToString
                                     '次番組かどうかチェック
                                     If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
                                         '2回目の場合は次番組であろう
@@ -2720,7 +2721,7 @@ Module モジュール_番組表
                                     r(i).endDateTime = t2s
                                     r(i).programTitle = title
                                     r(i).programContent = texts
-                                    r(i).genre = genre
+                                    r(i).genre = genre.ToString
                                     '次番組かどうかチェック
                                     If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
                                         '2回目の場合は次番組であろう

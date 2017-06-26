@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.54
+TvRemoteViewer_VB v2.55
 
 
 
@@ -732,6 +732,7 @@ TvRemoteViewer_VB v2.54
 	2.54	番組表キャッシュのバグを修正
 			無駄に番組表を作成することがあったバグを修正
 			iniにキャッシュ制御を行わないようにするオプションを追加（NoUseProgramCache）
+	2.55	次番組のジャンル情報提供について細かい修正
 
 
 

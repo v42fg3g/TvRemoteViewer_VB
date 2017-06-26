@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.53
+TvRemoteViewer_VB v2.55
 
 
 ※1　	%NUM%は配信番号を表します
@@ -261,6 +261,7 @@ TvRemoteViewer_VB v2.53
 		結果：	放送局名,サービスID,ChSpace,開始時:分,終了時:分,番組タイトル,番組内容(次番組)
 		【2.53】tempに,区切りで1を与えると番組内容に続いてジャンル数値を付加するようにした
 				例：temp=3,1
+		【2.55】[Next]表記の場合、次番組のジャンルは「:」区切りで既存ジャンル数値に続けて付加される
 
 
 	WI_GET_CHAPTER.html?temp=録画ファイルフルパス
@@ -277,7 +278,7 @@ TvRemoteViewer_VB v2.53
 		例：WI_GET_HTML.html?temp=2,UTF-8,,http://www.google.co.jp/
 		注意：nicovideo.jpと2ch.netのread.cgi,subback.html,bbsmenu.html以外は弾くようになっています
 			  client*.iniの設置によりクライアントが個別に解除指定できるようになっています
-			  client_sample.iniを参考にしてください
+			  GitHubの_readmeフォルダにあるclient_sample.ini.zipを参考にしてください
 
 
 	WI_GET_THUMBNAIL.html?temp=[作成ソース],[秒数指定],[幅],[縦]
