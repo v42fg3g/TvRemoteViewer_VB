@@ -859,7 +859,7 @@ Module モジュール_番組表
                             Dim s1 As DateTime = CDate(t.ToString("yyyy/MM/dd ") & Trim(value(j).startDateTime.Substring(11)))
                             Dim s2 As DateTime = CDate(t.ToString("yyyy/MM/dd ") & Trim(value(j).endDateTime.Substring(11)))
                             If s1 > s2 Then
-                                If Hour(t) < 12 Then
+                                If Hour(t) * 60 + Minute(t) < Hour(s2) * 60 + Minute(s2) Then
                                     s1 = DateAdd(DateInterval.Day, -1, s1)
                                 Else
                                     s2 = DateAdd(DateInterval.Day, 1, s2)
@@ -2128,7 +2128,7 @@ Module モジュール_番組表
                                                         r(j).sid = ch_list(i).sid
                                                         r(j).tsid = ch_list(i).tsid '一致しない可能性がある
                                                         '番組ジャンル
-                                                        Dim gnr As CtrlCmdCLI.Def.EpgContentInfo = info.eventList.Item(k).ContentInfo
+                                                        Dim gnr As CtrlCmdCLI.Def.EpgContentInfo = info.eventList.Item(k2).ContentInfo
                                                         r(j).genre = (gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2).ToString
 
                                                         '次の番組であることを記録

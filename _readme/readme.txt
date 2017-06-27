@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.55
+TvRemoteViewer_VB v2.56
 
 
 
@@ -733,6 +733,7 @@ TvRemoteViewer_VB v2.55
 			無駄に番組表を作成することがあったバグを修正
 			iniにキャッシュ制御を行わないようにするオプションを追加（NoUseProgramCache）
 	2.55	次番組のジャンル情報提供について細かい修正
+	2.56	EDCBの次番組ジャンルが不正確だったバグを修正
 
 
 
