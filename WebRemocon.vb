@@ -1809,83 +1809,87 @@ Class WebRemocon
 
         'カレントディレクトリ変更
         F_set_ppath4program()
-        Dim files As String() = System.IO.Directory.GetFiles(Me._wwwroot, "client*.ini", SearchOption.TopDirectoryOnly)
-        If files IsNot Nothing Then
-            For k = 0 To files.Length - 1
-                Dim line() As String = file2line(files(k))
-                If line Is Nothing Then
-                ElseIf line.Length > 0 Then
-                    '読み込み完了
-                    For i = 0 To line.Length - 1
-                        line(i) = trim8(line(i))
-                        'コメント削除
-                        If line(i).IndexOf(";") >= 0 Then
-                            line(i) = line(i).Substring(0, line(i).IndexOf(";"))
-                        End If
-                        Dim youso() As String = line(i).Split("=")
-                        Try
-                            If youso Is Nothing Then
-                            ElseIf youso.Length > 1 Then
-                                Dim url_text As String = youso(1) '=以降がURLの場合(=が途中に入っている可能性を考慮）
-                                If youso.Length > 2 Then
-                                    For j = 2 To youso.Length - 1
-                                        url_text &= "=" & youso(j)
-                                    Next
-                                End If
-                                url_text = trim8(url_text)
-                                For j = 0 To youso.Length - 1
-                                    youso(j) = trim8(youso(j))
-                                Next
-                                Select Case youso(0)
-                                    Case "allowDomains"
-                                        'アクセス許可ドメイン
-                                        youso(1) = youso(1).Replace("{", "").Replace("}", "")
-                                        If trim8(youso(1)).Length > 0 Then
-                                            Dim clset() As String = youso(1).Split(",")
-                                            If clset Is Nothing Then
-                                            ElseIf clset.Length > 0 Then
-                                                'client_allowDomainsに追加
-                                                For j = 0 To clset.Length - 1
-                                                    If Array.IndexOf(client_allowDomains, trim8(clset(j))) < 0 Then
-                                                        n = client_allowDomains.Length
-                                                        ReDim Preserve client_allowDomains(n)
-                                                        client_allowDomains(n) = trim8(clset(j))
-                                                        log1write("【クライアント設定】" & client_allowDomains(n) & "へのWEBアクセスを許可します")
-                                                    End If
-                                                Next
-                                            End If
-                                        End If
-                                    Case "allowFiles"
-                                        'アクセス許可ドメイン
-                                        youso(1) = youso(1).Replace("{", "").Replace("}", "")
-                                        If trim8(youso(1)).Length > 0 Then
-                                            Dim clset() As String = youso(1).Split(",")
-                                            If clset Is Nothing Then
-                                            ElseIf clset.Length > 0 Then
-                                                For j = 0 To clset.Length - 1
-                                                    If client_allowFiles Is Nothing Then
-                                                        n = 0
-                                                        ReDim Preserve client_allowFiles(n)
-                                                        client_allowFiles(n) = trim8(clset(j))
-                                                        log1write("【クライアント設定】" & client_allowFiles(n) & "へのWEBアクセスを許可します")
-                                                    ElseIf Array.IndexOf(client_allowFiles, trim8(clset(j))) < 0 Then
-                                                        n = client_allowFiles.Length
-                                                        ReDim Preserve client_allowFiles(n)
-                                                        client_allowFiles(n) = trim8(clset(j))
-                                                        log1write("【クライアント設定】" & client_allowFiles(n) & "へのWEBアクセスを許可します")
-                                                    End If
-                                                Next
-                                            End If
-                                        End If
-                                End Select
+        If folder_exist(Me._wwwroot) = 1 Then
+            Dim files As String() = System.IO.Directory.GetFiles(Me._wwwroot, "client*.ini", SearchOption.TopDirectoryOnly)
+            If files IsNot Nothing Then
+                For k = 0 To files.Length - 1
+                    Dim line() As String = file2line(files(k))
+                    If line Is Nothing Then
+                    ElseIf line.Length > 0 Then
+                        '読み込み完了
+                        For i = 0 To line.Length - 1
+                            line(i) = trim8(line(i))
+                            'コメント削除
+                            If line(i).IndexOf(";") >= 0 Then
+                                line(i) = line(i).Substring(0, line(i).IndexOf(";"))
                             End If
-                        Catch ex As Exception
-                            log1write("【エラー】クライアント設定パラメーター : " & youso(0) & " の読み込みに失敗しました。" & ex.Message)
-                        End Try
-                    Next
-                    log1write("クライアント設定：" & files(k) & "を読み込みました")
-                End If
-            Next
+                            Dim youso() As String = line(i).Split("=")
+                            Try
+                                If youso Is Nothing Then
+                                ElseIf youso.Length > 1 Then
+                                    Dim url_text As String = youso(1) '=以降がURLの場合(=が途中に入っている可能性を考慮）
+                                    If youso.Length > 2 Then
+                                        For j = 2 To youso.Length - 1
+                                            url_text &= "=" & youso(j)
+                                        Next
+                                    End If
+                                    url_text = trim8(url_text)
+                                    For j = 0 To youso.Length - 1
+                                        youso(j) = trim8(youso(j))
+                                    Next
+                                    Select Case youso(0)
+                                        Case "allowDomains"
+                                            'アクセス許可ドメイン
+                                            youso(1) = youso(1).Replace("{", "").Replace("}", "")
+                                            If trim8(youso(1)).Length > 0 Then
+                                                Dim clset() As String = youso(1).Split(",")
+                                                If clset Is Nothing Then
+                                                ElseIf clset.Length > 0 Then
+                                                    'client_allowDomainsに追加
+                                                    For j = 0 To clset.Length - 1
+                                                        If Array.IndexOf(client_allowDomains, trim8(clset(j))) < 0 Then
+                                                            n = client_allowDomains.Length
+                                                            ReDim Preserve client_allowDomains(n)
+                                                            client_allowDomains(n) = trim8(clset(j))
+                                                            log1write("【クライアント設定】" & client_allowDomains(n) & "へのWEBアクセスを許可します")
+                                                        End If
+                                                    Next
+                                                End If
+                                            End If
+                                        Case "allowFiles"
+                                            'アクセス許可ドメイン
+                                            youso(1) = youso(1).Replace("{", "").Replace("}", "")
+                                            If trim8(youso(1)).Length > 0 Then
+                                                Dim clset() As String = youso(1).Split(",")
+                                                If clset Is Nothing Then
+                                                ElseIf clset.Length > 0 Then
+                                                    For j = 0 To clset.Length - 1
+                                                        If client_allowFiles Is Nothing Then
+                                                            n = 0
+                                                            ReDim Preserve client_allowFiles(n)
+                                                            client_allowFiles(n) = trim8(clset(j))
+                                                            log1write("【クライアント設定】" & client_allowFiles(n) & "へのWEBアクセスを許可します")
+                                                        ElseIf Array.IndexOf(client_allowFiles, trim8(clset(j))) < 0 Then
+                                                            n = client_allowFiles.Length
+                                                            ReDim Preserve client_allowFiles(n)
+                                                            client_allowFiles(n) = trim8(clset(j))
+                                                            log1write("【クライアント設定】" & client_allowFiles(n) & "へのWEBアクセスを許可します")
+                                                        End If
+                                                    Next
+                                                End If
+                                            End If
+                                    End Select
+                                End If
+                            Catch ex As Exception
+                                log1write("【エラー】クライアント設定パラメーター : " & youso(0) & " の読み込みに失敗しました。" & ex.Message)
+                            End Try
+                        Next
+                        log1write("クライアント設定：" & files(k) & "を読み込みました")
+                    End If
+                Next
+            End If
+        Else
+            log1write("【エラー】%WWWROOT%が未設定です。設定後再起動してください")
         End If
     End Sub
 

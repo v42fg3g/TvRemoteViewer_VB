@@ -323,12 +323,16 @@ Module モジュール_ファイル
     End Sub
 
     Public Sub F_modify_filedate(ByVal FILE_PATH As String, ByVal d As DateTime)
-        'ファイル更新日時修正
-        ' 作成日時を現在のローカル時刻で更新する
-        System.IO.File.SetCreationTime(FILE_PATH, d)
-        ' 更新日時を現在のローカル時刻で更新する
-        System.IO.File.SetLastWriteTime(FILE_PATH, d)
-        ' アクセス日時を現在のローカル時刻で更新する
-        System.IO.File.SetLastAccessTime(FILE_PATH, d)
+        Try
+            'ファイル更新日時修正
+            ' 作成日時を現在のローカル時刻で更新する
+            System.IO.File.SetCreationTime(FILE_PATH, d)
+            ' 更新日時を現在のローカル時刻で更新する
+            System.IO.File.SetLastWriteTime(FILE_PATH, d)
+            ' アクセス日時を現在のローカル時刻で更新する
+            System.IO.File.SetLastAccessTime(FILE_PATH, d)
+        Catch ex As Exception
+            log1write(FILE_PATH & "の更新日時修正に失敗しました。" & ex.Message)
+        End Try
     End Sub
 End Module
