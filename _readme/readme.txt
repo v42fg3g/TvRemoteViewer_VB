@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.58
+TvRemoteViewer_VB v2.59
 
 
 
@@ -749,7 +749,8 @@ TvRemoteViewer_VB v2.58
 			AbemaTV番組情報取得先を選択できるようにした（iniにAvemaTV_data_get_methodを追加）
 			AbemaTV番組情報取得先を個別指定できるようにした（iniにAbemaTV_CustomURLを追加）
 			番組表キャッシュがNext分の違いを考慮していなかった不具合を修正
-
+	2.59	EDCB等の番組情報内の改行を処理（今更）
+			番組情報キャッシュが思い通りにいかなかった原因が判明したので修正
 
 
 
