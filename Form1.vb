@@ -109,7 +109,7 @@ Public Class Form1
                 s = "TvRemoteViewer_VB" & vbCrLf & "配信中：" & Trim(s)
             Else
                 LabelStream.Text = " " 'ついでにフォーム上にも表示
-                s = "TvRemoteViewer_VB " & Format(TvRemoteViewer_VB_version, "0.00") '"TvRemoteViewer_VB"
+                s = "TvRemoteViewer_VB " & Format(TvRemoteViewer_VB_version, "0.00") & TvRemoteViewer_VB_revision '"TvRemoteViewer_VB"
             End If
             If s.Length > 60 Then
                 '64文字を超えるとエラーになる
@@ -124,7 +124,7 @@ Public Class Form1
             Try
                 NotifyIcon1.Text = s
             Catch ex As Exception
-                NotifyIcon1.Text = "TvRemoteViewer_VB " & Format(TvRemoteViewer_VB_version, "0.00") '"TvRemoteViewer_VB"
+                NotifyIcon1.Text = "TvRemoteViewer_VB " & Format(TvRemoteViewer_VB_version, "0.00") & TvRemoteViewer_VB_revision  '"TvRemoteViewer_VB"
             End Try
 
             'アイドル時間が指定分に達した場合は全て切断する
@@ -173,16 +173,24 @@ Public Class Form1
                 End If
             End If
 
-            '6時間に1回バージョンチェック
-            If TvRemoteViewer_VB_version_check_on = 1 Then
-                Dim nowt As DateTime = Now()
-                If (Hour(Now()) Mod 6) = 0 And Minute(nowt) = Minute(TvRemoteViewer_VB_version_check_datetime) And Second(nowt) = Second(TvRemoteViewer_VB_version_check_datetime) Then
-                    check_version_multi() '邪魔にならないようマルチスレッドで確認
-                    'log1write("推奨バージョンチェックを行いました") 'ログに表示しないようにした
-                End If
-            End If
-
             chk_timer1 = 0
+        End If
+
+        '6時間に1回バージョンチェック
+        If TvRemoteViewer_VB_version_check_on = 1 Then
+            Dim nowt As DateTime = Now()
+            If (Hour(Now()) Mod 6) = 0 And Minute(nowt) = Minute(TvRemoteViewer_VB_version_check_datetime) And Second(nowt) = Second(TvRemoteViewer_VB_version_check_datetime) Then
+                check_version_multi() '邪魔にならないようマルチスレッドで確認
+                'log1write("推奨バージョンチェックを行いました") 'ログに表示しないようにした
+            End If
+        End If
+
+        '3時間に1回カスタムOutside番組表チェック(タイマー起動直後にも実行される）
+        If Outside_CustomURL.Length > 0 Then
+            Dim ut As Integer = time2unix(Now())
+            If ut - Outside_CustomURL_getutime > 3600 * 3 Then
+                check_Outside_CustomURL_multi()
+            End If
         End If
 
         'ログ処理
@@ -370,8 +378,16 @@ Public Class Form1
         End If
 
         Dim verstr As String = Format(TvRemoteViewer_VB_version, "0.00")
-        log1write("TvRemoteViewer_VB " & verstr)
+        log1write("TvRemoteViewer_VB " & verstr & TvRemoteViewer_VB_revision)
+    End Sub
 
+    Private Sub check_Outside_CustomURL_multi()
+        Dim t As New System.Threading.Thread(New System.Threading.ThreadStart(AddressOf check_Outside_CustomURL))
+        t.Start()
+    End Sub
+
+    Private Sub check_Outside_CustomURL()
+        Dim Outside_CustomURL_html As String = get_Outside_html(1)
     End Sub
 
     Private Sub check_version_multi()
@@ -383,7 +399,7 @@ Public Class Form1
     Private Function check_version() As Integer
         Dim r As Integer = 0
 
-        Dim s As String = get_html_by_webclient("http://vb45wb5b.up.seesaa.net/image/version.txt", "shift_jis", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
+        Dim s As String = get_html_by_webclient(TvRemoteViewer_VB_version_URL, "shift_jis", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
         If s.Length > 8 Then
             Dim line() As String = Split(s, vbCrLf)
             If line IsNot Nothing Then
@@ -520,6 +536,13 @@ Public Class Form1
         Me._worker.check_ini_parameter()
         'クライアントiniを読み込み
         Me._worker.read_client_ini()
+
+        'Outside_CustomURL取得
+        If Array.IndexOf(TvProgram_ch, 801) >= 0 Then
+            set_Outside_CustomURL()
+        Else
+            Outside_CustomURL = ""
+        End If
 
         '関連アプリのプロセスが残っていれば停止する
         '全プロセスを名前指定で停止

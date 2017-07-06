@@ -51,6 +51,18 @@ Module モジュール_番組表
     'EDCBの管理するチャンネルの取得方法
     Public EDCB_GetCh_method As Integer = 0 '1=旧方式
 
+    '外部の番組情報を取得するURL
+    Public Outside_StationName As String = "AbemaTV" '外部放送局名
+    Public Outside_CustomURL As String = ""
+    Public Outside_CustomURL_method As Integer = 1 '都合の良いデータ=1 今のところ1限定
+    Public Outside_data_get_method As Integer = 2 '0=ini設定 1=自動選択（有志の方サイト優先） 2=カッパ手作業限定 3=有志の方サイト限定
+    'チャンネルID,チャンネル名,開始unixtime,終了unixtime,タイトル,内容
+    'を1行としたUTF-8テキストファイルが都合良く用意されているURL
+    Public Outside_CustomURL_getutime As Long = 0 '最後に取得したunixtime
+    Public Outside_CustomURL_html As String = "" 'キャッシュ
+    Public Outside_CH_NAME() As String 'チャンネル名一覧　「チャンネル」は削除
+    Public Outside_sid_temp_str As String = "99999801" '本来は""だが番組表に表示させるため暫定。sid=99999801～がOutsideを示す目印
+
     Public NoUseProgramCache As Integer = 0 'キャッシュを使用しない場合は1
     Public pcache() As TVprogram_cache_structure
     Public Structure TVprogram_cache_structure
@@ -551,6 +563,9 @@ Module モジュール_番組表
         ElseIf regionID = 999 Then
             'TvRock
             r = get_TvRock_program(getnext)
+        ElseIf regionID = 801 And Outside_CustomURL.Length > 0 Then
+            'Outside
+            r = get_Outside_program(getnext)
         ElseIf regionID > 0 Then
             'ネットから地域の番組表を取得
             r = get_D_program(regionID, getnext)
@@ -572,7 +587,7 @@ Module モジュール_番組表
                 For i = 0 To r.Length - 2
                     If r(i).nextFlag = 0 Then
                         Try
-                            If r(i + 1).nextFlag = 1 And r(i).sid = r(i + 1).sid Then
+                            If r(i + 1).nextFlag = 1 And ((r(i).sid > 0 And r(i).sid = r(i + 1).sid) Or r(i).stationDispName = r(i + 1).stationDispName) Then
                                 Dim tr As DateTime = CDate(r(i).endDateTime)
                                 Dim re As Integer = Hour(tr) * 100 + Minute(tr) '番組終了時間　4桁分秒
                                 If re < ts Then
@@ -668,6 +683,235 @@ Module モジュール_番組表
         Return r
     End Function
 
+    Public Sub set_Outside_CustomURL()
+        Dim ut As Integer = time2unix(Now())
+        Dim temp_name As String = ""
+        Dim temp_url As String = ""
+        Dim temp_method As Integer = 0
+        If TvProgram_ch IsNot Nothing Then
+            If Array.IndexOf(TvProgram_ch, 801) Then
+                If Outside_data_get_method = 0 Then
+                    'iniで指定
+                ElseIf Outside_data_get_method > 0 Then
+                    'Outside_CustomURL
+                    Dim ptexts As String = get_html_by_webclient(TvRemoteViewer_VB_version_URL.Replace("/version.txt", "/abm_src.txt") & "?tvrvtm=" & ut.ToString, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
+                    Dim line() As String = Split(Trim(ptexts), vbCrLf)
+                    Dim rcount As Integer = 0
+                    For i = 0 To line.Length - 1
+                        If count_str(line(i), ",") = 2 Then
+                            rcount += 1
+                        Else
+                            '想定外の行が出現したらそこで終了
+                            Exit For
+                        End If
+                    Next
+                    If rcount > 0 Then
+                        Dim rnd As New System.Random(time2unix(Now()))
+                        Dim ri As Integer = -1
+                        Dim rp As Integer = 0
+                        Dim d() As String = Nothing
+                        'ランダム選択　最初の1回目は2行目以降にかかれた有志サーバーで取得することとする
+                        If Outside_CustomURL.Length = 0 And rcount >= 2 And Outside_data_get_method = 1 Then
+                            log1write(Outside_StationName & "番組情報取得先決定方法がランダムの場合、初回は有志提供サイトが優先されます")
+                            Outside_data_get_method = 3
+                        End If
+                        If rcount = 1 Or Outside_data_get_method = 2 Then
+                            '選択肢無し
+                            ri = 0
+                        ElseIf rcount >= 2 And Outside_data_get_method = 3 Then
+                            '有志サイト
+                            rp = 1
+                            rcount -= 1
+                        End If
+                        If ri < 0 Then
+                            'Outside_data_get_method=1 or 3
+                            Dim cnt As Integer = 50
+                            While cnt > 0
+                                Dim rtemp As Integer = rnd.Next(rcount - rp) + rp
+                                d = line(rtemp).Split(",")
+                                If d.Length = 3 Then
+                                    If d(2) <> Outside_CustomURL Or rcount = 1 Then
+                                        '前回と違うURL、もしくは選択肢が無いなら決定
+                                        ri = rtemp
+                                        Exit While
+                                    End If
+                                Else
+                                    'ありえない
+                                End If
+                                cnt -= 1
+                            End While
+                        End If
+                        If ri >= 0 Then
+                            d = line(ri).Split(",")
+                            If d.Length = 3 Then
+                                If Val(d(1)) > 0 And Trim(d(2)).Length > 0 Then
+                                    Outside_StationName = Trim(d(0))
+                                    Outside_CustomURL_method = Val(d(1))
+                                    Outside_CustomURL = Trim(d(2))
+                                    log1write(Outside_StationName & "の情報取得先の設定に成功しました。")
+                                Else
+                                    log1write("【エラー】不適切な" & Outside_StationName & "情報取得先です。" & line(ri))
+                                End If
+                            Else
+                                'ありえない
+                            End If
+                        Else
+                            log1write("【エラー】" & Outside_StationName & "の情報取得先の設定に失敗しました")
+                        End If
+                    Else
+                        log1write("【エラー】" & Outside_StationName & "の情報取得先を取得できませんでした")
+                    End If
+                Else
+                    log1write("【エラー】" & Outside_StationName & "の情報取得先決定方法Outside_data_get_methodが設定されていません")
+                End If
+                If Outside_CustomURL.Length > 0 Then
+                    log1write(Outside_StationName & "情報取得先が決定されました。" & Outside_CustomURL)
+                Else
+                    If Outside_data_get_method > 0 Then
+                        log1write("【エラー】" & Outside_StationName & "情報取得先が取得できませんでした")
+                    Else
+                        log1write("【エラー】" & Outside_StationName & "情報取得先が未入力です")
+                    End If
+                End If
+            End If
+        End If
+    End Sub
+
+    Public Function get_Outside_html(ByVal force As Integer) As String
+        Dim html As String = Outside_CustomURL_html
+        Dim ut As Integer = time2unix(Now())
+        Dim timer_str As String = ""
+        If force = 1 Then
+            timer_str = "(タイマー)"
+        End If
+        Outside_CustomURL_getutime = ut
+        If Outside_CustomURL.IndexOf("://") > 0 Then
+            If html.Length < 300 Or force = 1 Then
+                'html未取得 < 300
+                'force=1 タイマーからの指令ならば必ず取得
+                Dim nocache_str As String = ""
+                Dim ext As String = Path.GetExtension(Outside_CustomURL)
+                If ext = ".txt" Then
+                    nocache_str = "?tvrvtm=" & ut.ToString 'txtの場合内部キャッシュさせないよう
+                End If
+                html = get_html_by_webclient(Outside_CustomURL & nocache_str, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
+                log1write(Outside_StationName & "番組情報元：" & Outside_CustomURL)
+                'うまく取得できなかった場合、次回のために取得先更新だけはしておく。取得は急がない
+                If html.Length <= 300 Then
+                    log1write("【エラー】" & Outside_StationName & "番組情報データ取得に失敗しました" & timer_str & "。情報取得先を再取得します")
+                    set_Outside_CustomURL()
+                End If
+            Else
+                log1write(Outside_StationName & "番組情報元：取得済み番組情報データ")
+            End If
+        ElseIf Outside_CustomURL.IndexOf(":\") > 0 Or Outside_CustomURL.IndexOf("\\") = 0 Then
+            'ローカルファイルから
+            html = file2str(Outside_CustomURL, "UTF-8")
+            log1write(Outside_StationName & "番組情報元：" & Outside_CustomURL)
+        Else
+            log1write(Outside_StationName & "番組情報元が不明です")
+        End If
+        If html.Length > 300 Then
+            log1write("【番組表】" & Outside_StationName & "番組情報データを取得しました" & timer_str)
+            Outside_CustomURL_html = html 'キャッシュに格納
+        Else
+            log1write("【エラー】" & Outside_StationName & "番組情報データ取得に失敗しました" & timer_str & "。" & Outside_CustomURL)
+            html = Outside_CustomURL_html '既存のキャッシュを返す
+        End If
+        Return html
+    End Function
+
+    Private Function get_Outside_program(ByVal getnext As Integer) As TVprogramstructure()
+        Dim r() As TVprogramstructure = Nothing
+        Try
+            'Outside番組表を取得
+            Dim ut As Integer = time2unix(Now())
+            Dim html As String = get_Outside_html(0)
+            If Outside_CustomURL_method = 1 Then
+                '都合の良いデータ形式の場合
+                If html.Length >= 300 Then
+                    Outside_CH_NAME = Nothing
+                    Dim line() As String = Split(html, vbCrLf)
+                    Dim temp() As String = line(0).Split(",")
+                    If temp.Length > 100 Then
+                        'うまく分割できていない可能性
+                        line = Split(html, vbLf) 'unix
+                    End If
+                    For i = 0 To line.Length - 1
+                        Dim d() As String = line(i).Split(",")
+                        If d.Length >= 6 Then
+                            For i2 As Integer = 0 To d.Length - 1
+                                d(i2) = Trim(d(i2))
+                            Next
+                            If ut >= Val(d(2)) And ut < Val(d(3)) Then
+                                Dim j As Integer = 0
+                                If r Is Nothing Then
+                                    j = 0
+                                Else
+                                    j = r.Length
+                                End If
+                                ReDim Preserve r(j)
+                                r(j).stationDispName = d(1).Replace("チャンネル", "")
+                                If Outside_CH_NAME Is Nothing Then 'チャンネル名を記録
+                                    ReDim Preserve Outside_CH_NAME(0)
+                                    Outside_CH_NAME(0) = r(j).stationDispName
+                                Else
+                                    If Array.IndexOf(Outside_CH_NAME, r(j).stationDispName) < 0 Then
+                                        ReDim Preserve Outside_CH_NAME(Outside_CH_NAME.Length)
+                                        Outside_CH_NAME(Outside_CH_NAME.Length - 1) = r(j).stationDispName
+                                    End If
+                                End If
+                                r(j).ProgramInformation = d(0) '使ってないのでChanelIdを記録
+                                r(j).startDateTime = unix2time(d(2)).ToString("yyyy/MM/dd H:mm")
+                                r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
+                                r(j).programTitle = escape_program_str(d(4))
+                                r(j).programContent = escape_program_str(d(5))
+                                r(j).genre = -1
+                                '次の番組を取得
+                                If getnext > 0 Then
+                                    '次の番組
+                                    Try
+                                        Dim chk As Integer = 0
+                                        While i < line.Length - 1
+                                            d = line(i + 1).Split(",")
+                                            If d(1).Replace("チャンネル", "") = r(j).stationDispName Then
+                                                If Val(d(2)) > ut Then
+                                                    j = r.Length
+                                                    ReDim Preserve r(j)
+                                                    r(j).stationDispName = d(1).Replace("チャンネル", "")
+                                                    r(j).ProgramInformation = d(0) '使ってないのでChanelIdを記録
+                                                    r(j).startDateTime = unix2time(d(2)).ToString("yyyy/MM/dd H:mm")
+                                                    r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
+                                                    r(j).programTitle = escape_program_str(d(4))
+                                                    r(j).programContent = escape_program_str(d(5))
+                                                    r(j).genre = -1
+                                                    '次の番組であることを記録
+                                                    r(j).nextFlag = 1
+                                                    Exit While
+                                                End If
+                                            Else
+                                                Exit While
+                                            End If
+                                            i += 1
+                                        End While
+                                    Catch ex As Exception
+                                    End Try
+                                End If
+                            End If
+                        End If
+                    Next
+                Else
+                    log1write("取得した" & Outside_StationName & "番組表が不正です。" & Outside_CustomURL)
+                End If
+            Else
+                log1write("【エラー】未対応の" & Outside_StationName & "解析形式です。Outside_CustomURL_method=" & Outside_CustomURL_method)
+            End If
+        Catch ex As Exception
+            log1write(Outside_StationName & "番組表取得に失敗しました。" & ex.Message)
+        End Try
+        Return r
+    End Function
+
     Private Function get_TvRock_program(ByVal getnext As Integer) As TVprogramstructure()
         Dim r() As TVprogramstructure = Nothing
         Try
@@ -752,6 +996,8 @@ Module モジュール_番組表
         Dim r As String = ""
 
         Select Case regionID
+            Case 801
+                r = Outside_StationName
             Case 991
                 r = "ダミー"
             Case 996
@@ -777,7 +1023,7 @@ Module モジュール_番組表
                 route = 2 '経路Bで記録されたものを探す
             End If
 
-            Dim str As String = RegionID.ToString & "-" & route.ToString '記録経路も含めた識別
+            Dim str As String = RegionID.ToString & "-" & route.ToString & "-" & getnext.ToString '記録経路も含めた識別
             Dim i2 As Integer = -1
             If pcache IsNot Nothing Then
                 i2 = Array.IndexOf(pcache, str)
@@ -836,7 +1082,7 @@ Module モジュール_番組表
     'キャッシュに格納
     Public Sub pcache_set(ByVal RegionID As Integer, ByVal value As TVprogramstructure(), ByVal route As Integer, ByVal getnext As Integer)
         If NoUseProgramCache = 0 Then
-            Dim str As String = RegionID.ToString & "-" & route.ToString '記録経路も含めた識別
+            Dim str As String = RegionID.ToString & "-" & route.ToString & "-" & getnext.ToString '記録経路も含めた識別
             Dim pindex As Integer = -1
             Dim k As Integer = 0
             If pcache IsNot Nothing Then
@@ -1227,27 +1473,54 @@ Module モジュール_番組表
                                             Catch ex As Exception
                                             End Try
 
-                                            'BonDriver, sid, 事業者を取得
-                                            Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid, p.tsid)
-                                            'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
-
-                                            If d(0).Length > 0 Then
-                                                hosokyoku = StrConv(d(0), VbStrConv.Wide)
+                                            Dim c2 As Integer = -1
+                                            If Outside_CH_NAME IsNot Nothing Then
+                                                c2 = Array.IndexOf(Outside_CH_NAME, p.stationDispName)
                                             End If
 
-                                            If getnext = 2 And p.nextFlag = 1 Then
-                                                p.programTitle = "[Next]" & p.programTitle
+                                            If c2 >= 0 Then
+                                                'Outside
+                                                hosokyoku = p.stationDispName
+                                                If getnext = 2 And p.nextFlag = 1 Then
+                                                    p.programTitle = "[Next]" & p.programTitle
+                                                End If
+                                                sid = 0
+                                                title = escape_program_str(p.programTitle)
+                                                Dim s_str As String = ""
+                                                If Val(Outside_sid_temp_str) > 0 Then
+                                                    s_str = (Val(Outside_sid_temp_str) + c2).ToString
+                                                End If
+                                                html &= p.stationDispName & "," & p.ProgramInformation & "," & Outside_sid_temp_str & "," & Outside_sid_temp_str & "," & Trim(startt) & "," & Trim(endt) & "," & title & "," & escape_program_str(p.programContent)
+                                                If template = 1 Then
+                                                    html &= "," & p.genre
+                                                End If
+                                                If getnext = 3 Then
+                                                    html &= "," & p.nextFlag
+                                                End If
+                                                html &= vbCrLf
+                                            Else
+                                                'BonDriver, sid, 事業者を取得
+                                                Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid, p.tsid)
+                                                'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
+
+                                                If d(0).Length > 0 Then
+                                                    hosokyoku = StrConv(d(0), VbStrConv.Wide)
+                                                End If
+
+                                                If getnext = 2 And p.nextFlag = 1 Then
+                                                    p.programTitle = "[Next]" & p.programTitle
+                                                End If
+                                                sid = Val(Trim(d(2)))
+                                                title = escape_program_str(p.programTitle)
+                                                html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & title & "," & escape_program_str(p.programContent)
+                                                If template = 1 Then
+                                                    html &= "," & p.genre
+                                                End If
+                                                If getnext = 3 Then
+                                                    html &= "," & p.nextFlag
+                                                End If
+                                                html &= vbCrLf
                                             End If
-                                            sid = Val(Trim(d(2)))
-                                            title = escape_program_str(p.programTitle)
-                                            html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & title & "," & escape_program_str(p.programContent)
-                                            If template = 1 Then
-                                                html &= "," & p.genre
-                                            End If
-                                            If getnext = 3 Then
-                                                html &= "," & p.nextFlag
-                                            End If
-                                            html &= vbCrLf
 
                                             chkstr &= s4 & ":"
                                         End If
@@ -1328,6 +1601,10 @@ Module モジュール_番組表
     '番組表で使えない文字をエスケープ
     Public Function escape_program_str(ByVal s As String, Optional ByVal m As Integer = 0) As String
         Dim r As String = ""
+        'Outside
+        s = s.Replace("&#34;", """")
+        s = s.Replace("&#39;", "'")
+        's = s.Replace("　", " ")
         '念のため
         s = s.Replace("&lt;", "＜")
         s = s.Replace("&gt;", "＞")

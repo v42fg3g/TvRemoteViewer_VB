@@ -2,12 +2,14 @@
 
 Module モジュール_その他
     'バージョン
-    Public TvRemoteViewer_VB_version As Double = 2.57
+    Public TvRemoteViewer_VB_version As Double = 2.58
     Public TvRemoteViewer_VB_notrecommend_version As Double = 0
     Public TvRemoteViewer_VB_recommend_version As Double = 0
     Public TvRemoteViewer_VB_version_check_datetime As DateTime = CDate("2000/01/01") '何分何秒にチェックするか　起動時に決定
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
+    Public TvRemoteViewer_VB_version_URL As String = "http://vb45wb5b.up.seesaa.net/image/version.txt"
+    Public TvRemoteViewer_VB_revision As String = ""
 
     'debug
     Public log_debug As Integer = 0
@@ -263,6 +265,15 @@ Module モジュール_その他
             url = url.Substring(0, sp)
         End If
         Return Path.GetExtension(url).ToLower
+    End Function
+
+    '文字列に指定文字が何個含まれているか
+    Public Function count_str(ByVal html As String, ByVal s As String) As Integer
+        Dim r As Integer = 0
+        If s.Length > 0 Then
+            r = Int((html.Length - html.Replace(s, "").Length) / s.Length)
+        End If
+        Return r
     End Function
 
     'プログラム用

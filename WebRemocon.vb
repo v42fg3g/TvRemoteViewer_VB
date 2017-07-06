@@ -1664,6 +1664,22 @@ Class WebRemocon
                                 If NoUseProgramCache = 1 Then
                                     log1write("【システム】番組表のキャッシュを作成しないよう設定しました")
                                 End If
+                            Case "AbemaTV_CustomURL", "Outside_CustomURL"
+                                If youso(1).Length > 0 Then
+                                    Outside_CustomURL = youso(1)
+                                    Outside_data_get_method = 0 'ini指定
+                                    log1write("AbemaTV_CustomURL=" & Outside_CustomURL)
+                                End If
+                            Case "AbemaTV_CustomURL_method", "Outside_CustomURL_method"
+                                '解析方法↑"Outside_CustomURL"とセットで使用　今のところ都合の良いデータ=1限定　意味が無いのでini未記入
+                                If youso(1).Length > 0 Then
+                                    Outside_CustomURL_method = Val(youso(1))
+                                    log1write("AbemaTV_CustomURL_method=" & Outside_CustomURL_method)
+                                End If
+                            Case "AvemaTV_data_get_method", "Outside_data_get_method"
+                                Outside_data_get_method = Val(youso(1))
+                                log1write("AvemaTV_data_get_method=" & Outside_data_get_method)
+
 
 
 
@@ -1795,6 +1811,16 @@ Class WebRemocon
             log1write("【エラー】ISO再生に使用するmplayer.exeが見つかりません。TvRemoteViewer_VB.exeと同じフォルダにコピーしてください。ISO再生に対応できません")
         End If
 
+        'Outsideチェック
+        If Outside_CustomURL.Length > 0 Then
+            'この時点でiniで指定されている場合取得方法はini
+            Outside_data_get_method = 0
+        End If
+        If TvProgram_ch Is Nothing Then
+            Outside_CustomURL = ""
+        ElseIf Array.IndexOf(TvProgram_ch, 801) < 0 Then
+            Outside_CustomURL = ""
+        End If
     End Sub
 
     'クライアントの設定を読み込むclient.ini

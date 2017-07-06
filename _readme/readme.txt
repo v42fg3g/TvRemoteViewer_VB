@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.57
+TvRemoteViewer_VB v2.58
 
 
 
@@ -209,6 +209,16 @@ TvRemoteViewer_VB v2.57
 
 	・全般的にクラスというものがわかってない・・お～まいがっ
 	・ffmpegの穏便な終了
+
+
+
+■AbemaTV番組データにつきまして
+	現在、AbemaGraphさんのご協力をいただいております。この場をお借りして御礼申し上げます
+
+
+
+■免責
+	作者は一切の責任を負いません。絶対に！自己責任で使用できる方のみお使いください
 
 
 
@@ -735,6 +745,12 @@ TvRemoteViewer_VB v2.57
 	2.55	次番組のジャンル情報提供について細かい修正
 	2.56	EDCBの次番組ジャンルが不正確だったバグを修正
 	2.57	新規インストール時に起動エラーになっていたバグを修正
+	2.58	TVRVLauncher用に地デジ番組表にAbemaTVを追加（要：iniのTvProgramDに801を追加）
+			AbemaTV番組情報取得先を選択できるようにした（iniにAvemaTV_data_get_methodを追加）
+			AbemaTV番組情報取得先を個別指定できるようにした（iniにAbemaTV_CustomURLを追加）
+			番組表キャッシュがNext分の違いを考慮していなかった不具合を修正
+
+
 
 
 
