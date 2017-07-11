@@ -826,10 +826,10 @@ Module モジュール_番組表
         If force = 1 Then
             timer_str = "(タイマー)"
         End If
-        Outside_CustomURL_getutime = ut
         If Outside_CustomURL.IndexOf("://") > 0 Then
             If isThisAbemaProgram(html) = 0 Or force = 1 Then
                 'html未取得
+                Outside_CustomURL_getutime = ut
                 'force=1 タイマーからの指令ならば必ず取得
                 Dim nocache_str As String = ""
                 Dim ext As String = Path.GetExtension(Outside_CustomURL)
