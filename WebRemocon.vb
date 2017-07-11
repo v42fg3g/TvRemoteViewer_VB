@@ -5301,6 +5301,9 @@ Class WebRemocon
                                     Case "WI_GET_STATUS_NUM"
                                         WI_cmd_reply = F_get_streamprep(num).ToString & "," & F_get_isoprep(num).ToString
                                         WI_cmd_reply_force = 1
+                                    Case "WI_DEBUG_ABEMA_CACHE"
+                                        WI_cmd_reply = Outside_CustomURL_html
+                                        WI_cmd_reply_force = 1
                                 End Select
                             End If
 

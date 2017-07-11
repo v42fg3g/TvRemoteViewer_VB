@@ -828,8 +828,8 @@ Module モジュール_番組表
         End If
         Outside_CustomURL_getutime = ut
         If Outside_CustomURL.IndexOf("://") > 0 Then
-            If html.Length < 300 Or force = 1 Then
-                'html未取得 < 300
+            If isThisAbemaProgram(html) = 0 Or force = 1 Then
+                'html未取得
                 'force=1 タイマーからの指令ならば必ず取得
                 Dim nocache_str As String = ""
                 Dim ext As String = Path.GetExtension(Outside_CustomURL)
@@ -839,7 +839,7 @@ Module モジュール_番組表
                 html = get_html_by_webclient(Outside_CustomURL & nocache_str, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
                 log1write(Outside_StationName & "番組情報元：" & Outside_CustomURL)
                 'うまく取得できなかった場合、次回のために取得先更新だけはしておく。取得は急がない
-                If html.Length <= 300 Then
+                If isThisAbemaProgram(html) = 0 Then
                     log1write("【エラー】" & Outside_StationName & "番組情報データ取得に失敗しました" & timer_str & "。情報取得先を再取得します")
                     set_Outside_CustomURL()
                 End If
@@ -853,14 +853,27 @@ Module モジュール_番組表
         Else
             log1write(Outside_StationName & "番組情報元が不明です")
         End If
-        If html.Length > 300 Then
+        If isThisAbemaProgram(html) = 1 Then
             log1write("【番組表】" & Outside_StationName & "番組情報データを取得しました" & timer_str)
             Outside_CustomURL_html = html 'キャッシュに格納
         Else
-            log1write("【エラー】" & Outside_StationName & "番組情報データ取得に失敗しました" & timer_str & "。" & Outside_CustomURL)
+            log1write("【エラー】" & Outside_StationName & "番組情報データ取得に失敗しました" & timer_str & "。既存のキャッシュを使用します")
             html = Outside_CustomURL_html '既存のキャッシュを返す
         End If
         Return html
+    End Function
+
+    'AbemaTVの番組情報かどうかチェック
+    Private Function isThisAbemaProgram(ByRef html As String) As Integer
+        Dim r As Integer = 0
+
+        Dim cnt As Integer = count_str(html, ",")
+        If cnt > 100 And html.IndexOf("bema") > 0 Then
+            '区切り記号が100個以上あればまぁ良しとするか
+            r = 1
+        End If
+
+        Return r
     End Function
 
     Private Function get_Outside_program() As TVprogramstructure()
@@ -879,6 +892,7 @@ Module モジュール_番組表
                         'うまく分割できていない可能性
                         line = Split(html, vbLf) 'unix
                     End If
+                    Dim chk_inTime As Integer = 0
                     For i = 0 To line.Length - 1
                         Dim d() As String = line(i).Split(",")
                         If d.Length >= 6 Then
@@ -886,6 +900,7 @@ Module モジュール_番組表
                                 d(i2) = Trim(d(i2))
                             Next
                             If ut >= Val(d(2)) And ut < Val(d(3)) Then
+                                chk_inTime = 1 '現在の番組表が見つかった
                                 Dim j As Integer = 0
                                 If r Is Nothing Then
                                     j = 0
@@ -910,36 +925,39 @@ Module モジュール_番組表
                                 r(j).programContent = escape_program_str(d(5))
                                 r(j).genre = -1
                                 '次の番組を取得
-                                    '次の番組
-                                    Try
-                                        Dim chk As Integer = 0
-                                        While i < line.Length - 1
-                                            d = line(i + 1).Split(",")
-                                            If d(1).Replace("チャンネル", "") = r(j).stationDispName Then
-                                                If Val(d(2)) > ut Then
-                                                    j = r.Length
-                                                    ReDim Preserve r(j)
-                                                    r(j).stationDispName = d(1).Replace("チャンネル", "")
-                                                    r(j).ProgramInformation = d(0) '使ってないのでChanelIdを記録
-                                                    r(j).startDateTime = unix2time(d(2)).ToString("yyyy/MM/dd H:mm")
-                                                    r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
-                                                    r(j).programTitle = escape_program_str(d(4))
-                                                    r(j).programContent = escape_program_str(d(5))
-                                                    r(j).genre = -1
-                                                    '次の番組であることを記録
-                                                    r(j).nextFlag = 1
-                                                    Exit While
-                                                End If
-                                            Else
+                                '次の番組
+                                Try
+                                    Dim chk As Integer = 0
+                                    While i < line.Length - 1
+                                        d = line(i + 1).Split(",")
+                                        If d(1).Replace("チャンネル", "") = r(j).stationDispName Then
+                                            If Val(d(2)) > ut Then
+                                                j = r.Length
+                                                ReDim Preserve r(j)
+                                                r(j).stationDispName = d(1).Replace("チャンネル", "")
+                                                r(j).ProgramInformation = d(0) '使ってないのでChanelIdを記録
+                                                r(j).startDateTime = unix2time(d(2)).ToString("yyyy/MM/dd H:mm")
+                                                r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
+                                                r(j).programTitle = escape_program_str(d(4))
+                                                r(j).programContent = escape_program_str(d(5))
+                                                r(j).genre = -1
+                                                '次の番組であることを記録
+                                                r(j).nextFlag = 1
                                                 Exit While
                                             End If
-                                            i += 1
-                                        End While
-                                    Catch ex As Exception
-                                    End Try
+                                        Else
+                                            Exit While
+                                        End If
+                                        i += 1
+                                    End While
+                                Catch ex As Exception
+                                End Try
                             End If
                         End If
                     Next
+                    If chk_inTime = 0 Then
+                        log1write("【エラー】" & Outside_StationName & "番組情報内に現在の情報が含まれていません")
+                    End If
                 Else
                     log1write("取得した" & Outside_StationName & "番組表が不正です。" & Outside_CustomURL)
                 End If
