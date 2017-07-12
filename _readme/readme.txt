@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.61
+TvRemoteViewer_VB v2.62
 
 
 
@@ -753,6 +753,7 @@ TvRemoteViewer_VB v2.61
 			番組情報キャッシュが思い通りにいかなかった原因が判明したので修正
 	2.60	取得したAbemaTV番組情報データが番組情報を含んでいるかしっかりチェックするようにした
 	2.61	数時間毎のAbemaTV番組情報取得が行われていなかったバグを修正
+	2.62	Tvmaid MAYAに対応
 
 
 

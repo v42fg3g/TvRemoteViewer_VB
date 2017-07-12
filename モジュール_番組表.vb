@@ -2993,7 +2993,7 @@ Module モジュール_番組表
                                 End Try
                                 If g1 > 1000000000 Then
                                     'MAYA
-                                    genre = Int((g1 Mod 256) / 16)
+                                    genre = Int((g1 Mod 256) / 16) * 256
                                 Else
                                     '旧式
                                     If g1 > 15 Then
