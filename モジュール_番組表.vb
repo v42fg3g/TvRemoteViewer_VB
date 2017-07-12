@@ -2733,8 +2733,8 @@ Module モジュール_番組表
     Public Function get_Tvmaid_program() As Object
         Dim r() As TVprogramstructure = Nothing
 
-        Dim nextsec As Integer = 180 * 60
-        '次の番組を取得するため期間を3時間にしてデータベースから取得
+        Dim nextsec As Integer = 150 * 60
+        '次の番組を取得するため期間を2時間半にしてデータベースから取得
 
         If Tvmaid_url.Length > 0 Then
             'データベースから番組一覧を取得する
@@ -2894,8 +2894,8 @@ Module モジュール_番組表
     Public Function get_TvmaidEX_program() As Object
         Dim r() As TVprogramstructure = Nothing
 
-        Dim nextsec As Integer = 180 * 60
-        '次の番組を取得するため期間を3時間にしてデータベースから取得
+        Dim nextsec As Integer = 150 * 60
+        '次の番組を取得するため期間を2時間半にしてデータベースから取得
 
         If Tvmaid_url.Length > 0 Then
             'データベースから番組一覧を取得する
@@ -2908,9 +2908,9 @@ Module モジュール_番組表
                 Dim utn_b As Long = DateTime.Parse(nowtime_n).ToBinary
                 Dim url As String = Tvmaid_url & "/webapi/GetTable?sql="
                 If nextsec = 0 Then
-                    url &= "SELECT fsid,start,end,duration,title,desc,genre,subgenre from event WHERE start <= " & ut_b & " AND end > " & ut_b & " ORDER BY fsid"
+                    url &= "SELECT fsid,start,end,duration,title,desc,genre from event WHERE start <= " & ut_b & " AND end > " & ut_b & " ORDER BY fsid"
                 Else
-                    url &= "SELECT fsid,start,end,duration,title,desc,genre,subgenre from event WHERE (start <= " & ut_b & " AND end > " & ut_b & ") OR (start <= " & utn_b & " AND start > " & ut_b & ") ORDER BY fsid,start"
+                    url &= "SELECT fsid,start,end,duration,title,desc,genre from event WHERE (start <= " & ut_b & " AND end > " & ut_b & ") OR (start <= " & utn_b & " AND start > " & ut_b & ") ORDER BY fsid,start"
                 End If
                 url = url.Replace("//webapi/", "/webapi/")
 
@@ -2983,7 +2983,31 @@ Module モジュール_番組表
                             Dim texts As String = escape_program_str(tr.data1(i)(5))
                             '改行（\u000d\u000a）が入ることがあるのかな・・
                             'ジャンル
-                            Dim genre As Integer = Val(tr.data1(i)(6)) * 256 + Val(tr.data1(i)(7))
+                            Dim genre As Integer = -1
+                            Try
+                                Dim g1_str As String = Trim(tr.data1(i)(6).ToString)
+                                Dim g1 As Long = -1
+                                Try
+                                    g1 = CType(g1_str, Long)
+                                Catch ex2 As Exception
+                                End Try
+                                If g1 > 1000000000 Then
+                                    'MAYA
+                                    genre = Int((g1 Mod 256) / 16)
+                                Else
+                                    '旧式
+                                    If g1 > 15 Then
+                                        g1 = 15
+                                    End If
+                                    If g1 >= 0 And g1 <= 15 Then
+                                        genre = g1 * 256
+                                    End If
+                                End If
+                                If genre < 0 Then
+                                    genre = -1
+                                End If
+                            Catch ex2 As Exception
+                            End Try
 
                             '放送局名
                             Dim station As String
@@ -3045,7 +3069,7 @@ Module モジュール_番組表
                     Array.Sort(r)
                 End If
             Catch ex As Exception
-                log1write("TvmaidYUI番組情報取得中にエラーが発生しました。" & ex.Message)
+                log1write("【エラー】TvmaidYUI番組情報取得中にエラーが発生しました。" & ex.Message)
             End Try
         End If
 
