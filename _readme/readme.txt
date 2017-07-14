@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.62
+TvRemoteViewer_VB v2.64
 
 
 
@@ -754,6 +754,8 @@ TvRemoteViewer_VB v2.62
 	2.60	取得したAbemaTV番組情報データが番組情報を含んでいるかしっかりチェックするようにした
 	2.61	数時間毎のAbemaTV番組情報取得が行われていなかったバグを修正
 	2.62	Tvmaid MAYAに対応
+	2.63	ptTimerの番組情報にジャンルを追加
+	2.64	AbemaTV番組情報サイトが落ちている場合に情報提供元が切り替わらなかったバグを修正
 
 
 

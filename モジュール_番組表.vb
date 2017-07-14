@@ -755,9 +755,9 @@ Module モジュール_番組表
                         'ランダム選択　最初の1回目は2行目以降にかかれた有志サーバーで取得することとする
                         If Outside_CustomURL.Length = 0 And rcount >= 2 And Outside_data_get_method = 1 Then
                             log1write(Outside_StationName & "番組情報取得先決定方法がランダムの場合、初回は有志提供サイトが優先されます")
-                            Outside_data_get_method = 3
-                        End If
-                        If rcount = 1 Or Outside_data_get_method = 2 Then
+                            rp = 1
+                            rcount -= 1
+                        ElseIf rcount = 1 Or Outside_data_get_method = 2 Then
                             '選択肢無し
                             ri = 0
                         ElseIf rcount >= 2 And Outside_data_get_method = 3 Then
@@ -2147,7 +2147,7 @@ Module モジュール_番組表
                                                 r(i).endDateTime = t2s
                                                 r(i).programTitle = title
                                                 r(i).programContent = texts
-                                                r(i).genre = "-1" 'Val(youso(6)) '内容がいまいち掴めないのでスルー 0=ニュース 112=アニメ
+                                                r(i).genre = Int(Val(youso(6)) / 16) * 256
                                                 '次番組かどうかチェック
                                                 If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
                                                     '2回目の場合は次番組であろう
