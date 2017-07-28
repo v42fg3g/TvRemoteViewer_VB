@@ -5304,6 +5304,15 @@ Class WebRemocon
                                     Case "WI_DEBUG_ABEMA_CACHE"
                                         WI_cmd_reply = Outside_CustomURL_html
                                         WI_cmd_reply_force = 1
+                                    Case "WI_CLEAR_ABEMA_CACHE"
+                                        Outside_CustomURL_html = ""
+                                        Dim i3 As Integer = Array.IndexOf(pcache, "801")
+                                        If i3 >= 0 Then
+                                            pcache(i3).value_str = ""
+                                        End If
+                                        log1write("AbemaTV番組情報キャッシュをクリアしました")
+                                        WI_cmd_reply = "OK"
+                                        WI_cmd_reply_force = 1
                                 End Select
                             End If
 

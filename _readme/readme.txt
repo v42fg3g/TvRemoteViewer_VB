@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.64
+TvRemoteViewer_VB v2.65
 
 
 
@@ -756,6 +756,8 @@ TvRemoteViewer_VB v2.64
 	2.62	Tvmaid MAYAに対応
 	2.63	ptTimerの番組情報にジャンルを追加
 	2.64	AbemaTV番組情報サイトが落ちている場合に情報提供元が切り替わらなかったバグを修正
+	2.65	TVRVLauncherからAbemaTV番組情報キャッシュをクリアできるようにした
+			AbemaTV番組情報のチェックを厳しくした（途中までしか送信されて来ない場合に対処）
 
 
 

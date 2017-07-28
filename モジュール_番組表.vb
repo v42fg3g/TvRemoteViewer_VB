@@ -829,6 +829,7 @@ Module モジュール_番組表
         If Outside_CustomURL.IndexOf("://") > 0 Then
             If isThisAbemaProgram(html) = 0 Or force = 1 Then
                 'html未取得
+                log1write("AbemaTV番組情報をネット上から取得します。" & Now())
                 Outside_CustomURL_getutime = ut
                 'force=1 タイマーからの指令ならば必ず取得
                 Dim nocache_str As String = ""
@@ -870,7 +871,16 @@ Module モジュール_番組表
         Dim cnt As Integer = count_str(html, ",")
         If cnt > 100 And html.IndexOf("bema") > 0 Then
             '区切り記号が100個以上あればまぁ良しとするか
-            r = 1
+
+            'と思ったがなんと途中で切れた状態で送られてくることがある（通信エラー？）
+            '前回の3分の2以上のデータがあればOKとすることにする
+            'チャンネル削減もありえるので余裕を持って判断
+            Dim last_cnt As Integer = count_str(Outside_CustomURL_html, ",")
+            If cnt >= Int(last_cnt / 3 * 2) Then
+                r = 1
+            Else
+                log1write("【エラー】AbemaTV番組情報が前回取得時のものより極端に短いためデータ取得に失敗したと判断しました")
+            End If
         End If
 
         Return r
