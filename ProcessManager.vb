@@ -409,13 +409,20 @@ Public Class ProcessManager
                                 'ffmpeg HTTPストリーム
                                 'この場合、ffmpegはすぐには実行しない 後でwatch.tsにアクセスがあったときに起動
                                 'ProcessBeans作成
-                                If hls_only = 1 Then
-                                    '既存のリストを削除してから改めて追加
-                                    Me._list.RemoveAt(i)
-                                End If
                                 '                                  ↓Processはまだ決まっていない
-                                Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing, "")
-                                Me._list.Add(pb)
+                                'If hls_only = 1 And i >= 0 Then
+                                ''既存のリストを削除してから改めて追加
+                                'Me._list.RemoveAt(i)
+                                'End If
+                                'Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing, "")
+                                'Me._list.Add(pb)
+                                Dim ni As Integer = num2i(num, 1)
+                                If ni < 0 Then
+                                    Dim pb As New ProcessBean(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing, "")
+                                    Me._list.Add(pb)
+                                Else
+                                    Me._list(ni).set_parameter(udpProc, Nothing, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing, "")
+                                End If
 
                                 '1秒毎のプロセスチェックさせない
                                 'Me._list(num2i(num))._stopping >= 100
@@ -473,23 +480,28 @@ Public Class ProcessManager
                                 End If
 
                                 'Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex_str)'↓再起動用にパラメーターを渡しておく
-                                Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing, "")
-                                Me._list.Add(pb)
+                                Dim ni As Integer = num2i(num, 1)
+                                If ni < 0 Then
+                                    Dim pb As New ProcessBean(udpProc, hlsProc, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing, "")
+                                    Me._list.Add(pb)
+                                Else
+                                    Me._list(ni).set_parameter(udpProc, hlsProc, num, pipeIndex_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, NHK_dual_mono_mode_select, resolution, "", 0, Nothing, "")
+                                End If
                             End If
-                        Else
-                            'チャンネル切り替え失敗したのでUDPアプリを終了させる
-                            log1write("チャンネル切り替えに失敗したのでUDPアプリを終了します")
+                            Else
+                                'チャンネル切り替え失敗したのでUDPアプリを終了させる
+                                log1write("チャンネル切り替えに失敗したのでUDPアプリを終了します")
 
-                            'RecTaskを終了させる（まだlistが作られていない場合）
-                            Dim rr As Integer = stroUdpProc_by_pipeindex_str(num, pipeIndex_str, udpProc)
+                                'RecTaskを終了させる（まだlistが作られていない場合）
+                                Dim rr As Integer = stroUdpProc_by_pipeindex_str(num, pipeIndex_str, udpProc)
 
-                            'ストリームが存在していれば削除
-                            If num2i(num) >= 0 Then
-                                log1write("ストリーム" & num.ToString & "を削除します")
-                                stopProc(num)
+                                'ストリームが存在していれば削除
+                                If num2i(num) >= 0 Then
+                                    log1write("ストリーム" & num.ToString & "を削除します")
+                                    stopProc(num)
+                                End If
+                                stream_last_utime(num) = 0 '前回配信準備開始時間リセット
                             End If
-                            stream_last_utime(num) = 0 '前回配信準備開始時間リセット
-                        End If
                     Else
                         log1write("名前付きパイプ名の取得に失敗したのでUDPアプリを終了します")
                         Try
@@ -549,8 +561,13 @@ Public Class ProcessManager
                         End If
                         'ProcessBeans作成
                         '                                  ↓Processはまだ決まっていない
-                        Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, Nothing, "")
-                        Me._list.Add(pb)
+                        Dim ni As Integer = num2i(num, 1)
+                        If ni < 0 Then
+                            Dim pb As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, Nothing, "")
+                            Me._list.Add(pb)
+                        Else
+                            Me._list(ni).set_parameter(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, Nothing, "")
+                        End If
 
                         '1秒毎のプロセスチェックさせない
                         'Me._list(num2i(num))._stopping >= 100
@@ -678,8 +695,13 @@ Public Class ProcessManager
                                         If Not dvdObject(num) Is Nothing Then
                                             'ストリーム登録
                                             write_log_debug("ISO再生 hlsOpt(5) DVD用変数変換前", hlsOpt)
-                                            Dim pb_iso As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, isoPara)
-                                            Me._list.Add(pb_iso)
+                                            Dim ni2 As Integer = num2i(num, 1)
+                                            If ni2 < 0 Then
+                                                Dim pb_iso As New ProcessBean(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, isoPara)
+                                                Me._list.Add(pb_iso)
+                                            Else
+                                                Me._list(ni2).set_parameter(Nothing, Nothing, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, isoPara)
+                                            End If
                                             'シークまたはトラック等のパラメータを変更しての再読込
                                             If dvdObject(num).dumpProgress >= 101 Then
                                                 log1write("ストリーム" & num.ToString & "の" & "DVDはダンプ済です。")
@@ -829,8 +851,13 @@ Public Class ProcessManager
                         End Try
 
                         '                                                           ↓再起動用にパラメーターを渡しておく
-                        Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, "")
-                        Me._list.Add(pb)
+                        Dim ni As Integer = num2i(num, 1)
+                        If ni < 0 Then
+                            Dim pb As New ProcessBean(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, "")
+                            Me._list.Add(pb)
+                        Else
+                            Me._list(ni).set_parameter(Nothing, hlsProc, num, 0, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, stream_mode, 0, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, "")
+                        End If
                     End If
                 End If
                 'End If
@@ -1009,7 +1036,7 @@ Public Class ProcessManager
     End Function
 
     'numから_list(i)のiを取得する
-    Public Function num2i(ByVal num As Integer) As Integer
+    Public Function num2i(ByVal num As Integer, Optional ByVal pb As Integer = 0) As Integer
         Dim r As Integer = -1
 
         If Me._list.Count > 0 Then
@@ -1019,6 +1046,15 @@ Public Class ProcessManager
                     Exit For
                 End If
             Next
+
+            If pb = 1 And r = -1 Then
+                For i As Integer = 0 To Me._list.Count - 1
+                    If Me._list(i)._num = 0 Then
+                        r = i
+                        Exit For
+                    End If
+                Next
+            End If
         End If
 
         Return r
@@ -1489,17 +1525,17 @@ Public Class ProcessManager
                                 log1write("No.=" & Me._list(i)._num.ToString & " の復帰用データを記録しました")
                                 log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
                                 stream_last_utime(Me._list(i)._num) = 0 '前回配信準備開始時間リセット
-                                Me._list.RemoveAt(i)
+                                Me._list(i).data_clear()
                             ElseIf num = -2 Or num = -3 Then
                                 '強制全停止　実際に停止されたかどうかかまわず
                                 log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
                                 stream_last_utime(Me._list(i)._num) = 0 '前回配信準備開始時間リセット
-                                Me._list.RemoveAt(i)
+                                Me._list(i).data_clear()
                                 'delete_mystreamnum(num) 'm3u8,tsを削除
                             ElseIf hls_stop = 1 And udp_stop = 1 Then
                                 log1write("No.=" & Me._list(i)._num & "のプロセスを停止しました")
                                 stream_last_utime(Me._list(i)._num) = 0 '前回配信準備開始時間リセット
-                                Me._list.RemoveAt(i)
+                                Me._list(i).data_clear()
                                 'delete_mystreamnum(num) 'm3u8,tsを削除
                             Else
                                 log1write("No.=" & Me._list(i)._num & "のプロセス停止に失敗しました")
@@ -1714,27 +1750,31 @@ Public Class ProcessManager
     End Structure
 
     '現在稼働中のlistナンバーをnumでソートして返す
-    Public Function get_live_index_sort() As Object
+    Public Function get_live_index_sort(Optional ByVal ShowListCount As Integer = 0) As Object
         Dim ls() As livesortstructure = Nothing
         Dim s() As Integer = Nothing
         Dim j As Integer = 0
         If Me._list.Count > 0 Then
             ReDim Preserve ls(Me._list.Count - 1)
-            ReDim Preserve s(Me._list.Count - 1)
             For j = 0 To Me._list.Count - 1
                 ls(j).r = Me._list(j)._num
                 ls(j).s = j
             Next
             Array.Sort(ls)
+            Dim cnt As Integer = 0
             For j = 0 To Me._list.Count - 1
-                s(j) = ls(j).s
+                If ls(j).r > 0 Then
+                    ReDim Preserve s(cnt)
+                    s(cnt) = ls(j).s
+                    cnt += 1
+                End If
             Next
         End If
         Return s
     End Function
 
     '現在稼働中のlist(i)._numを取得
-    Public Function get_live_numbers() As String
+    Public Function get_live_numbers(Optional ByVal ShowListCount As Integer = 0) As String
         Dim js As String = " "
         Dim d() As Integer = get_live_index_sort() 'listナンバーがnumでソートされて返ってくる
         If d IsNot Nothing Then
@@ -1745,6 +1785,9 @@ Public Class ProcessManager
                     js &= Me._list(d(j))._num.ToString & " "
                 End If
             Next
+        End If
+        If ShowListCount = 1 Then
+            js &= " (" & Me._list.Count & ")"
         End If
         Return js
     End Function
@@ -2594,8 +2637,13 @@ Public Class ProcessManager
                                     '互換性のため配慮　ISOが復帰できるかは未検証
                                     isoPara = d(8)
                                 End If
-                                Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)), Nothing, isoPara)
-                                Me._list.Add(pb)
+                                Dim ni As Integer = num2i(Val(d(0)), 1)
+                                If ni < 0 Then
+                                    Dim pb As New ProcessBean(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)), Nothing, isoPara)
+                                    Me._list.Add(pb)
+                                Else
+                                    Me._list(ni).set_parameter(Nothing, Nothing, Val(d(0)), "", "", "", d(1), d(2), 0, False, -Val(d(3)), Val(d(4)), d(5), d(6), Val(d(7)), Nothing, isoPara)
+                                End If
                                 log1write("ストリーム" & Val(d(0)).ToString & "が復帰されました")
                             Else
                                 log1write("ストリーム" & Val(d(0)).ToString & "の復帰に失敗しました。動画ファイルが見つかりません")

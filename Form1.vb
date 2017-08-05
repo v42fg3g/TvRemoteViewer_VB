@@ -102,7 +102,11 @@ Public Class Form1
             End If
 
             '現在稼働中のストリームをタスクトレイアイコンのマウスオーバー時に表示する
-            Dim s As String = Me._worker.get_live_numbers()
+            If log_debug = 1 Then
+                Dim s As String = Me._worker.get_live_numbers(1) 'デバッグ _list数表示
+            Else
+                Dim s As String = Me._worker.get_live_numbers()
+            End If
             live_chk = s.Length
             If s.Length > 1 Then
                 LabelStream.Text = "配信中：" & s 'ついでにフォーム上にも表示

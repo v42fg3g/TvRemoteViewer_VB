@@ -1100,9 +1100,9 @@ Class WebRemocon
     End Sub
 
     '現在稼働中のストリームナンバーを取得
-    Public Function get_live_numbers() As String
+    Public Function get_live_numbers(Optional ByVal ShowListCount As Integer = 0) As String
         Dim r As String
-        r = Me._procMan.get_live_numbers()
+        r = Me._procMan.get_live_numbers(ShowListCount)
         Return r
     End Function
 
@@ -5340,7 +5340,7 @@ Class WebRemocon
                                     waitingmessage_str(num) = ""
                                     Me.start_movie(num, bondriver, Val(sid), Val(chspace), Me._udpApp, Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, Me._udpOpt3, videoname, NHK_dual_mono_mode_select, stream_mode, resolution, 0, 0, "1", hlsOptAdd, 0, hlsAppSelect, profileSelect, httpApp, Nothing)
                                     'すぐさま視聴ページへリダイレクトする
-                                    If TVRemoteFilesNEW = 0 Then
+                                    If TVRemoteFilesNEW = 0 And stream_mode <> 2 And stream_mode <> 3 Then
                                         redirect = "ViewTV" & num & ".html"
                                     End If
                                 ElseIf num > 0 And videoname.Length > 0 Then
@@ -5349,13 +5349,13 @@ Class WebRemocon
                                     waitingmessage_str(num) = ""
                                     Me.start_movie(num, "", 0, 0, "", Me._hlsApp, Me._hlsOpt1, Me._hlsOpt2, Me._wwwroot, Me._fileroot, Me._hlsroot, Me._ShowConsole, "", videoname, NHK_dual_mono_mode_select, stream_mode, resolution, VideoSeekSeconds, nohsub, baisoku, hlsOptAdd, margin1, hlsAppSelect, profileSelect, httpApp, iso)
                                     'すぐさま視聴ページへリダイレクトする
-                                    If TVRemoteFilesNEW = 0 Then
+                                    If TVRemoteFilesNEW = 0 And stream_mode <> 2 And stream_mode <> 3 Then
                                         redirect = "ViewTV" & num & ".html"
                                     End If
                                 Else
                                     StartTv_param = -1
                                 End If
-                                If TVRemoteFilesNEW = 1 Then
+                                If TVRemoteFilesNEW = 1 And stream_mode <> 2 And stream_mode <> 3 Then
                                     '新画面推移
                                     'ViewTVへのアクセスとして扱う
                                     chk_viewtv_ok = 1
@@ -5371,7 +5371,7 @@ Class WebRemocon
                                     End If
                                 End If
 
-                                If TVRemoteFilesNEW = 1 Then
+                                If TVRemoteFilesNEW = 1 And stream_mode <> 2 And stream_mode <> 3 Then
                                     '新画面推移
                                     chk_viewtv_ok = 1
                                 Else

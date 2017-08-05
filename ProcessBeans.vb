@@ -37,6 +37,10 @@ Class ProcessBean
     Public _ISO_para As String = ""
 
     Public Sub New(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId_str As String, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String, VideoSeekSeconds As Integer, hlsProc2 As Process, ByVal ISO_para_str As String)
+        set_parameter(udpProc, hlsProc, procBrowserIndex, udpPipeId_str, udpApp, udpOpt, hlsApp, hlsOpt, udpPort, ShowConsole, Stream_mode, NHK_dual_mono_mode_select, resolution, fullpathfilename, VideoSeekSeconds, hlsProc2, ISO_para_str)
+    End Sub
+
+    Public Sub set_parameter(udpProc As Process, hlsProc As Process, procBrowserIndex As Integer, udpPipeId_str As String, udpApp As String, udpOpt As String, hlsApp As String, hlsOpt As String, udpPort As Integer, ShowConsole As Boolean, Stream_mode As Integer, NHK_dual_mono_mode_select As Integer, resolution As String, fullpathfilename As String, VideoSeekSeconds As Integer, hlsProc2 As Process, ByVal ISO_para_str As String)
         Me._udpProc = udpProc
         Me._hlsProc = hlsProc
         Me._hlsProc2 = hlsProc2
@@ -78,6 +82,39 @@ Class ProcessBean
         stream_last_utime(Me._num) = 0 '直前配信履歴簡易記録クリア
     End Sub
 
+    Public Sub data_clear()
+        Me._udpProc = Nothing
+        Me._hlsProc = Nothing
+        Me._hlsProc2 = Nothing
+        Me._procBrowserIndex = 0
+        Me._udpPipeId_str = ""
+        Me._udpApp = ""
+        Me._udpOpt = ""
+        Me._hlsApp = ""
+        Me._hlsOpt = ""
+        Me._num = 0
+        Me._chk_proc = 0
+        Me._udpPort = 0
+        Me._stopping = 0
+        Me._ShowConsole = False
+        Me._resolution = ""
+        Me._FileEncodeFinished = 0
+        Me._stream_mode = 0
+        Me._NHK_dual_mono_mode_select = 0
+        Me._fullpathfilename = ""
+        Me._VideoSeekSeconds = 0
+
+        'ffmpeg HTTPストリーム
+        Me._IsStart = False
+        Me._http_udp_changing = 0
+        '停止フラグ
+        Me._http_force_stop = 0
+
+        'ISOパラメータ
+        Me._ISO_para = ""
+
+        stream_last_utime(Me._num) = 0 '直前配信履歴簡易記録クリア
+    End Sub
     '========================================================================
 
     'ffmpeg HTTPストリーム　スタート
