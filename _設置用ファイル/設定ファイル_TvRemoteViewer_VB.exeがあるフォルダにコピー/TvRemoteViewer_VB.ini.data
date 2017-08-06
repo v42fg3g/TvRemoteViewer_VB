@@ -1,0 +1,119 @@
+全般	0	integer	close2min	0	×で最小化させる=1
+全般	0	document			　
+全般	0	document			HLSアプリを個別指定で使用する場合は各アプリのexeをフルパスで指定してください
+全般	0	document			特にサムネイル機能を使用する場合は必ずexepath_ffmpegを指定してください
+全般	0	document			例　D:\TvRemoteViewer\ffmpeg\bin\ffmpeg.exe
+全般	0	string	exepath_ffmpeg		ffmpegパス
+全般	0	string	exepath_VLC		VLCパス
+全般	0	string	exepath_QSVEnc		QSVEncCパス
+全般	0	string	exepath_NVEnc		NVEncCパス
+全般	0	string	exepath_ISO_VLC		ISO用VLCパス
+全般	0	string	exepath_mplayer		mplayerパス
+全般	0	string	RecTask_SPHD		スカパープレミアムSPHD視聴時に使用するRecTask
+全般	0	string	BS1_hlsApp		BS1とBSプレミアムの再生時のみvlcに切り替える場合のVLCパス
+全般	0	document			　
+全般	0	integer	Stop_RecTask_at_StartEnd	1	起動・終了・全停止時にRecTaskを名前指定で停止（しない=0 する=1）
+全般	0	integer	Stop_ffmpeg_at_StartEnd	1	起動・終了・全停止時にffmpegを名前指定で停止（しない=0 する=1）
+全般	0	integer	Stop_vlc_at_StartEnd	1	起動・終了・全停止時にVLCを名前指定で停止（しない=0 する=1）
+全般	0	integer	Stop_QSVEnc_at_StartEnd	1	起動・終了・全停止時にQSVEncCを名前指定で停止（しない=0 する=1）
+全般	0	integer	Stop_NVEnc_at_StartEnd	1	起動・終了・全停止時にNVEncCを名前指定で停止（しない=0 する=1）
+全般	0	document			　
+全般	0	integer	log_size	30000	ログの最大文字数
+全般	0	string	log_path	TvRemoteViewer_VB.log	終了時のログ保存ファイル名(絶対パス可) 空白=保存しない
+全般	0	document			　
+
+WEBサーバー	0	integer	TVRemoteFilesNEW	0	新画面推移=1 スムーズかつ高速になります（標準は0）
+WEBサーバー	0	document			　
+WEBサーバー	0	string	Remocon_Domains		リモコン先にローカルIP以外を指定する場合のドメイン「,」区切りで複数指定可
+WEBサーバー	0	integer	html_publish_method	1	HTML発行方式(エラーが気になる方は0にしてみてください)
+WEBサーバー	0	document			　
+WEBサーバー	0	string	MIME_TYPE_DEFAULT		MIME TYPE(例："m3u8:application/x-mpegURL", "ts:video/MP2T")
+WEBサーバー	0	integer	meta_refresh_fix	0	metaタグRefresh記述をjavascriptに変更（0=しない 1=する）Android UCブラウザを使用する場合は1
+WEBサーバー	0	document			　
+WEBサーバー	0	string	BonDriver_NGword		表示したくないBonDriver名の一部を記述（,区切りで複数可）
+WEBサーバー	0	string	TvProgramD_BonDriver1st		地デジで優先的に割り当てるBonDriver（,区切りで複数可）
+WEBサーバー	0	string	TvProgramS_BonDriver1st		BS・CSで優先的に割り当てるBonDriver（,区切りで複数可）
+WEBサーバー	0	string	TvProgramP_BonDriver1st		プレミアムで優先的に割り当てるBonDriver（,区切りで複数可）
+WEBサーバー	0	integer	TvProgram_SelectUptoNum	0	番組表での配信ナンバーを制限する場合に上限の配信ナンバーを指定
+WEBサーバー	0	document			　
+WEBサーバー	0	string	HTML_IN_CHARACTER_CODE	UTF-8	[無効] HTML入力キャラクターコード
+WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコード
+
+番組表データ	1	string	TvProgramD		ネット番組表都道府県コード AbemaTV:801	例　福岡＆佐賀の場合　TvProgramD = 55,61\nさらに、その中から表示したくない放送局名を指定することができます。\n　　福岡の特定局を除く TvProgramD_NGword = "ＲＫＢ毎日放送","ＦＢＳ福岡放送"\n10:北海道（札幌）11:北海道（函館）12:北海道（旭川）13:北海道（帯広）14:北海道（釧路）15:北海道（北見）16:北海道（室蘭）\n22:青森　20:岩手　17:宮城　18:秋田　19:山形　21:福島　26:茨城　28:栃木　25:群馬　29:埼玉　27:千葉\n23:東京　24:神奈川　31:新潟　37:富山　34:石川　36:福井　32:山梨　30:長野　39:岐阜　35:静岡\n33:愛知　38:三重　45:滋賀　41:京都　40:大阪　42:兵庫　44:奈良　43:和歌山\n49:鳥取　48:島根　47:岡山　46:広島　50:山口　53:徳島　52:香川　51:愛媛　54:高知\n55:福岡　61:佐賀　57:長崎　56:熊本　60:大分　59:宮崎　58:鹿児島　62:沖縄\n801:AbemaTV
+番組表データ	0	string	TvProgramD_NGword		ネット番組表に表示したくない放送局名
+番組表データ	0	string	TvProgramD_channels		番組表の放送局名から.ch2で記述されている放送局名への変換
+番組表データ	0	document			　
+番組表データ	0	integer	AvemaTV_data_get_method	1	AbemaTV情報取得先決定方法
+番組表データ	0	string	AbemaTV_CustomURL		AbemaTV情報取得先URL
+番組表データ	0	document			　
+番組表データ	0	string	TvProgram_tvrock_url		TvRockのiPhone用番組表URL（http://127.0.0.1:8969/ユーザー名/iphone）
+番組表データ	0	string	TvProgramTvRock_NGword		TvRock番組表に表示したくない放送局名
+番組表データ	0	document			　
+番組表データ	0	string	TvProgram_EDCB_url		EDCBの番組表WEBインターフェースURL（http://127.0.0.1:5510/api/EnumEventInfo）
+番組表データ	0	string	TvProgramEDCB_NGword		EDCB番組表に表示したくない放送局名
+番組表データ	0	string	TvProgramEDCB_ignore		EDCB番組表に表示はするが番組データは取得しない放送局名
+番組表データ	0	integer	TvProgramEDCB_premium	0	EDCBプレミアム番組表に表示する局（0=全て 1=SPHDのみ 2=SPHD以外）
+番組表データ	0	integer	EDCB_Velmy_niisaka	0	EDCBの番組表が表示されないときにEDCB_Velmy_niisaka=1を指定してください
+番組表データ	1	integer	EDCB_thru_addprogres	0	EDCB_Velmy_niisaka=1でもEDCB番組表が表示されない場合は1
+番組表データ	1	integer	EDCB_GetCh_method	0	EDCBの管理するチャンネル一覧取得方法（0=CtrlCmdCLI使用 1=旧方式）
+番組表データ	0	document			　
+番組表データ	1	string	ptTimer_path		ptTimerのフォルダ（C:\ptTimer）
+番組表データ	0	string	TvProgramptTimer_NGword		ptTimer番組表に表示したくない放送局名
+番組表データ	0	document			　
+番組表データ	0	string	Tvmaid_url		Tvmaid初代サーバーのURL（http://127.0.0.1:20000）
+番組表データ	0	string	TvmaidYUI_url		TvmaidEX以降のサーバーURL（http://127.0.0.1:20001）
+番組表データ	0	string	TvProgramTvmaid_NGword		Tvmaid番組表に表示したくない放送局名
+番組表データ	0	document			　
+番組表データ	0	document			　
+番組表データ	0	document			　
+番組表データ	0	string	TvProgramD_sort		番組表の並び順	指定の無い放送局は指定された放送局の後に表示されます\n例　TvProgramD_sort = "NHK総合","NHK Eテレ","日本テレビ","TBSテレビ","フジテレビ","テレビ朝日","テレビ東京","TOKYO MX"\n※並び順は地デジ・EDCB・TvRock共通で適用されます
+番組表データ	0	integer	TvProgram_Force_NoRec	0	番組情報を取得できない環境でチャンネル一覧を表示する=1
+番組表データ	0	integer	NoUseProgramCache	0	番組表キャッシュ制御を行いたくない場合は1にしてください
+
+HLS配信	0	integer	MAX_STREAM_NUMBER	100	最大配信ナンバー
+HLS配信	0	integer	tsfile_wait	2	tsファイルが指定数作成されるまで配信準備中とする
+HLS配信	0	integer	ALLOW_IDPASS2HTML	0	外部プレーヤーにパスワードを渡すときに必要な場合は1
+HLS配信	0	integer	OLDTS_NODELETE	0	配信中に古い断片ファイルtsを削除しないように（する=1, しない=0)
+HLS配信	0	integer	Allow_BonDriver4Streams	0	同一BonDriverの複数ストリームでの使用を許可（する=1, しない=0)
+HLS配信	0	integer	NHK_dual_mono_mode	3	ffmpeg使用時のNHK音声モード（0=主・副固定 1=主音声固定 2=副音声固定 3=WEB選択式 9=VLC切り替え）
+HLS配信	0	integer	RecTask_CH_MaxWait	5	RecTaskがチャンネル変更するまで待機する最大秒数
+HLS配信	0	integer	UDP2HLS_WAIT	0	HLSアプリ起動待機msec（通常は0でOK）
+HLS配信	0	document			　
+HLS配信	0	integer	STOP_IDLEMINUTES	300	アイドル時に全切断されるまでの分数（0の場合は切断しません）
+HLS配信	0	integer	STOP_IDLEMINUTES_METHOD	1	アイドル抑止イベント（1=WIアクセス 2=WEBアクセス全て 3=HLSアクセスも含む）
+HLS配信	0	document			　
+HLS配信	0	string	UDP_PRIORITY		UDP CPU優先度(Idle,Normal,High,RealTime)
+HLS配信	0	string	HLS_PRIORITY		HLS CPU優先度(Idle,Normal,High,RealTime)
+HLS配信	0	document			　
+HLS配信	0	string	openfix_BonSid		openfix_BonSid = BonDriverファイル名:一時的に合わせるサービスID(:チャンネル空間) ,で区切って複数指定可能
+HLS配信	0	integer	OPENFIX_WAIT	0	ダミーチャンネル切り替え時に入れるウェイト
+
+HTTP配信	0	integer	HTTPSTREAM_App	2	HTTPストリーム再生にどのhlsアプリを使用するか 0=指定無し 1=vlc 2=ffmpeg
+HTTP配信	0	integer	HTTPSTREAM_VLC_port	42465	HTTPストリームでVLCが使用するTCPポートの始まり
+HTTP配信	0	integer	FFMPEG_HTTP_CUT_SECONDS	5	ffmpeg　クライアントから切断された場合、何秒後に配信自体を停止するか
+HTTP配信	0	integer	HTTPSTREAM_FFMPEG_BUFFER	32	ffmpeg　バッファ * MB
+HTTP配信	0	integer	HTTPSTREAM_METHOD	0	HTTPストリーム受信方法（0=従来通り 1=Read　標準は0）
+
+ファイル再生	1	string	VideoPath		ビデオファイルがあるパス（,区切りで複数可）
+ファイル再生	1	integer	AddSubFolder	1	サブフォルダーを（0=含めない 1=含める）
+ファイル再生	0	string	VideoExtensions		ビデオファイル一覧に表示する拡張子を指定（,区切りで複数可）
+ファイル再生	0	document			　
+ファイル再生	0	integer	VideoSeekDefault	0	ファイル再生スタート時に指定秒数シークする
+ファイル再生	0	integer	VideoSizeCheck	0	ファイル一覧作成時にファイルサイズが0かどうか検査（1=する）
+ファイル再生	0	integer	TOT_get_duration	1	動画の長さ(秒)を取得（しない=0,する=1）
+ファイル再生	0	document			　
+ファイル再生	0	integer	ISOPlayNEW	1	ISO再生を新方式で（行う=1）
+ファイル再生	1	string	ISO_DumpDirPath		ISO新方式　DUMPするフォルダ。（無指定の場合は%FILEROO%）大きな容量が必要になります）
+ファイル再生	0	integer	ISO_maxDump	2	ISO新方式　DUMPデータの最大保持数。4GB～7GBのISO_maxDump個分の空き容量が必要になります
+ファイル再生	1	string	VLC_ISO_option		ISO再生時にVLCに与える追加オプションを指定できます（空白=標準設定使用）
+ファイル再生	0	document			　
+ファイル再生	0	string	NicoJK_path		NicoJKコメントフォルダ
+ファイル再生	0	string	NicoConvAss_path		NicoConvAss.exeのフルパス
+ファイル再生	0	integer	NicoJK_first	0	すでに「動画ファイル名.ass」ファイルが存在している場合でもNicoJKファイルを優先（する=1 しない=0)
+ファイル再生	0	integer	Nico_delay	0	NicoJKコメント再生における微妙なズレを修正（秒）（コメントを早めたいときはマイナス値、遅くしたいときはプラス値）
+ファイル再生	0	integer	make_chapter	0	assファイル内の文字列（ｷﾀ━,OP,A,B,C,ED）が現れる地点にチャプターを（打つ=1,打たない=0）
+ファイル再生	0	integer	chapter_bufsec	3	見つかった地点の何秒前にチャプターを打つか
+ファイル再生	0	integer	NicoConvAss_copy2NicoJK	1	NicoConvAssでassを作成するついでにNicoJKフォルダ\jk～にassを作成（しない=0 する=1）
+ファイル再生	0	document			　
+ファイル再生	0	string	PipeRun_ffmpeg_option		PipeRun時にffmpegへ渡すパラメータ
+

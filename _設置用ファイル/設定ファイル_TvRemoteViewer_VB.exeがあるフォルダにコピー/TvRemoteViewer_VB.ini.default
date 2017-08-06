@@ -1,0 +1,484 @@
+;==============================================================
+; HLSストリーム再生
+;==============================================================
+
+;【2.07】HLSアプリを個別指定で使用する場合は各アプリのexeをフルパスで指定してください
+; 特にサムネイル機能を使用する場合はexepath_ffmpegを指定してください
+; Pipe経由QSVEnc再生をする場合はexepath_ffmpegとexepath_QSVEncを指定してください
+; 併せてvideo_force_ffmpeg=2とするとファイル再生はPipe経由で行われるようになります
+; 　　　video_force_ffmpeg=3とすると2に加えts以外のファイル再生はffmpegで行われるようになります
+; 例　exepath_ffmpeg = "D:\TvRemoteViewer\ffmpeg\bin\ffmpeg.exe"
+; 　　exepath_QSVEnc = "D:\TvRemoteViewer\QSVEnc\bin\QSVEncC.exe"
+exepath_ffmpeg = 
+exepath_VLC = 
+exepath_QSVEnc = 
+exepath_NVEnc = 
+;【2.22】ISO再生に使用するVLCへのパス　v2.1.2推奨
+; http://download.videolan.org/pub/videolan/vlc/2.1.2/win32/
+; http://download.videolan.org/pub/videolan/vlc/2.1.2/win64/
+exepath_ISO_VLC = 
+;【2.51】ISO再生に使用するmplayerへのパス
+exepath_mplayer = 
+
+;【0.49】最大配信ナンバー
+MAX_STREAM_NUMBER = 8
+
+;【0.49】UDP,HLSアプリのCPU優先度 Idle,Normal,High,RealTime,空白は無指定
+;例：　UDP_PRIORITY = High
+UDP_PRIORITY =
+HLS_PRIORITY =
+
+;【0.65】
+; UDPアプリが起動した後、HLSアプリを起動するまでに待つ時間(ミリセカンド)
+; 0ではVLCの起動に失敗することあり
+; 0=UDPアプリが準備出来次第　1.77までの値は500です
+; 例　2秒ウェイトを入れる場合：UDP2HLS_WAIT = 2000
+UDP2HLS_WAIT = 0
+
+;tsファイルが指定数作成されるまで配信準備中とする
+tsfile_wait = 2
+
+;【0.68】HTML内の「%IDPASS%」を「ユーザー名:パスワード@」に変換（しない=0 する=1）
+; 外部プレーヤー等にURLを渡すときに必要な場合は1にしてください
+; 注意！　HTML内にユーザー名とパスワードが平文で記入されることになります。
+; 　　　　自己責任で使用してください。
+ALLOW_IDPASS2HTML = 0
+
+;【0.81】アイドル時に全切断されるまでの分数（0の場合は切断しません）
+STOP_IDLEMINUTES = 300
+;【2.39】アイドル抑止イベント（1=WIアクセス 2=WEBアクセス全て 3=HLSアクセスも含む）
+STOP_IDLEMINUTES_METHOD = 1
+
+;【0.97】配信中に古い断片ファイルtsを削除しないように（する=1, しない=0)
+OLDTS_NODELETE = 0
+
+;【1.12】スカパープレミアムSPHD視聴時に使用するRecTask
+; 例：RecTask_SPHD = "D:\TvRemoteViewer\TVTest\RecTask.exe"
+RecTask_SPHD = 
+
+;【1.21】同一BonDriverの複数ストリームでの使用を許可（する=1, しない=0)
+Allow_BonDriver4Streams = 0
+
+;【1.41】RecTaskがチャンネル変更するまで待機する最大秒数
+RecTask_CH_MaxWait = 5
+
+;【1.51】チューナー初使用時に一旦別のサービスIDに合わせてから目的のサービスIDへ
+; openfix_BonSid = BonDriverファイル名:一時的に合わせるサービスID(:チャンネル空間)
+; 例：openfix_BonSid = BonDriver_Spinel_PT3_s0.dll:100
+; 例：openfix_BonSid = BonDriver_Spinel_PT3_s0.dll:100:1
+; ,で区切って複数指定可能
+openfix_BonSid = 
+;【1.78】ダミーチャンネル切り替え時に入れるウェイト　1.78までは500 0=UDPアプリが準備出来次第
+OPENFIX_WAIT = 0
+
+
+;==============================================================
+; WEBサーバー
+;==============================================================
+
+;MIME TYPE
+;拡張子とTYPEは「:」で区切って記述してください。
+;該当拡張子が無い場合はMIME_TYPE_DEFAULTが使用されます。
+;MIME_TYPE_DEFAULT = "text/html"
+;MIME_TYPE = "m3u8:application/x-mpegURL", "ts:video/MP2T", "js:application/x-javascript"
+
+
+;【0.58】WEB上で表示したくないBonDriver名を記述
+;例　BonDriver_NGword = "BonDriver_PT2_s0.dll"
+;　　BonDriver_NGword = "BonDriver_PT2_s", "PT3_t1"
+;特に無い場合は空白でおｋ
+;チャンネル指定ができない"_file", "_udp", "_pipe"は初めから除去されています
+BonDriver_NGword = 
+
+
+;【0.79】HTML入力キャラクターコード（HTMLファイルの文字コード）　※1.60移行無効
+;HTML_IN_CHARACTER_CODE = "UTF-8"
+;【0.79】HTML出力キャラクターコード　※1.60移行無効
+;HTML_OUT_CHARACTER_CODE = "UTF-8"
+
+
+;【1.57】ログの最大文字数
+log_size = 30000
+;【2.31】ログの保存先(絶対パス可)　""は保存しない
+log_path = "TvRemoteViewer_VB.log"
+
+
+;【1.62】HTML発行方式　0=1.60以降の方式　1=1.59以前の方式(デフォルト)
+; 1.59以前では目立った実害は無かったもののログに例外エラーが記録されることがあったので、
+; 違う方式を採用してみました
+; エラーが気になる方は0にしてみてください
+; html_publish_methodの記入が無い場合は1が指定されます（デフォルト）
+html_publish_method = 1
+
+
+;【1.68】metaタグRefresh記述をjavascriptに変更（0=しない 1=する）Android UCブラウザを使用する場合は1
+meta_refresh_fix = 0
+
+
+;【2.35】リモコン先にローカルIP以外を指定する場合はここで指定してください。「,」区切りで複数指定可
+; 例　Remocon_Domains = "myserver23534.ddns-test99.com"
+Remocon_Domains = 
+
+
+;【2.40】画面推移方法
+; TVRemoteFiles1.82以上を使用している場合に1にすると画面推移がスムーズかつ高速になります（標準は0）
+TVRemoteFilesNEW = 1
+
+
+;==============================================================
+; ファイル再生
+;==============================================================
+
+;ビデオファイルがあるパスを記述してください。
+;例　VideoPath = "D:\My Videos"
+;　　VideoPath = "D:\My Videos", "\\COM1\My Videos"
+;ファイル再生しない場合は空白でおｋ
+
+VideoPath = 
+
+
+;【0.58】一覧に表示する拡張子を指定
+;例　VideoExtensions = ".ts"
+;　　VideoExtensions = ".ts", ".mp4"
+;指定しない場合は空白でおｋ
+
+VideoExtensions = 
+
+
+;サブフォルダーを（0=含めない 1=含める）
+
+AddSubFolder = 1
+
+
+;【0.87】ファイル再生スタート時に指定秒数シークする
+VideoSeekDefault = 0
+
+
+;【1.18】ファイル一覧作成時にファイルサイズが0かどうか検査（1=する）
+VideoSizeCheck = 0
+
+
+;【1.36】ファイル再生時にNicoJKのコメントを使用する
+; 注意：NicoConvAssを使用しますのであらかじめNicoConvAssをセッティングしておいてください
+; 以下の条件のいずれかでニコニコ実況コメントを保存している場合に有効になります
+; ・動画ファイルと同名のxml又はtxtが存在する
+; ・NicoJKコメントフォルダにjklファイルが存在する
+; ・動画ファイル名にサービスIDが埋め込まれている　例：おはようにゃんこ [s0x410].ts　（[s1040]でも可）
+; 　TVTestで録画する場合、設定→録画のファイル名に「%event-name% [s0x%service-id%].ts」などと設定する
+; ソフトサブ使用時でも動作が変換分だけ若干遅くなりますので使用しない場合は空白推奨
+; NicoJKコメントフォルダ（jklがあるフォルダ、もしくはxmlファイルの保存フォルダ）
+; 例：NicoJK_path = "C:\NicoJK"
+NicoJK_path = 
+; NicoConvAss.exeのフルパス
+; 例：NicoConvAss_path = "C:\NIcoConvAss\NicoConvAss.exe"
+NicoConvAss_path = 
+; すでに「動画ファイル名.ass」ファイルが存在している場合でもNicoJKファイルを優先（する=1 しない=0)
+NicoJK_first = 0
+;【1.39】NicoJKコメント再生における微妙なズレを修正（秒）（コメントを早めたいときはマイナス値、遅くしたいときはプラス値）
+Nico_delay = 
+;【1.50】assファイル内の文字列（ｷﾀ━,OP,A,B,C,ED）が現れる地点にチャプターを（打つ=1,打たない=0）
+; ※assファイルが存在する＆chapterファイルが存在しない場合に実行されます
+make_chapter = 1
+;【1.50】見つかった地点の何秒前にチャプターを打つか
+chapter_bufsec = 3
+;【1.84】NicoConvAssでassを作成するついでにNicoJKフォルダ\jk～にassを作成（しない=0 する=1）
+; 2度目以降の再生開始が早くなります
+; 標準は1になっています。作成したくない場合は0を指定してください
+NicoConvAss_copy2NicoJK = 1
+
+
+;【1.66】動画の長さ(秒)を取得（しない=0,する=1）
+; 初回動画再生の始まりに少々時間がかかるようになります（1秒程度）
+; 標準（無指定）は取得する=1です
+TOT_get_duration = 1
+
+
+;【2.00】video_force_ffmpeg廃止　フォーム上に移動
+
+
+;【1.95】PipeRun時にffmpegへ渡すパラメータ
+; 無指定の場合は↓に設定されます。%VIDEOFILE%のみ変換されます
+;PipeRun_ffmpeg_option = -i %VIDEOFILE% -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1
+PipeRun_ffmpeg_option = 
+
+
+;【2.41】ISO再生を新方式で（行う=1）
+; （TVRemoteFiles1.82以上　TVRemoteFilesNEW=1のときに有効）
+ISOPlayNEW=1
+;【2.41】ISO新方式　DUMPするフォルダ。（無指定の場合は%FILEROO%）大きな容量が必要になります）
+; 例：ISO_DumpDirPath="d:\dvd_temp"
+ISO_DumpDirPath=
+;【2.41】ISO新方式　DUMPデータの最大保持数。4GB～7GBのISO_maxDump個分の空き容量が必要になります
+ISO_maxDump=2
+
+
+;【2.43】ISO再生時にVLCに与える追加オプションを指定できます
+;ISO再生時にログに表示されるオプションの内、VLCに与える部分の--sout以降が追加できます
+;音割れ等不具合が起こる場合は2.29以前のオプションを使用してみてください
+;2.29までのオプションは
+;--sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}
+;2.30以降のオプションは
+;--sout=#transcode{scodec=dvbsub,senc=dvbsub,acodec=a52,ab=192}:standard{access=file,mux=ts,dst=-}
+;となっています
+;無指定の場合は2.30以降のオプションが使用されます
+;例：VLC_ISO_option = --sout=#transcode{scodec=dvbsub,senc=dvbsub}:standard{access=file,mux=ts,dst=-}
+VLC_ISO_option = 
+
+
+;==============================================================
+; BS1・BSプレミアムの音声が聞こえないことへの対策
+;==============================================================
+
+;ffmpeg使用時のNHK音声モード（0=主・副固定 1=主音声固定 2=副音声固定 3=WEB選択式 9=VLC切り替え）
+;【0.57】NHK以外でも音声モードを指定する(11=主音声固定 12=副音声固定) 他局でのNHK再放送に有効
+;NHK特有の１つの音声チャンネルに２つの音声が入っているモードに対処するものです。
+;WEB選択式またはVLC切り替えをする場合は下のBS1_hlsAppも記入してください。
+
+NHK_dual_mono_mode = 3
+
+
+;ffmpeg使用時にNHK BS1とBSプレミアムの音声が聞こえないことへの暫定的処置
+;BS1とBSプレミアムの再生時のみvlcに切り替えます
+;必要ない場合は空白にしておいてください。
+;例　BS1_hlsApp = "D:\TvRemoteViewer\vlc\vlc.exe"
+
+BS1_hlsApp = 
+
+
+;==============================================================
+; 番組表
+;==============================================================
+
+;地デジ番組表
+;表示したい都道府県コードを記述してください。
+;例　東京の場合　	TvProgramD = 23
+;　　福岡＆佐賀の場合	TvProgramD = 55,61
+;さらに、その中から表示したくない放送局名を指定することができます。
+;　　福岡の特定局を除く	TvProgramD_NGword = "ＲＫＢ毎日放送","ＦＢＳ福岡放送"
+;10:北海道（札幌）11:北海道（函館）12:北海道（旭川）13:北海道（帯広）14:北海道（釧路）15:北海道（北見）16:北海道（室蘭）
+;22:青森　20:岩手　17:宮城　18:秋田　19:山形　21:福島　26:茨城　28:栃木　25:群馬　29:埼玉　27:千葉
+;23:東京　24:神奈川　31:新潟　37:富山　34:石川　36:福井　32:山梨　30:長野　39:岐阜　35:静岡
+;33:愛知　38:三重　45:滋賀　41:京都　40:大阪　42:兵庫　44:奈良　43:和歌山
+;49:鳥取　48:島根　47:岡山　46:広島　50:山口　53:徳島　52:香川　51:愛媛　54:高知
+;55:福岡　61:佐賀　57:長崎　56:熊本　60:大分　59:宮崎　58:鹿児島　62:沖縄
+;【2.58】801:AbemaTV
+
+TvProgramD = 
+
+;【2.58】【ネット】AbemaTV情報取得先決定方法
+;1=自動選択(有志の方サイト優先) 2=作者が用意したカッパ手入力サイト限定 3=有志の方サイト限定
+;カッパサイトはタイムアウトや突然永久消滅する可能性があります。1の場合、カッパサイトは非常時にのみ使用されます
+AvemaTV_data_get_method=1
+
+;【2.58】【ネット】AbemaTV情報取得先URL
+;AbemaTV番組情報を自前で用意できる方用設定（今のところTvRemoteViewer_VB用に加工されたデータ限定）
+;データ形式詳細は別途readme_dev.txt内「資料_AbemaTVカスタムデータ形式」で説明
+;URLまたはファイル(絶対パス)が指定できます。指定するとAvemaTV_data_get_methodの設定は無視されます
+AbemaTV_CustomURL=
+
+;【ネット】
+;番組表の放送局名からBonDriver.ch2で記述されている放送局名への変換
+;（地デジ番組表を表示した際に自動判別できていないものを記入してください）
+;左側が番組表の放送局名、右側がBonDriver.ch2で記述されている放送局名
+;例　TvProgramD_channels = "NHK総合:ＮＨＫ総合・東京","フジテレビ:フジテレビジョン"
+;※地デジとEDCB、TvRockそれぞれの設定を分離しました
+
+TvProgramD_channels = 
+;【1.11】廃止 TvProgramEDCB_channels = 
+;【1.11】廃止 TvProgramTvRock_channels = 
+
+
+;【ネット】【EDCB】【TvRock】【ptTimer】【Tvmaid】
+;番組表に表示したくない放送局名
+;例　福岡の特定局を除く	TvProgramD_NGword = "ＲＫＢ毎日放送","ＦＢＳ福岡放送"
+;※地デジとEDCB、TvRockそれぞれの設定を分離しました
+;EDCBのみ番組表表示が若干速くなります
+;【1.14】【EDCB】【TvRock】局名ではなく数値の場合はサービスIDで指定したものとみなされます
+
+TvProgramD_NGword = 
+;【0.76】
+TvProgramEDCB_NGword = 
+TvProgramTvRock_NGword = 
+;【1.21】
+TvProgramptTimer_NGword = 
+;【1.32】
+TvProgramTvmaid_NGword = 
+
+
+;【EDCB】
+;番組表に表示はするが番組データは取得しない放送局名
+;番組表表示が若干速くなります
+;例　TvProgramEDCB_ignore = "日テレＮＥＷＳ２４","ＴＢＳニュースバード"
+;【1.14】局名ではなく数値の場合はサービスIDで指定したものとみなされます
+;【0.76】
+
+TvProgramEDCB_ignore = 
+
+
+;【ネット】【EDCB】【TvRock】【ptTimer】【Tvmaid】
+;番組表の並び順
+;指定の無い放送局は指定された放送局の後に表示されます
+;例　TvProgramD_sort = "NHK総合","NHK Eテレ","日本テレビ","TBSテレビ","フジテレビ","テレビ朝日","テレビ東京","TOKYO MX"
+;※並び順は地デジ・EDCB・TvRock共通で適用されます
+
+TvProgramD_sort = 
+
+
+;【ネット】【EDCB】【TvRock】【ptTimer】【Tvmaid】
+;番組表で優先的に割り当てるBonDriver（地デジ）複数記入可
+;特別に指定が無い場合は空白
+;例　TvProgramD_BonDriver1st = "BonDriver_PT2_t0.dll"
+;例　TvProgramD_BonDriver1st = "BonDriver_PT2_t0.dll","BonDriver_PT2_t1.dll"
+
+TvProgramD_BonDriver1st = 
+
+
+;【ネット】【EDCB】【TvRock】【ptTimer】【Tvmaid】
+;番組表で優先的に割り当てるBonDriver（BS/CS）複数記入可
+;特別に指定が無い場合は空白
+;例　TvProgramS_BonDriver1st = "BonDriver_PT2_s0.dll"
+;例　TvProgramS_BonDriver1st = "BonDriver_PT2_s0.dll","BonDriver_PT2_s1.dll"
+
+TvProgramS_BonDriver1st =
+
+
+;【1.11】【プレミアム】
+;番組表で優先的に割り当てるBonDriver（プレミアム）複数記入可
+;特別に指定が無い場合は空白
+;例　TvProgramP_BonDriver1st = "BonDriver_Premium0.dll"
+;例　TvProgramP_BonDriver1st = "BonDriver_Premium0.dll","BonDriver_Premium1.dll"
+
+TvProgramP_BonDriver1st =
+
+
+;【0.94】番組表での配信ナンバーを制限する場合に上限の配信ナンバーを指定
+;例　番組表で地デジ・BS/CSをどちらも配信ナンバー1で運用したい場合に1を指定
+
+TvProgram_SelectUptoNum = 0
+
+
+;【TvRock】
+;TvRockのiPhone用番組表URL
+;例　TvProgram_tvrock_url = "http://127.0.0.1:8969/ユーザー名/iphone"
+;地デジまたはBS/CSのどちらかしか表示されない場合は、ブラウザで「～/iphone?md=2&d=0」を一度開いてください
+;予約表示数は3を推奨します
+;　・チューナーを指定したい場合、「?d=チューナー番号」を↑に追記してください
+;　　なお、?d=を追記した場合、チューナーをセットするため若干番組表表示が遅くなります
+;　　例　TvProgram_tvrock_url = "http://127.0.0.1:8969/ユーザー名/iphone?d=12"
+;　　※注意　チューナー番号は1から並んでいるわけではありません
+;　　　iphone用番組表を表示し、チューナーのリンク先になっているchangedev()内の数値を指定しください
+;　　d=0を指定するとTvRock側のチューナー選択をリセットし地デジ・BSCSの両方を表示するようになります
+;TvRockを使用していない場合は空白
+
+TvProgram_tvrock_url = 
+
+
+;【EDCB】
+;EDCBの番組表WEBインターフェースURL
+;準備
+;EpgTimer.exeが存在するフォルダにあるEpgTimerSrv.iniを開いて[SET]直後に
+;  EnableHttpSrv=1
+;  HttpPort=5510
+;を書き加えてEpgTimerを再起動してください
+;参考　http://blog.livedoor.jp/kotositu/archives/1923002.html
+;例　TvProgram_EDCB_url = "http://127.0.0.1:5510/api/EnumEventInfo"
+;EDCBを使用していない場合は空白
+
+TvProgram_EDCB_url = 
+
+
+;【EDCB】
+;【1.11】EDCB番組表に表示する局（0=全て 1=SPHDのみ 2=SPHD以外）
+
+TvProgramEDCB_premium = 0
+
+
+;【EDCB】
+;【1.23】EDCBの番組表が表示されないときにEDCB_Velmy_niisaka=1を指定してください
+; 特にVelmy版、niisaka版をご使用の場合は必ず1を指定してください
+; それでも表示されない場合はEDCB_thru_addprogres=1を指定してみてください。全てのチャンネルが表示されます
+
+EDCB_Velmy_niisaka = 0
+EDCB_thru_addprogres = 0
+
+
+;【EDCB】
+;【1.41】EDCBの管理するチャンネル一覧取得方法（0=CtrlCmdCLI使用 1=旧方式）
+EDCB_GetCh_method = 0
+
+
+;【ptTimer】
+;ptTimerのパス
+;例　ptTimer_path = "C:\ptTimer"
+;注意　TvRemoteViewer.exeと同じフォルダにsqlite3.exeを設置する必要があります
+;【1.21】
+ptTimer_path = 
+
+
+;【Tvmaid】
+;TvmaidサーバーのURL
+;例　Tvmaid_url = "http://127.0.0.1:20000"
+;【1.32】
+Tvmaid_url = 
+;【1.80】Tvmaid YUI　※Tvmaidとの同時使用はできません
+;例　TvmaidYUI_url = "http://127.0.0.1:20001"
+TvmaidYUI_url = 
+
+
+;【TTRecまたは録画プログラムが起動しておらず、番組情報が取得できない環境用】
+;【2.24】TvRockの番組表をTTRec等の番組情報取得できない環境用のものに置き換える=1
+; 注意：このini内でTvProgram_tvrock_urlより下に記述する必要があります
+TvProgram_Force_NoRec = 0
+
+
+;【2.54】番組表キャッシュ制御を行いたくない場合は1にしてください
+NoUseProgramCache = 0
+
+
+
+;==============================================================
+; RecTask,ffmpeg,vlcを別用途で使用している環境用
+;==============================================================
+
+;TvRemoteViewer_VBの起動＆終了時、および全停止時にプロセスを名前指定で停止（しない=0 する=1）
+;それぞれのソフトを別用途で使用している場合は0にしてください
+
+;RecTask・TSTask 録画にTvRemoteViewer_VBが使用するUDPソフト(RecTask・TSTask)を別の録画ソフトで使用する場合は0にしてください
+Stop_RecTask_at_StartEnd = 1
+;【1.22】ffmpeg
+Stop_ffmpeg_at_StartEnd = 1
+;【1.22】vlc
+Stop_vlc_at_StartEnd = 1
+;【1.88】QSVEnc
+Stop_QSVEnc_at_StartEnd = 1
+;【2.07】NVEnc
+Stop_NVEnc_at_StartEnd = 1
+
+
+;==============================================================
+; HTTPストリーム再生【実験：クライアントソフトからのみ使用可能】
+; RemoteTest(WEBではないほう）の配信方法の実験
+; 通常のHLS配信において以下のオプションは何の意味も持ちません
+;==============================================================
+
+;【0.49】HTTPストリーム再生にどのhlsアプリを使用するか 0=指定無し 1=vlc 2=ffmpeg
+HTTPSTREAM_App = 2
+
+;【0.49】HTTPストリームでVLCが使用するTCPポートの始まり
+HTTPSTREAM_VLC_port = 42465
+
+;【0.72】ffmpegHTTPストリーム　クライアントから切断された場合、何秒後に配信自体を停止するか
+;この秒数以内にチャンネル変更があれば終了予約はキャンセルされます
+FFMPEG_HTTP_CUT_SECONDS = 5
+
+;【0.80】ffmpegHTTPストリーム　バッファ * MB
+HTTPSTREAM_FFMPEG_BUFFER = 32
+
+;【2.39】HTTPストリーム受信方法（0=従来通り 1=Read　標準は0）
+HTTPSTREAM_METHOD = 0
+
+;==============================================================
+; その他
+;==============================================================
+;【2.33】×で最小化させる=1
+close2min = 0
