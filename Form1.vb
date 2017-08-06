@@ -535,16 +535,24 @@ Public Class Form1
         'チャンネル情報を取得　今までは表示要求があった時点で１つ１つ取得していた
         Me._worker.WI_GET_CHANNELS()
 
+        '標準ini
+        read_ini_default()
         'iniからパラ－メータを読み込む
         Me._worker.read_videopath()
         'iniを元に設定したパラメータの整合性チェック
         Me._worker.check_ini_parameter()
         'クライアントiniを読み込み
         Me._worker.read_client_ini()
+        'フォーム上のiniタブを初期化
+        ini_init_tab()
 
         'Outside_CustomURL取得
-        If Array.IndexOf(TvProgram_ch, 801) >= 0 Then
-            set_Outside_CustomURL()
+        If TvProgram_ch IsNot Nothing Then
+            If Array.IndexOf(TvProgram_ch, 801) >= 0 Then
+                set_Outside_CustomURL()
+            Else
+                Outside_CustomURL = ""
+            End If
         Else
             Outside_CustomURL = ""
         End If
@@ -621,7 +629,7 @@ Public Class Form1
         End If
 
         'DVD2 ISO再生用
-        ReDim dvdObject(MAX_STREAM_NUMBER)
+        ReDim Preserve dvdObject(MAX_STREAM_NUMBER + 1)
         '起動時クリーンアップ： 通常のDVDダンプのクリーンアップの他、作成途中のダンプ(.tmp)ファイルも削除する。
         Try
             DVDClass.CleanupDumpCache(ISO_DumpDirPath, ISO_maxDump, True)
@@ -1676,5 +1684,353 @@ Public Class Form1
         Else
             log_debug = 0
         End If
+    End Sub
+
+    'タブにini要素を追加
+    Private iniLabel1 As System.Windows.Forms.Label
+    Private iniLabel2 As System.Windows.Forms.Label
+    Private iniTextbox() As System.Windows.Forms.TextBox
+    Private Sub ini_init_tab()
+        Dim i As Integer = 0
+        If ini_array IsNot Nothing And ini_genre IsNot Nothing Then
+            Dim y(ini_genre.Length) As Integer
+            For i = 1 To ini_genre.Length
+                y(i) = 10
+            Next
+
+            Me.iniTextbox = New System.Windows.Forms.TextBox(ini_array.Length - 1) {}
+
+            Me.SuspendLayout()
+            For i = 0 To ini_array.Length - 1
+                'label1
+                Me.iniLabel1 = New System.Windows.Forms.Label
+                Me.iniLabel1.Text = ini_array(i).name
+                If ini_array(i).title IsNot Nothing Then
+                    If ini_array(i).title.Length > 0 Then
+                        Me.iniLabel1.Text = ini_array(i).title
+                    End If
+                End If
+                'If ini_array(i).document IsNot Nothing Then
+                'If ini_array(i).document.Length > 0 Then
+                'Me.iniLabel1.Text &= vbCrLf & ini_array(i).document
+                'End If
+                'End If
+                If ini_array(i).need_reset = 1 Then
+                    Me.iniLabel1.Text = "(*)" & Me.iniLabel1.Text
+                End If
+                Me.iniLabel1.AutoSize = False
+                Me.iniLabel1.Size = New System.Drawing.Size(280, 16)
+                Me.iniLabel1.AutoEllipsis = True
+                'label2
+                Me.iniLabel2 = New System.Windows.Forms.Label
+                Me.iniLabel2.Text = ini_array(i).name
+                Me.iniLabel2.AutoSize = False
+                Me.iniLabel2.Size = New System.Drawing.Size(100, 16)
+                Me.iniLabel2.AutoEllipsis = True
+                Me.iniLabel2.Visible = True
+                'textbox
+                Me.iniTextbox(i) = New System.Windows.Forms.TextBox
+                Me.iniTextbox(i).Name = "Textbox_-" & ini_array(i).name
+                Me.iniTextbox(i).Text = ini_array(i).value
+                Me.iniTextbox(i).Visible = True
+                If ini_array(i).value_type = "integer" Then
+                    Me.iniTextbox(i).Size = New System.Drawing.Size(60, 20)
+                    Me.iniTextbox(i).TextAlign = HorizontalAlignment.Right
+                Else
+                    Me.iniTextbox(i).Size = New System.Drawing.Size(120, 20)
+                End If
+                'イベント
+                AddHandler Me.iniTextbox(i).TextChanged, AddressOf Me.iniTextbox_changed
+                AddHandler Me.iniTextbox(i).Enter, AddressOf Me.iniTextbox_enter
+                Dim x1 As Integer = 5
+                Dim x2 As Integer = 290
+                Dim x3 As Integer = 415
+                Dim y1 As Integer = 3
+                Dim h1 As Integer = 20
+                '説明
+                If ini_array(i).value_type = "document" Then
+                    Me.iniTextbox(i).Visible = False
+                    Me.iniLabel2.Visible = False
+                    If Trim(ini_array(i).title.Replace("　", "")).Length = 0 Then
+                        Me.iniLabel1.Visible = False
+                        h1 = 10
+                    Else
+                        Me.iniLabel1.Size = New System.Drawing.Size(535, 16)
+                    End If
+                End If
+                Select Case ini_array(i).genre
+                    Case "WEBサーバー"
+                        Me.iniLabel1.Location = New Point(x1, y(2) + y1)
+                        Me.iniTextbox(i).Location = New Point(x2, y(2))
+                        Me.iniLabel2.Location = New Point(x3, y(2) + y1)
+                        y(2) += h1
+                        TabPage2.Controls.Add(Me.iniLabel1)
+                        TabPage2.Controls.Add(Me.iniTextbox(i))
+                        TabPage2.Controls.Add(Me.iniLabel2)
+                    Case "番組表データ"
+                        Me.iniLabel1.Location = New Point(x1, y(3) + y1)
+                        Me.iniTextbox(i).Location = New Point(x2, y(3))
+                        Me.iniLabel2.Location = New Point(x3, y(3) + y1)
+                        y(3) += h1
+                        TabPage3.Controls.Add(Me.iniLabel1)
+                        TabPage3.Controls.Add(Me.iniTextbox(i))
+                        TabPage3.Controls.Add(Me.iniLabel2)
+                    Case "HLS配信"
+                        Me.iniLabel1.Location = New Point(x1, y(4) + y1)
+                        Me.iniTextbox(i).Location = New Point(x2, y(4))
+                        Me.iniLabel2.Location = New Point(x3, y(4) + y1)
+                        y(4) += h1
+                        TabPage4.Controls.Add(Me.iniLabel1)
+                        TabPage4.Controls.Add(Me.iniTextbox(i))
+                        TabPage4.Controls.Add(Me.iniLabel2)
+                    Case "HTTP配信"
+                        Me.iniLabel1.Location = New Point(x1, y(5) + y1)
+                        Me.iniTextbox(i).Location = New Point(x2, y(5))
+                        Me.iniLabel2.Location = New Point(x3, y(5) + y1)
+                        y(5) += h1
+                        TabPage5.Controls.Add(Me.iniLabel1)
+                        TabPage5.Controls.Add(Me.iniTextbox(i))
+                        TabPage5.Controls.Add(Me.iniLabel2)
+                    Case "ファイル再生"
+                        Me.iniLabel1.Location = New Point(x1, y(6) + y1)
+                        Me.iniTextbox(i).Location = New Point(x2, y(6))
+                        Me.iniLabel2.Location = New Point(x3, y(6) + y1)
+                        y(6) += h1
+                        TabPage6.Controls.Add(Me.iniLabel1)
+                        TabPage6.Controls.Add(Me.iniTextbox(i))
+                        TabPage6.Controls.Add(Me.iniLabel2)
+                    Case Else
+                        'Case "全般"
+                        Me.iniLabel1.Location = New Point(x1, y(1) + y1)
+                        Me.iniTextbox(i).Location = New Point(x2, y(1))
+                        Me.iniLabel2.Location = New Point(x3, y(1) + y1)
+                        y(1) += h1
+                        TabPage1.Controls.Add(Me.iniLabel1)
+                        TabPage1.Controls.Add(Me.iniTextbox(i))
+                        TabPage1.Controls.Add(Me.iniLabel2)
+                End Select
+            Next
+            Me.ResumeLayout(False)
+        End If
+    End Sub
+
+    Private Sub iniTextbox_changed(ByVal sender As Object, ByVal e As EventArgs)
+        Dim name As String = (CType(sender, System.Windows.Forms.TextBox).Name).Replace("Textbox_-", "")
+        Dim j As Integer = Array.IndexOf(ini_array, name)
+        If j >= 0 Then
+            ini_array(j).value_temp = (CType(sender, System.Windows.Forms.TextBox).Text).ToString
+            If ini_array(j).value <> ini_array(j).value_temp Then
+                CType(sender, System.Windows.Forms.TextBox).BackColor = Color.Yellow
+            Else
+                CType(sender, System.Windows.Forms.TextBox).BackColor = Color.White
+            End If
+        End If
+    End Sub
+
+    Private Sub iniTextbox_enter(ByVal sender As Object, ByVal e As EventArgs)
+        Dim name As String = (CType(sender, System.Windows.Forms.TextBox).Name).Replace("Textbox_-", "")
+        Dim j As Integer = Array.IndexOf(ini_array, name)
+        If j >= 0 Then
+            TextBoxIniDoc.Text = ini_array(j).name
+            If ini_array(j).need_reset = 1 Then
+                TextBoxIniDoc.Text = "【要再起動】 " & vbCrLf & TextBoxIniDoc.Text
+            End If
+            If ini_array(j).value IsNot Nothing Then
+                TextBoxIniDoc.Text &= vbCrLf & "現在値： " & ini_array(j).value
+            End If
+            If ini_array(j).title IsNot Nothing Then
+                TextBoxIniDoc.Text &= vbCrLf & ini_array(j).title
+            End If
+            If ini_array(j).document IsNot Nothing Then
+                TextBoxIniDoc.Text &= vbCrLf & ini_array(j).document
+            End If
+        End If
+    End Sub
+
+    Private Sub ButtonIniApply_Click(sender As System.Object, e As System.EventArgs) Handles ButtonIniApply.Click
+        Dim result As DialogResult = MessageBox.Show("iniに変更を保存し適用しますか？", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+        If result = DialogResult.Yes Then
+            rewrite_ini_file()
+            Me._worker.read_videopath()
+            Me._worker.check_ini_parameter()
+            If iniTextbox IsNot Nothing Then
+                For i As Integer = 0 To iniTextbox.Length - 1
+                    iniTextbox(i).BackColor = Color.White
+                Next
+            End If
+            log1write("iniを変更し適用作業を行いました")
+        End If
+    End Sub
+
+    Private Sub ButtonIniCancel_Click(sender As System.Object, e As System.EventArgs) Handles ButtonIniCancel.Click
+        'キャンセル
+        Dim result As DialogResult = MessageBox.Show("入力した内容を破棄しますか？", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+        If result = DialogResult.Yes Then
+            If iniTextbox IsNot Nothing Then
+                For i As Integer = 0 To iniTextbox.Length - 1
+                    Dim name As String = iniTextbox(i).Name.Replace("Textbox_-", "")
+                    Dim j As Integer = Array.IndexOf(ini_array, name)
+                    If j >= 0 Then
+                        If ini_array(i).value <> ini_array(i).value_temp Then
+                            ini_array(i).value_temp = ini_array(i).value
+                            iniTextbox(i).Text = ini_array(j).value
+                            iniTextbox(i).BackColor = Color.White
+                        End If
+                    End If
+                Next
+                log1write("入力内容を破棄しました")
+            End If
+        End If
+    End Sub
+
+    Private Sub Button9_Click(sender As System.Object, e As System.EventArgs) Handles Button9.Click
+        If Me.Width >= 1078 Then
+            Me.Width = 546
+        ElseIf Me.Width > 546 Then
+            Me.Width = 546
+        Else
+            Me.Width = 1078
+        End If
+    End Sub
+
+    Private Sub Button10_Click(sender As System.Object, e As System.EventArgs) Handles Button10.Click
+        Dim result As DialogResult = MessageBox.Show("iniファイルをバックアップしますか？", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+        If result = DialogResult.Yes Then
+            Dim bak_str As String = file2str("TvRemoteViewer_VB.ini")
+            If bak_str.Length > 0 Then
+                str2file("TvRemoteViewer_VB.ini.bak2", bak_str)
+                log1write("TvRemoteViewer_VB.ini を TvRemoteViewer_VB.ini.bak2 にバックアップしました")
+            End If
+        End If
+    End Sub
+
+    'セットされた値にiniを書き換える
+    Public Sub rewrite_ini_file()
+        'その後read_videopathを実行すれば環境変更完了
+
+        'カレントディレクトリ変更
+        F_set_ppath4program()
+
+        Dim log_str As String = ""
+        Dim ini_filename As String = "TvRemoteViewer_VB.ini"
+
+        If file_exist(ini_filename) = 1 Then
+            Dim line() As String = file2line(ini_filename)
+            If line IsNot Nothing Then
+                Dim i, j, k As Integer
+                Dim need_reset As Integer = 0
+
+                If line Is Nothing Then
+                ElseIf line.Length > 0 Then
+                    '読み込み完了
+
+                    If ini_array IsNot Nothing Then
+                        If ini_array.Length > 0 Then
+                            For i = 0 To line.Length - 1
+                                Dim line_temp As String = line(i)
+                                line_temp = Trim(line(i))
+                                'コメント削除
+                                Dim inline_comment As String = ""
+                                If line_temp.IndexOf(";") >= 0 Then
+                                    inline_comment = line_temp.Substring(line(i).IndexOf(";"))
+                                    line_temp = line_temp.Substring(0, line(i).IndexOf(";"))
+                                End If
+                                Dim youso() As String = line_temp.Split("=")
+                                If youso Is Nothing Then
+                                ElseIf youso.Length >= 2 Then
+                                    If youso.Length > 2 Then
+                                        For j = 2 To youso.Length - 1
+                                            youso(1) &= "=" & youso(j)
+                                        Next
+                                    End If
+
+                                    For j = 0 To youso.Length - 1
+                                        youso(j) = Trim(youso(j))
+                                    Next
+
+                                    If youso(0).Length > 0 Then
+                                        j = Array.IndexOf(ini_array, youso(0))
+                                        If j >= 0 Then
+                                            ini_array(j).write_chk = 1
+                                            If ini_array(j).value <> ini_array(j).value_temp Then
+                                                ini_array(j).value = ini_array(j).value_temp
+                                                line(i) = ini_array(j).name & " = " & ini_array(j).value_temp
+                                                If inline_comment.Length > 0 Then
+                                                    line(i) &= " " & inline_comment
+                                                End If
+                                                '要再起動かどうか
+                                                If ini_array(j).need_reset > 0 Then
+                                                    need_reset = 1
+                                                End If
+                                                log1write(ini_filename & "の項目を修正しました。[" & ini_array(j).genre & "] " & ini_array(j).name & "=" & ini_array(j).value_temp)
+                                                log_str &= ini_filename & "の項目を修正しました。[" & ini_array(j).genre & "] " & ini_array(j).name & "=" & ini_array(j).value_temp & vbCrLf
+                                            End If
+                                        Else
+                                            log1write(ini_filename & "の項目 " & youso(0) & " が見つかりません")
+                                            log_str &= ini_filename & "の項目 " & youso(0) & " が見つかりません" & vbCrLf
+                                        End If
+                                    End If
+                                End If
+                            Next
+
+                            '書き残しを追加
+                            For i = 0 To ini_array.Length - 1
+                                If ini_array(i).write_chk = 0 And ini_array(i).name.Length > 0 Then
+                                    ''直前項目の後ろに追加
+                                    'Dim last_i As Integer = 0
+                                    'If i > 0 Then
+                                    'last_i = i - 1
+                                    'End If
+                                    'Dim last_name As String = ini_array(last_i).name
+                                    'For j = 0 To line.Length - 1
+                                    'If line(j).Replace(" ", "").IndexOf(last_name & "=") = 0 Or j = line.Length - 1 Then
+                                    'Dim genre_str As String = ""
+                                    'If line(j).Replace(" ", "").IndexOf(last_name & "=") < 0 And j = line.Length - 1 Then
+                                    'genre_str = "[" & ini_array(i).genre & "] "
+                                    'End If
+                                    'line(j) &= vbCrLf & vbCrLf
+                                    'line(j) &= ";" & genre_str & ini_array(i).title & " " & ini_array(i).document & vbCrLf
+                                    'line(j) &= ini_array(i).name & " = " & ini_array(i).value
+                                    'log1write(ini_filename & "に項目" & ini_array(i).name & "=" & ini_array(i).value & "を追加しました")
+                                    'Exit For
+                                    'End If
+                                    'Next
+
+                                    '最後に追加（このほうがわかりやすい）
+                                    j = line.Length - 1
+                                    Dim genre_str As String = ""
+                                    genre_str = "[" & ini_array(i).genre & "] "
+                                    line(j) &= vbCrLf & vbCrLf
+                                    line(j) &= ";" & genre_str & ini_array(i).title & " " & ini_array(i).document & vbCrLf
+                                    line(j) &= ini_array(i).name & " = " & ini_array(i).value
+                                    log1write(ini_filename & "に [" & ini_array(i).genre & "] " & ini_array(i).name & "=" & ini_array(i).value & " を追加しました")
+                                    log_str &= ini_filename & "に [" & ini_array(i).genre & "] " & ini_array(i).name & "=" & ini_array(i).value & " を追加しました" & vbCrLf
+
+                                    '要再起動かどうか
+                                    If ini_array(i).need_reset = 1 Then
+                                        need_reset = 1
+                                    End If
+                                End If
+                            Next
+
+                            '書き出し
+                            line2file(ini_filename, line)
+                            log1write("iniファイル " & ini_filename & " を更新しました")
+                            log_str &= "iniファイル " & ini_filename & " を更新しました" & vbCrLf
+
+                            If need_reset = 1 Then
+                                log_str = "【再起動が必要です】" & vbCrLf & log_str
+                                MsgBox("再起動が必要です")
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        Else
+            log1write("【エラー】iniファイル " & ini_filename & " が見つかりませんでした")
+            log_str &= "【エラー】iniファイル " & ini_filename & " が見つかりませんでした" & vbCrLf
+        End If
+        'ログ出力
+        TextBoxIniDoc.Text = log_str
     End Sub
 End Class

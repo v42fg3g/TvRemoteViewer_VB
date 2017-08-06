@@ -385,6 +385,10 @@ TvRemoteViewer_VB v2.58
 			unixtime 32400秒目の項目として [スレッド番号,送られた最初のコメントNo.,送られた最初のコメントunixtime,送られた最後のコメントNo.,送られた最後のコメントunixtime,直近に取得した最後のコメントNo.,直近に取得した最後のコメントunixtime]　が返されます
 
 
+	WI_CLEAR_ABEMA_CACHE.html
+		AbemaTV番組情報キャッシュを削除
+
+
 
 ■資料_AbemaTVカスタムデータ形式
 	形式：テキスト

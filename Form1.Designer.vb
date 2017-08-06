@@ -100,7 +100,21 @@ Partial Class Form1
         Me.CheckBoxLogETC = New System.Windows.Forms.CheckBox()
         Me.CheckBoxWriteLog = New System.Windows.Forms.CheckBox()
         Me.CheckBoxLogDebug = New System.Windows.Forms.CheckBox()
+        Me.TabControl1 = New System.Windows.Forms.TabControl()
+        Me.TabPage1 = New System.Windows.Forms.TabPage()
+        Me.TabPage2 = New System.Windows.Forms.TabPage()
+        Me.TabPage3 = New System.Windows.Forms.TabPage()
+        Me.TabPage4 = New System.Windows.Forms.TabPage()
+        Me.TabPage5 = New System.Windows.Forms.TabPage()
+        Me.TabPage6 = New System.Windows.Forms.TabPage()
+        Me.ButtonIniApply = New System.Windows.Forms.Button()
+        Me.ButtonIniCancel = New System.Windows.Forms.Button()
+        Me.Label17 = New System.Windows.Forms.Label()
+        Me.TextBoxIniDoc = New System.Windows.Forms.TextBox()
+        Me.Button9 = New System.Windows.Forms.Button()
+        Me.Button10 = New System.Windows.Forms.Button()
         Me.ContextMenuStrip1.SuspendLayout()
+        Me.TabControl1.SuspendLayout()
         Me.SuspendLayout()
         '
         'buttonHlsAppPath
@@ -471,7 +485,7 @@ Partial Class Form1
         'Label10
         '
         Me.Label10.AutoSize = True
-        Me.Label10.Location = New System.Drawing.Point(312, 9)
+        Me.Label10.Location = New System.Drawing.Point(238, 9)
         Me.Label10.Name = "Label10"
         Me.Label10.Size = New System.Drawing.Size(204, 12)
         Me.Label10.TabIndex = 81
@@ -808,11 +822,148 @@ Partial Class Form1
         Me.CheckBoxLogDebug.Text = "Debug"
         Me.CheckBoxLogDebug.UseVisualStyleBackColor = True
         '
+        'TabControl1
+        '
+        Me.TabControl1.Controls.Add(Me.TabPage1)
+        Me.TabControl1.Controls.Add(Me.TabPage2)
+        Me.TabControl1.Controls.Add(Me.TabPage3)
+        Me.TabControl1.Controls.Add(Me.TabPage4)
+        Me.TabControl1.Controls.Add(Me.TabPage5)
+        Me.TabControl1.Controls.Add(Me.TabPage6)
+        Me.TabControl1.Location = New System.Drawing.Point(535, 30)
+        Me.TabControl1.Name = "TabControl1"
+        Me.TabControl1.SelectedIndex = 0
+        Me.TabControl1.Size = New System.Drawing.Size(526, 575)
+        Me.TabControl1.TabIndex = 115
+        '
+        'TabPage1
+        '
+        Me.TabPage1.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage1.Name = "TabPage1"
+        Me.TabPage1.Padding = New System.Windows.Forms.Padding(3)
+        Me.TabPage1.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage1.TabIndex = 0
+        Me.TabPage1.Text = "全般"
+        Me.TabPage1.UseVisualStyleBackColor = True
+        '
+        'TabPage2
+        '
+        Me.TabPage2.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage2.Name = "TabPage2"
+        Me.TabPage2.Padding = New System.Windows.Forms.Padding(3)
+        Me.TabPage2.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage2.TabIndex = 1
+        Me.TabPage2.Text = "WEBサーバー"
+        Me.TabPage2.UseVisualStyleBackColor = True
+        '
+        'TabPage3
+        '
+        Me.TabPage3.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage3.Name = "TabPage3"
+        Me.TabPage3.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage3.TabIndex = 2
+        Me.TabPage3.Text = "番組表データ"
+        Me.TabPage3.UseVisualStyleBackColor = True
+        '
+        'TabPage4
+        '
+        Me.TabPage4.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage4.Name = "TabPage4"
+        Me.TabPage4.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage4.TabIndex = 3
+        Me.TabPage4.Text = "HLS配信"
+        Me.TabPage4.UseVisualStyleBackColor = True
+        '
+        'TabPage5
+        '
+        Me.TabPage5.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage5.Name = "TabPage5"
+        Me.TabPage5.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage5.TabIndex = 4
+        Me.TabPage5.Text = "HTTP配信"
+        Me.TabPage5.UseVisualStyleBackColor = True
+        '
+        'TabPage6
+        '
+        Me.TabPage6.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage6.Name = "TabPage6"
+        Me.TabPage6.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage6.TabIndex = 5
+        Me.TabPage6.Text = "ファイル再生"
+        Me.TabPage6.UseVisualStyleBackColor = True
+        '
+        'ButtonIniApply
+        '
+        Me.ButtonIniApply.Location = New System.Drawing.Point(957, 5)
+        Me.ButtonIniApply.Name = "ButtonIniApply"
+        Me.ButtonIniApply.Size = New System.Drawing.Size(100, 21)
+        Me.ButtonIniApply.TabIndex = 116
+        Me.ButtonIniApply.TabStop = False
+        Me.ButtonIniApply.Text = "ini 更新＆適用"
+        Me.ButtonIniApply.UseVisualStyleBackColor = True
+        '
+        'ButtonIniCancel
+        '
+        Me.ButtonIniCancel.Location = New System.Drawing.Point(875, 5)
+        Me.ButtonIniCancel.Name = "ButtonIniCancel"
+        Me.ButtonIniCancel.Size = New System.Drawing.Size(76, 21)
+        Me.ButtonIniCancel.TabIndex = 117
+        Me.ButtonIniCancel.TabStop = False
+        Me.ButtonIniCancel.Text = "キャンセル"
+        Me.ButtonIniCancel.UseVisualStyleBackColor = True
+        '
+        'Label17
+        '
+        Me.Label17.AutoSize = True
+        Me.Label17.Location = New System.Drawing.Point(537, 9)
+        Me.Label17.Name = "Label17"
+        Me.Label17.Size = New System.Drawing.Size(126, 12)
+        Me.Label17.TabIndex = 120
+        Me.Label17.Text = "TvRemoteViewer_VB.ini"
+        '
+        'TextBoxIniDoc
+        '
+        Me.TextBoxIniDoc.BackColor = System.Drawing.SystemColors.Control
+        Me.TextBoxIniDoc.Location = New System.Drawing.Point(535, 606)
+        Me.TextBoxIniDoc.Multiline = True
+        Me.TextBoxIniDoc.Name = "TextBoxIniDoc"
+        Me.TextBoxIniDoc.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
+        Me.TextBoxIniDoc.Size = New System.Drawing.Size(522, 96)
+        Me.TextBoxIniDoc.TabIndex = 121
+        Me.TextBoxIniDoc.TabStop = False
+        '
+        'Button9
+        '
+        Me.Button9.Location = New System.Drawing.Point(451, 5)
+        Me.Button9.Name = "Button9"
+        Me.Button9.Size = New System.Drawing.Size(66, 21)
+        Me.Button9.TabIndex = 122
+        Me.Button9.TabStop = False
+        Me.Button9.Text = "ini 設定"
+        Me.Button9.UseVisualStyleBackColor = True
+        '
+        'Button10
+        '
+        Me.Button10.Location = New System.Drawing.Point(760, 5)
+        Me.Button10.Name = "Button10"
+        Me.Button10.Size = New System.Drawing.Size(93, 21)
+        Me.Button10.TabIndex = 123
+        Me.Button10.TabStop = False
+        Me.Button10.Text = "ini バックアップ"
+        Me.Button10.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(530, 705)
+        Me.ClientSize = New System.Drawing.Size(1062, 705)
+        Me.Controls.Add(Me.Button10)
+        Me.Controls.Add(Me.Button9)
+        Me.Controls.Add(Me.TextBoxIniDoc)
+        Me.Controls.Add(Me.ButtonIniApply)
+        Me.Controls.Add(Me.ButtonIniCancel)
+        Me.Controls.Add(Me.Label17)
+        Me.Controls.Add(Me.TabControl1)
         Me.Controls.Add(Me.CheckBoxLogDebug)
         Me.Controls.Add(Me.CheckBoxWriteLog)
         Me.Controls.Add(Me.CheckBoxLogETC)
@@ -883,13 +1034,14 @@ Partial Class Form1
         Me.Controls.Add(Me.textHttpPortNumber)
         Me.Controls.Add(Me.labelPortNuber)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximumSize = New System.Drawing.Size(546, 744)
+        Me.MaximumSize = New System.Drawing.Size(1078, 744)
         Me.MinimumSize = New System.Drawing.Size(200, 50)
         Me.Name = "Form1"
         Me.ShowInTaskbar = False
         Me.Text = "TvRemoteViewer_VB"
         Me.WindowState = System.Windows.Forms.FormWindowState.Minimized
         Me.ContextMenuStrip1.ResumeLayout(False)
+        Me.TabControl1.ResumeLayout(False)
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -970,5 +1122,18 @@ Partial Class Form1
     Friend WithEvents CheckBoxLogETC As System.Windows.Forms.CheckBox
     Friend WithEvents CheckBoxWriteLog As System.Windows.Forms.CheckBox
     Friend WithEvents CheckBoxLogDebug As System.Windows.Forms.CheckBox
+    Friend WithEvents TabControl1 As System.Windows.Forms.TabControl
+    Friend WithEvents TabPage1 As System.Windows.Forms.TabPage
+    Friend WithEvents TabPage2 As System.Windows.Forms.TabPage
+    Friend WithEvents TabPage3 As System.Windows.Forms.TabPage
+    Friend WithEvents TabPage4 As System.Windows.Forms.TabPage
+    Friend WithEvents TabPage5 As System.Windows.Forms.TabPage
+    Friend WithEvents TabPage6 As System.Windows.Forms.TabPage
+    Friend WithEvents ButtonIniApply As System.Windows.Forms.Button
+    Friend WithEvents ButtonIniCancel As System.Windows.Forms.Button
+    Private WithEvents Label17 As System.Windows.Forms.Label
+    Private WithEvents TextBoxIniDoc As System.Windows.Forms.TextBox
+    Friend WithEvents Button9 As System.Windows.Forms.Button
+    Friend WithEvents Button10 As System.Windows.Forms.Button
 
 End Class

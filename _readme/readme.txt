@@ -760,6 +760,9 @@ TvRemoteViewer_VB v2.65
 			AbemaTV番組情報のチェックを厳しくした（途中までしか送信されて来ない場合に対処）
 	2.66	複数の配信停止命令が同時に処理された場合に起こっていた不具合を修正
 			TVRemoteFilesNEW=1使用時にHTTP配信への応答が従来と異なっていた不具合を修正
+			iniファイル上の設定をフォーム上から動的に変更できるようにした
+			iniファイルの標準添付を廃止し上書きで設定を無くしてしまう事故を防止するようにした
+			TvRemoteViwer_VB.ini.dataとTvRemoteViwer_VB.ini.defaultを添付
 
 
 

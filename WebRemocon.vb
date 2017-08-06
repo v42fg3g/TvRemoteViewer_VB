@@ -1125,6 +1125,26 @@ Class WebRemocon
         'カレントディレクトリ変更
         F_set_ppath4program()
 
+        '初回実行時のみiniのバックアップを作成
+        If file_exist("TvRemoteViewer_VB.ini.bak") <= 0 Then
+            Dim bak_str As String = file2str("TvRemoteViewer_VB.ini")
+            If bak_str.Length > 0 Then
+                str2file("TvRemoteViewer_VB.ini.bak", bak_str)
+                log1write("TvRemoteViewer_VB.ini を TvRemoteViewer_VB.ini.bak にバックアップしました")
+                System.Threading.Thread.Sleep(50)
+            End If
+        End If
+
+        '初回インストール時にiniが存在しない場合
+        If file_exist("TvRemoteViewer_VB.ini") <= 0 Then
+            Dim org_str As String = file2str("TvRemoteViewer_VB.ini.default")
+            If org_str.Length > 0 Then
+                str2file("TvRemoteViewer_VB.ini", org_str)
+                log1write("TvRemoteViewer_VB.ini を 作成しました")
+                System.Threading.Thread.Sleep(100)
+            End If
+        End If
+
         If file_exist("VideoPath.txt") Then
             line = file2line("VideoPath.txt")
             log1write("設定ファイルとして VideoPath.txt を読み込みました")
@@ -1136,6 +1156,8 @@ Class WebRemocon
         Dim i, j As Integer
 
         If line Is Nothing Then
+            MsgBox("iniファイルの読み込みに失敗したようです" & vbCrLf & "TvRemoteViewer_VBを終了します")
+            Application.Exit()
         ElseIf line.Length > 0 Then
             '読み込み完了
             For i = 0 To line.Length - 1
@@ -1161,6 +1183,7 @@ Class WebRemocon
                         For j = 0 To youso.Length - 1
                             youso(j) = trim8(youso(j))
                         Next
+                        set_ini_data(youso(0), url_text)
                         Select Case youso(0)
                             Case "VideoPath"
                                 'サブフォルダ監視修正
@@ -1400,6 +1423,10 @@ Class WebRemocon
                                 If Val(youso(1).ToString) > 0 Then
                                     MAX_STREAM_NUMBER = Val(youso(1).ToString)
                                     ReDim Preserve file_last_filename(MAX_STREAM_NUMBER + 1)
+                                    ReDim Preserve stream_last_utime(MAX_STREAM_NUMBER + 1)
+                                    ReDim Preserve stream_reset_count(MAX_STREAM_NUMBER + 1)
+                                    ReDim Preserve waitingmessage_count(MAX_STREAM_NUMBER + 1)
+                                    ReDim Preserve dvdObject(MAX_STREAM_NUMBER + 1)
                                 End If
                             Case "UDP_PRIORITY"
                                 UDP_PRIORITY = trim8(youso(1).ToString)
@@ -1434,7 +1461,7 @@ Class WebRemocon
                                 RecTask_SPHD = trim8(path_s2z(youso(1).ToString))
                                 If RecTask_SPHD.Length > 0 Then
                                     If file_exist(RecTask_SPHD) <= 0 Then
-                                        log1write("【エラー】" & RecTask_SPHD & " が見つかりません")
+                                        log1write("【エラー】RecTask_SPHD：" & RecTask_SPHD & " が見つかりません")
                                         RecTask_SPHD = ""
                                     Else
                                         log1write("スカパープレミアムSPHD用RecTaskとして " & RecTask_SPHD & " が指定されました")
@@ -1474,7 +1501,7 @@ Class WebRemocon
                                 NicoJK_path = trim8(path_s2z(youso(1).ToString))
                                 If NicoJK_path.Length > 0 Then
                                     If folder_exist(NicoJK_path) <= 0 Then
-                                        log1write("【エラー】" & NicoJK_path & " が見つかりません")
+                                        log1write("【エラー】NicoJK_path：" & NicoJK_path & " が見つかりません")
                                         NicoJK_path = ""
                                     Else
                                         log1write("NicoJKフォルダ：" & NicoJK_path & " が指定されました")
@@ -1486,7 +1513,7 @@ Class WebRemocon
                                 NicoConvAss_path = trim8(path_s2z(youso(1).ToString))
                                 If NicoConvAss_path.Length > 0 Then
                                     If file_exist(NicoConvAss_path) <= 0 Then
-                                        log1write("【エラー】" & NicoConvAss_path & " が見つかりません")
+                                        log1write("【エラー】NicoConvAss_path：" & NicoConvAss_path & " が見つかりません")
                                         NicoConvAss_path = ""
                                     Else
                                         log1write("NicoConvAss：" & NicoConvAss_path & " が指定されました")
@@ -1722,11 +1749,13 @@ Class WebRemocon
         End Select
 
         If TVRemoteFilesNEW = 1 Then
-            log1write("【システム】TVRemoteFiles Ver1.82以降を使用することを前提としています")
-        Else
-            log1write("【システム】TVRemoteFiles Ver1.81以前を使用することを前提としています")
+            If TvRemoteViewer_VB_version < 1.82 Then
+                log1write("【エラー】TVRemoteFiles Ver1.82以降を使用することを前提としています。TVRemoteFilesNEW=0に修正しました")
+                TVRemoteFilesNEW = 0
+            Else
+                log1write("【システム】新画面推移が指定されました")
+            End If
         End If
-
 
         'mplayerチェック
         If mplayer4ISOPath.Length = 0 Then
