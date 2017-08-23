@@ -384,6 +384,16 @@ Public Class Form1
 
         Dim verstr As String = Format(TvRemoteViewer_VB_version, "0.00")
         log1write("TvRemoteViewer_VB " & verstr & TvRemoteViewer_VB_revision)
+
+        Try
+            NotifyIcon1.Text = "TvRemoteViewer_VB " & Format(TvRemoteViewer_VB_version, "0.00") & TvRemoteViewer_VB_revision  '"TvRemoteViewer_VB"
+            NotifyIcon1.Icon = My.Resources.TvRemoteViewer_VB3
+        Catch ex As Exception
+            log1write("【エラー】NotifyIcon1の初期化に失敗しました。" & ex.Message)
+        End Try
+
+        '最初はini設定欄を非表示
+        Me.Width = 546
     End Sub
 
     Private Sub check_Outside_CustomURL_multi()
@@ -539,6 +549,11 @@ Public Class Form1
         read_ini_default()
         'iniからパラ－メータを読み込む
         Me._worker.read_videopath()
+        '×ボタン動作
+        If close2min = 2 Then
+            Me.Visible = False
+            Me.FormBorderStyle = Windows.Forms.FormBorderStyle.SizableToolWindow
+        End If
         'iniを元に設定したパラメータの整合性チェック
         Me._worker.check_ini_parameter()
         'クライアントiniを読み込み
@@ -917,7 +932,7 @@ Public Class Form1
 
     Private Sub Form1_FormClosing(sender As System.Object, e As System.Windows.Forms.FormClosingEventArgs) Handles MyBase.FormClosing
         '×で最小化
-        If close2min = 1 And e.CloseReason.ToString = "UserClosing" Then
+        If close2min > 0 And e.CloseReason.ToString = "UserClosing" Then
             e.Cancel = True
             Me.WindowState = FormWindowState.Minimized
             Exit Sub
@@ -1414,6 +1429,13 @@ Public Class Form1
             me_width = Me.Width
             me_height = Me.Height
             show_log()
+
+            'ini設定ボタン
+            If Me.Width > 546 Then
+                ButtonIniSetting.Text = "<< ini 設定"
+            Else
+                ButtonIniSetting.Text = "ini 設定 >>"
+            End If
         End If
     End Sub
 
@@ -1853,6 +1875,11 @@ Public Class Form1
             rewrite_ini_file()
             Me._worker.read_videopath()
             Me._worker.check_ini_parameter()
+            If close2min = 2 Then
+                Me.FormBorderStyle = Windows.Forms.FormBorderStyle.SizableToolWindow
+            Else
+                Me.FormBorderStyle = Windows.Forms.FormBorderStyle.Sizable
+            End If
             If iniTextbox IsNot Nothing Then
                 For i As Integer = 0 To iniTextbox.Length - 1
                     iniTextbox(i).BackColor = Color.White
@@ -1883,7 +1910,7 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub Button9_Click(sender As System.Object, e As System.EventArgs) Handles Button9.Click
+    Private Sub ButtonIniSetting_Click(sender As System.Object, e As System.EventArgs) Handles ButtonIniSetting.Click
         If Me.Width >= 1078 Then
             Me.Width = 546
         ElseIf Me.Width > 546 Then
@@ -1893,7 +1920,7 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub Button10_Click(sender As System.Object, e As System.EventArgs) Handles Button10.Click
+    Private Sub ButtonIniBackup_Click(sender As System.Object, e As System.EventArgs) Handles ButtonIniBackup.Click
         Dim result As DialogResult = MessageBox.Show("iniファイルをバックアップしますか？", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
         If result = DialogResult.Yes Then
             Dim bak_str As String = file2str("TvRemoteViewer_VB.ini")

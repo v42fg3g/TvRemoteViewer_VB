@@ -111,8 +111,8 @@ Partial Class Form1
         Me.ButtonIniCancel = New System.Windows.Forms.Button()
         Me.Label17 = New System.Windows.Forms.Label()
         Me.TextBoxIniDoc = New System.Windows.Forms.TextBox()
-        Me.Button9 = New System.Windows.Forms.Button()
-        Me.Button10 = New System.Windows.Forms.Button()
+        Me.ButtonIniSetting = New System.Windows.Forms.Button()
+        Me.ButtonIniBackup = New System.Windows.Forms.Button()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.TabControl1.SuspendLayout()
         Me.SuspendLayout()
@@ -485,7 +485,7 @@ Partial Class Form1
         'Label10
         '
         Me.Label10.AutoSize = True
-        Me.Label10.Location = New System.Drawing.Point(238, 9)
+        Me.Label10.Location = New System.Drawing.Point(243, 9)
         Me.Label10.Name = "Label10"
         Me.Label10.Size = New System.Drawing.Size(204, 12)
         Me.Label10.TabIndex = 81
@@ -521,7 +521,6 @@ Partial Class Form1
         'NotifyIcon1
         '
         Me.NotifyIcon1.ContextMenuStrip = Me.ContextMenuStrip1
-        Me.NotifyIcon1.Icon = CType(resources.GetObject("NotifyIcon1.Icon"), System.Drawing.Icon)
         Me.NotifyIcon1.Text = "TvRemoteViewer_VB"
         Me.NotifyIcon1.Visible = True
         '
@@ -932,33 +931,33 @@ Partial Class Form1
         Me.TextBoxIniDoc.TabIndex = 121
         Me.TextBoxIniDoc.TabStop = False
         '
-        'Button9
+        'ButtonIniSetting
         '
-        Me.Button9.Location = New System.Drawing.Point(451, 5)
-        Me.Button9.Name = "Button9"
-        Me.Button9.Size = New System.Drawing.Size(66, 21)
-        Me.Button9.TabIndex = 122
-        Me.Button9.TabStop = False
-        Me.Button9.Text = "ini 設定"
-        Me.Button9.UseVisualStyleBackColor = True
+        Me.ButtonIniSetting.Location = New System.Drawing.Point(448, 5)
+        Me.ButtonIniSetting.Name = "ButtonIniSetting"
+        Me.ButtonIniSetting.Size = New System.Drawing.Size(69, 21)
+        Me.ButtonIniSetting.TabIndex = 122
+        Me.ButtonIniSetting.TabStop = False
+        Me.ButtonIniSetting.Text = "ini 設定 >>"
+        Me.ButtonIniSetting.UseVisualStyleBackColor = True
         '
-        'Button10
+        'ButtonIniBackup
         '
-        Me.Button10.Location = New System.Drawing.Point(760, 5)
-        Me.Button10.Name = "Button10"
-        Me.Button10.Size = New System.Drawing.Size(93, 21)
-        Me.Button10.TabIndex = 123
-        Me.Button10.TabStop = False
-        Me.Button10.Text = "ini バックアップ"
-        Me.Button10.UseVisualStyleBackColor = True
+        Me.ButtonIniBackup.Location = New System.Drawing.Point(760, 5)
+        Me.ButtonIniBackup.Name = "ButtonIniBackup"
+        Me.ButtonIniBackup.Size = New System.Drawing.Size(93, 21)
+        Me.ButtonIniBackup.TabIndex = 123
+        Me.ButtonIniBackup.TabStop = False
+        Me.ButtonIniBackup.Text = "ini バックアップ"
+        Me.ButtonIniBackup.UseVisualStyleBackColor = True
         '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(1062, 705)
-        Me.Controls.Add(Me.Button10)
-        Me.Controls.Add(Me.Button9)
+        Me.Controls.Add(Me.ButtonIniSetting)
+        Me.Controls.Add(Me.ButtonIniBackup)
         Me.Controls.Add(Me.TextBoxIniDoc)
         Me.Controls.Add(Me.ButtonIniApply)
         Me.Controls.Add(Me.ButtonIniCancel)
@@ -1133,7 +1132,7 @@ Partial Class Form1
     Friend WithEvents ButtonIniCancel As System.Windows.Forms.Button
     Private WithEvents Label17 As System.Windows.Forms.Label
     Private WithEvents TextBoxIniDoc As System.Windows.Forms.TextBox
-    Friend WithEvents Button9 As System.Windows.Forms.Button
-    Friend WithEvents Button10 As System.Windows.Forms.Button
+    Friend WithEvents ButtonIniSetting As System.Windows.Forms.Button
+    Friend WithEvents ButtonIniBackup As System.Windows.Forms.Button
 
 End Class

@@ -1,4 +1,4 @@
-全般	0	integer	close2min	0	×で最小化させる=1
+全般	0	integer	close2min	0	×ボタン動作　1=最小化させる 2=最小化＆Alt+Tabに非表示
 全般	0	document			　
 全般	0	document			HLSアプリを個別指定で使用する場合は各アプリのexeをフルパスで指定してください
 全般	0	document			特にサムネイル機能を使用する場合は必ずexepath_ffmpegを指定してください
@@ -31,10 +31,10 @@ WEBサーバー	0	string	MIME_TYPE_DEFAULT		MIME TYPE(例："m3u8:application/x-mpegUR
 WEBサーバー	0	integer	meta_refresh_fix	0	metaタグRefresh記述をjavascriptに変更（0=しない 1=する）Android UCブラウザを使用する場合は1
 WEBサーバー	0	document			　
 WEBサーバー	0	string	BonDriver_NGword		表示したくないBonDriver名の一部を記述（,区切りで複数可）
-WEBサーバー	0	string	TvProgramD_BonDriver1st		地デジで優先的に割り当てるBonDriver（,区切りで複数可）
-WEBサーバー	0	string	TvProgramS_BonDriver1st		BS・CSで優先的に割り当てるBonDriver（,区切りで複数可）
-WEBサーバー	0	string	TvProgramP_BonDriver1st		プレミアムで優先的に割り当てるBonDriver（,区切りで複数可）
 WEBサーバー	0	integer	TvProgram_SelectUptoNum	0	番組表での配信ナンバーを制限する場合に上限の配信ナンバーを指定
+WEBサーバー	0	string	TvProgramD_BonDriver1st		[無効] 地デジで優先的に割り当てるBonDriver（,区切りで複数可）	※旧方式　TvRemoteFiles上は無効です
+WEBサーバー	0	string	TvProgramS_BonDriver1st		[無効] BS・CSで優先的に割り当てるBonDriver（,区切りで複数可）	※旧方式　TvRemoteFiles上は無効です
+WEBサーバー	0	string	TvProgramP_BonDriver1st		[無効] プレミアムで優先的に割り当てるBonDriver（,区切りで複数可）	※旧方式　TvRemoteFiles上は無効です
 WEBサーバー	0	document			　
 WEBサーバー	0	string	HTML_IN_CHARACTER_CODE	UTF-8	[無効] HTML入力キャラクターコード
 WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコード
@@ -91,7 +91,7 @@ HLS配信	0	integer	OPENFIX_WAIT	0	ダミーチャンネル切り替え時に入れるウェイト
 HTTP配信	0	integer	HTTPSTREAM_App	2	HTTPストリーム再生にどのhlsアプリを使用するか 0=指定無し 1=vlc 2=ffmpeg
 HTTP配信	0	integer	HTTPSTREAM_VLC_port	42465	HTTPストリームでVLCが使用するTCPポートの始まり
 HTTP配信	0	integer	FFMPEG_HTTP_CUT_SECONDS	5	ffmpeg　クライアントから切断された場合、何秒後に配信自体を停止するか
-HTTP配信	0	integer	HTTPSTREAM_FFMPEG_BUFFER	32	ffmpeg　バッファ * MB
+HTTP配信	1	integer	HTTPSTREAM_FFMPEG_BUFFER	32	ffmpeg　バッファ * MB
 HTTP配信	0	integer	HTTPSTREAM_METHOD	0	HTTPストリーム受信方法（0=従来通り 1=Read　標準は0）
 
 ファイル再生	1	string	VideoPath		ビデオファイルがあるパス（,区切りで複数可）
