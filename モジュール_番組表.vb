@@ -1318,7 +1318,10 @@ Module モジュール_番組表
                     Else
                         '推測の場合は部分一致おｋ
                         If h.IndexOf(hosokyoku) >= 0 Then
-                            cindex = i
+                            If ch_list(i).sid >= 1024 And ch_list(i).sid <= 63599 Then
+                                '地デジ限定
+                                cindex = i
+                            End If
                             Exit For
                         End If
                     End If
@@ -1326,10 +1329,10 @@ Module モジュール_番組表
             End If
 
             If cindex >= 0 Then
-                r(0) = ch_list(i).jigyousha
-                r(1) = ch_list(i).bondriver
-                r(2) = ch_list(i).sid.ToString
-                r(3) = ch_list(i).chspace.ToString
+                r(0) = ch_list(cindex).jigyousha
+                r(1) = ch_list(cindex).bondriver
+                r(2) = ch_list(cindex).sid.ToString
+                r(3) = ch_list(cindex).chspace.ToString
             End If
         End If
 

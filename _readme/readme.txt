@@ -764,6 +764,7 @@ TvRemoteViewer_VB v2.67
 			iniファイルの標準添付を廃止し上書きで設定を無くしてしまう事故を防止するようにした
 			TvRemoteViwer_VB.ini.dataとTvRemoteViwer_VB.ini.defaultを添付
 	2.67	iniのclose2minの選択肢を追加(2=×で最小化＆Alt+Tabに非表示)
+			ネット放送局名変換指定がされていない場合の推測機能を地デジへの変換限定にした
 
 
 
