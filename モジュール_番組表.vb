@@ -731,7 +731,7 @@ Module モジュール_番組表
         Dim temp_url As String = ""
         Dim temp_method As Integer = 0
         If TvProgram_ch IsNot Nothing Then
-            If Array.IndexOf(TvProgram_ch, 801) Then
+            If Array.IndexOf(TvProgram_ch, 801) >= 0 Then
                 If Outside_data_get_method = 0 Then
                     'iniで指定
                 ElseIf Outside_data_get_method > 0 Then
