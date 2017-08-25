@@ -7245,7 +7245,7 @@ Class WebRemocon
                 '許可するドメインはallowDomains()に入っている
                 If client_allowDomains IsNot Nothing Then
                     If sp = 4 Or sp = 5 Then
-                        Dim domain_str As String = Instr_pickup(url, "://", "/", 0) & "/"
+                        Dim domain_str As String = instr_pickup_para(url, "://", "/", 0) & "/"
                         For i = 0 To client_allowDomains.Length - 1
                             If client_allowDomains(i).IndexOf("/") < 0 Then
                                 'ドメイン指定
