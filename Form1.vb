@@ -182,10 +182,13 @@ Public Class Form1
             chk_timer1 = 0
         End If
 
+        '現在時刻unixtime
+        Dim ut2 As Integer = time2unix(Now())
+
         '6時間に1回バージョンチェック
         If TvRemoteViewer_VB_version_check_on = 1 Then
-            Dim nowt As DateTime = Now()
-            If (Hour(Now()) Mod 6) = 0 And Minute(nowt) = Minute(TvRemoteViewer_VB_version_check_datetime) And Second(nowt) = Second(TvRemoteViewer_VB_version_check_datetime) Then
+            Dim ct As Integer = time2unix(TvRemoteViewer_VB_version_check_datetime)
+            If ut2 - ct > 3600 * 6 + 180 Then
                 check_version_multi() '邪魔にならないようマルチスレッドで確認
                 'log1write("推奨バージョンチェックを行いました") 'ログに表示しないようにした
             End If
@@ -193,17 +196,15 @@ Public Class Form1
 
         '3時間に1回カスタムOutside番組表チェック(タイマー起動直後にも実行される）
         If Outside_CustomURL.Length > 0 Then
-            Dim ut As Integer = time2unix(Now())
-            If ut - Outside_CustomURL_getutime > 3600 * 3 Then
+            If ut2 - Outside_CustomURL_getutime > 3600 * 3 Then
                 check_Outside_CustomURL_multi()
             End If
         End If
 
         '2時間に1回TvRockPC用番組表を取得（ランチャー用ジャンル判別のため）
-        If TvProgram_ch IsNot Nothing Then
-            If TvProgram_tvrock_url.Length > 0 Then
-                Dim ut As Integer = time2unix(Now())
-                If ut - TvRock_html_getutime > (3600 * 2 - 180) Then
+        If TvProgram_tvrock_url.Length > 0 Then
+            If TvProgram_ch IsNot Nothing And TvRock_genre_color IsNot Nothing Then
+                If ut2 - TvRock_html_getutime > (3600 * 2 - 180) Then
                     TvRock_html_getutime = time2unix(Now())
                     check_TvRock_Program_PC_multi()
                 End If
