@@ -1142,6 +1142,8 @@ Class WebRemocon
                 str2file("TvRemoteViewer_VB.ini", org_str)
                 log1write("TvRemoteViewer_VB.ini を 作成しました")
                 System.Threading.Thread.Sleep(100)
+            Else
+                log1write("【エラー】TvRemoteViewer_VB.ini.defaultが見つかりませんでした")
             End If
         End If
 
@@ -1777,13 +1779,13 @@ Class WebRemocon
         'DVD2
         '作業フォルダ
         If ISO_DumpDirPath.Length = 0 Or folder_exist(ISO_DumpDirPath) <= 0 Then
-            log1write("DVD新再生方式用作業フォルダが指定されていないか見つかりません")
+            log1write("DVD新再生方式用作業フォルダが指定されていないか見つかりません（%FILEROOT%が使用されます）")
             ISO_DumpDirPath = Me._fileroot
         End If
         log1write("ISO再生用 DUMPフォルダとして" & ISO_DumpDirPath & "を設定しました")
         'ISO用サムネイルフォルダ
         If ISO_ThumbPath.length = 0 Or folder_exist(ISO_ThumbPath) <= 0 Then
-            log1write("DVD用サムネイルフォルダが指定されていないか見つかりません")
+            log1write("DVD用サムネイルフォルダが指定されていないか見つかりません（%FILEROOT%が使用されます）")
             ISO_ThumbPath = Me._fileroot
         End If
         log1write("ISO再生用 サムネイルフォルダとして" & ISO_ThumbPath & "を設定しました")
@@ -4663,7 +4665,7 @@ Class WebRemocon
                             httpApp = 3 'webm
                         End If
 
-                        If (h_stream_mode = 2 And h_bondriver.Length > 0 And Val(h_sid) > 0) Or (h_stream_mode = 3 And h_videoname.Length > 0) Then
+                        If ffmpeg_num > 0 And ((h_stream_mode = 2 And h_bondriver.Length > 0 And Val(h_sid) > 0) Or (h_stream_mode = 3 And h_videoname.Length > 0)) Then
                             'httpストリーム配信開始
                             waitingmessage_count(ffmpeg_num) = 0
                             waitingmessage_str(ffmpeg_num) = ""

@@ -392,8 +392,8 @@ Public Class Form1
             log1write("【エラー】NotifyIcon1の初期化に失敗しました。" & ex.Message)
         End Try
 
-        '最初はini設定欄を非表示
-        Me.Width = 546
+        '最初はini設定欄を非表示　と思ったが起動時エラー注意喚起を表示するため表示するようにした
+        'Me.Width = 546
     End Sub
 
     Private Sub check_Outside_CustomURL_multi()
@@ -545,8 +545,12 @@ Public Class Form1
         'チャンネル情報を取得　今までは表示要求があった時点で１つ１つ取得していた
         Me._worker.WI_GET_CHANNELS()
 
-        '標準ini
-        read_ini_default()
+        '標準ini読み込み
+        If read_ini_default() = 0 Then
+            'TvRemoteViewer_VB.ini.dataが存在しなかった
+            Me.ButtonIniCancel.Enabled = False
+            Me.ButtonIniApply.Enabled = False
+        End If
         'iniからパラ－メータを読み込む
         Me._worker.read_videopath()
         '×ボタン動作
@@ -672,8 +676,38 @@ Public Class Form1
         'ViewTV～.htmlが更新されていないかチェック
         Me._worker.check_ViewTVhtml()
 
+        'エラーが発生している場合注意喚起
+        log1_show_warning()
+
         '無事起動
         TvRemoteViewer_VB_Start = 1
+    End Sub
+
+    Private Sub log1_show_warning()
+        Dim err_str As String = ""
+        Dim line() As String = Split(log1, vbCrLf)
+        For Each s As String In line
+            If s.IndexOf("エラー") >= 0 Or s.IndexOf("警告") >= 0 Or s.IndexOf("ません") >= 0 Then
+                If s.IndexOf("配信中のストリームlistが存在しません") < 0 Then 'これはOK
+                    Try
+                        '日時削除
+                        Dim sp As Integer = s.IndexOf(" ")
+                        If sp > 0 Then
+                            sp = s.IndexOf(" ", sp + 1)
+                        End If
+                        If sp > 0 Then
+                            s = s.Substring(sp + 1)
+                        End If
+                    Catch ex As Exception
+                    End Try
+                    err_str &= s & vbCrLf
+                End If
+            End If
+        Next
+        If err_str.Length > 0 Then
+            err_str = "■起動時エラー＆警告■" & vbCrLf & err_str
+            Me.TextBoxIniDoc.Text = err_str
+        End If
     End Sub
 
     'フォーム上の項目が正常かどうかチェック
@@ -795,7 +829,7 @@ Public Class Form1
                 fonts_conf_ok = 1
                 log1write("起動チェック　ASS字幕に必要なfonts.conf：OK")
             Else
-                log1write("ffmepgファイル再生時：ASS字幕を表示させるのに必要なfonts.confは見つかりませんでした")
+                log1write("【警告】ファイル再生時：ASS字幕を焼込み表示させるために必要なfonts.confが見つかりませんでした")
             End If
         End If
         'ptTimer用sqlite3.exeがあるかどうか確認

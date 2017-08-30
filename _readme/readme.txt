@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.68
+TvRemoteViewer_VB v2.69
 
 
 
@@ -766,6 +766,9 @@ TvRemoteViewer_VB v2.68
 	2.67	iniのclose2minの選択肢を追加(2=×で最小化＆Alt+Tabに非表示)
 	2.68	ネット放送局名変換指定がされていない場合の推測機能を地デジへの変換限定にした
 			ネット放送局にAbemaTV(801)単独で指定するとAbemaTV番組表が表示されないバグを修正
+	2.69	ffmpegストリーム配信時にストリーム番号のチェックをスルーしていたバグを修正
+			TvRemoteViewer_VB.ini.dataのコピーし忘れ時にini更新ボタンを使用不可とした
+			起動時のログからエラーと警告を抽出してini項目詳細欄に表示して注意喚起するようにした
 
 
 

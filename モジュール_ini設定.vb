@@ -29,7 +29,9 @@
         End Function
     End Structure
 
-    Public Sub read_ini_default()
+    Public Function read_ini_default() As Integer
+        Dim r As Integer = 1
+
         'カレントディレクトリ変更
         F_set_ppath4program()
 
@@ -98,8 +100,11 @@
             End If
         Else
             log1write("【エラー】標準設定ファイル " & ini_default_filename & " が見つかりませんでした")
+            r = 0
         End If
-    End Sub
+
+        Return r
+    End Function
 
     Public Sub set_ini_data_default(ByVal name As String, ByVal genre As String, ByVal value_default As String, ByVal value_type As String, ByVal title As String, ByVal document As String, ByVal need_reset As Integer)
         Dim j As Integer = -1
