@@ -475,6 +475,9 @@ Public Class Form1
     Private Function check_version() As Integer
         Dim r As Integer = 0
 
+        TvRemoteViewer_VB_version_check_datetime = Now()
+        LabelVersionCheckDate.Text = TvRemoteViewer_VB_version_check_datetime
+
         Dim s As String = get_html_by_webclient(TvRemoteViewer_VB_version_URL, "shift_jis", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
         If s.Length > 8 Then
             Dim line() As String = Split(s, vbCrLf)
@@ -504,8 +507,6 @@ Public Class Form1
                 If TvRemoteViewer_VB_recommend_version = 0 Then
                     log1write("推奨バージョンが取得できませんでした")
                 End If
-                TvRemoteViewer_VB_version_check_datetime = Now()
-                LabelVersionCheckDate.Text = TvRemoteViewer_VB_version_check_datetime
             End If
         Else
             log1write("ネット上から推奨バージョン情報が取得出来ませんでした")
