@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.69
+TvRemoteViewer_VB v2.70
 
 
 
@@ -769,6 +769,9 @@ TvRemoteViewer_VB v2.69
 	2.69	ffmpegストリーム配信時にストリーム番号のチェックをスルーしていたバグを修正
 			TvRemoteViewer_VB.ini.dataのコピーし忘れ時にini更新ボタンを使用不可とした
 			起動時のログからエラーと警告を抽出してini項目詳細欄に表示して注意喚起するようにした
+	2.70	iniファイルへの新規項目追加と値のセットが同時に出来なかったバグを修正
+			iniファイルへの新規項目追加で説明中に改行が入っているとコメントアウトされなかったバグを修正
+			TvRock番組表へのジャンル追加（取得が遅くなるので必要な方のみiniのTvRock_genre_colorを追加）
 
 
 

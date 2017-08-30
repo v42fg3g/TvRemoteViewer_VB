@@ -372,6 +372,17 @@ TvProgram_SelectUptoNum = 0
 
 TvProgram_tvrock_url = 
 
+;【TvRock】
+;【2.70】TVRLauncher用ジャンル判別色データ
+;現在TvRock番組表で使用中のジャンル色0～15まで16個の色データを指定してください
+;例えば先頭のデータはジャンル0・ニュースの色を示しています
+;現在使用中の色はレジストリ
+;HKEY_CURRENT_USER\Software\TvRock
+;のCC0～CC15に記録されています
+;例：TvRock_genre_color=#d4ffc8,#ffccef,#f0f0f0,#ffbbbb,#b6f2ff,#faffb0,#ccfcf4,#dcddff,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0
+
+TvRock_genre_color = 
+
 
 ;【EDCB】
 ;EDCBの番組表WEBインターフェースURL

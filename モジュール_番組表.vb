@@ -33,6 +33,10 @@ Module モジュール_番組表
     Public Tvmaid_url As String = "" 'Tvmaidのサーバーurl
     Public TvmaidIsEX As Integer = 0 'TvmaidEXなら1
     Public TvProgramTvmaid_NGword() As String
+    'TvRock ジャンル判定
+    Public TvRock_html_src As String = "" 'TvRock PC用番組表HTMLデータ
+    Public TvRock_genre_color() As String '0～15ジャンルのカラー"#ffffff"等
+    Public TvRock_html_getutime As Long = 0 '最終取得日時
 
     Public LIVE_STREAM_STR As String = ""
     Public TvProgram_SelectUptoNum As Integer = 0 '番組表上の配信ナンバーを制限する
@@ -1023,7 +1027,7 @@ Module モジュール_番組表
                     Dim sp3 As Integer = html.IndexOf("</b></small>", sp)
                     sp3 = html.IndexOf("<font color=", sp3)
                     r(j).programContent = escape_program_str(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
-                    r(j).genre = "-1"
+                    r(j).genre = get_tvrock_genre_from_title(r(j).programTitle).ToString '"-1"
 
                     'サービスIDを取得
                     sp3 = html.IndexOf("javascript:reserv(", sp3)
@@ -1043,7 +1047,7 @@ Module モジュール_番組表
                         r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
                         r(j).programContent = ""
                         r(j).sid = r(j - 1).sid
-                        r(j).genre = "-1"
+                        r(j).genre = get_tvrock_genre_from_title(r(j).programTitle).ToString '"-1"
 
                         '次の番組であることを記録
                         r(j).nextFlag = 1
@@ -1056,6 +1060,110 @@ Module モジュール_番組表
         Catch ex As Exception
             log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)
         End Try
+        Return r
+    End Function
+
+    'TvRock PC用番組表からジャンルを推測する
+    Private Function get_tvrock_genre_from_title(ByVal title As String) As Integer
+        Dim r As Integer = -1
+
+        If TvRock_html_src.Length > 0 And TvRock_genre_color IsNot Nothing Then
+            Dim sp1 As Integer = -1
+
+            'TvRock特有の変換に対応
+            title = title.Replace("/", "／")
+            title = title.Replace("＆", "&")
+
+            sp1 = TvRock_html_src.IndexOf(title)
+            If sp1 < 0 Then
+                'タイトルそのままでは見つからなかった
+
+                While title.LastIndexOf("[") > Int(title.Length * 2 / 3)
+                    '後半に[がある場合
+                    title = title.Substring(0, title.LastIndexOf("["))
+                    sp1 = TvRock_html_src.IndexOf(title)
+                    If sp1 >= 0 Then
+                        Exit While
+                    End If
+                End While
+
+                If sp1 < 0 Then
+                    While title.IndexOf("]") >= 0 And title.IndexOf("]") < Int(title.Length / 3)
+                        '前半に]がある場合
+                        Try
+                            title = title.Substring(title.IndexOf("]") + 1)
+                        Catch ex As Exception
+                            title = ""
+                            sp1 = -1
+                            Exit While
+                        End Try
+                        sp1 = TvRock_html_src.IndexOf(title)
+                        If sp1 >= 0 Then
+                            Exit While
+                        End If
+                    End While
+                End If
+
+                If sp1 < 0 And title.Length > 0 Then
+                    'それでも見つからなかった場合
+                    '【】を取り除く
+                    If title.LastIndexOf("【") > Int(title.Length * 2 / 3) Then
+                        title = title.Substring(0, title.LastIndexOf("【"))
+                    End If
+                    If title.IndexOf("】") >= 0 And title.IndexOf("】") < Int(title.Length / 3) Then
+                        title = title.Substring(title.LastIndexOf("】") + 1)
+                    End If
+                    'Dim kc As String = Instr_pickup(title, "【", "】", 0)
+                    'If kc.Length > 0 Then
+                    'title = title.Replace("【" & kc & "】", "")
+                    'End If
+
+                    title = title.Replace("[デ]", "")
+                    title = title.Replace("[字]", "")
+                    title = title.Replace("[二]", "")
+
+                    sp1 = TvRock_html_src.IndexOf(title)
+
+                    If sp1 < 0 Then
+                        '見つからなければ一番長い全角文字列
+                        Dim tz As String = zenkakudake_max(title)
+                        If tz.Length > 1 Then
+                            sp1 = TvRock_html_src.IndexOf(Trim(tz))
+                        Else
+                            '1文字以下ならばタイトルそのまま たぶん英文タイトル（無駄）
+                        End If
+                    End If
+                End If
+            End If
+
+            If sp1 >= 0 And title.Length > 0 Then
+                Dim sps As Integer = 0
+                sps = TvRock_html_src.LastIndexOf("title=", sp1 - 50)
+                If sps < 0 Then
+                    sps = 0
+                End If
+                Dim sp2 As Integer = TvRock_html_src.LastIndexOf("<td rowspan=", sp1)
+                If sp2 < sps Then
+                    '見つかっていない場合、直近の色を使用
+                    sp2 = TvRock_html_src.LastIndexOf(" bgcolor=", sp1)
+                    If sp2 < sps Then
+                        sp2 = -1
+                    End If
+                End If
+                If sp2 >= 0 Then
+                    Dim bgcolor As String = Trim(Instr_pickup(TvRock_html_src, "bgcolor=", " ", sp2, sp1).ToString.ToLower)
+                    If bgcolor.Length > 0 Then
+                        r = Array.LastIndexOf(TvRock_genre_color, bgcolor) '後ろから。その他優先
+                        If r < 0 Then
+                            r = -1
+                        Else
+                            r = r * 256
+                        End If
+                    End If
+                End If
+            End If
+        End If
+
         Return r
     End Function
 
@@ -2658,31 +2766,31 @@ Module モジュール_番組表
                                         r(j).genre = "-1"
 
                                         chk = 1
-                                            '次の番組を探す
-                                            sp = html.IndexOf(t2str)
-                                            If sp > 0 Then
-                                                ep = html.IndexOf("</eventinfo>", sp)
-                                                j = r.Length
-                                                ReDim Preserve r(j)
-                                                r(j).stationDispName = r(j - 1).stationDispName
-                                                r(j).startDateTime = t2s
-                                                t1long = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
-                                                t1 = t2
-                                                t2 = DateAdd(DateInterval.Minute, t1long, t1)
-                                                t1s = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
-                                                t2s = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
-                                                r(j).endDateTime = t2s
-                                                r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
-                                                r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
-                                                'sidを追加 
-                                                'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
-                                                r(j).sid = ch_list(i).sid
-                                                r(j).tsid = ch_list(i).tsid '一致しない可能性がある
-                                                r(j).genre = "-1"
+                                        '次の番組を探す
+                                        sp = html.IndexOf(t2str)
+                                        If sp > 0 Then
+                                            ep = html.IndexOf("</eventinfo>", sp)
+                                            j = r.Length
+                                            ReDim Preserve r(j)
+                                            r(j).stationDispName = r(j - 1).stationDispName
+                                            r(j).startDateTime = t2s
+                                            t1long = Int(Val(Instr_pickup(html, "<duration>", "</duration>", sp, ep)) / 60) '分
+                                            t1 = t2
+                                            t2 = DateAdd(DateInterval.Minute, t1long, t1)
+                                            t1s = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
+                                            t2s = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
+                                            r(j).endDateTime = t2s
+                                            r(j).programTitle = Instr_pickup(html, "<event_name>", "</event_name>", sp, ep)
+                                            r(j).programContent = Instr_pickup(html, "<event_text>", "</event_text>", sp, ep)
+                                            'sidを追加 
+                                            'sid,tsidは番組表から取ってきたものだがch_list().tsidが異なる可能性があるのでch_list()のほうを記録することにした
+                                            r(j).sid = ch_list(i).sid
+                                            r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+                                            r(j).genre = "-1"
 
-                                                '次の番組であることを記録
-                                                r(j).nextFlag = 1
-                                            End If
+                                            '次の番組であることを記録
+                                            r(j).nextFlag = 1
+                                        End If
                                         Exit While
                                     End If
                                 Catch ex As Exception

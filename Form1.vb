@@ -1,6 +1,7 @@
 ﻿Imports System
 Imports System.IO
 Imports System.Threading
+Imports System.Text.RegularExpressions
 
 Public Class Form1
 
@@ -195,6 +196,17 @@ Public Class Form1
             Dim ut As Integer = time2unix(Now())
             If ut - Outside_CustomURL_getutime > 3600 * 3 Then
                 check_Outside_CustomURL_multi()
+            End If
+        End If
+
+        '2時間に1回TvRockPC用番組表を取得（ランチャー用ジャンル判別のため）
+        If TvProgram_ch IsNot Nothing Then
+            If TvProgram_tvrock_url.Length > 0 Then
+                Dim ut As Integer = time2unix(Now())
+                If ut - TvRock_html_getutime > (3600 * 2 - 180) Then
+                    TvRock_html_getutime = time2unix(Now())
+                    check_TvRock_Program_PC_multi()
+                End If
             End If
         End If
 
@@ -403,6 +415,54 @@ Public Class Form1
 
     Private Sub check_Outside_CustomURL()
         Dim Outside_CustomURL_html As String = get_Outside_html(1)
+        'バグかと思ったがget_Outside_html内でOutside_CustomURL_htmlに代入済み
+    End Sub
+
+    Private Sub check_TvRock_Program_PC_multi()
+        Dim t As New System.Threading.Thread(New System.Threading.ThreadStart(AddressOf check_TvRock_Program_PC))
+        t.Start()
+    End Sub
+
+    Private Sub check_TvRock_Program_PC()
+        System.Threading.Thread.Sleep(100)
+        Dim url As String = TvProgram_tvrock_url
+        Dim sp As Integer = url.IndexOf("/iphone")
+        If sp > 0 Then
+            url = url.Substring(0, sp) & "/now?b=4"
+            'TvRock_html_src = get_html_by_webclient(url, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
+            Dim html As String = get_html_by_webclient(url, "Shift_JIS") '番組表1.0と思われる
+            If html.Length > 500 Then
+                '容量を減らす努力をする あまりにも巨大でジャンル判別に時間がかかるため
+                sp = html.IndexOf(">新番組<")
+                If sp > 0 Then
+                    html = html.Substring(sp)
+                End If
+                sp = html.IndexOf(">6時間<")
+                If sp > 0 Then
+                    html = html.Substring(sp)
+                End If
+                html = html.Replace("<ノーカット版>", "")
+                html = html.Replace("<small>", "").Replace("</small>", "").Replace("&nbsp;", "").Replace("td width=", "")
+                html = html.Replace("<wbr>", "").Replace("<tbody>", "").Replace("align=center", "").Replace("valign=top", "")
+                html = html.Replace("<b>", "").Replace("<br>", "")
+                html = Regex.Replace(html, "<a.href..http+.*?>.*?</a>", "")
+                html = Regex.Replace(html, "<a.href..now+.*?>.*?</a>", "")
+                html = Regex.Replace(html, "<font.color+.*?>.*?</font>", "")
+                html = Regex.Replace(html, "<img+.*?>", "")
+                html = Regex.Replace(html, "<tr+.*?>", "")
+                html = Regex.Replace(html, "noshade>.*?<", "<")
+                html = Regex.Replace(html, "</b>.*?<", "<")
+                html = Regex.Replace(html, "<table+.*?>", "")
+                html = Regex.Replace(html, "</+.*?>", "")
+
+                TvRock_html_src = html
+                log1write("ジャンル判別用にTvRockのPC番組表を取得しました")
+            Else
+                log1write("【エラー】TvRockのPC用番組表取得に失敗しました")
+            End If
+        Else
+            log1write("TvRockの番組取得URL（TvProgram_tvrock_url）が未知の形式です。末尾に/iphoneが記入されていません")
+        End If
     End Sub
 
     Private Sub check_version_multi()
@@ -2059,10 +2119,11 @@ Public Class Form1
 
                                     '最後に追加（このほうがわかりやすい）
                                     j = line.Length - 1
+                                    ini_array(i).value = ini_array(i).value_temp
                                     Dim genre_str As String = ""
                                     genre_str = "[" & ini_array(i).genre & "] "
                                     line(j) &= vbCrLf & vbCrLf
-                                    line(j) &= ";" & genre_str & ini_array(i).title & " " & ini_array(i).document & vbCrLf
+                                    line(j) &= ";" & genre_str & ini_array(i).title.Replace(vbCrLf, vbCrLf & ";") & " " & ini_array(i).document.Replace(vbCrLf, vbCrLf & ";") & vbCrLf
                                     line(j) &= ini_array(i).name & " = " & ini_array(i).value
                                     log1write(ini_filename & "に [" & ini_array(i).genre & "] " & ini_array(i).name & "=" & ini_array(i).value & " を追加しました")
                                     log_str &= ini_filename & "に [" & ini_array(i).genre & "] " & ini_array(i).name & "=" & ini_array(i).value & " を追加しました" & vbCrLf

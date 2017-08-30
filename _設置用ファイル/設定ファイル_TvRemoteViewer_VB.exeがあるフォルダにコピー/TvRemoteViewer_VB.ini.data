@@ -48,6 +48,7 @@ WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコ
 番組表データ	0	document			　
 番組表データ	0	string	TvProgram_tvrock_url		TvRockのiPhone用番組表URL（http://127.0.0.1:8969/ユーザー名/iphone）
 番組表データ	0	string	TvProgramTvRock_NGword		TvRock番組表に表示したくない放送局名
+番組表データ	0	string	TvRock_genre_color		TVRLauncher用ジャンル判別色データ	現在TvRock番組表で使用中のジャンル色0～15まで16個の色データを指定してください。例えば先頭のデータはジャンル0・ニュースの色を示しています。\n現在使用中の色はレジストリHKEY_CURRENT_USER\Software\TvRockののCC0～CC15に記録されています\n例：TvRock_genre_color=#d4ffc8,#ffccef,#f0f0f0,#ffbbbb,#b6f2ff,#faffb0,#ccfcf4,#dcddff,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0
 番組表データ	0	document			　
 番組表データ	0	string	TvProgram_EDCB_url		EDCBの番組表WEBインターフェースURL（http://127.0.0.1:5510/api/EnumEventInfo）
 番組表データ	0	string	TvProgramEDCB_NGword		EDCB番組表に表示したくない放送局名
