@@ -447,7 +447,7 @@ Public Class Form1
                 html = html.Replace("<wbr>", "").Replace("<tbody>", "").Replace("align=center", "").Replace("valign=top", "")
                 html = html.Replace("<b>", "").Replace("<br>", "")
                 html = Regex.Replace(html, "<a.href..http+.*?>.*?</a>", "")
-                html = Regex.Replace(html, "<a.href..now+.*?>.*?</a>", "")
+                'html = Regex.Replace(html, "<a.href..now+.*?>.*?</a>", "")
                 html = Regex.Replace(html, "<font.color+.*?>.*?</font>", "")
                 html = Regex.Replace(html, "<img+.*?>", "")
                 html = Regex.Replace(html, "<tr+.*?>", "")

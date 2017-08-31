@@ -1027,16 +1027,25 @@ Module モジュール_番組表
                     Dim sp3 As Integer = html.IndexOf("</b></small>", sp)
                     sp3 = html.IndexOf("<font color=", sp3)
                     r(j).programContent = escape_program_str(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
+                    '予約番号がわからないのでタイトルから推測
                     r(j).genre = get_tvrock_genre_from_title(r(j).programTitle).ToString '"-1"
 
                     'サービスIDを取得
                     sp3 = html.IndexOf("javascript:reserv(", sp3)
-                    r(j).sid = Val(Instr_pickup(html, ",", ",", sp3))
+                    If sp3 > 0 Then
+                        r(j).sid = Val(Instr_pickup(html, ",", ",", sp3))
+                    Else
+                        log1write("【エラー】TvRock番組情報取得に失敗しました。TvRock携帯用番組表の「予約表示」を３番組以上にしてください")
+                        r = Nothing
+                        Exit While
+                    End If
 
                     '次の番組を取得
-
                     sp = html.IndexOf("><small><i>", sp2 + 1)
                     Dim se As Integer = html.IndexOf(" <small><i>", sp2 + 1)
+                    If se < 0 Then
+                        se = html.Length - 1
+                    End If
                     If sp > 0 And sp < se Then
                         '次の番組があれば
                         j = r.Length
@@ -1047,7 +1056,15 @@ Module モジュール_番組表
                         r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
                         r(j).programContent = ""
                         r(j).sid = r(j - 1).sid
-                        r(j).genre = get_tvrock_genre_from_title(r(j).programTitle).ToString '"-1"
+
+                        Dim sidtrid_str As String = Instr_pickup(html, "reserv(", ")", sp3, se)
+                        Dim d() As String = sidtrid_str.Split(",")
+                        If d.Length = 4 Then
+                            'こちらのほうが正確
+                            r(j).genre = get_tvrock_genre_from_sidtrid(Val(d(1)), Val(d(2))).ToString
+                        Else
+                            r(j).genre = get_tvrock_genre_from_title(r(j).programTitle).ToString '"-1"
+                        End If
 
                         '次の番組であることを記録
                         r(j).nextFlag = 1
@@ -1060,6 +1077,47 @@ Module モジュール_番組表
         Catch ex As Exception
             log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)
         End Try
+        Return r
+    End Function
+
+    'TvRock PC用番組表からジャンルを推測する
+    Private Function get_tvrock_genre_from_sidtrid(ByVal sid As Integer, ByVal trid As Integer) As Integer
+        Dim r As Integer = -1
+
+        Dim sstr As String = "c=" & sid.ToString & "&e=" & trid.ToString
+
+        If TvRock_html_src.Length > 0 And TvRock_genre_color IsNot Nothing Then
+            Dim sp1 As Integer = -1
+
+            sp1 = TvRock_html_src.IndexOf(sstr)
+            If sp1 >= 0 Then
+                Dim sps As Integer = 0
+                sps = TvRock_html_src.LastIndexOf("&c=", sp1 - 10)
+                If sps < 0 Then
+                    sps = 0
+                End If
+                Dim sp2 As Integer = TvRock_html_src.LastIndexOf("<td rowspan=", sp1)
+                If sp2 <= sps Then
+                    '見つかっていない場合、直近の色を使用
+                    sp2 = TvRock_html_src.LastIndexOf(" bgcolor=", sp1)
+                    If sp2 < sps Then
+                        sp2 = -1
+                    End If
+                End If
+                If sp2 >= 0 Then
+                    Dim bgcolor As String = Trim(Instr_pickup(TvRock_html_src, "bgcolor=", " ", sp2, sp1).ToString.ToLower)
+                    If bgcolor.Length > 0 Then
+                        r = Array.LastIndexOf(TvRock_genre_color, bgcolor) '後ろから。その他優先
+                        If r < 0 Then
+                            r = -1
+                        Else
+                            r = r * 256
+                        End If
+                    End If
+                End If
+            End If
+        End If
+
         Return r
     End Function
 

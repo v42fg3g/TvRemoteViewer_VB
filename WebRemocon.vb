@@ -1870,27 +1870,27 @@ Class WebRemocon
             Outside_CustomURL = ""
         End If
 
-        'TvRockジャンル　標準色 をセットしようかと思ったがランチャーを使わない場合は重くなるだけなのでiniでセットされなければジャンル判別は行わないことにした
-        'If TvRock_genre_color Is Nothing Then
-        'ReDim Preserve TvRock_genre_color(15)
-        'TvRock_genre_color(0) = "#d4ffc8"
-        'TvRock_genre_color(1) = "#ffccef"
-        'TvRock_genre_color(2) = "#f0f0f0"
-        'TvRock_genre_color(3) = "#ffbbbb"
-        'TvRock_genre_color(4) = "#b6f2ff"
-        'TvRock_genre_color(5) = "#faffb0"
-        'TvRock_genre_color(6) = "#ccfcf4"
-        'TvRock_genre_color(7) = "#dcddff"
-        'TvRock_genre_color(8) = "#f0f0f0"
-        'TvRock_genre_color(9) = "#f0f0f0"
-        'TvRock_genre_color(10) = "#f0f0f0"
-        'TvRock_genre_color(11) = "#f0f0f0"
-        'TvRock_genre_color(12) = "#f0f0f0"
-        'TvRock_genre_color(13) = "#f0f0f0"
-        'TvRock_genre_color(14) = "#f0f0f0"
-        'TvRock_genre_color(15) = "#f0f0f0"
-        'log1write("TvRock_genre_colorにTvRock標準ジャンル色がセットされました")
-        'End If
+        'TvRockジャンル　標準色
+        If TvRock_genre_color Is Nothing Then
+            ReDim Preserve TvRock_genre_color(15)
+            TvRock_genre_color(0) = "#d4ffc8"
+            TvRock_genre_color(1) = "#ffccef"
+            TvRock_genre_color(2) = "#f0f0f0"
+            TvRock_genre_color(3) = "#ffbbbb"
+            TvRock_genre_color(4) = "#b6f2ff"
+            TvRock_genre_color(5) = "#faffb0"
+            TvRock_genre_color(6) = "#ccfcf4"
+            TvRock_genre_color(7) = "#dcddff"
+            TvRock_genre_color(8) = "#f0f0f0"
+            TvRock_genre_color(9) = "#f0f0f0"
+            TvRock_genre_color(10) = "#f0f0f0"
+            TvRock_genre_color(11) = "#f0f0f0"
+            TvRock_genre_color(12) = "#f0f0f0"
+            TvRock_genre_color(13) = "#f0f0f0"
+            TvRock_genre_color(14) = "#f0f0f0"
+            TvRock_genre_color(15) = "#f0f0f0"
+            log1write("TvRock_genre_colorにTvRock標準ジャンル色がセットされました")
+        End If
     End Sub
 
     'クライアントの設定を読み込むclient.ini
