@@ -46,6 +46,10 @@ Module モジュール_番組表
     '次番組を表示する分数デフォルト(7分に設定）
     Public nextmin_default As Integer = 7
 
+    '次の次の番組
+    Public next2_minutes As Integer = 8 '次の番組が指定分以内の番組の場合は次の次の番組情報を追加表示 0ならば次の次の番組は収集しない
+    'Public next2_conv() As String = {"ニュース:News", "天気:天気", "気象:天気", "インフォ:Info", "報:Info", "紹:Info", "プレ:Info", "買:shop", "ショッ:shop"}
+
     'EDCBの/addprogres.htmlでEDCB管理チャンネルを抽出しない場合=1
     Public EDCB_thru_addprogres As Integer = 0
 
@@ -639,6 +643,20 @@ Module モジュール_番組表
 
                 For i = 0 To r.Length - 2
                     If r(i).nextFlag = 0 Then
+                        Dim n2_str As String = "" '次の次の番組情報
+                        Dim n2_genre As String = "-1"
+                        If next2_minutes > 0 Then
+                            Try
+                                If r(i + 2).nextFlag = 2 And ((r(i).sid > 0 And r(i).sid = r(i + 2).sid) Or r(i).stationDispName = r(i + 2).stationDispName) Then
+                                    '次の次の番組があれば
+                                    Dim tr As DateTime = CDate(r(i + 2).startDateTime)
+                                    Dim tt As String = Hour(tr) & ":" & Minute(tr).ToString("d2")
+                                    n2_str = "　　≫" & tt & " " & r(i + 2).programTitle
+                                    n2_genre = r(i + 2).genre
+                                End If
+                            Catch ex As Exception
+                            End Try
+                        End If
                         Try
                             If r(i + 1).nextFlag = 1 And ((r(i).sid > 0 And r(i).sid = r(i + 1).sid) Or r(i).stationDispName = r(i + 1).stationDispName) Then
                                 Dim tr As DateTime = CDate(r(i).endDateTime)
@@ -649,8 +667,53 @@ Module モジュール_番組表
                                 End If
                                 If te >= re Then
                                     '次番組があれば
-                                    r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & "-" & Trim(r(i + 1).endDateTime.Substring(r(i + 1).endDateTime.IndexOf(" "))) & " " & r(i + 1).programTitle
-                                    r(i).genre &= ":" & r(i + 1).genre
+                                    Dim n1_str As String = r(i + 1).programTitle
+                                    Dim n1_genre As String = r(i + 1).genre
+                                    '次の次の番組があれば
+                                    If n2_str.Length > 0 Then
+                                        Dim du As Integer = time2unix(r(i + 1).endDateTime) - time2unix(r(i + 1).startDateTime)
+                                        If du < 0 Then
+                                            du += 60 * 24
+                                        End If
+                                        If du <= (next2_minutes * 60) Then 'next2_minutes分以下の番組
+                                            If next2_minutes < 120 Then
+                                                '全ての番組において次の次を調べるわけでないなら、次の次の番組情報が表示されていることを示す印を付ける
+                                                n1_str = "≫ " & n1_str
+                                            End If
+                                            'If next2_conv IsNot Nothing And Val(n1_genre) <> 7 And r(i).stationDispName.IndexOf("教育") < 0 And StrConv(r(i).stationDispName, VbStrConv.Wide).IndexOf("Ｅテレ") < 0 Then
+                                            ''短いアニメの場合はタイトル短縮無し
+                                            'If n1_str.Length > 10 Then '10文字以上のタイトルの場合は短縮を試みる
+                                            ''タイトル短縮
+                                            'Dim c_title As String = "&"
+                                            'Dim c_cat As String = ""
+                                            'For Each a As String In next2_conv
+                                            'Dim d() As String = a.Split(":")
+                                            'If d.Length = 2 Then
+                                            'If n1_str.IndexOf(d(0)) >= 0 Then
+                                            'If c_title.IndexOf("&" & d(0) & "&") < 0 Then
+                                            'c_title &= c_cat & d(1)
+                                            'c_cat = "&"
+                                            'End If
+                                            'End If
+                                            'End If
+                                            'Next
+                                            'If c_title.Length > 1 Then
+                                            'n1_str = c_title.Substring(1)
+                                            'End If
+                                            'End If
+                                            ''ジャンルを上書き(次の次の方が重要なので）
+                                            ''n1_genre = n2_genre
+                                            ''と思ったが混乱するので中止
+                                            'End If
+                                            'If n1_str.Length > 10 Then
+                                            'n1_str = n1_str.Substring(0, 10) & ".."
+                                            'End If
+                                        Else
+                                            n2_str = ""
+                                        End If
+                                    End If
+                                    r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & "-" & Trim(r(i + 1).endDateTime.Substring(r(i + 1).endDateTime.IndexOf(" "))) & " " & n1_str & n2_str
+                                    r(i).genre &= ":" & n1_genre
                                 End If
                             End If
                         Catch ex As Exception
@@ -676,6 +739,19 @@ Module モジュール_番組表
                     End If
                 Next
                 Return r2
+            Else
+                '互換性のためnextFlag = 0 or 1 だけを抽出
+                If next2_minutes > 0 Then
+                    Dim k As Integer = 0
+                    Dim r2() As TVprogramstructure = Nothing
+                    For i = 0 To r.Length - 1
+                        If r(i).nextFlag < 2 Then
+                            ReDim Preserve r2(k)
+                            r2(k) = r(i)
+                            k += 1
+                        End If
+                    Next
+                End If
             End If
         End If
 
@@ -938,7 +1014,6 @@ Module モジュール_番組表
                                 r(j).programTitle = escape_program_str(d(4))
                                 r(j).programContent = escape_program_str(d(5))
                                 r(j).genre = -1
-                                '次の番組を取得
                                 '次の番組
                                 Try
                                     Dim chk As Integer = 0
@@ -957,6 +1032,26 @@ Module モジュール_番組表
                                                 r(j).genre = -1
                                                 '次の番組であることを記録
                                                 r(j).nextFlag = 1
+                                                If next2_minutes > 0 Then
+                                                    '次の次の番組
+                                                    Dim last_d2 As Long = Val(d(2))
+                                                    d = line(i + 2).Split(",")
+                                                    If d(1).Replace("チャンネル", "") = r(j).stationDispName Then
+                                                        If Val(d(2)) > last_d2 Then
+                                                            j = r.Length
+                                                            ReDim Preserve r(j)
+                                                            r(j).stationDispName = d(1).Replace("チャンネル", "")
+                                                            r(j).ProgramInformation = d(0) '使ってないのでChanelIdを記録
+                                                            r(j).startDateTime = unix2time(d(2)).ToString("yyyy/MM/dd H:mm")
+                                                            r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
+                                                            r(j).programTitle = escape_program_str(d(4))
+                                                            r(j).programContent = escape_program_str(d(5))
+                                                            r(j).genre = -1
+                                                            '次の次の番組であることを記録
+                                                            r(j).nextFlag = 2
+                                                        End If
+                                                    End If
+                                                End If
                                                 Exit While
                                             End If
                                         Else
@@ -1068,6 +1163,26 @@ Module モジュール_番組表
 
                         '次の番組であることを記録
                         r(j).nextFlag = 1
+                    End If
+
+                    If next2_minutes > 0 Then
+                        '次の次の番組を取得
+                        sp = html.IndexOf("><small><i>", sp + 1)
+                        If sp > 0 And sp < se Then
+                            '次の番組があれば
+                            j = r.Length
+                            ReDim Preserve r(j)
+                            r(j).stationDispName = r(j - 1).stationDispName
+                            r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<small><i>", "～", sp)))
+                            r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
+                            r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
+                            r(j).programContent = ""
+                            r(j).sid = r(j - 1).sid
+                            r(j).genre = "-1" '次の次は必要無し
+
+                            '次の次の番組であることを記録
+                            r(j).nextFlag = 2
+                        End If
                     End If
 
                     sp2 = html.IndexOf(" <small><i>", sp2 + 1)
@@ -2249,7 +2364,7 @@ Module モジュール_番組表
                     If line.Length > 0 Then
                         Dim i As Integer = 0
                         Dim j As Integer
-                        Dim last_sid As String = ":"
+                        Dim last_sid As String = "::"
                         Dim skip_sid As String = ":"
                         For j = 0 To line.Length - 1
                             '番組表の数だけ繰り返す
@@ -2328,12 +2443,16 @@ Module モジュール_番組表
                                                 r(i).programContent = texts
                                                 r(i).genre = Int(Val(youso(6)) / 16) * 256
                                                 '次番組かどうかチェック
-                                                If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
+                                                Dim cnt As Integer = count_str(last_sid, ":" & sid.ToString & ":")
+                                                If cnt = 1 Then
                                                     '2回目の場合は次番組であろう
                                                     r(i).nextFlag = 1
-                                                    skip_sid &= sid.ToString & ":" '3回目以降はスキップするように
+                                                ElseIf cnt = 2 Then
+                                                    '3回目
+                                                    r(i).nextFlag = 2
+                                                    skip_sid &= sid.ToString & ":" '4回目以降はスキップするように
                                                 End If
-                                                last_sid &= sid.ToString & ":"
+                                                last_sid &= sid.ToString & "::"
                                             End If
                                         End If
                                     End If
@@ -2580,6 +2699,7 @@ Module モジュール_番組表
                                         If k2 < 0 And (k + 1) < info.eventList.Count Then
                                             '見つからなければ途中から探す
                                             For k0 As Integer = k + 1 To info.eventList.Count - 1
+                                                scache(k0) = info.eventList.Item(k0).start_time
                                                 If t2next = info.eventList.Item(k0).start_time Then
                                                     k2 = k0
                                                     Exit For
@@ -2623,6 +2743,64 @@ Module モジュール_番組表
 
                                                         '次の番組であることを記録
                                                         r(j).nextFlag = 1
+
+                                                        If next2_minutes > 0 And t1long <= next2_minutes Then
+                                                            '次の次の番組
+                                                            t2next = t2
+                                                            '今までに調べたなかにあったかキャッシュから探す
+                                                            k2 = Array.IndexOf(scache, t2next)
+                                                            If k2 < 0 And (k + 1) < info.eventList.Count Then
+                                                                '見つからなければ途中から探す
+                                                                For k0 As Integer = k + 1 To info.eventList.Count - 1
+                                                                    scache(k0) = info.eventList.Item(k0).start_time
+                                                                    If t2next = info.eventList.Item(k0).start_time Then
+                                                                        k2 = k0
+                                                                        Exit For
+                                                                    End If
+                                                                Next
+                                                            End If
+                                                            If k2 >= 0 Then
+                                                                '次の次の番組が存在すれば
+                                                                Try
+                                                                    t = Now()
+                                                                    t1long = Int(info.eventList.Item(k2).durationSec / 60) '分
+                                                                    t1 = info.eventList.Item(k2).start_time
+                                                                    t2 = DateAdd(DateInterval.Minute, t1long, t1)
+                                                                    t1s = "1970/01/01 " & Hour(t1).ToString & ":" & (Minute(t1).ToString("D2"))
+                                                                    t2s = "1970/01/01 " & Hour(t2).ToString & ":" & (Minute(t2).ToString("D2"))
+                                                                    If t1 = t2next Then
+                                                                        ei = info.eventList.Item(k2).ShortInfo
+                                                                        If ei IsNot Nothing Then
+                                                                            j = r.Length
+                                                                            ReDim Preserve r(j)
+
+                                                                            r(j).stationDispName = ch_list(i).jigyousha 'sid2jigyousha(sid, tsid)
+                                                                            r(j).startDateTime = t1s
+                                                                            r(j).endDateTime = t2s
+                                                                            If ei.event_name IsNot Nothing Then
+                                                                                r(j).programTitle = escape_program_str(ei.event_name)
+                                                                            Else
+                                                                                r(j).programTitle = ""
+                                                                            End If
+                                                                            If ei.text_char IsNot Nothing Then
+                                                                                r(j).programContent = escape_program_str(ei.text_char)
+                                                                            Else
+                                                                                r(j).programContent = ""
+                                                                            End If
+                                                                            r(j).sid = ch_list(i).sid
+                                                                            r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+                                                                            '番組ジャンル
+                                                                            gnr = info.eventList.Item(k2).ContentInfo
+                                                                            r(j).genre = (gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2).ToString
+
+                                                                            '次の次の番組であることを記録
+                                                                            r(j).nextFlag = 2
+                                                                        End If
+                                                                    End If
+                                                                Catch ex As Exception
+                                                                End Try
+                                                            End If
+                                                        End If
                                                     End If
                                                 End If
                                             Catch ex As Exception
@@ -2939,6 +3117,8 @@ Module モジュール_番組表
                 Dim sr As New StreamReader(st, Encoding.UTF8)
                 Dim s As String = sr.ReadToEnd
 
+                Dim i, j As Integer
+
                 sw.Write(s)
                 sw.Flush()
                 ms.Position = 0
@@ -2947,7 +3127,7 @@ Module モジュール_番組表
                 Dim tr As tvmaidData.TvmaidReserve = jsonRead.ReadObject(ms)
 
                 If tr.Code = 0 Then
-                    Dim last_sid As String = ":"
+                    Dim last_sid As String = "::"
                     Dim skip_sid As String = ":"
                     For i = 0 To tr.Data1.Count - 1
                         'タイトル
@@ -3023,28 +3203,32 @@ Module モジュール_番組表
                                 If chk < 0 Then
                                     '重複がなければ
                                     If r Is Nothing Then
-                                        ReDim Preserve r(0)
+                                        j = 0
                                     Else
-                                        i = r.Length
-                                        ReDim Preserve r(i)
+                                        j = r.Length
                                     End If
-                                    r(i).sid = sid
-                                    r(i).tsid = 0
-                                    r(i).stationDispName = station
+                                    ReDim Preserve r(j)
+                                    r(j).sid = sid
+                                    r(j).tsid = 0
+                                    r(j).stationDispName = station
                                     Dim t1s As String = "1970/01/01 " & ystart_time
                                     Dim t2s As String = "1970/01/01 " & yend_time
-                                    r(i).startDateTime = t1s
-                                    r(i).endDateTime = t2s
-                                    r(i).programTitle = title
-                                    r(i).programContent = texts
-                                    r(i).genre = genre.ToString
+                                    r(j).startDateTime = t1s
+                                    r(j).endDateTime = t2s
+                                    r(j).programTitle = title
+                                    r(j).programContent = texts
+                                    r(j).genre = genre.ToString
                                     '次番組かどうかチェック
-                                    If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
+                                    Dim cnt As Integer = count_str(last_sid, ":" & sid.ToString & ":")
+                                    If cnt = 1 Then
                                         '2回目の場合は次番組であろう
-                                        r(i).nextFlag = 1
-                                        skip_sid &= sid.ToString & ":" '3回目以降はスキップするように
+                                        r(j).nextFlag = 1
+                                    ElseIf cnt = 2 Then
+                                        '3回目
+                                        r(j).nextFlag = 2
+                                        skip_sid &= sid.ToString & ":" '4回目以降はスキップするように
                                     End If
-                                    last_sid &= sid.ToString & ":"
+                                    last_sid &= sid.ToString & "::"
                                 End If
                             End If
                         End If
@@ -3100,6 +3284,8 @@ Module モジュール_番組表
                 Dim sr As New StreamReader(st, Encoding.UTF8)
                 Dim s As String = sr.ReadToEnd
 
+                Dim i, j As Integer
+
                 sw.Write(s)
                 sw.Flush()
                 ms.Position = 0
@@ -3108,7 +3294,7 @@ Module モジュール_番組表
                 Dim tr As tvmaidExData.TvmaidExReserve = jsonRead.ReadObject(ms)
 
                 If tr.code = 0 Then
-                    Dim last_sid As String = ":"
+                    Dim last_sid As String = "::"
                     Dim skip_sid As String = ":"
                     For i = 0 To tr.data1.Count - 1
                         'タイトル
@@ -3209,28 +3395,32 @@ Module モジュール_番組表
                                 If chk < 0 Then
                                     '重複がなければ
                                     If r Is Nothing Then
-                                        ReDim Preserve r(0)
+                                        j = 0
                                     Else
-                                        i = r.Length
-                                        ReDim Preserve r(i)
+                                        j = r.Length
                                     End If
-                                    r(i).sid = sid
-                                    r(i).tsid = 0
-                                    r(i).stationDispName = station
+                                    ReDim Preserve r(j)
+                                    r(j).sid = sid
+                                    r(j).tsid = 0
+                                    r(j).stationDispName = station
                                     Dim t1s As String = "1970/01/01 " & ystart_time
                                     Dim t2s As String = "1970/01/01 " & yend_time
-                                    r(i).startDateTime = t1s
-                                    r(i).endDateTime = t2s
-                                    r(i).programTitle = title
-                                    r(i).programContent = texts
-                                    r(i).genre = genre.ToString
+                                    r(j).startDateTime = t1s
+                                    r(j).endDateTime = t2s
+                                    r(j).programTitle = title
+                                    r(j).programContent = texts
+                                    r(j).genre = genre.ToString
                                     '次番組かどうかチェック
-                                    If last_sid.IndexOf(":" & sid.ToString & ":") >= 0 Then
+                                    Dim cnt As Integer = count_str(last_sid, ":" & sid.ToString & ":")
+                                    If cnt = 1 Then
                                         '2回目の場合は次番組であろう
-                                        r(i).nextFlag = 1
-                                        skip_sid &= sid.ToString & ":" '3回目以降はスキップするように
+                                        r(j).nextFlag = 1
+                                    ElseIf cnt = 2 Then
+                                        '3回目
+                                        r(j).nextFlag = 2
+                                        skip_sid &= sid.ToString & ":" '4回目以降はスキップするように
                                     End If
-                                    last_sid &= sid.ToString & ":"
+                                    last_sid &= sid.ToString & "::"
                                 End If
                             End If
                         End If

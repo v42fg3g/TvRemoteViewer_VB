@@ -1725,6 +1725,19 @@ Class WebRemocon
                                         log1write("【エラー】TvRock_genre_colorの要素数が16個ではありません")
                                     End If
                                 End If
+                            Case "next2_minutes"
+                                If IsNumeric(youso(1)) Then
+                                    Try
+                                        next2_minutes = Val(youso(1))
+                                    Catch ex As Exception
+                                        next2_minutes = 500
+                                    End Try
+                                    If next2_minutes > 0 Then
+                                        log1write("次の番組が" & next2_minutes.ToString & "分以内の番組ならば次の次の番組情報を追加表示するよう設定しました")
+                                    Else
+                                        log1write("次の次の番組情報を取得しないよう設定しました")
+                                    End If
+                                End If
 
 
 
