@@ -673,7 +673,7 @@ Module モジュール_番組表
                                     If n2_str.Length > 0 Then
                                         Dim du As Integer = time2unix(r(i + 1).endDateTime) - time2unix(r(i + 1).startDateTime)
                                         If du < 0 Then
-                                            du += 60 * 24
+                                            du += 3600 * 24
                                         End If
                                         If du <= (next2_minutes * 60) Then 'next2_minutes分以下の番組
                                             If next2_minutes < 120 Then
