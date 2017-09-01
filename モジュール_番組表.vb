@@ -1116,7 +1116,7 @@ Module モジュール_番組表
                     End If
                     r(j).stationDispName = Trim(r(j).stationDispName)
                     r(j).stationDispName = Trim(delete_tag(r(j).stationDispName))
-                    r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<small><i>", "～", sp)))
+                    r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp)))
                     r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
                     r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
                     Dim sp3 As Integer = html.IndexOf("</b></small>", sp)
@@ -1146,7 +1146,7 @@ Module モジュール_番組表
                         j = r.Length
                         ReDim Preserve r(j)
                         r(j).stationDispName = r(j - 1).stationDispName
-                        r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<small><i>", "～", sp)))
+                        r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp)))
                         r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
                         r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
                         r(j).programContent = ""
@@ -1173,7 +1173,7 @@ Module モジュール_番組表
                             j = r.Length
                             ReDim Preserve r(j)
                             r(j).stationDispName = r(j - 1).stationDispName
-                            r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<small><i>", "～", sp)))
+                            r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp)))
                             r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
                             r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
                             r(j).programContent = ""
