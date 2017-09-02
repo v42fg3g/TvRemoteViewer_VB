@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.71
+TvRemoteViewer_VB v2.72
 
 
 
@@ -773,7 +773,11 @@ TvRemoteViewer_VB v2.71
 			iniファイルへの新規項目追加で説明中に改行が入っているとコメントアウトされなかったバグを修正
 			TvRock番組表へのジャンル追加（標準色以外にカスタマイズしているならばiniのTvRock_genre_colorを追加）
 	2.71	Tvmaid番組表において次番組の取得が出来ない場合があったバグを修正
+			TvRock番組表で予約が入っていると番組が無視されていたバグを修正
 			iniに次の次の番組を番組表に表示するオプションを追加（next2_minutes）
+	2.72	TvRock番組表ジャンルの精度アップ＆予約中番組のジャンル取得が可能になった
+			TvRockジャンル色は使用しなくなったのでiniのTvRock_genre_colorを廃止
+			iniにTvRockジャンル取得を行うかを指定できるようにした。標準はしない（TvRock_genre_ON）
 
 
 

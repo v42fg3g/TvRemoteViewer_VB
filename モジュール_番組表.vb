@@ -5,6 +5,7 @@ Imports System
 Imports System.IO
 Imports System.Runtime.Serialization
 '参照で.net System.Runtime.Serializationを追加
+Imports System.Text.RegularExpressions
 
 Module モジュール_番組表
     Public TvProgram_Force_NoRec As Integer = 0 'TvRock番組表の代わりにダミー番組表を表示する=1
@@ -35,8 +36,11 @@ Module モジュール_番組表
     Public TvProgramTvmaid_NGword() As String
     'TvRock ジャンル判定
     Public TvRock_html_src As String = "" 'TvRock PC用番組表HTMLデータ
-    Public TvRock_genre_color() As String '0～15ジャンルのカラー"#ffffff"等
+    Public TvRock_html_src_last As String = "" 'TvRock PC用番組表HTMLデータ(前回分）
+    Public tvrock_genre_str() As String = {"ニュース／報道", "スポーツ", "情報／ワイドショー", "ドラマ", "音楽", "バラエティー", "映画", "アニメ／特撮", "ドキュメンタリー／教養", "劇場／公演", "趣味／教育", "福祉", "その他１", "その他２", "その他３", "その他４"}
     Public TvRock_html_getutime As Long = 0 '最終取得日時
+    Public TvRock_web_ch_str As String = "" '&z=～&z=～
+    Public TvRock_genre_ON As Integer = 0 '1=ジャンル判定する 0=従来通り
 
     Public LIVE_STREAM_STR As String = ""
     Public TvProgram_SelectUptoNum As Integer = 0 '番組表上の配信ナンバーを制限する
@@ -1123,7 +1127,7 @@ Module モジュール_番組表
                     sp3 = html.IndexOf("<font color=", sp3)
                     r(j).programContent = escape_program_str(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
                     '予約番号がわからないのでタイトルから推測
-                    r(j).genre = get_tvrock_genre_from_title(r(j).programTitle).ToString '"-1"
+                    r(j).genre = get_tvrock_genre(0, 0, r(j).programTitle).ToString '"-1"
 
                     'サービスIDを取得
                     sp3 = html.IndexOf("javascript:reserv(", sp3)
@@ -1154,12 +1158,7 @@ Module モジュール_番組表
 
                         Dim sidtrid_str As String = Instr_pickup(html, "reserv(", ")", sp3, se)
                         Dim d() As String = sidtrid_str.Split(",")
-                        If d.Length = 4 Then
-                            'こちらのほうが正確
-                            r(j).genre = get_tvrock_genre_from_sidtrid(Val(d(1)), Val(d(2))).ToString
-                        Else
-                            r(j).genre = get_tvrock_genre_from_title(r(j).programTitle).ToString '"-1"
-                        End If
+                        r(j).genre = get_tvrock_genre(Val(d(1)), Val(d(2)), r(j).programTitle).ToString
 
                         '次の番組であることを記録
                         r(j).nextFlag = 1
@@ -1196,141 +1195,91 @@ Module モジュール_番組表
     End Function
 
     'TvRock PC用番組表からジャンルを推測する
-    Private Function get_tvrock_genre_from_sidtrid(ByVal sid As Integer, ByVal trid As Integer) As Integer
+    Private Function get_tvrock_genre(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
         Dim r As Integer = -1
 
-        Dim sstr As String = "c=" & sid.ToString & "&e=" & trid.ToString
+        If TvRock_html_src.Length > 0 Then
+            Dim gstr As String = ""
+            Dim sp As Integer = -1
+            If sid > 0 And trid > 0 Then
+                sp = TvRock_html_src.IndexOf("c=" & sid.ToString & "&e=" & trid.ToString)
+            ElseIf title.Length > 0 Then
+                'TvRock特有の変換に対応
+                title = title.Replace("，", ",")
+                title = title.Replace("＆", "&")
 
-        If TvRock_html_src.Length > 0 And TvRock_genre_color IsNot Nothing Then
-            Dim sp1 As Integer = -1
+                sp = TvRock_html_src.IndexOf(title)
+                If sp < 0 Then
+                    'タイトルそのままでは見つからなかった
+                    '携帯版番組表では<～>が消されているので番組名が無茶苦茶になっている場合がある
 
-            sp1 = TvRock_html_src.IndexOf(sstr)
-            If sp1 >= 0 Then
-                Dim sps As Integer = 0
-                sps = TvRock_html_src.LastIndexOf("&c=", sp1 - 10)
-                If sps < 0 Then
-                    sps = 0
-                End If
-                Dim sp2 As Integer = TvRock_html_src.LastIndexOf("<td rowspan=", sp1)
-                If sp2 <= sps Then
-                    '見つかっていない場合、直近の色を使用
-                    sp2 = TvRock_html_src.LastIndexOf(" bgcolor=", sp1)
-                    If sp2 < sps Then
-                        sp2 = -1
-                    End If
-                End If
-                If sp2 >= 0 Then
-                    Dim bgcolor As String = Trim(Instr_pickup(TvRock_html_src, "bgcolor=", " ", sp2, sp1).ToString.ToLower)
-                    If bgcolor.Length > 0 Then
-                        r = Array.LastIndexOf(TvRock_genre_color, bgcolor) '後ろから。その他優先
-                        If r < 0 Then
-                            r = -1
-                        Else
-                            r = r * 256
+                    If title.IndexOf("<") < 0 And title.IndexOf(">") < 0 Then
+                        While title.LastIndexOf("[") > Int(title.Length * 2 / 3)
+                            '後半に[がある場合
+                            title = title.Substring(0, title.LastIndexOf("["))
+                            sp = TvRock_html_src.IndexOf(title)
+                            If sp >= 0 Then
+                                Exit While
+                            End If
+                        End While
+
+                        If sp < 0 Then
+                            While title.IndexOf("]") >= 0 And title.IndexOf("]") < Int(title.Length / 3)
+                                '前半に]がある場合
+                                Try
+                                    title = title.Substring(title.IndexOf("]") + 1)
+                                Catch ex As Exception
+                                    title = ""
+                                    sp = -1
+                                    Exit While
+                                End Try
+                                sp = TvRock_html_src.IndexOf(title)
+                                If sp >= 0 Then
+                                    Exit While
+                                End If
+                            End While
                         End If
                     End If
-                End If
-            End If
-        End If
 
-        Return r
-    End Function
-
-    'TvRock PC用番組表からジャンルを推測する
-    Private Function get_tvrock_genre_from_title(ByVal title As String) As Integer
-        Dim r As Integer = -1
-
-        If TvRock_html_src.Length > 0 And TvRock_genre_color IsNot Nothing Then
-            Dim sp1 As Integer = -1
-
-            'TvRock特有の変換に対応
-            title = title.Replace("/", "／")
-            title = title.Replace("＆", "&")
-
-            sp1 = TvRock_html_src.IndexOf(title)
-            If sp1 < 0 Then
-                'タイトルそのままでは見つからなかった
-
-                While title.LastIndexOf("[") > Int(title.Length * 2 / 3)
-                    '後半に[がある場合
-                    title = title.Substring(0, title.LastIndexOf("["))
-                    sp1 = TvRock_html_src.IndexOf(title)
-                    If sp1 >= 0 Then
-                        Exit While
-                    End If
-                End While
-
-                If sp1 < 0 Then
-                    While title.IndexOf("]") >= 0 And title.IndexOf("]") < Int(title.Length / 3)
-                        '前半に]がある場合
-                        Try
-                            title = title.Substring(title.IndexOf("]") + 1)
-                        Catch ex As Exception
-                            title = ""
-                            sp1 = -1
-                            Exit While
-                        End Try
-                        sp1 = TvRock_html_src.IndexOf(title)
-                        If sp1 >= 0 Then
-                            Exit While
-                        End If
-                    End While
-                End If
-
-                If sp1 < 0 And title.Length > 0 Then
-                    'それでも見つからなかった場合
-                    '【】を取り除く
-                    If title.LastIndexOf("【") > Int(title.Length * 2 / 3) Then
-                        title = title.Substring(0, title.LastIndexOf("【"))
-                    End If
-                    If title.IndexOf("】") >= 0 And title.IndexOf("】") < Int(title.Length / 3) Then
-                        title = title.Substring(title.LastIndexOf("】") + 1)
-                    End If
-                    'Dim kc As String = Instr_pickup(title, "【", "】", 0)
-                    'If kc.Length > 0 Then
-                    'title = title.Replace("【" & kc & "】", "")
-                    'End If
-
-                    title = title.Replace("[デ]", "")
-                    title = title.Replace("[字]", "")
-                    title = title.Replace("[二]", "")
-
-                    sp1 = TvRock_html_src.IndexOf(title)
-
-                    If sp1 < 0 Then
-                        '見つからなければ一番長い全角文字列
+                    If sp < 0 And title.Length > 0 Then
+                        '【】[]<>を取り除いて一番長い文字列
+                        title = Regex.Replace(title, "【+.*?】", "")
+                        title = Regex.Replace(title, "\[+.*?\]", "")
+                        title = Regex.Replace(title, "&lt;+.*?&gt;", "")
+                        title = Regex.Replace(title, "<+.*?>", "")
+                        title = Regex.Replace(title, "＜+.*?＞", "")
                         Dim tz As String = zenkakudake_max(title)
                         If tz.Length > 1 Then
-                            sp1 = TvRock_html_src.IndexOf(Trim(tz))
+                            sp = TvRock_html_src.IndexOf(Trim(tz))
                         Else
-                            '1文字以下ならばタイトルそのまま たぶん英文タイトル（無駄）
+                            '1文字以下ならばたぶん英文タイトル 一番長い単語
+                            title = title.Replace("　", " ")
+                            Dim str As String = ""
+                            Dim d() As String = title.Split(" ")
+                            For k As Integer = 0 To d.Length - 1
+                                If d(k).Length > str Then
+                                    str = d(k)
+                                End If
+                            Next
+                            If str.Length > 2 Then
+                                sp = TvRock_html_src.IndexOf(str)
+                            End If
                         End If
                     End If
                 End If
             End If
 
-            If sp1 >= 0 And title.Length > 0 Then
-                Dim sps As Integer = 0
-                sps = TvRock_html_src.LastIndexOf("title=", sp1 - 50)
-                If sps < 0 Then
-                    sps = 0
-                End If
-                Dim sp2 As Integer = TvRock_html_src.LastIndexOf("<td rowspan=", sp1)
-                If sp2 < sps Then
-                    '見つかっていない場合、直近の色を使用
-                    sp2 = TvRock_html_src.LastIndexOf(" bgcolor=", sp1)
-                    If sp2 < sps Then
-                        sp2 = -1
-                    End If
-                End If
-                If sp2 >= 0 Then
-                    Dim bgcolor As String = Trim(Instr_pickup(TvRock_html_src, "bgcolor=", " ", sp2, sp1).ToString.ToLower)
-                    If bgcolor.Length > 0 Then
-                        r = Array.LastIndexOf(TvRock_genre_color, bgcolor) '後ろから。その他優先
-                        If r < 0 Then
-                            r = -1
-                        Else
+            'ジャンル
+            If sp > 0 Then
+                sp = TvRock_html_src.LastIndexOf("width=11%", sp)
+                If sp > 0 Then
+                    gstr = Trim(Instr_pickup(TvRock_html_src, ">", "<", sp))
+                    If gstr.Length > 0 Then
+                        r = Array.IndexOf(tvrock_genre_str, gstr)
+                        If r >= 0 Then
                             r = r * 256
+                        Else
+                            r = -1
                         End If
                     End If
                 End If

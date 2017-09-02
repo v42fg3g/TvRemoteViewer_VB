@@ -202,10 +202,10 @@ Public Class Form1
         End If
 
         '2時間に1回TvRockPC用番組表を取得（ランチャー用ジャンル判別のため）
-        If TvProgram_tvrock_url.Length > 0 Then
-            If TvProgram_ch IsNot Nothing And TvRock_genre_color IsNot Nothing Then
+        If TvProgram_tvrock_url.Length > 0 And TvRock_genre_ON = 1 Then
+            If TvProgram_ch IsNot Nothing Then
                 If ut2 - TvRock_html_getutime > (3600 * 2 - 180) Then
-                    TvRock_html_getutime = time2unix(Now())
+                    TvRock_html_getutime = ut2
                     check_TvRock_Program_PC_multi()
                 End If
             End If
@@ -429,42 +429,90 @@ Public Class Form1
         Dim url As String = TvProgram_tvrock_url
         Dim sp As Integer = url.IndexOf("/iphone")
         If sp > 0 Then
-            url = url.Substring(0, sp) & "/now?b=4"
-            'TvRock_html_src = get_html_by_webclient(url, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
-            Dim html As String = get_html_by_webclient(url, "Shift_JIS") '番組表1.0と思われる
-            If html.Length > 500 Then
-                '容量を減らす努力をする あまりにも巨大でジャンル判別に時間がかかるため
-                sp = html.IndexOf(">新番組<")
-                If sp > 0 Then
-                    html = html.Substring(sp)
-                End If
-                sp = html.IndexOf(">6時間<")
-                If sp > 0 Then
-                    html = html.Substring(sp)
-                End If
-                html = html.Replace("<ノーカット版>", "")
-                html = html.Replace("<small>", "").Replace("</small>", "").Replace("&nbsp;", "").Replace("td width=", "")
-                html = html.Replace("<wbr>", "").Replace("<tbody>", "").Replace("align=center", "").Replace("valign=top", "")
-                html = html.Replace("<b>", "").Replace("<br>", "")
-                html = Regex.Replace(html, "<a.href..http+.*?>.*?</a>", "")
-                'html = Regex.Replace(html, "<a.href..now+.*?>.*?</a>", "")
-                html = Regex.Replace(html, "<font.color+.*?>.*?</font>", "")
-                html = Regex.Replace(html, "<img+.*?>", "")
-                html = Regex.Replace(html, "<tr+.*?>", "")
-                html = Regex.Replace(html, "noshade>.*?<", "<")
-                html = Regex.Replace(html, "</b>.*?<", "<")
-                html = Regex.Replace(html, "<table+.*?>", "")
-                html = Regex.Replace(html, "</+.*?>", "")
+            If TvRock_web_ch_str.Length = 0 Then
+                'チャンネル一覧文字列を取得する
+                Try
+                    url = url.Substring(0, sp) & "/kws"
+                    Dim str1 As String = ""
+                    Dim chstr As String = get_html_by_webclient(url, "Shift_JIS")
+                    Dim sp1 As Integer = chstr.IndexOf("name=""z""")
+                    Dim ep1 As Integer = chstr.IndexOf("name=""g""")
+                    If sp1 > 0 And ep1 > 0 Then
+                        sp1 = chstr.IndexOf("<OPTION", sp1 + 1)
+                        While sp1 > 0 And sp1 < ep1
+                            str1 &= "&z=" & Instr_pickup(chstr, "value=""", """", sp1)
+                            sp1 = chstr.IndexOf("<OPTION", sp1 + 1)
+                        End While
+                        TvRock_web_ch_str = str1
+                    Else
+                        log1write("【エラー】TvRockジャンル判別用チャンネル一覧取得に失敗しました")
+                        TvRock_web_ch_str = ""
+                    End If
+                Catch ex As Exception
+                    log1write("【エラー】TvRockジャンル判別用チャンネル一覧取得中にエラーが発生しました。" & ex.Message)
+                    TvRock_web_ch_str = ""
+                End Try
+                System.Threading.Thread.Sleep(100)
+            End If
 
-                TvRock_html_src = html
-                log1write("ジャンル判別用にTvRockのPC番組表を取得しました")
-            Else
-                log1write("【エラー】TvRockのPC用番組表取得に失敗しました")
+            If TvRock_web_ch_str.Length > 0 Then
+                '検索用URL
+                Dim t As DateTime = Now()
+                If TvRock_html_src_last.Length = 0 Then
+                    '前回取得分無しの場合は遡って検索
+                    Dim t2 As DateTime = DateAdd(DateInterval.Hour, -4, t)
+                    TvRock_html_src_last = get_TvRock_search_html(Month(t2), Microsoft.VisualBasic.Day(t2), Hour(t2))
+                    System.Threading.Thread.Sleep(100)
+                End If
+                Dim html As String = get_TvRock_search_html(Month(t), Microsoft.VisualBasic.Day(t), Hour(t))
+                TvRock_html_src = TvRock_html_src_last & vbCrLf & html
+                TvRock_html_src_last = html
             End If
         Else
             log1write("TvRockの番組取得URL（TvProgram_tvrock_url）が未知の形式です。末尾に/iphoneが記入されていません")
         End If
     End Sub
+
+    Private Function get_TvRock_search_html(ByVal mm As Integer, ByVal dd As Integer, ByVal hh As Integer) As String
+        Dim du As Integer = 4
+        Dim url As String = TvProgram_tvrock_url
+        Dim sp As Integer = url.IndexOf("/iphone")
+        url = url.Substring(0, sp) & "/kws?title=*&submit=%81%40%8C%9F%8D%F5%81%40&content=&mtor=0"
+        url &= "&sh=" & hh.ToString & "&dur=" & du.ToString '何時から何時間
+        url &= "&w1=true&w2=true&w3=true&w4=true&w5=true&w6=true&w7=true" '曜日
+        url &= "&exp=1&exs1=" & mm.ToString & "&exs2=" & dd.ToString & "&exe1=" & mm.ToString & "&exe2=" & dd.ToString '日付
+        url &= TvRock_web_ch_str '放送局
+        url &= "&g=0&g=1&g=2&g=3&g=4&g=5&g=6&g=7&g=8&g=9&g=10&g=11&g=12&g=13&g=14&g=15" 'ジャンル
+        url &= "&bc=0&bc=1&bc=2&bc=3&bc=4&bc=5&bc=6&bc=7&bc=8&bc=9&bc=10&bc=11&bc=12&bc=13&bc=14&bc=15&bc=16&bc=17&bc=18&bc=19&bc=20&bc=21&bc=22&bc=23&bc=24&bc=25&bc=26&bc=27&bc=28&bc=29" '種別
+        url &= "&dno=-1&idle=60&ready=30&tale=0&extmd=0&cuscom=&trep=&ffex=&rnm=&ffrm=%40TT%40NB%40SB&nmb=0&lei=0&wonly=&ronly=true&oneseg=&asd=true&eflw=true&coop=true&rmt=&ron=&roff=&dchk=&dchk2=&vsbt=&vdsc=&tflw=true&npri=true"
+        Dim html As String = get_html_by_webclient(url, "Shift_JIS") '番組表1.0と思われる
+        If html.IndexOf("<small>内容</small>") > 0 Then
+            '成功
+            sp = html.IndexOf("<small>内容</small>")
+            If sp > 0 Then
+                html = html.Substring(sp + "<small>内容</small>".Length)
+            End If
+            html = html.Replace("<small>", "").Replace("</small>", "")
+            html = html.Replace(" align=center", "")
+            html = html.Replace("<b>", "").Replace("</b>", "")
+            html = Regex.Replace(html, "<a.href..kws.tsea=+.*?>", "") '二重なので
+            html = Regex.Replace(html, "<a.href..http+.*?>.*?</a>", "")
+            html = Regex.Replace(html, "<a.href..day+.*?>.*?</a>", "")
+            html = Regex.Replace(html, "size=-2>.*?</font>", "size=-2></font>")
+            html = Regex.Replace(html, "<font.color+.*?>", "")
+            html = html.Replace("</font>", "").Replace("<tr>", "").Replace("</tr>", "")
+            html = Regex.Replace(html, "<img+.*?>", "")
+            html = Regex.Replace(html, "bgcolor=+.*?>", ">")
+            html = Regex.Replace(html, "</+.*?>", "")
+
+            log1write("ジャンル判別用にTvRockのPC用検索結果を取得しました。" & mm.ToString & "/" & dd.ToString & " " & hh.ToString & ":00からの" & du.ToString & "時間")
+        Else
+            log1write("【エラー】TvRockのジャンル判別用PC用検索結果取得に失敗しました。" & mm.ToString & "/" & dd.ToString & " " & hh.ToString & ":00からの" & du.ToString & "時間")
+            html = ""
+        End If
+
+        Return html
+    End Function
 
     Private Sub check_version_multi()
         Dim t As New System.Threading.Thread(New System.Threading.ThreadStart(AddressOf check_version))

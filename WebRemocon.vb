@@ -1708,23 +1708,6 @@ Class WebRemocon
                             Case "AvemaTV_data_get_method", "Outside_data_get_method"
                                 Outside_data_get_method = Val(youso(1))
                                 log1write("AvemaTV_data_get_method=" & Outside_data_get_method)
-                            Case "TvRock_genre_color"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                If Trim(youso(1)).Length > 0 Then
-                                    Dim clset() As String = youso(1).Split(",")
-                                    If clset Is Nothing Then
-                                    ElseIf clset.Length = 16 Then
-                                        Dim temp As String = ""
-                                        ReDim Preserve TvRock_genre_color(clset.Length - 1)
-                                        For j = 0 To clset.Length - 1
-                                            TvRock_genre_color(j) = trim8(clset(j).ToLower)
-                                            temp &= "ジャンル(" & j.ToString & "）色=" & TvRock_genre_color(j) & " "
-                                        Next
-                                        log1write("TvRock番組表で表示中のジャンル色は、" & temp & "であると想定するようセットしました")
-                                    Else
-                                        log1write("【エラー】TvRock_genre_colorの要素数が16個ではありません")
-                                    End If
-                                End If
                             Case "next2_minutes"
                                 If IsNumeric(youso(1)) Then
                                     Try
@@ -1736,6 +1719,15 @@ Class WebRemocon
                                         log1write("次の番組が" & next2_minutes.ToString & "分以内の番組ならば次の次の番組情報を追加表示するよう設定しました")
                                     Else
                                         log1write("次の次の番組情報を取得しないよう設定しました")
+                                    End If
+                                End If
+                            Case "TvRock_genre_ON"
+                                If IsNumeric(youso(1)) Then
+                                    TvRock_genre_ON = Val(youso(1))
+                                    If TvRock_genre_ON = 1 Then
+                                        log1write("TvRockジャンル情報を取得するよう設定しました")
+                                    Else
+                                        log1write("TvRockジャンル情報を取得しないように設定しました")
                                     End If
                                 End If
 
@@ -1881,28 +1873,6 @@ Class WebRemocon
             Outside_CustomURL = ""
         ElseIf Array.IndexOf(TvProgram_ch, 801) < 0 Then
             Outside_CustomURL = ""
-        End If
-
-        'TvRockジャンル　標準色
-        If TvRock_genre_color Is Nothing Then
-            ReDim Preserve TvRock_genre_color(15)
-            TvRock_genre_color(0) = "#d4ffc8"
-            TvRock_genre_color(1) = "#ffccef"
-            TvRock_genre_color(2) = "#f0f0f0"
-            TvRock_genre_color(3) = "#ffbbbb"
-            TvRock_genre_color(4) = "#b6f2ff"
-            TvRock_genre_color(5) = "#faffb0"
-            TvRock_genre_color(6) = "#ccfcf4"
-            TvRock_genre_color(7) = "#dcddff"
-            TvRock_genre_color(8) = "#f0f0f0"
-            TvRock_genre_color(9) = "#f0f0f0"
-            TvRock_genre_color(10) = "#f0f0f0"
-            TvRock_genre_color(11) = "#f0f0f0"
-            TvRock_genre_color(12) = "#f0f0f0"
-            TvRock_genre_color(13) = "#f0f0f0"
-            TvRock_genre_color(14) = "#f0f0f0"
-            TvRock_genre_color(15) = "#f0f0f0"
-            log1write("TvRock_genre_colorにTvRock標準ジャンル色がセットされました")
         End If
     End Sub
 
