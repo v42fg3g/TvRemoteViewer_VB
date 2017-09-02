@@ -187,10 +187,11 @@ Public Class Form1
 
         '6時間に1回バージョンチェック
         If TvRemoteViewer_VB_version_check_on = 1 Then
+            LabelVersionCheckDate.Text = TvRemoteViewer_VB_version_check_datetime
             Dim ct As Integer = time2unix(TvRemoteViewer_VB_version_check_datetime)
             If ut2 - ct > 3600 * 6 + 180 Then
                 check_version_multi() '邪魔にならないようマルチスレッドで確認
-                'log1write("推奨バージョンチェックを行いました") 'ログに表示しないようにした
+                log1write("推奨バージョンチェックを行いました")
             End If
         End If
 
@@ -524,7 +525,6 @@ Public Class Form1
         Dim r As Integer = 0
 
         TvRemoteViewer_VB_version_check_datetime = Now()
-        LabelVersionCheckDate.Text = TvRemoteViewer_VB_version_check_datetime
 
         Dim s As String = get_html_by_webclient(TvRemoteViewer_VB_version_URL, "shift_jis", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
         If s.Length > 8 Then
