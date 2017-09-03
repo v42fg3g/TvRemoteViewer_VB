@@ -35,12 +35,14 @@ Module モジュール_番組表
     Public TvmaidIsEX As Integer = 0 'TvmaidEXなら1
     Public TvProgramTvmaid_NGword() As String
     'TvRock ジャンル判定
-    Public TvRock_html_src As String = "" 'TvRock PC用番組表HTMLデータ
-    Public TvRock_html_src_last As String = "" 'TvRock PC用番組表HTMLデータ(前回分）
-    Public tvrock_genre_str() As String = {"ニュース／報道", "スポーツ", "情報／ワイドショー", "ドラマ", "音楽", "バラエティー", "映画", "アニメ／特撮", "ドキュメンタリー／教養", "劇場／公演", "趣味／教育", "福祉", "その他１", "その他２", "その他３", "その他４"}
+    Public TvRock_html_program_src As String = "" 'TvRock PC用番組表HTMLデータ
+    Public TvRock_html_search_src As String = "" 'TvRock PC用検索HTMLデータ
+    Public TvRock_html_search_src_last As String = "" 'TvRock PC用検索HTMLデータ
+    Public TvRock_genre_color() As String = {"#d4ffc8", "#ffccef", "#f0f0f0", "#ffbbbb", "#b6f2ff", "#faffb0", "#ccfcf4", "#dcddff", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0"}
     Public TvRock_html_getutime As Long = 0 '最終取得日時
+    Public tvrock_genre_str() As String = {"ニュース／報道", "スポーツ", "情報／ワイドショー", "ドラマ", "音楽", "バラエティー", "映画", "アニメ／特撮", "ドキュメンタリー／教養", "劇場／公演", "趣味／教育", "福祉", "その他１", "その他２", "その他３", "その他４"}
     Public TvRock_web_ch_str As String = "" '&z=～&z=～
-    Public TvRock_genre_ON As Integer = 0 '1=ジャンル判定する 0=従来通り
+    Public TvRock_genre_ON As Integer = 1 '1=ジャンル判定する 0=従来通り
 
     Public LIVE_STREAM_STR As String = ""
     Public TvProgram_SelectUptoNum As Integer = 0 '番組表上の配信ナンバーを制限する
@@ -1104,7 +1106,7 @@ Module モジュール_番組表
 
                 '<small>ＮＨＫＢＳ１ <small><i> のようになっている
                 Dim sp2 As Integer = html.IndexOf(" <small><i>")
-                Dim sp As Integer = html.LastIndexOf("><small>", sp2 + 1)
+                Dim sp As Integer = html.LastIndexOf("><small>", sp2 + 1) 'sp=チャンネルの頭
                 While sp > 0
                     Dim j As Integer = 0
                     If r Is Nothing Then
@@ -1123,16 +1125,28 @@ Module モジュール_番組表
                     r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp)))
                     r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
                     r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
-                    Dim sp3 As Integer = html.IndexOf("</b></small>", sp)
-                    sp3 = html.IndexOf("<font color=", sp3)
+                    Dim sp3 As Integer = html.IndexOf("<font color=", sp)
                     r(j).programContent = escape_program_str(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
                     '予約番号がわからないのでタイトルから推測
-                    r(j).genre = get_tvrock_genre(0, 0, r(j).programTitle).ToString '"-1"
+                    r(j).genre = get_tvrock_genre_from_program(0, 0, r(j).programTitle).ToString '"-1"
+                    If r(j).genre < 0 Then
+                        '予約のためわからなかった可能性
+                        r(j).genre = get_tvrock_genre_from_search(0, 0, r(j).programTitle).ToString
+                    End If
+
+                    '次のチャンネルが始まる地点
+                    Dim se As Integer = html.IndexOf(" <small><i>", sp2 + 1)
+                    If se < 0 Then
+                        se = html.Length - 1
+                    End If
 
                     'サービスIDを取得
-                    sp3 = html.IndexOf("javascript:reserv(", sp3)
-                    If sp3 > 0 Then
-                        r(j).sid = Val(Instr_pickup(html, ",", ",", sp3))
+                    Dim sp4 As Integer = html.IndexOf("javascript:reserv(", sp3)
+                    If sp4 < 0 Then
+                        sp4 = html.IndexOf("javascript:delsc(", sp3)
+                    End If
+                    If sp4 > 0 And sp4 < se Then
+                        r(j).sid = Val(Instr_pickup(html, ",", ",", sp4))
                     Else
                         log1write("【エラー】TvRock番組情報取得に失敗しました。TvRock携帯用番組表の「予約表示」を３番組以上にしてください")
                         r = Nothing
@@ -1140,25 +1154,43 @@ Module モジュール_番組表
                     End If
 
                     '次の番組を取得
-                    sp = html.IndexOf("><small><i>", sp2 + 1)
-                    Dim se As Integer = html.IndexOf(" <small><i>", sp2 + 1)
-                    If se < 0 Then
-                        se = html.Length - 1
-                    End If
-                    If sp > 0 And sp < se Then
+                    sp3 = html.IndexOf("</i>", sp3 + 1)
+                    sp3 = html.LastIndexOf("<i>", sp3 + 1)
+                    If sp3 > 0 And sp3 < se Then
                         '次の番組があれば
+                        '予約されているかどうか
+                        Dim rsv As Integer = 0
+                        If html.Substring(sp3 - 1, 1) = "]" Then
+                            '予約されている
+                            rsv = 1
+                        End If
                         j = r.Length
                         ReDim Preserve r(j)
                         r(j).stationDispName = r(j - 1).stationDispName
-                        r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp)))
-                        r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
-                        r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
+                        r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3)))
+                        r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3)))
+                        r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                         r(j).programContent = ""
                         r(j).sid = r(j - 1).sid
 
-                        Dim sidtrid_str As String = Instr_pickup(html, "reserv(", ")", sp3, se)
-                        Dim d() As String = sidtrid_str.Split(",")
-                        r(j).genre = get_tvrock_genre(Val(d(1)), Val(d(2)), r(j).programTitle).ToString
+                        Dim spn As Integer = html.IndexOf("href=""javascript:", sp3)
+                        Dim sid As Integer = 0
+                        Dim trid As Integer = 0
+                        If spn > 0 Then
+                            Dim sidtrid_str As String = Instr_pickup(html, "(", ")", spn + 1, se)
+                            Dim d() As String = sidtrid_str.Split(",")
+                            If d.Length = 4 Then
+                                sid = Val(d(1))
+                                trid = Val(d(2))
+                            End If
+                        End If
+                        If rsv = 0 Then
+                            '予約されていない場合は番組表から
+                            r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).programTitle).ToString
+                        Else
+                            '予約されている場合は検索から
+                            r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).programTitle).ToString
+                        End If
 
                         '次の番組であることを記録
                         r(j).nextFlag = 1
@@ -1166,15 +1198,15 @@ Module モジュール_番組表
 
                     If next2_minutes > 0 Then
                         '次の次の番組を取得
-                        sp = html.IndexOf("><small><i>", sp + 1)
-                        If sp > 0 And sp < se Then
+                        sp3 = html.IndexOf("<i>", sp3 + 1)
+                        If sp3 > 0 And sp3 < se Then
                             '次の番組があれば
                             j = r.Length
                             ReDim Preserve r(j)
                             r(j).stationDispName = r(j - 1).stationDispName
-                            r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp)))
-                            r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
-                            r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp)))
+                            r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3)))
+                            r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3)))
+                            r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                             r(j).programContent = ""
                             r(j).sid = r(j - 1).sid
                             r(j).genre = "-1" '次の次は必要無し
@@ -1191,24 +1223,25 @@ Module モジュール_番組表
         Catch ex As Exception
             log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)
         End Try
+
         Return r
     End Function
 
     'TvRock PC用番組表からジャンルを推測する
-    Private Function get_tvrock_genre(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
+    Private Function get_tvrock_genre_from_search(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
         Dim r As Integer = -1
 
-        If TvRock_html_src.Length > 0 Then
+        If TvRock_genre_ON = 1 And TvRock_html_search_src.Length > 0 Then
             Dim gstr As String = ""
             Dim sp As Integer = -1
             If sid > 0 And trid > 0 Then
-                sp = TvRock_html_src.IndexOf("c=" & sid.ToString & "&e=" & trid.ToString)
+                sp = TvRock_html_search_src.IndexOf("c=" & sid.ToString & "&e=" & trid.ToString)
             ElseIf title.Length > 0 Then
                 'TvRock特有の変換に対応
                 title = title.Replace("，", ",")
                 title = title.Replace("＆", "&")
 
-                sp = TvRock_html_src.IndexOf(title)
+                sp = TvRock_html_search_src.IndexOf(title)
                 If sp < 0 Then
                     'タイトルそのままでは見つからなかった
                     '携帯版番組表では<～>が消されているので番組名が無茶苦茶になっている場合がある
@@ -1217,7 +1250,7 @@ Module モジュール_番組表
                         While title.LastIndexOf("[") > Int(title.Length * 2 / 3)
                             '後半に[がある場合
                             title = title.Substring(0, title.LastIndexOf("["))
-                            sp = TvRock_html_src.IndexOf(title)
+                            sp = TvRock_html_search_src.IndexOf(title)
                             If sp >= 0 Then
                                 Exit While
                             End If
@@ -1233,7 +1266,7 @@ Module モジュール_番組表
                                     sp = -1
                                     Exit While
                                 End Try
-                                sp = TvRock_html_src.IndexOf(title)
+                                sp = TvRock_html_search_src.IndexOf(title)
                                 If sp >= 0 Then
                                     Exit While
                                 End If
@@ -1250,7 +1283,7 @@ Module モジュール_番組表
                         title = Regex.Replace(title, "＜+.*?＞", "")
                         Dim tz As String = zenkakudake_max(title)
                         If tz.Length > 1 Then
-                            sp = TvRock_html_src.IndexOf(Trim(tz))
+                            sp = TvRock_html_search_src.IndexOf(Trim(tz))
                         Else
                             '1文字以下ならばたぶん英文タイトル 一番長い単語
                             title = title.Replace("　", " ")
@@ -1262,7 +1295,7 @@ Module モジュール_番組表
                                 End If
                             Next
                             If str.Length > 2 Then
-                                sp = TvRock_html_src.IndexOf(str)
+                                sp = TvRock_html_search_src.IndexOf(str)
                             End If
                         End If
                     End If
@@ -1271,15 +1304,129 @@ Module モジュール_番組表
 
             'ジャンル
             If sp > 0 Then
-                sp = TvRock_html_src.LastIndexOf("width=11%", sp)
+                sp = TvRock_html_search_src.LastIndexOf("<g>", sp)
                 If sp > 0 Then
-                    gstr = Trim(Instr_pickup(TvRock_html_src, ">", "<", sp))
+                    gstr = Trim(Instr_pickup(TvRock_html_search_src, ">", "<", sp))
                     If gstr.Length > 0 Then
                         r = Array.IndexOf(tvrock_genre_str, gstr)
                         If r >= 0 Then
                             r = r * 256
                         Else
                             r = -1
+                        End If
+                    End If
+                End If
+            End If
+        End If
+
+        Return r
+    End Function
+
+    'TvRock PC用番組表からジャンルを推測する
+    Private Function get_tvrock_genre_from_program(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
+        Dim r As Integer = -1
+
+        If TvRock_genre_ON = 1 And TvRock_html_program_src.Length > 0 And TvRock_genre_color IsNot Nothing Then
+            Dim sp1 As Integer = -1
+
+            If sid > 0 And trid > 0 Then
+                '予約番号データから
+                Dim sstr As String = "c=" & sid.ToString & "&e=" & trid.ToString
+                sp1 = TvRock_html_program_src.IndexOf(sstr)
+            ElseIf title.Length > 0 Then
+                '番組タイトルから
+                'TvRock特有の変換に対応
+                title = title.Replace("/", "／")
+                title = title.Replace("＆", "&")
+
+                sp1 = TvRock_html_program_src.IndexOf(title)
+                If sp1 < 0 Then
+                    'タイトルそのままでは見つからなかった
+                    '携帯版番組表では<～>が消されているので番組名が無茶苦茶になっている場合がある
+
+                    If title.IndexOf("<") < 0 And title.IndexOf(">") < 0 Then
+                        While title.LastIndexOf("[") > Int(title.Length * 2 / 3)
+                            '後半に[がある場合
+                            title = title.Substring(0, title.LastIndexOf("["))
+                            sp1 = TvRock_html_program_src.IndexOf(title)
+                            If sp1 >= 0 Then
+                                Exit While
+                            End If
+                        End While
+
+                        If sp1 < 0 Then
+                            While title.IndexOf("]") >= 0 And title.IndexOf("]") < Int(title.Length / 3)
+                                '前半に]がある場合
+                                Try
+                                    title = title.Substring(title.IndexOf("]") + 1)
+                                Catch ex As Exception
+                                    title = ""
+                                    sp1 = -1
+                                    Exit While
+                                End Try
+                                sp1 = TvRock_html_program_src.IndexOf(title)
+                                If sp1 >= 0 Then
+                                    Exit While
+                                End If
+                            End While
+                        End If
+                    End If
+
+                    If sp1 < 0 And title.Length > 0 Then
+                        '【】[]<>を取り除いて一番長い文字列
+                        title = Regex.Replace(title, "【+.*?】", "")
+                        title = Regex.Replace(title, "\[+.*?\]", "")
+                        title = Regex.Replace(title, "\(+.*?\)", "")
+                        title = Regex.Replace(title, "&lt;+.*?&gt;", "")
+                        title = Regex.Replace(title, "<+.*?>", "")
+                        title = Regex.Replace(title, "＜+.*?＞", "")
+                        Dim tz As String = zenkakudake_max(title)
+                        If tz.Length > 1 Then
+                            sp1 = TvRock_html_program_src.IndexOf(Trim(tz))
+                        Else
+                            '1文字以下ならばたぶん英文タイトル 一番長い単語
+                            title = title.Replace("　", " ")
+                            Dim str As String = ""
+                            Dim d() As String = title.Split(" ")
+                            For k As Integer = 0 To d.Length - 1
+                                If d(k).Length > str Then
+                                    str = d(k)
+                                End If
+                            Next
+                            If str.Length > 2 Then
+                                sp1 = TvRock_html_program_src.IndexOf(str)
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+
+            If sp1 >= 0 Then
+                Dim sps As Integer = 0
+                If sid > 0 And trid > 0 Then
+                    sps = TvRock_html_program_src.LastIndexOf("&c=", sp1 - 10)
+                Else
+                    sps = TvRock_html_program_src.LastIndexOf("title=", sp1 - 50)
+                End If
+                If sps < 0 Then
+                    sps = 0
+                End If
+                Dim sp2 As Integer = TvRock_html_program_src.LastIndexOf("<td rowspan=", sp1)
+                If sp2 < sps Then
+                    '見つかっていない場合、直近の色を使用
+                    sp2 = TvRock_html_program_src.LastIndexOf(" bgcolor=", sp1)
+                    If sp2 < sps Then
+                        sp2 = -1
+                    End If
+                End If
+                If sp2 >= 0 Then
+                    Dim bgcolor As String = Trim(Instr_pickup(TvRock_html_program_src, "bgcolor=", " ", sp2, sp1).ToString.ToLower)
+                    If bgcolor.Length > 0 Then
+                        r = Array.LastIndexOf(TvRock_genre_color, bgcolor) '後ろから。その他優先
+                        If r < 0 Then
+                            r = -1
+                        Else
+                            r = r * 256
                         End If
                     End If
                 End If
@@ -1325,16 +1472,20 @@ Module モジュール_番組表
                 Dim ut As Integer = time2unix(t)
 
                 'log1write("【番組表】キャッシュが見つかりました。" & p_r_s(RegionID, route, getnext))
-                Dim chk As Integer = 0
-                If Minute(t) = Minute(unix2time(pcache(i2).get_utime)) Then
-                    '同じ分ならキャッシュを利用
-                    msg = "[same minutes]"
-                    Return convert_str_tvprogram(pcache(i2).value_str)
+                If pcache(i2).value_str.Length = 0 Then
+                    'キャッシュ無し
+                    Return Nothing
                     Exit Function
-                ElseIf pcache(i2).get_utime < ut - (3600 * 2) Then
+                End If
+                If pcache(i2).get_utime < ut - (3600 * 2) Then
                     '2時間以上前のキャッシュなら
                     log1write("【番組表】新しいキャッシュが存在しませんでした。" & region2softname(RegionID))
                     Return Nothing
+                    Exit Function
+                ElseIf Minute(t) = Minute(unix2time(pcache(i2).get_utime)) Then
+                    '同じ分ならキャッシュを利用
+                    msg = "[same minutes]"
+                    Return convert_str_tvprogram(pcache(i2).value_str)
                     Exit Function
                 End If
 
@@ -1363,7 +1514,7 @@ Module モジュール_番組表
                 log1write("【番組表】キャッシュが見つかりませんでした。" & region2softname(RegionID))
             End If
         End If
-        Return Nothing
+            Return Nothing
     End Function
 
     'キャッシュに格納

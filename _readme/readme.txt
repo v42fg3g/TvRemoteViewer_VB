@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.72
+TvRemoteViewer_VB v2.74
 
 
 
@@ -778,6 +778,12 @@ TvRemoteViewer_VB v2.72
 	2.72	TvRock番組表ジャンルの精度アップ＆予約中番組のジャンル取得が可能になった
 			TvRockジャンル色は使用しなくなったのでiniのTvRock_genre_colorを廃止
 			iniにTvRockジャンル取得を行うかを指定できるようにした。標準はしない（TvRock_genre_ON）
+	2.73	TvRock番組表ジャンルが0時またぎで判別できないので2.71に戻して精度アップだけを行った
+			希にバージョンチェックで例外エラーが起こるバグを修正
+	2.74	TvRockジャンル取得を番組表＆検索結果の両方から取得するようにした
+			（iniのTvRock_genre_colorとTvRock_genre_ONを改めて設置しジャンル取得を標準とした）
+			TvRock番組表で予約が入っていると番組が無視されてしまうバグがまだ直っていなかったので修正
+			TVRVLauncherからのキャッシュクリア要求に対して全ての番組情報をクリアするようにした
 
 
 

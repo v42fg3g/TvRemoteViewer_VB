@@ -1730,6 +1730,23 @@ Class WebRemocon
                                         log1write("TvRockジャンル情報を取得しないように設定しました")
                                     End If
                                 End If
+                            Case "TvRock_genre_color"
+                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                If Trim(youso(1)).Length > 0 Then
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length = 16 Then
+                                        Dim temp As String = ""
+                                        ReDim Preserve TvRock_genre_color(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            TvRock_genre_color(j) = trim8(clset(j).ToLower)
+                                            temp &= "ジャンル(" & j.ToString & "）色=" & TvRock_genre_color(j) & " "
+                                        Next
+                                        log1write("TvRock番組表で表示中のジャンル色は、" & temp & "であると想定するようセットしました")
+                                    Else
+                                        log1write("【エラー】TvRock_genre_colorの要素数が16個ではありません")
+                                    End If
+                                End If
 
 
 
@@ -5359,11 +5376,18 @@ Class WebRemocon
                                         WI_cmd_reply_force = 1
                                     Case "WI_CLEAR_ABEMA_CACHE"
                                         Outside_CustomURL_html = ""
-                                        Dim i3 As Integer = Array.IndexOf(pcache, "801")
-                                        If i3 >= 0 Then
-                                            pcache(i3).value_str = ""
+                                        If pcache IsNot Nothing Then
+                                            Dim i3 As Integer = Array.IndexOf(pcache, "801")
+                                            If i3 >= 0 Then
+                                                pcache(i3).value_str = ""
+                                            End If
+                                            '他のキャッシュもクリア
+                                            For k As Integer = 0 To pcache.Length - 1
+                                                pcache(k).value_str = ""
+                                                pcache(k).get_utime = time2unix(Now()) - 3600 * 24
+                                            Next
                                         End If
-                                        log1write("AbemaTV番組情報キャッシュをクリアしました")
+                                        log1write("番組情報キャッシュをクリアしました")
                                         WI_cmd_reply = "OK"
                                         WI_cmd_reply_force = 1
                                 End Select

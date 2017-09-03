@@ -1,5 +1,5 @@
 ﻿Module モジュール_ini設定
-    Public ini_genre() As String
+    Public ini_genre() As String = {"全般", "WEBサーバー", "番組表全般", "番組表データ", "HLS配信", "HTTP配信", "ファイル再生"}
 
     Public ini_array() As inistructure
     Public Structure inistructure
@@ -35,8 +35,9 @@
         'カレントディレクトリ変更
         F_set_ppath4program()
 
-        Dim last_genre As String = ""
         Dim ini_default_filename As String = "TvRemoteViewer_VB.ini.data"
+
+        Dim update_chk As Integer = 0
 
         If file_exist(ini_default_filename) = 1 Then
             Dim line() As String = file2line(ini_default_filename)
@@ -64,14 +65,18 @@
                                 '0       ,1         ,2       ,3   ,4           ,5     ,6
 
                                 'ジャンルを記録
-                                If last_genre <> youso(0) Then
+                                If Array.IndexOf(ini_genre, youso(0)) < 0 Then
                                     Dim k As Integer = 0
                                     If ini_genre IsNot Nothing Then
                                         k = ini_genre.Length
                                     End If
                                     ReDim Preserve ini_genre(k)
                                     ini_genre(k) = youso(0)
-                                    last_genre = youso(0)
+                                    log1write("【警告】標準に無いiniジャンルが追加されました。" & youso(0))
+                                End If
+                                'ジャンルが足りない場合はアップデートをうながすため
+                                If youso(0) = "番組表全般" Then
+                                    update_chk = 1
                                 End If
 
                                 If youso.Length = 5 Then
@@ -101,6 +106,12 @@
         Else
             log1write("【エラー】標準設定ファイル " & ini_default_filename & " が見つかりませんでした")
             r = 0
+        End If
+
+        'ファイルコピーし忘れの際の警告
+        If update_chk = 0 Then
+            MsgBox("設定ファイルが古くなっています" & vbCrLf & "TvRemoteViewer_VB.ini.dataをexeと同じフォルダにコピーしてください")
+            log1write("【警告】設定ファイルが古くなっています。TvRemoteViewer_VB.ini.dataをexeと同じフォルダにコピーしてください")
         End If
 
         Return r

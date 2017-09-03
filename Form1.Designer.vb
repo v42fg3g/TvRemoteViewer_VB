@@ -113,6 +113,7 @@ Partial Class Form1
         Me.TextBoxIniDoc = New System.Windows.Forms.TextBox()
         Me.ButtonIniSetting = New System.Windows.Forms.Button()
         Me.ButtonIniBackup = New System.Windows.Forms.Button()
+        Me.TabPage7 = New System.Windows.Forms.TabPage()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.TabControl1.SuspendLayout()
         Me.SuspendLayout()
@@ -829,6 +830,7 @@ Partial Class Form1
         Me.TabControl1.Controls.Add(Me.TabPage4)
         Me.TabControl1.Controls.Add(Me.TabPage5)
         Me.TabControl1.Controls.Add(Me.TabPage6)
+        Me.TabControl1.Controls.Add(Me.TabPage7)
         Me.TabControl1.Location = New System.Drawing.Point(535, 30)
         Me.TabControl1.Name = "TabControl1"
         Me.TabControl1.SelectedIndex = 0
@@ -861,7 +863,7 @@ Partial Class Form1
         Me.TabPage3.Name = "TabPage3"
         Me.TabPage3.Size = New System.Drawing.Size(518, 549)
         Me.TabPage3.TabIndex = 2
-        Me.TabPage3.Text = "番組表データ"
+        Me.TabPage3.Text = "番組表全般"
         Me.TabPage3.UseVisualStyleBackColor = True
         '
         'TabPage4
@@ -870,7 +872,7 @@ Partial Class Form1
         Me.TabPage4.Name = "TabPage4"
         Me.TabPage4.Size = New System.Drawing.Size(518, 549)
         Me.TabPage4.TabIndex = 3
-        Me.TabPage4.Text = "HLS配信"
+        Me.TabPage4.Text = "番組表データ"
         Me.TabPage4.UseVisualStyleBackColor = True
         '
         'TabPage5
@@ -879,7 +881,7 @@ Partial Class Form1
         Me.TabPage5.Name = "TabPage5"
         Me.TabPage5.Size = New System.Drawing.Size(518, 549)
         Me.TabPage5.TabIndex = 4
-        Me.TabPage5.Text = "HTTP配信"
+        Me.TabPage5.Text = "HLS配信"
         Me.TabPage5.UseVisualStyleBackColor = True
         '
         'TabPage6
@@ -888,7 +890,7 @@ Partial Class Form1
         Me.TabPage6.Name = "TabPage6"
         Me.TabPage6.Size = New System.Drawing.Size(518, 549)
         Me.TabPage6.TabIndex = 5
-        Me.TabPage6.Text = "ファイル再生"
+        Me.TabPage6.Text = "HTTP配信"
         Me.TabPage6.UseVisualStyleBackColor = True
         '
         'ButtonIniApply
@@ -950,6 +952,16 @@ Partial Class Form1
         Me.ButtonIniBackup.TabStop = False
         Me.ButtonIniBackup.Text = "ini バックアップ"
         Me.ButtonIniBackup.UseVisualStyleBackColor = True
+        '
+        'TabPage7
+        '
+        Me.TabPage7.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage7.Name = "TabPage7"
+        Me.TabPage7.Padding = New System.Windows.Forms.Padding(3)
+        Me.TabPage7.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage7.TabIndex = 6
+        Me.TabPage7.Text = "ファイル再生"
+        Me.TabPage7.UseVisualStyleBackColor = True
         '
         'Form1
         '
@@ -1134,5 +1146,6 @@ Partial Class Form1
     Private WithEvents TextBoxIniDoc As System.Windows.Forms.TextBox
     Friend WithEvents ButtonIniSetting As System.Windows.Forms.Button
     Friend WithEvents ButtonIniBackup As System.Windows.Forms.Button
+    Friend WithEvents TabPage7 As System.Windows.Forms.TabPage
 
 End Class

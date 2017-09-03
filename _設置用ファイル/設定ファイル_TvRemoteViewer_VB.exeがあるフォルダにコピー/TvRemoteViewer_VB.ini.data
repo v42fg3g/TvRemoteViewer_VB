@@ -39,17 +39,25 @@ WEBサーバー	0	document			　
 WEBサーバー	0	string	HTML_IN_CHARACTER_CODE	UTF-8	[無効] HTML入力キャラクターコード
 WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコード
 
-番組表データ	0	integer	next2_minutes	8	次の番組が指定分以内の番組ならば次の次の番組情報を表示 0=取得しない
-番組表データ	0	document			　
+番組表全般	0	integer	next2_minutes	8	次の番組が指定分以内の番組ならば次の次の番組情報を表示 0=取得しない
+番組表全般	0	document			　
+番組表全般	0	integer	NoUseProgramCache	0	番組表キャッシュ制御を行いたくない場合は1にしてください
+番組表全般	0	document			　
+番組表全般	0	integer	TvProgram_Force_NoRec	0	番組情報を取得できない環境でチャンネル一覧を表示する=1
+番組表全般	0	document			　
+番組表全般	0	string	TvProgramD_sort		番組表の並び順	指定の無い放送局は指定された放送局の後に表示されます\n例　TvProgramD_sort = "NHK総合","NHK Eテレ","日本テレビ","TBSテレビ","フジテレビ","テレビ朝日","テレビ東京","TOKYO MX"\n※並び順は地デジ・EDCB・TvRock共通で適用されます
+
 番組表データ	1	string	TvProgramD		ネット番組表都道府県コード AbemaTV:801	例　福岡＆佐賀の場合　TvProgramD = 55,61\nさらに、その中から表示したくない放送局名を指定することができます。\n　　福岡の特定局を除く TvProgramD_NGword = "ＲＫＢ毎日放送","ＦＢＳ福岡放送"\n10:北海道（札幌）11:北海道（函館）12:北海道（旭川）13:北海道（帯広）14:北海道（釧路）15:北海道（北見）16:北海道（室蘭）\n22:青森　20:岩手　17:宮城　18:秋田　19:山形　21:福島　26:茨城　28:栃木　25:群馬　29:埼玉　27:千葉\n23:東京　24:神奈川　31:新潟　37:富山　34:石川　36:福井　32:山梨　30:長野　39:岐阜　35:静岡\n33:愛知　38:三重　45:滋賀　41:京都　40:大阪　42:兵庫　44:奈良　43:和歌山\n49:鳥取　48:島根　47:岡山　46:広島　50:山口　53:徳島　52:香川　51:愛媛　54:高知\n55:福岡　61:佐賀　57:長崎　56:熊本　60:大分　59:宮崎　58:鹿児島　62:沖縄\n801:AbemaTV
 番組表データ	0	string	TvProgramD_NGword		ネット番組表に表示したくない放送局名
 番組表データ	0	string	TvProgramD_channels		番組表の放送局名から.ch2で記述されている放送局名への変換
+番組表データ	0	document			　
 番組表データ	0	integer	AvemaTV_data_get_method	1	AbemaTV情報取得先決定方法	1=自動選択(有志の方サイト優先) 2=作者が用意したカッパ手入力サイト限定 3=有志の方サイト限定
 番組表データ	0	string	AbemaTV_CustomURL		AbemaTV情報取得先URL	AbemaTV番組情報を自前で用意できる方用設定（今のところTvRemoteViewer_VB用に加工されたデータ限定）\nデータ形式詳細は別途readme_dev.txt内「資料_AbemaTVカスタムデータ形式」で説明\nURLまたはファイル(絶対パス)が指定できます。指定するとAvemaTV_data_get_methodの設定は無視されます
 番組表データ	0	document			　
 番組表データ	0	string	TvProgram_tvrock_url		TvRockのiPhone用番組表URL（http://127.0.0.1:8969/ユーザー名/iphone）
 番組表データ	0	string	TvProgramTvRock_NGword		TvRock番組表に表示したくない放送局名
-番組表データ	0	integer	TvRock_genre_ON	0	TvRockジャンル情報を取得する=1 しない=0	ジャンル情報を取得するためにTvRockのPC用番組表1.0にアクセスします
+番組表データ	0	integer	TvRock_genre_ON	1	TvRockジャンル情報を取得する=1 しない=0
+番組表データ	0	string	TvRock_genre_color		TVRLauncher用ジャンル判別色データ	TvRock番組表でジャンル色をカスタマイズしている場合は使用中のジャンル色0～15まで16個の色データを指定してください。例えば先頭のデータはジャンル0・ニュースの色を示しています。\n現在使用中の色はレジストリHKEY_CURRENT_USER\Software\TvRockののCC0～CC15に記録されています\n例：TvRock_genre_color=#d4ffc8,#ffccef,#f0f0f0,#ffbbbb,#b6f2ff,#faffb0,#ccfcf4,#dcddff,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0
 番組表データ	0	document			　
 番組表データ	0	string	TvProgram_EDCB_url		EDCBの番組表WEBインターフェースURL（http://127.0.0.1:5510/api/EnumEventInfo）
 番組表データ	0	string	TvProgramEDCB_NGword		EDCB番組表に表示したくない放送局名
@@ -65,10 +73,6 @@ WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコ
 番組表データ	0	string	Tvmaid_url		Tvmaid初代サーバーのURL（http://127.0.0.1:20000）
 番組表データ	0	string	TvmaidYUI_url		TvmaidEX以降のサーバーURL（http://127.0.0.1:20001）
 番組表データ	0	string	TvProgramTvmaid_NGword		Tvmaid番組表に表示したくない放送局名
-番組表データ	0	document			　
-番組表データ	0	string	TvProgramD_sort		番組表の並び順	指定の無い放送局は指定された放送局の後に表示されます\n例　TvProgramD_sort = "NHK総合","NHK Eテレ","日本テレビ","TBSテレビ","フジテレビ","テレビ朝日","テレビ東京","TOKYO MX"\n※並び順は地デジ・EDCB・TvRock共通で適用されます
-番組表データ	0	integer	TvProgram_Force_NoRec	0	番組情報を取得できない環境でチャンネル一覧を表示する=1
-番組表データ	0	integer	NoUseProgramCache	0	番組表キャッシュ制御を行いたくない場合は1にしてください
 
 HLS配信	0	integer	MAX_STREAM_NUMBER	100	最大配信ナンバー
 HLS配信	0	integer	tsfile_wait	2	tsファイルが指定数作成されるまで配信準備中とする
