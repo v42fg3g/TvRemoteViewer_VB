@@ -1402,16 +1402,20 @@ Class WebRemocon
                                     Me._tsfile_wait = 3
                                 End If
                             Case "MIME_TYPE_DEFAULT"
-                                Me._MIME_TYPE_DEFAULT = trim8(youso(1))
+                                If trim8(youso(1)).Length > 0 Then
+                                    Me._MIME_TYPE_DEFAULT = trim8(youso(1))
+                                End If
                             Case "MIME_TYPE"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve Me._MIME_TYPE(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        Me._MIME_TYPE(j) = trim8(clset(j))
-                                    Next
+                                If trim8(youso(1)).Length > 0 Then
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve Me._MIME_TYPE(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            Me._MIME_TYPE(j) = trim8(clset(j))
+                                        Next
+                                    End If
                                 End If
                             Case "PipeListGetter"
                                 PipeListGetter = trim8(youso(1).ToString)

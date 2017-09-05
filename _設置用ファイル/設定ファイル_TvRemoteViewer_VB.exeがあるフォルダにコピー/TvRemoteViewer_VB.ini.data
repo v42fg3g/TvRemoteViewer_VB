@@ -27,7 +27,8 @@ WEBサーバー	0	document			　
 WEBサーバー	0	string	Remocon_Domains		リモコン先にローカルIP以外を指定する場合のドメイン「,」区切りで複数指定可
 WEBサーバー	0	integer	html_publish_method	1	HTML発行方式(エラーが気になる方は0にしてみてください)
 WEBサーバー	0	document			　
-WEBサーバー	0	string	MIME_TYPE_DEFAULT		MIME TYPE(例："m3u8:application/x-mpegURL", "ts:video/MP2T")
+WEBサーバー	0	string	MIME_TYPE		MIME TYPE(例："m3u8:application/x-mpegURL", "ts:video/MP2T")	,区切りで複数指定可能
+WEBサーバー	0	string	MIME_TYPE_DEFAULT		指定が無い場合の標準MIME TYPE(例："text/html")
 WEBサーバー	0	integer	meta_refresh_fix	0	metaタグRefresh記述をjavascriptに変更（0=しない 1=する）Android UCブラウザを使用する場合は1
 WEBサーバー	0	document			　
 WEBサーバー	0	string	BonDriver_NGword		表示したくないBonDriver名の一部を記述（,区切りで複数可）
@@ -39,7 +40,7 @@ WEBサーバー	0	document			　
 WEBサーバー	0	string	HTML_IN_CHARACTER_CODE	UTF-8	[無効] HTML入力キャラクターコード
 WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコード
 
-番組表全般	0	integer	next2_minutes	8	次の番組が指定分以内の番組ならば次の次の番組情報を表示 0=取得しない
+番組表全般	1	integer	next2_minutes	8	次の番組が指定分以内の番組ならば次の次の番組情報を表示 0=取得しない
 番組表全般	0	document			　
 番組表全般	0	integer	NoUseProgramCache	0	番組表キャッシュ制御を行いたくない場合は1にしてください
 番組表全般	0	document			　

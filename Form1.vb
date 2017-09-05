@@ -2200,6 +2200,13 @@ Public Class Form1
                                         youso(j) = Trim(youso(j))
                                     Next
 
+                                    'BugFix 先のTvRemoteViewer_VB.ini.dataの説明文ミスを修正
+                                    If i > 0 Then
+                                        If youso(0) = "MIME_TYPE_DEFAULT" And trim8(line(i - 1)) = ";[WEBサーバー] MIME TYPE(例：m3u8:application/x-mpegURL, ts:video/MP2T)" Then
+                                            line(i - 1) = ";[WEBサーバー] 指定が無い場合の標準MIME TYPE(例：""text/html"")"
+                                        End If
+                                    End If
+
                                     If youso(0).Length > 0 Then
                                         j = Array.IndexOf(ini_array, youso(0))
                                         If j >= 0 Then

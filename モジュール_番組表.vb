@@ -1102,7 +1102,9 @@ Module モジュール_番組表
             End If
 
             If TvProgram_tvrock_url.Length > 0 Then
+                Dim log_temp As String = ">>TvRock番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                 Dim html As String = get_html_by_webclient(TvProgram_tvrock_url, "Shift_JIS")
+                log_temp &= " > 取得完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
 
                 '<small>ＮＨＫＢＳ１ <small><i> のようになっている
                 Dim sp2 As Integer = html.IndexOf(" <small><i>")
@@ -1219,6 +1221,8 @@ Module モジュール_番組表
                     sp2 = html.IndexOf(" <small><i>", sp2 + 1)
                     sp = html.LastIndexOf("><small>", sp2 + 1)
                 End While
+                log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                log1write(log_temp)
             End If
         Catch ex As Exception
             log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)

@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.74
+TvRemoteViewer_VB v2.75
 
 
 
@@ -784,6 +784,9 @@ TvRemoteViewer_VB v2.74
 			（iniのTvRock_genre_colorとTvRock_genre_ONを改めて設置しジャンル取得を標準とした）
 			TvRock番組表で予約が入っていると番組が無視されてしまうバグがまだ直っていなかったので修正
 			TVRVLauncherからのキャッシュクリア要求に対して全ての番組情報をクリアするようにした
+	2.75	TvRemoteViewer_VB.ini.dataのMIME_TYPE_DEFAULTの説明文が間違っていたので修正
+			TvRemoteViewer_VB.ini.dataに項目MIME_TYPEが記載されていなかったので追加
+			上記記載ミスがiniに記載されている場合は「ini 更新&適用」ボタンが押された際に修正するようにした
 
 
 
