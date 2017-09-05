@@ -4823,6 +4823,8 @@ Class WebRemocon
                                 mimetype = "text/css"
                             Case ".m3u8", ".m3u"
                                 mimetype = "application/x-mpegURL"
+                            Case ".ts"
+                                mimetype = "video/MP2T"
                             Case ".json"
                                 'mimetype = "application/json" '動作しない
                                 mimetype = "text/plain" 'これでOK
