@@ -123,7 +123,7 @@ Remocon_Domains =
 
 
 ;【2.40】画面推移方法
-; TVRemoteFiles1.82以上を使用している場合に1にすると画面推移がスムーズかつ高速になります（標準は0）
+; TVRemoteFiles1.82以上を使用している場合に1にすると画面推移がスムーズかつ高速になります（標準は1）
 TVRemoteFilesNEW = 1
 
 

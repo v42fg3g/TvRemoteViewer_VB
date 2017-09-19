@@ -1926,8 +1926,7 @@ Public Class Form1
     End Sub
 
     'タブにini要素を追加
-    Private iniLabel1 As System.Windows.Forms.Label
-    Private iniLabel2 As System.Windows.Forms.Label
+    Private iniLabel1() As System.Windows.Forms.Label
     Private iniTextbox() As System.Windows.Forms.TextBox
     Private Sub ini_init_tab()
         Dim i As Integer = 0
@@ -1937,124 +1936,116 @@ Public Class Form1
                 y(i) = 10
             Next
 
+            Me.iniLabel1 = New System.Windows.Forms.Label(ini_array.Length - 1) {}
             Me.iniTextbox = New System.Windows.Forms.TextBox(ini_array.Length - 1) {}
 
             Me.SuspendLayout()
             For i = 0 To ini_array.Length - 1
-                'label1
-                Me.iniLabel1 = New System.Windows.Forms.Label
-                Me.iniLabel1.Text = ini_array(i).name
-                If ini_array(i).title IsNot Nothing Then
-                    If ini_array(i).title.Length > 0 Then
-                        Me.iniLabel1.Text = ini_array(i).title
-                    End If
-                End If
-                'If ini_array(i).document IsNot Nothing Then
-                'If ini_array(i).document.Length > 0 Then
-                'Me.iniLabel1.Text &= vbCrLf & ini_array(i).document
-                'End If
-                'End If
-                If ini_array(i).need_reset = 1 Then
-                    Me.iniLabel1.Text = "(*)" & Me.iniLabel1.Text
-                End If
-                Me.iniLabel1.AutoSize = False
-                Me.iniLabel1.Size = New System.Drawing.Size(280, 16)
-                Me.iniLabel1.AutoEllipsis = True
-                'label2
-                Me.iniLabel2 = New System.Windows.Forms.Label
-                Me.iniLabel2.Text = ini_array(i).name
-                Me.iniLabel2.AutoSize = False
-                Me.iniLabel2.Size = New System.Drawing.Size(100, 16)
-                Me.iniLabel2.AutoEllipsis = True
-                Me.iniLabel2.Visible = True
+                Dim iniTextbox_leftmove As Integer = 0
+                Dim label_width_plus As Integer = 0
                 'textbox
                 Me.iniTextbox(i) = New System.Windows.Forms.TextBox
                 Me.iniTextbox(i).Name = "Textbox_-" & ini_array(i).name
                 Me.iniTextbox(i).Text = ini_array(i).value
                 Me.iniTextbox(i).Visible = True
-                If ini_array(i).value_type = "integer" Then
-                    Me.iniTextbox(i).Size = New System.Drawing.Size(60, 20)
-                    Me.iniTextbox(i).TextAlign = HorizontalAlignment.Right
+                If ini_array(i).value_type IsNot Nothing Then
+                    If ini_array(i).value_type = "integer" Then
+                        Me.iniTextbox(i).Size = New System.Drawing.Size(60, 20)
+                        Me.iniTextbox(i).TextAlign = HorizontalAlignment.Right
+                        iniTextbox_leftmove -= 60
+                        label_width_plus = 60
+                    ElseIf ini_array(i).value_type.IndexOf("string") >= 0 Then
+                        Dim w As Integer = Val(ini_array(i).value_type.Replace("string", ""))
+                        If w > 0 Then
+                            iniTextbox_leftmove = w - 120
+                            If iniTextbox_leftmove <= 0 Then iniTextbox_leftmove = 0
+                        End If
+                        Me.iniTextbox(i).Size = New System.Drawing.Size(120 + iniTextbox_leftmove, 20)
+                    Else
+                        Me.iniTextbox(i).Size = New System.Drawing.Size(120, 20)
+                    End If
                 Else
                     Me.iniTextbox(i).Size = New System.Drawing.Size(120, 20)
                 End If
+                'label1
+                Me.iniLabel1(i) = New System.Windows.Forms.Label
+                Me.iniLabel1(i).Name = "Label_-" & ini_array(i).name
+                Me.iniLabel1(i).Text = ini_array(i).name
+                If ini_array(i).title IsNot Nothing Then
+                    If ini_array(i).title.Length > 0 Then
+                        Me.iniLabel1(i).Text = ini_array(i).title
+                    End If
+                End If
+                If ini_array(i).need_reset = 1 Then
+                    Me.iniLabel1(i).Text = "(*)" & Me.iniLabel1(i).Text
+                End If
+                Me.iniLabel1(i).AutoSize = False
+                Me.iniLabel1(i).Size = New System.Drawing.Size(380 + label_width_plus, 16)
+                Me.iniLabel1(i).AutoEllipsis = True
                 'イベント
                 AddHandler Me.iniTextbox(i).TextChanged, AddressOf Me.iniTextbox_changed
                 AddHandler Me.iniTextbox(i).Enter, AddressOf Me.iniTextbox_enter
+                AddHandler Me.iniLabel1(i).Click, AddressOf Me.iniTextbox_enter
+                'AddHandler Me.iniLabel1(i).MouseHover, AddressOf Me.iniTextbox_enter
                 Dim x1 As Integer = 5
-                Dim x2 As Integer = 290
+                Dim x2 As Integer = 390 - iniTextbox_leftmove
                 Dim x3 As Integer = 415
                 Dim y1 As Integer = 3
                 Dim h1 As Integer = 20
                 '説明
                 If ini_array(i).value_type = "document" Then
                     Me.iniTextbox(i).Visible = False
-                    Me.iniLabel2.Visible = False
                     If Trim(ini_array(i).title.Replace("　", "")).Length = 0 Then
-                        Me.iniLabel1.Visible = False
+                        Me.iniLabel1(i).Visible = False
                         h1 = 10
                     Else
-                        Me.iniLabel1.Size = New System.Drawing.Size(535, 16)
+                        Me.iniLabel1(i).Size = New System.Drawing.Size(535, 16)
                     End If
                 End If
                 Select Case ini_array(i).genre
                     Case "WEBサーバー"
-                        Me.iniLabel1.Location = New Point(x1, y(2) + y1)
+                        Me.iniLabel1(i).Location = New Point(x1, y(2) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(2))
-                        Me.iniLabel2.Location = New Point(x3, y(2) + y1)
                         y(2) += h1
-                        TabPage2.Controls.Add(Me.iniLabel1)
                         TabPage2.Controls.Add(Me.iniTextbox(i))
-                        TabPage2.Controls.Add(Me.iniLabel2)
+                        TabPage2.Controls.Add(Me.iniLabel1(i))
                     Case "番組表全般"
-                        Me.iniLabel1.Location = New Point(x1, y(3) + y1)
+                        Me.iniLabel1(i).Location = New Point(x1, y(3) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(3))
-                        Me.iniLabel2.Location = New Point(x3, y(3) + y1)
                         y(3) += h1
-                        TabPage3.Controls.Add(Me.iniLabel1)
                         TabPage3.Controls.Add(Me.iniTextbox(i))
-                        TabPage3.Controls.Add(Me.iniLabel2)
+                        TabPage3.Controls.Add(Me.iniLabel1(i))
                     Case "番組表データ"
-                        Me.iniLabel1.Location = New Point(x1, y(4) + y1)
+                        Me.iniLabel1(i).Location = New Point(x1, y(4) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(4))
-                        Me.iniLabel2.Location = New Point(x3, y(4) + y1)
                         y(4) += h1
-                        TabPage4.Controls.Add(Me.iniLabel1)
                         TabPage4.Controls.Add(Me.iniTextbox(i))
-                        TabPage4.Controls.Add(Me.iniLabel2)
+                        TabPage4.Controls.Add(Me.iniLabel1(i))
                     Case "HLS配信"
-                        Me.iniLabel1.Location = New Point(x1, y(5) + y1)
+                        Me.iniLabel1(i).Location = New Point(x1, y(5) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(5))
-                        Me.iniLabel2.Location = New Point(x3, y(5) + y1)
                         y(5) += h1
-                        TabPage5.Controls.Add(Me.iniLabel1)
                         TabPage5.Controls.Add(Me.iniTextbox(i))
-                        TabPage5.Controls.Add(Me.iniLabel2)
+                        TabPage5.Controls.Add(Me.iniLabel1(i))
                     Case "HTTP配信"
-                        Me.iniLabel1.Location = New Point(x1, y(6) + y1)
+                        Me.iniLabel1(i).Location = New Point(x1, y(6) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(6))
-                        Me.iniLabel2.Location = New Point(x3, y(6) + y1)
                         y(6) += h1
-                        TabPage6.Controls.Add(Me.iniLabel1)
                         TabPage6.Controls.Add(Me.iniTextbox(i))
-                        TabPage6.Controls.Add(Me.iniLabel2)
+                        TabPage6.Controls.Add(Me.iniLabel1(i))
                     Case "ファイル再生"
-                        Me.iniLabel1.Location = New Point(x1, y(7) + y1)
+                        Me.iniLabel1(i).Location = New Point(x1, y(7) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(7))
-                        Me.iniLabel2.Location = New Point(x3, y(7) + y1)
                         y(7) += h1
-                        TabPage7.Controls.Add(Me.iniLabel1)
                         TabPage7.Controls.Add(Me.iniTextbox(i))
-                        TabPage7.Controls.Add(Me.iniLabel2)
+                        TabPage7.Controls.Add(Me.iniLabel1(i))
                     Case Else
                         'Case "全般"
-                        Me.iniLabel1.Location = New Point(x1, y(1) + y1)
+                        Me.iniLabel1(i).Location = New Point(x1, y(1) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(1))
-                        Me.iniLabel2.Location = New Point(x3, y(1) + y1)
                         y(1) += h1
-                        TabPage1.Controls.Add(Me.iniLabel1)
                         TabPage1.Controls.Add(Me.iniTextbox(i))
-                        TabPage1.Controls.Add(Me.iniLabel2)
+                        TabPage1.Controls.Add(Me.iniLabel1(i))
                 End Select
             Next
             Me.ResumeLayout(False)
@@ -2075,10 +2066,15 @@ Public Class Form1
     End Sub
 
     Private Sub iniTextbox_enter(ByVal sender As Object, ByVal e As EventArgs)
-        Dim name As String = (CType(sender, System.Windows.Forms.TextBox).Name).Replace("Textbox_-", "")
+        Dim name As String = ""
+        If sender.GetType.FullName.IndexOf(".Label") > 0 Then
+            name = (CType(sender, System.Windows.Forms.Label).Name).Replace("Label_-", "")
+        Else
+            name = (CType(sender, System.Windows.Forms.TextBox).Name).Replace("Textbox_-", "")
+        End If
         Dim j As Integer = Array.IndexOf(ini_array, name)
         If j >= 0 Then
-            TextBoxIniDoc.Text = ini_array(j).name
+            TextBoxIniDoc.Text = "パラメーター名： " & ini_array(j).name
             If ini_array(j).need_reset = 1 Then
                 TextBoxIniDoc.Text = "【要再起動】 " & vbCrLf & TextBoxIniDoc.Text
             End If

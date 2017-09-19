@@ -107,13 +107,13 @@ Partial Class Form1
         Me.TabPage4 = New System.Windows.Forms.TabPage()
         Me.TabPage5 = New System.Windows.Forms.TabPage()
         Me.TabPage6 = New System.Windows.Forms.TabPage()
+        Me.TabPage7 = New System.Windows.Forms.TabPage()
         Me.ButtonIniApply = New System.Windows.Forms.Button()
         Me.ButtonIniCancel = New System.Windows.Forms.Button()
         Me.Label17 = New System.Windows.Forms.Label()
         Me.TextBoxIniDoc = New System.Windows.Forms.TextBox()
         Me.ButtonIniSetting = New System.Windows.Forms.Button()
         Me.ButtonIniBackup = New System.Windows.Forms.Button()
-        Me.TabPage7 = New System.Windows.Forms.TabPage()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.TabControl1.SuspendLayout()
         Me.SuspendLayout()
@@ -893,6 +893,16 @@ Partial Class Form1
         Me.TabPage6.Text = "HTTP配信"
         Me.TabPage6.UseVisualStyleBackColor = True
         '
+        'TabPage7
+        '
+        Me.TabPage7.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage7.Name = "TabPage7"
+        Me.TabPage7.Padding = New System.Windows.Forms.Padding(3)
+        Me.TabPage7.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage7.TabIndex = 6
+        Me.TabPage7.Text = "ファイル再生"
+        Me.TabPage7.UseVisualStyleBackColor = True
+        '
         'ButtonIniApply
         '
         Me.ButtonIniApply.Location = New System.Drawing.Point(957, 5)
@@ -952,16 +962,6 @@ Partial Class Form1
         Me.ButtonIniBackup.TabStop = False
         Me.ButtonIniBackup.Text = "ini バックアップ"
         Me.ButtonIniBackup.UseVisualStyleBackColor = True
-        '
-        'TabPage7
-        '
-        Me.TabPage7.Location = New System.Drawing.Point(4, 22)
-        Me.TabPage7.Name = "TabPage7"
-        Me.TabPage7.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage7.Size = New System.Drawing.Size(518, 549)
-        Me.TabPage7.TabIndex = 6
-        Me.TabPage7.Text = "ファイル再生"
-        Me.TabPage7.UseVisualStyleBackColor = True
         '
         'Form1
         '

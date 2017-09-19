@@ -1,16 +1,16 @@
 ‘S”Ê	0	integer	close2min	0	~ƒ{ƒ^ƒ““®ì@1=Å¬‰»‚³‚¹‚é 2=Å¬‰»•Alt+Tab‚É”ñ•\¦
 ‘S”Ê	0	document			@
-‘S”Ê	0	document			HLSƒAƒvƒŠ‚ğŒÂ•Êw’è‚Åg—p‚·‚éê‡‚ÍŠeƒAƒvƒŠ‚Ìexe‚ğƒtƒ‹ƒpƒX‚Åw’è‚µ‚Ä‚­‚¾‚³‚¢
+‘S”Ê	0	document			HLSƒAƒvƒŠ‚ğŒÂ•Êw’è‚Åg—p‚·‚éê‡‚ÍŠeƒAƒvƒŠ‚Ìexe‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢
 ‘S”Ê	0	document			“Á‚ÉƒTƒ€ƒlƒCƒ‹‹@”\‚ğg—p‚·‚éê‡‚Í•K‚¸exepath_ffmpeg‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢
 ‘S”Ê	0	document			—á@D:\TvRemoteViewer\ffmpeg\bin\ffmpeg.exe
-‘S”Ê	0	string	exepath_ffmpeg		ffmpegƒpƒX
-‘S”Ê	0	string	exepath_VLC		VLCƒpƒX
-‘S”Ê	0	string	exepath_QSVEnc		QSVEncCƒpƒX
-‘S”Ê	0	string	exepath_NVEnc		NVEncCƒpƒX
-‘S”Ê	0	string	exepath_ISO_VLC		ISO—pVLCƒpƒX
-‘S”Ê	0	string	exepath_mplayer		mplayerƒpƒX
-‘S”Ê	0	string	RecTask_SPHD		ƒXƒJƒp[ƒvƒŒƒ~ƒAƒ€SPHD‹’®‚Ég—p‚·‚éRecTask
-‘S”Ê	0	string	BS1_hlsApp		BS1‚ÆBSƒvƒŒƒ~ƒAƒ€‚ÌÄ¶‚Ì‚İvlc‚ÉØ‚è‘Ö‚¦‚éê‡‚ÌVLCƒpƒX
+‘S”Ê	0	string400	exepath_ffmpeg		ffmpegƒpƒX
+‘S”Ê	0	string400	exepath_VLC		VLCƒpƒX
+‘S”Ê	0	string400	exepath_QSVEnc		QSVEncCƒpƒX
+‘S”Ê	0	string400	exepath_NVEnc		NVEncCƒpƒX
+‘S”Ê	0	string400	exepath_ISO_VLC		ISO—pVLCƒpƒX
+‘S”Ê	0	string400	exepath_mplayer		mplayerƒpƒX
+‘S”Ê	0	string300	RecTask_SPHD		SPƒvƒŒƒ~ƒAƒ€‹’®‚Ég—p‚·‚éRecTask
+‘S”Ê	0	string300	BS1_hlsApp		NHK BSÄ¶‚Ì‚İg—p‚·‚éVLCƒpƒX
 ‘S”Ê	0	document			@
 ‘S”Ê	0	integer	Stop_RecTask_at_StartEnd	1	‹N“®EI—¹E‘S’â~‚ÉRecTask‚ğ–¼‘Ow’è‚Å’â~i‚µ‚È‚¢=0 ‚·‚é=1j
 ‘S”Ê	0	integer	Stop_ffmpeg_at_StartEnd	1	‹N“®EI—¹E‘S’â~‚Éffmpeg‚ğ–¼‘Ow’è‚Å’â~i‚µ‚È‚¢=0 ‚·‚é=1j
@@ -19,20 +19,23 @@
 ‘S”Ê	0	integer	Stop_NVEnc_at_StartEnd	1	‹N“®EI—¹E‘S’â~‚ÉNVEncC‚ğ–¼‘Ow’è‚Å’â~i‚µ‚È‚¢=0 ‚·‚é=1j
 ‘S”Ê	0	document			@
 ‘S”Ê	0	integer	log_size	30000	ƒƒO‚ÌÅ‘å•¶š”
-‘S”Ê	0	string	log_path	TvRemoteViewer_VB.log	I—¹‚ÌƒƒO•Û‘¶ƒtƒ@ƒCƒ‹–¼(â‘ÎƒpƒX‰Â) ‹ó”’=•Û‘¶‚µ‚È‚¢
+‘S”Ê	0	string200	log_path	TvRemoteViewer_VB.log	I—¹‚ÌƒƒO•Û‘¶ƒtƒ@ƒCƒ‹–¼(â‘ÎƒpƒX‰Â) ‹ó”’=•Û‘¶‚µ‚È‚¢
 ‘S”Ê	0	document			@
 
-WEBƒT[ƒo[	0	integer	TVRemoteFilesNEW	0	V‰æ–Ê„ˆÚ=1 ƒXƒ€[ƒY‚©‚Â‚‘¬‚É‚È‚è‚Ü‚·i•W€‚Í0j
+WEBƒT[ƒo[	0	integer	TVRemoteFilesNEW	1	TvRemoteFilesV‰æ–Ê„ˆÚ‚ğg—p‚·‚é i•W€‚Í1@TvRemoteFiles–¢g—p‚Ìê‡‚Í0j	‹’®ŠJn‚ªƒXƒ€[ƒY‚©‚Â‚‘¬‚É‚È‚è‚Ü‚·
 WEBƒT[ƒo[	0	document			@
-WEBƒT[ƒo[	0	string	Remocon_Domains		ƒŠƒ‚ƒRƒ“æ‚Éƒ[ƒJƒ‹IPˆÈŠO‚ğw’è‚·‚éê‡‚ÌƒhƒƒCƒ“u,v‹æØ‚è‚Å•¡”w’è‰Â
+WEBƒT[ƒo[	0	string200	BonDriver_NGword		‘I‘ğ•\¦‚µ‚È‚¢BonDriver–¼i,‹æØ‚è‚Å•¡”‰Â@ˆê•”ƒ}ƒbƒ`j
+WEBƒT[ƒo[	0	document			@
+WEBƒT[ƒo[	0	string	Remocon_Domains		ƒŠƒ‚ƒRƒ“æ‚Éƒ[ƒJƒ‹IPˆÈŠO‚ğw’è‚·‚éê‡‚ÌƒhƒƒCƒ“u,v‹æØ‚è‚Å•¡”w’è‰Â	—áFtest.com
+WEBƒT[ƒo[	0	document			@
+WEBƒT[ƒo[	0	string200	MIME_TYPE		MIME TYPE‚ğŒÂX‚Éw’è‚µ‚½‚¢ê‡	—áF"m3u8:application/x-mpegURL", "ts:video/MP2T"\ni,‹æØ‚è‚Å•¡”w’è‰Â”\j
+WEBƒT[ƒo[	0	string	MIME_TYPE_DEFAULT		w’è‚ª–³‚¢ê‡‚Ì•W€MIME TYPE(—áF"text/html")
+WEBƒT[ƒo[	0	document			@
 WEBƒT[ƒo[	0	integer	html_publish_method	1	HTML”­s•û®(ƒGƒ‰[‚ª‹C‚É‚È‚é•û‚Í0‚É‚µ‚Ä‚İ‚Ä‚­‚¾‚³‚¢)
 WEBƒT[ƒo[	0	document			@
-WEBƒT[ƒo[	0	string	MIME_TYPE		MIME TYPE(—áF"m3u8:application/x-mpegURL", "ts:video/MP2T")	,‹æØ‚è‚Å•¡”w’è‰Â”\
-WEBƒT[ƒo[	0	string	MIME_TYPE_DEFAULT		w’è‚ª–³‚¢ê‡‚Ì•W€MIME TYPE(—áF"text/html")
-WEBƒT[ƒo[	0	integer	meta_refresh_fix	0	metaƒ^ƒORefresh‹Lq‚ğjavascript‚É•ÏXi0=‚µ‚È‚¢ 1=‚·‚éjAndroid UCƒuƒ‰ƒEƒU‚ğg—p‚·‚éê‡‚Í1
+WEBƒT[ƒo[	0	integer	meta_refresh_fix	0	Refresh‹Lq‚ğjavascript‚É•ÏXi‚·‚é=1jAndroid UCƒuƒ‰ƒEƒU—p
 WEBƒT[ƒo[	0	document			@
-WEBƒT[ƒo[	0	string	BonDriver_NGword		•\¦‚µ‚½‚­‚È‚¢BonDriver–¼‚Ìˆê•”‚ğ‹Lqi,‹æØ‚è‚Å•¡”‰Âj
-WEBƒT[ƒo[	0	integer	TvProgram_SelectUptoNum	0	”Ô‘g•\‚Å‚Ì”zMƒiƒ“ƒo[‚ğ§ŒÀ‚·‚éê‡‚ÉãŒÀ‚Ì”zMƒiƒ“ƒo[‚ğw’è
+WEBƒT[ƒo[	0	document			@
 WEBƒT[ƒo[	0	string	TvProgramD_BonDriver1st		[–³Œø] ’nƒfƒW‚Å—Dæ“I‚ÉŠ„‚è“–‚Ä‚éBonDriveri,‹æØ‚è‚Å•¡”‰Âj	¦‹Œ•û®@TvRemoteFilesã‚Í–³Œø‚Å‚·
 WEBƒT[ƒo[	0	string	TvProgramS_BonDriver1st		[–³Œø] BSECS‚Å—Dæ“I‚ÉŠ„‚è“–‚Ä‚éBonDriveri,‹æØ‚è‚Å•¡”‰Âj	¦‹Œ•û®@TvRemoteFilesã‚Í–³Œø‚Å‚·
 WEBƒT[ƒo[	0	string	TvProgramP_BonDriver1st		[–³Œø] ƒvƒŒƒ~ƒAƒ€‚Å—Dæ“I‚ÉŠ„‚è“–‚Ä‚éBonDriveri,‹æØ‚è‚Å•¡”‰Âj	¦‹Œ•û®@TvRemoteFilesã‚Í–³Œø‚Å‚·
@@ -40,44 +43,45 @@ WEBƒT[ƒo[	0	document			@
 WEBƒT[ƒo[	0	string	HTML_IN_CHARACTER_CODE	UTF-8	[–³Œø] HTML“ü—ÍƒLƒƒƒ‰ƒNƒ^[ƒR[ƒh
 WEBƒT[ƒo[	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[–³Œø] HTMLo—ÍƒLƒƒƒ‰ƒNƒ^[ƒR[ƒh
 
-”Ô‘g•\‘S”Ê	1	integer	next2_minutes	8	Ÿ‚Ì”Ô‘g‚ªw’è•ªˆÈ“à‚Ì”Ô‘g‚È‚ç‚ÎŸ‚ÌŸ‚Ì”Ô‘gî•ñ‚ğ•\¦ 0=æ“¾‚µ‚È‚¢
+”Ô‘g•\‘S”Ê	1	integer	next2_minutes	8	Ÿ‚ÌŸ‚Ì”Ô‘g‚ğæ“¾‚·‚é iŸ‚Ì”Ô‘g‚ªw’è•ªˆÈ“à‚Ì”Ô‘g‚È‚ç‚Îj 0=æ“¾‚µ‚È‚¢
 ”Ô‘g•\‘S”Ê	0	document			@
-”Ô‘g•\‘S”Ê	0	integer	NoUseProgramCache	0	”Ô‘g•\ƒLƒƒƒbƒVƒ…§Œä‚ğs‚¢‚½‚­‚È‚¢ê‡‚Í1‚É‚µ‚Ä‚­‚¾‚³‚¢
+”Ô‘g•\‘S”Ê	0	integer	NoUseProgramCache	0	”Ô‘g•\ƒLƒƒƒbƒVƒ…§Œä‚ğg—pi‚·‚é=0 ‚µ‚È‚¢=1j@1‚É‚·‚é‚Æ–ˆ‰ñ”Ô‘gî•ñ‚ğæ“¾‚µ‚Ü‚·
 ”Ô‘g•\‘S”Ê	0	document			@
-”Ô‘g•\‘S”Ê	0	integer	TvProgram_Force_NoRec	0	”Ô‘gî•ñ‚ğæ“¾‚Å‚«‚È‚¢ŠÂ‹«‚Åƒ`ƒƒƒ“ƒlƒ‹ˆê——‚ğ•\¦‚·‚é=1
+”Ô‘g•\‘S”Ê	0	integer	TvProgram_Force_NoRec	0	”Ô‘gî•ñ‚ğæ“¾‚Å‚«‚È‚¢ŠÂ‹«‚Åƒ_ƒ~[‚ÌTvRock‚ğ•\¦‚·‚é=1
 ”Ô‘g•\‘S”Ê	0	document			@
-”Ô‘g•\‘S”Ê	0	string	TvProgramD_sort		”Ô‘g•\‚Ì•À‚Ñ‡	w’è‚Ì–³‚¢•ú‘—‹Ç‚Íw’è‚³‚ê‚½•ú‘—‹Ç‚ÌŒã‚É•\¦‚³‚ê‚Ü‚·\n—á@TvProgramD_sort = "NHK‘‡","NHK EƒeƒŒ","“ú–{ƒeƒŒƒr","TBSƒeƒŒƒr","ƒtƒWƒeƒŒƒr","ƒeƒŒƒr’©“ú","ƒeƒŒƒr“Œ‹","TOKYO MX"\n¦•À‚Ñ‡‚Í’nƒfƒWEEDCBETvRock‹¤’Ê‚Å“K—p‚³‚ê‚Ü‚·
+”Ô‘g•\‘S”Ê	0	string400	TvProgramD_sort		”Ô‘g•\‚Ì•À‚Ñ‡	w’è‚Ì–³‚¢•ú‘—‹Ç‚Íw’è‚³‚ê‚½•ú‘—‹Ç‚ÌŒã‚É•\¦‚³‚ê‚Ü‚·\n—á@TvProgramD_sort = "NHK‘‡","NHK EƒeƒŒ","“ú–{ƒeƒŒƒr","TBSƒeƒŒƒr","ƒtƒWƒeƒŒƒr","ƒeƒŒƒr’©“ú","ƒeƒŒƒr“Œ‹","TOKYO MX"\n¦•À‚Ñ‡‚Í’nƒfƒWEEDCBETvRock‹¤’Ê‚Å“K—p‚³‚ê‚Ü‚·
 
 ”Ô‘g•\ƒf[ƒ^	1	string	TvProgramD		ƒlƒbƒg”Ô‘g•\“s“¹•{Œ§ƒR[ƒh AbemaTV:801	—á@•Ÿ‰ª•²‰ê‚Ìê‡@TvProgramD = 55,61\n‚³‚ç‚ÉA‚»‚Ì’†‚©‚ç•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼‚ğw’è‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B\n@@•Ÿ‰ª‚Ì“Á’è‹Ç‚ğœ‚­ TvProgramD_NGword = "‚q‚j‚a–ˆ“ú•ú‘—","‚e‚a‚r•Ÿ‰ª•ú‘—"\n10:–kŠC“¹iD–yj11:–kŠC“¹i”ŸŠÙj12:–kŠC“¹iˆ®ìj13:–kŠC“¹i‘ÑLj14:–kŠC“¹i‹ú˜Hj15:–kŠC“¹i–kŒ©j16:–kŠC“¹iº—–j\n22:ÂX@20:Šâè@17:‹{é@18:H“c@19:RŒ`@21:•Ÿ“‡@26:ˆïé@28:“È–Ø@25:ŒQ”n@29:é‹Ê@27:ç—t\n23:“Œ‹@24:_“Şì@31:VŠƒ@37:•xR@34:Îì@36:•Ÿˆä@32:R—œ@30:’·–ì@39:Šò•Œ@35:Ã‰ª\n33:ˆ¤’m@38:Od@45: ‰ê@41:‹“s@40:‘åã@42:•ºŒÉ@44:“Ş—Ç@43:˜a‰ÌR\n49:’¹æ@48:“‡ª@47:‰ªR@46:L“‡@50:RŒû@53:“¿“‡@52:ì@51:ˆ¤•Q@54:‚’m\n55:•Ÿ‰ª@61:²‰ê@57:’·è@56:ŒF–{@60:‘å•ª@59:‹{è@58:­™“‡@62:‰«“ê\n801:AbemaTV
-”Ô‘g•\ƒf[ƒ^	0	string	TvProgramD_NGword		ƒlƒbƒg”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼
-”Ô‘g•\ƒf[ƒ^	0	string	TvProgramD_channels		”Ô‘g•\‚Ì•ú‘—‹Ç–¼‚©‚ç.ch2‚Å‹Lq‚³‚ê‚Ä‚¢‚é•ú‘—‹Ç–¼‚Ö‚Ì•ÏŠ·
+”Ô‘g•\ƒf[ƒ^	0	string260	TvProgramD_NGword		ƒlƒbƒg”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼	i,‹æØ‚è‚Å•¡”w’è‰Âj
+”Ô‘g•\ƒf[ƒ^	0	string260	TvProgramD_channels		ƒlƒbƒg•ú‘—‹Ç–¼‚©‚ç.ch2•ú‘—‹Ç–¼‚Ö‚Ì•ÏŠ·–@‘¥	i’nƒfƒW”Ô‘g•\‚ğ•\¦‚µ‚½Û‚É©“®”»•Ê‚Å‚«‚Ä‚¢‚È‚¢‚à‚Ì‚ğ‹L“ü‚µ‚Ä‚­‚¾‚³‚¢j\n¶‘¤‚ª”Ô‘g•\‚Ì•ú‘—‹Ç–¼A‰E‘¤‚ªBonDriver.ch2‚Å‹Lq‚³‚ê‚Ä‚¢‚é•ú‘—‹Ç–¼‚Å‚·\n—á@TvProgramD_channels = "NHK‘‡:‚m‚g‚j‘‡E“Œ‹","ƒtƒWƒeƒŒƒr:ƒtƒWƒeƒŒƒrƒWƒ‡ƒ“"
 ”Ô‘g•\ƒf[ƒ^	0	document			@
-”Ô‘g•\ƒf[ƒ^	0	integer	AvemaTV_data_get_method	1	AbemaTVî•ñæ“¾æŒˆ’è•û–@	1=©“®‘I‘ğ(—Lu‚Ì•ûƒTƒCƒg—Dæ) 2=ìÒ‚ª—pˆÓ‚µ‚½ƒJƒbƒpè“ü—ÍƒTƒCƒgŒÀ’è 3=—Lu‚Ì•ûƒTƒCƒgŒÀ’è
+”Ô‘g•\ƒf[ƒ^	0	integer	AvemaTV_data_get_method	1	AbemaTVî•ñæ“¾æi1=©“®‘I‘ğ 2=‚©‚Á‚Ïèì‹ÆŒÀ’è 3=—LuƒTƒCƒgŒÀ’è)	1=©“®‘I‘ğ(—Lu‚Ì•ûƒTƒCƒg—Dæ) 2=ìÒ‚ª—pˆÓ‚µ‚½ƒJƒbƒpè“ü—ÍƒTƒCƒgŒÀ’è 3=—Lu‚Ì•ûƒTƒCƒgŒÀ’è
 ”Ô‘g•\ƒf[ƒ^	0	string	AbemaTV_CustomURL		AbemaTVî•ñæ“¾æURL	AbemaTV”Ô‘gî•ñ‚ğ©‘O‚Å—pˆÓ‚Å‚«‚é•û—pİ’èi¡‚Ì‚Æ‚±‚ëTvRemoteViewer_VB—p‚É‰ÁH‚³‚ê‚½ƒf[ƒ^ŒÀ’èj\nƒf[ƒ^Œ`®Ú×‚Í•Ê“rreadme_dev.txt“àu‘—¿_AbemaTVƒJƒXƒ^ƒ€ƒf[ƒ^Œ`®v‚Åà–¾\nURL‚Ü‚½‚Íƒtƒ@ƒCƒ‹(â‘ÎƒpƒX)‚ªw’è‚Å‚«‚Ü‚·Bw’è‚·‚é‚ÆAvemaTV_data_get_method‚Ìİ’è‚Í–³‹‚³‚ê‚Ü‚·
 ”Ô‘g•\ƒf[ƒ^	0	document			@
-”Ô‘g•\ƒf[ƒ^	0	string	TvProgram_tvrock_url		TvRock‚ÌiPhone—p”Ô‘g•\URLihttp://127.0.0.1:8969/ƒ†[ƒU[–¼/iphonej
-”Ô‘g•\ƒf[ƒ^	0	string	TvProgramTvRock_NGword		TvRock”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼
+”Ô‘g•\ƒf[ƒ^	0	string260	TvProgram_tvrock_url		TvRock‚ÌiPhone—p”Ô‘g•\URL(ƒNƒŠƒbƒN‚Å—á)	http://127.0.0.1:8969/ƒ†[ƒU[–¼/iphone\n—áF@http://127.0.0.1:8969/nobody/iphone
+”Ô‘g•\ƒf[ƒ^	0	string260	TvProgramTvRock_NGword		TvRock”Ô‘g•\‚É•\¦‚µ‚È‚¢•ú‘—‹Ç–¼
 ”Ô‘g•\ƒf[ƒ^	0	integer	TvRock_genre_ON	1	TvRockƒWƒƒƒ“ƒ‹î•ñ‚ğæ“¾‚·‚é=1 ‚µ‚È‚¢=0
-”Ô‘g•\ƒf[ƒ^	0	string	TvRock_genre_color		TVRLauncher—pƒWƒƒƒ“ƒ‹”»•ÊFƒf[ƒ^	TvRock”Ô‘g•\‚ÅƒWƒƒƒ“ƒ‹F‚ğƒJƒXƒ^ƒ}ƒCƒY‚µ‚Ä‚¢‚éê‡‚Íg—p’†‚ÌƒWƒƒƒ“ƒ‹F0`15‚Ü‚Å16ŒÂ‚ÌFƒf[ƒ^‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢B—á‚¦‚Îæ“ª‚Ìƒf[ƒ^‚ÍƒWƒƒƒ“ƒ‹0Eƒjƒ…[ƒX‚ÌF‚ğ¦‚µ‚Ä‚¢‚Ü‚·B\nŒ»İg—p’†‚ÌF‚ÍƒŒƒWƒXƒgƒŠHKEY_CURRENT_USER\Software\TvRock‚Ì‚ÌCC0`CC15‚É‹L˜^‚³‚ê‚Ä‚¢‚Ü‚·\n—áFTvRock_genre_color=#d4ffc8,#ffccef,#f0f0f0,#ffbbbb,#b6f2ff,#faffb0,#ccfcf4,#dcddff,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0
+”Ô‘g•\ƒf[ƒ^	0	string260	TvRock_genre_color		TVRLauncher—pƒWƒƒƒ“ƒ‹”»•ÊFƒf[ƒ^	TvRock”Ô‘g•\‚ÅƒWƒƒƒ“ƒ‹F‚ğƒJƒXƒ^ƒ}ƒCƒY‚µ‚Ä‚¢‚éê‡‚Íg—p’†‚ÌƒWƒƒƒ“ƒ‹F0`15‚Ü‚Å16ŒÂ‚ÌFƒf[ƒ^‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢B—á‚¦‚Îæ“ª‚Ìƒf[ƒ^‚ÍƒWƒƒƒ“ƒ‹0Eƒjƒ…[ƒX‚ÌF‚ğ¦‚µ‚Ä‚¢‚Ü‚·B\nŒ»İg—p’†‚ÌF‚ÍƒŒƒWƒXƒgƒŠHKEY_CURRENT_USER\Software\TvRock‚Ì‚ÌCC0`CC15‚É‹L˜^‚³‚ê‚Ä‚¢‚Ü‚·\n—áFTvRock_genre_color=#d4ffc8,#ffccef,#f0f0f0,#ffbbbb,#b6f2ff,#faffb0,#ccfcf4,#dcddff,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0
 ”Ô‘g•\ƒf[ƒ^	0	document			@
-”Ô‘g•\ƒf[ƒ^	0	string	TvProgram_EDCB_url		EDCB‚Ì”Ô‘g•\WEBƒCƒ“ƒ^[ƒtƒF[ƒXURLihttp://127.0.0.1:5510/api/EnumEventInfoj
-”Ô‘g•\ƒf[ƒ^	0	string	TvProgramEDCB_NGword		EDCB”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼
-”Ô‘g•\ƒf[ƒ^	0	string	TvProgramEDCB_ignore		EDCB”Ô‘g•\‚É•\¦‚Í‚·‚é‚ª”Ô‘gƒf[ƒ^‚Íæ“¾‚µ‚È‚¢•ú‘—‹Ç–¼
-”Ô‘g•\ƒf[ƒ^	0	integer	TvProgramEDCB_premium	0	EDCBƒvƒŒƒ~ƒAƒ€”Ô‘g•\‚É•\¦‚·‚é‹Çi0=‘S‚Ä 1=SPHD‚Ì‚İ 2=SPHDˆÈŠOj
+”Ô‘g•\ƒf[ƒ^	0	string260	TvProgram_EDCB_url		EDCB‚ÌWEBƒCƒ“ƒ^[ƒtƒF[ƒXURL(ƒNƒŠƒbƒN‚Å—á)	—áF@http://127.0.0.1:5510/api/EnumEventInfo
+”Ô‘g•\ƒf[ƒ^	0	string260	TvProgramEDCB_NGword		EDCB”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼	i,‹æØ‚è‚Å•¡”w’è‰Âj
+”Ô‘g•\ƒf[ƒ^	0	string180	TvProgramEDCB_ignore		EDCB”Ô‘g•\‚É•\¦‚Í‚·‚é‚ª”Ô‘gƒf[ƒ^‚Íæ“¾‚µ‚È‚¢•ú‘—‹Ç–¼
+”Ô‘g•\ƒf[ƒ^	0	integer	TvProgramEDCB_premium	0	EDCB”Ô‘g•\‚É•\¦‚·‚é‹Çi0=‘S‚Ä 1=SPƒvƒŒƒ~ƒAƒ€‚Ì‚İ 2=SPƒvƒŒƒ~ƒAƒ€ˆÈŠOj
 ”Ô‘g•\ƒf[ƒ^	0	integer	EDCB_Velmy_niisaka	0	EDCB‚Ì”Ô‘g•\‚ª•\¦‚³‚ê‚È‚¢‚Æ‚«‚ÉEDCB_Velmy_niisaka=1‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢
 ”Ô‘g•\ƒf[ƒ^	1	integer	EDCB_thru_addprogres	0	EDCB_Velmy_niisaka=1‚Å‚àEDCB”Ô‘g•\‚ª•\¦‚³‚ê‚È‚¢ê‡‚Í1
 ”Ô‘g•\ƒf[ƒ^	1	integer	EDCB_GetCh_method	0	EDCB‚ÌŠÇ—‚·‚éƒ`ƒƒƒ“ƒlƒ‹ˆê——æ“¾•û–@i0=CtrlCmdCLIg—p 1=‹Œ•û®j
 ”Ô‘g•\ƒf[ƒ^	0	document			@
-”Ô‘g•\ƒf[ƒ^	1	string	ptTimer_path		ptTimer‚ÌƒtƒHƒ‹ƒ_iC:\ptTimerj
-”Ô‘g•\ƒf[ƒ^	0	string	TvProgramptTimer_NGword		ptTimer”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼
+”Ô‘g•\ƒf[ƒ^	1	string260	ptTimer_path		ptTimer‚ÌƒtƒHƒ‹ƒ_iC:\ptTimerj
+”Ô‘g•\ƒf[ƒ^	0	string260	TvProgramptTimer_NGword		ptTimer”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼	i,‹æØ‚è‚Å•¡”w’è‰Âj
 ”Ô‘g•\ƒf[ƒ^	0	document			@
-”Ô‘g•\ƒf[ƒ^	0	string	Tvmaid_url		Tvmaid‰‘ãƒT[ƒo[‚ÌURLihttp://127.0.0.1:20000j
-”Ô‘g•\ƒf[ƒ^	0	string	TvmaidYUI_url		TvmaidEXˆÈ~‚ÌƒT[ƒo[URLihttp://127.0.0.1:20001j
-”Ô‘g•\ƒf[ƒ^	0	string	TvProgramTvmaid_NGword		Tvmaid”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼
+”Ô‘g•\ƒf[ƒ^	0	string260	Tvmaid_url		Tvmaid‰‘ãƒT[ƒo[‚ÌURL(ƒNƒŠƒbƒN‚Å—á)	—áF@http://127.0.0.1:20000
+”Ô‘g•\ƒf[ƒ^	0	string260	TvmaidYUI_url		TvmaidEXˆÈ~‚ÌƒT[ƒo[URL(ƒNƒŠƒbƒN‚Å—á)	—áF@http://127.0.0.1:20001
+”Ô‘g•\ƒf[ƒ^	0	string260	TvProgramTvmaid_NGword		Tvmaid”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼	i,‹æØ‚è‚Å•¡”w’è‰Âj
 
 HLS”zM	0	integer	MAX_STREAM_NUMBER	100	Å‘å”zMƒiƒ“ƒo[
+HLS”zM	0	integer	TvProgram_SelectUptoNum	0	”Ô‘g•\‚Å‚Ì”zMƒiƒ“ƒo[‚ğ§ŒÀ‚·‚éê‡‚ÉãŒÀ‚Ì”zMƒiƒ“ƒo[‚ğw’è(0=•W€j
 HLS”zM	0	integer	tsfile_wait	2	tsƒtƒ@ƒCƒ‹‚ªw’è”ì¬‚³‚ê‚é‚Ü‚Å”zM€”õ’†‚Æ‚·‚é
-HLS”zM	0	integer	ALLOW_IDPASS2HTML	0	ŠO•”ƒvƒŒ[ƒ„[‚ÉƒpƒXƒ[ƒh‚ğ“n‚·‚Æ‚«‚É•K—v‚Èê‡‚Í1
+HLS”zM	0	integer	ALLOW_IDPASS2HTML	0	URL“àƒpƒXƒ[ƒh•ÏŠ·@ŠO•”ƒvƒŒ[ƒ„[‚ÉƒpƒXƒ[ƒh‚ğ“n‚·‚Æ‚«‚É•K—v‚Èê‡‚Í1
 HLS”zM	0	integer	OLDTS_NODELETE	0	”zM’†‚ÉŒÃ‚¢’f•Ğƒtƒ@ƒCƒ‹ts‚ğíœ‚µ‚È‚¢‚æ‚¤‚Éi‚·‚é=1, ‚µ‚È‚¢=0)
 HLS”zM	0	integer	Allow_BonDriver4Streams	0	“¯ˆêBonDriver‚Ì•¡”ƒXƒgƒŠ[ƒ€‚Å‚Ìg—p‚ğ‹–‰Âi‚·‚é=1, ‚µ‚È‚¢=0)
 HLS”zM	0	integer	NHK_dual_mono_mode	3	ffmpegg—p‚ÌNHK‰¹ºƒ‚[ƒhi0=åE•›ŒÅ’è 1=å‰¹ºŒÅ’è 2=•›‰¹ºŒÅ’è 3=WEB‘I‘ğ® 9=VLCØ‚è‘Ö‚¦j
@@ -90,8 +94,9 @@ HLS”zM	0	document			@
 HLS”zM	0	string	UDP_PRIORITY		UDP CPU—Dæ“x(Idle,Normal,High,RealTime)
 HLS”zM	0	string	HLS_PRIORITY		HLS CPU—Dæ“x(Idle,Normal,High,RealTime)
 HLS”zM	0	document			@
-HLS”zM	0	string	openfix_BonSid		openfix_BonSid = BonDriverƒtƒ@ƒCƒ‹–¼:ˆê“I‚É‡‚í‚¹‚éƒT[ƒrƒXID(:ƒ`ƒƒƒ“ƒlƒ‹‹óŠÔ) ,‚Å‹æØ‚Á‚Ä•¡”w’è‰Â”\
-HLS”zM	0	integer	OPENFIX_WAIT	0	ƒ_ƒ~[ƒ`ƒƒƒ“ƒlƒ‹Ø‚è‘Ö‚¦‚É“ü‚ê‚éƒEƒFƒCƒg
+HLS”zM	0	string180	openfix_BonSid		OPENFIX@ƒ`ƒ…[ƒi[‰g—p‚Éˆê’U•Ê‚Ìƒ`ƒƒƒ“ƒlƒ‹‚ğŒo—R‚·‚é	openfix_BonSid = BonDriverƒtƒ@ƒCƒ‹–¼:ˆê“I‚É‡‚í‚¹‚éƒT[ƒrƒXID(:ƒ`ƒƒƒ“ƒlƒ‹‹óŠÔ)\n—áFopenfix_BonSid = BonDriver_Spinel_PT3_s0.dll:100\n—áFopenfix_BonSid = BonDriver_Spinel_PT3_s0.dll:100:1\n ,‚Å‹æØ‚Á‚Ä•¡”w’è‰Â”\
+ˆê“I‚É‡‚í‚¹‚éƒT[ƒrƒXID	:‹æØ‚è‚Åƒ`ƒƒƒ“ƒlƒ‹‹óŠÔw’è‰Â”\ ,‚Å‹æØ‚Á‚Ä•¡”w’è‰Â”\\n—áF@101@@@@@—á2F@101:0,
+HLS”zM	0	integer	OPENFIX_WAIT	0	OPENFIX@ƒ_ƒ~[ƒ`ƒƒƒ“ƒlƒ‹Ø‚è‘Ö‚¦‚É“ü‚ê‚éƒEƒFƒCƒgi•W€‚Í0j	@1.78‚Ü‚Å‚Í500 0=UDPƒAƒvƒŠ‚ª€”õo—ˆŸ‘æ
 
 HTTP”zM	0	integer	HTTPSTREAM_App	2	HTTPƒXƒgƒŠ[ƒ€Ä¶‚É‚Ç‚ÌhlsƒAƒvƒŠ‚ğg—p‚·‚é‚© 0=w’è–³‚µ 1=vlc 2=ffmpeg
 HTTP”zM	0	integer	HTTPSTREAM_VLC_port	42465	HTTPƒXƒgƒŠ[ƒ€‚ÅVLC‚ªg—p‚·‚éTCPƒ|[ƒg‚Ìn‚Ü‚è
@@ -99,26 +104,26 @@ HTTP”zM	0	integer	FFMPEG_HTTP_CUT_SECONDS	5	ffmpeg@ƒNƒ‰ƒCƒAƒ“ƒg‚©‚çØ’f‚³‚ê‚½
 HTTP”zM	1	integer	HTTPSTREAM_FFMPEG_BUFFER	32	ffmpeg@ƒoƒbƒtƒ@ * MB
 HTTP”zM	0	integer	HTTPSTREAM_METHOD	0	HTTPƒXƒgƒŠ[ƒ€óM•û–@i0=]—ˆ’Ê‚è 1=Read@•W€‚Í0j
 
-ƒtƒ@ƒCƒ‹Ä¶	1	string	VideoPath		ƒrƒfƒIƒtƒ@ƒCƒ‹‚ª‚ ‚éƒpƒXi,‹æØ‚è‚Å•¡”‰Âj
+ƒtƒ@ƒCƒ‹Ä¶	1	string380	VideoPath		ƒrƒfƒIƒtƒHƒ‹ƒ_‚ÌƒpƒX	i,‹æØ‚è‚Å•¡”‰Âj\n—áF@"D:\My Videos", "\\COM1\My Videos"
 ƒtƒ@ƒCƒ‹Ä¶	1	integer	AddSubFolder	1	ƒTƒuƒtƒHƒ‹ƒ_[‚ği0=ŠÜ‚ß‚È‚¢ 1=ŠÜ‚ß‚éj
-ƒtƒ@ƒCƒ‹Ä¶	0	string	VideoExtensions		ƒrƒfƒIƒtƒ@ƒCƒ‹ˆê——‚É•\¦‚·‚éŠg’£q‚ğw’èi,‹æØ‚è‚Å•¡”‰Âj
+ƒtƒ@ƒCƒ‹Ä¶	0	string200	VideoExtensions		ƒrƒfƒIƒtƒ@ƒCƒ‹ˆê——‚É•\¦‚·‚éŠg’£qi•W€‚Í–³w’èj	i,‹æØ‚è‚Å•¡”‰Âj\n—áF@".ts",".mp4"
 ƒtƒ@ƒCƒ‹Ä¶	0	document			@
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	VideoSeekDefault	0	ƒtƒ@ƒCƒ‹Ä¶ƒXƒ^[ƒg‚Éw’è•b”ƒV[ƒN‚·‚é
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	VideoSizeCheck	0	ƒtƒ@ƒCƒ‹ˆê——ì¬‚Éƒtƒ@ƒCƒ‹ƒTƒCƒY‚ª0‚©‚Ç‚¤‚©ŒŸ¸i1=‚·‚éj
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	TOT_get_duration	1	“®‰æ‚Ì’·‚³(•b)‚ğæ“¾i‚µ‚È‚¢=0,‚·‚é=1j
 ƒtƒ@ƒCƒ‹Ä¶	0	document			@
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	ISOPlayNEW	1	ISOÄ¶‚ğV•û®‚Åis‚¤=1j
-ƒtƒ@ƒCƒ‹Ä¶	1	string	ISO_DumpDirPath		ISOV•û®@DUMP‚·‚éƒtƒHƒ‹ƒ_Bi–³w’è‚Ìê‡‚Í%FILEROO%j‘å‚«‚È—e—Ê‚ª•K—v‚É‚È‚è‚Ü‚·j
-ƒtƒ@ƒCƒ‹Ä¶	0	integer	ISO_maxDump	2	ISOV•û®@DUMPƒf[ƒ^‚ÌÅ‘å•Û”B4GB`7GB‚ÌISO_maxDumpŒÂ•ª‚Ì‹ó‚«—e—Ê‚ª•K—v‚É‚È‚è‚Ü‚·
-ƒtƒ@ƒCƒ‹Ä¶	1	string	VLC_ISO_option		ISOÄ¶‚ÉVLC‚É—^‚¦‚é’Ç‰ÁƒIƒvƒVƒ‡ƒ“‚ğw’è‚Å‚«‚Ü‚·i‹ó”’=•W€İ’èg—pj
+ƒtƒ@ƒCƒ‹Ä¶	1	string300	ISO_DumpDirPath		ISOV•û®@DUMP‚·‚éƒtƒHƒ‹ƒ_	i–³w’è‚Ìê‡‚Í%FILEROO%j‘å‚«‚È—e—Ê‚ª•K—v‚É‚È‚è‚Ü‚·
+ƒtƒ@ƒCƒ‹Ä¶	0	integer	ISO_maxDump	2	ISOV•û®@DUMPƒf[ƒ^‚ÌÅ‘å•Û”	4GB`7GB‚ÌISO_maxDumpŒÂ•ª‚Ì‹ó‚«—e—Ê‚ª•K—v‚É‚È‚è‚Ü‚·
+ƒtƒ@ƒCƒ‹Ä¶	1	string	VLC_ISO_option		ISOÄ¶‚ÉVLC‚É—^‚¦‚é’Ç‰ÁƒIƒvƒVƒ‡ƒ“‚ğw’è‚Å‚«‚Ü‚·	i‹ó”’=•W€İ’èg—pj
 ƒtƒ@ƒCƒ‹Ä¶	0	document			@
-ƒtƒ@ƒCƒ‹Ä¶	0	string	NicoJK_path		NicoJKƒRƒƒ“ƒgƒtƒHƒ‹ƒ_
-ƒtƒ@ƒCƒ‹Ä¶	0	string	NicoConvAss_path		NicoConvAss.exe‚Ìƒtƒ‹ƒpƒX
-ƒtƒ@ƒCƒ‹Ä¶	0	integer	NicoJK_first	0	‚·‚Å‚Éu“®‰æƒtƒ@ƒCƒ‹–¼.assvƒtƒ@ƒCƒ‹‚ª‘¶İ‚µ‚Ä‚¢‚éê‡‚Å‚àNicoJKƒtƒ@ƒCƒ‹‚ğ—Dæi‚·‚é=1 ‚µ‚È‚¢=0)
-ƒtƒ@ƒCƒ‹Ä¶	0	integer	Nico_delay	0	NicoJKƒRƒƒ“ƒgÄ¶‚É‚¨‚¯‚é”÷–­‚ÈƒYƒŒ‚ğC³i•bjiƒRƒƒ“ƒg‚ğ‘‚ß‚½‚¢‚Æ‚«‚Íƒ}ƒCƒiƒX’lA’x‚­‚µ‚½‚¢‚Æ‚«‚Íƒvƒ‰ƒX’lj
-ƒtƒ@ƒCƒ‹Ä¶	0	integer	make_chapter	0	assƒtƒ@ƒCƒ‹“à‚Ì•¶š—ñi·À„ª,OP,A,B,C,EDj‚ªŒ»‚ê‚é’n“_‚Éƒ`ƒƒƒvƒ^[‚ği‘Å‚Â=1,‘Å‚½‚È‚¢=0j
+ƒtƒ@ƒCƒ‹Ä¶	0	string380	NicoJK_path		NicoJKƒRƒƒ“ƒgƒtƒHƒ‹ƒ_
+ƒtƒ@ƒCƒ‹Ä¶	0	string380	NicoConvAss_path		NicoConvAss.exeƒpƒX
+ƒtƒ@ƒCƒ‹Ä¶	0	integer	NicoJK_first	0	‚·‚Å‚Éu“®‰æƒtƒ@ƒCƒ‹–¼.assvƒtƒ@ƒCƒ‹‚ª‘¶İ‚µ‚Ä‚¢‚éê‡‚Å‚àNicoJKƒtƒ@ƒCƒ‹‚ğ—Dæ‚·‚é=1
+ƒtƒ@ƒCƒ‹Ä¶	0	integer	Nico_delay	0	NicoJKƒRƒƒ“ƒgÄ¶‚É‚¨‚¯‚é”÷–­‚ÈƒYƒŒ‚ğC³i•bj	iƒRƒƒ“ƒg‚ğ‘‚ß‚½‚¢‚Æ‚«‚Íƒ}ƒCƒiƒX’lA’x‚­‚µ‚½‚¢‚Æ‚«‚Íƒvƒ‰ƒX’lj
+ƒtƒ@ƒCƒ‹Ä¶	0	integer	make_chapter	0	assƒtƒ@ƒCƒ‹“à‚Ì•¶š—ñi·À„ª,OP,A,B,C,EDj‚ªŒ»‚ê‚é’n“_‚Éƒ`ƒƒƒvƒ^[‚ğ‘Å‚Â=1
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	chapter_bufsec	3	Œ©‚Â‚©‚Á‚½’n“_‚Ì‰½•b‘O‚Éƒ`ƒƒƒvƒ^[‚ğ‘Å‚Â‚©
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	NicoConvAss_copy2NicoJK	1	NicoConvAss‚Åass‚ğì¬‚·‚é‚Â‚¢‚Å‚ÉNicoJKƒtƒHƒ‹ƒ_\jk`‚Éass‚ğì¬i‚µ‚È‚¢=0 ‚·‚é=1j
 ƒtƒ@ƒCƒ‹Ä¶	0	document			@
-ƒtƒ@ƒCƒ‹Ä¶	0	string	PipeRun_ffmpeg_option		PipeRun‚Éffmpeg‚Ö“n‚·ƒpƒ‰ƒ[ƒ^
+ƒtƒ@ƒCƒ‹Ä¶	0	string	PipeRun_ffmpeg_option		PipeRun‚Éffmpeg‚Ö“n‚·ƒpƒ‰ƒ[ƒ^	–³w’è‚Ìê‡‚Í«‚Éİ’è‚³‚ê‚Ü‚·B%VIDEOFILE%‚Ì‚İ•ÏŠ·‚³‚ê‚Ü‚·\n-i %VIDEOFILE% -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1
 

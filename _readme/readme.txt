@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.75
+TvRemoteViewer_VB v2.76
 
 
 
@@ -787,6 +787,8 @@ TvRemoteViewer_VB v2.75
 	2.75	TvRemoteViewer_VB.ini.dataのMIME_TYPE_DEFAULTの説明文が間違っていたので修正
 			TvRemoteViewer_VB.ini.dataに項目MIME_TYPEが記載されていなかったので追加
 			上記記載ミスがiniに記載されている場合は「ini 更新&適用」ボタンが押された際に修正するようにした
+	2.76	番組表内の時刻表示を統一した(H:mm）
+			ini設定画面レイアウトを変更して見やすくし説明文等を修正した
 
 
 

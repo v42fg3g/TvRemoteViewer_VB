@@ -1124,8 +1124,8 @@ Module モジュール_番組表
                     End If
                     r(j).stationDispName = Trim(r(j).stationDispName)
                     r(j).stationDispName = Trim(delete_tag(r(j).stationDispName))
-                    r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp)))
-                    r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp)))
+                    r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp))))
+                    r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp))))
                     r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
                     Dim sp3 As Integer = html.IndexOf("<font color=", sp)
                     r(j).programContent = escape_program_str(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
@@ -1169,8 +1169,8 @@ Module モジュール_番組表
                         j = r.Length
                         ReDim Preserve r(j)
                         r(j).stationDispName = r(j - 1).stationDispName
-                        r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3)))
-                        r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3)))
+                        r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3))))
+                        r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3))))
                         r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                         r(j).programContent = ""
                         r(j).sid = r(j - 1).sid
@@ -1206,8 +1206,8 @@ Module モジュール_番組表
                             j = r.Length
                             ReDim Preserve r(j)
                             r(j).stationDispName = r(j - 1).stationDispName
-                            r(j).startDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3)))
-                            r(j).endDateTime = Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3)))
+                            r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3))))
+                            r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3))))
                             r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                             r(j).programContent = ""
                             r(j).sid = r(j - 1).sid
@@ -1228,6 +1228,23 @@ Module モジュール_番組表
             log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)
         End Try
 
+        Return r
+    End Function
+
+    'tvrock番組表の時刻をH:mmで返す
+    Private Function fix_tvrock_d_str(ByVal s As String) As String
+        Dim r As String = ""
+        Try
+            s = Trim(s.Substring(s.IndexOf(" ")))
+            Dim d() As String = s.Split(":")
+            If d.Length = 2 Then
+                r = "1970/01/01 " & Val(Trim(d(0))).ToString.PadLeft(2, " "c) & ":" & Val(Trim(d(1))).ToString.PadLeft(2, "0"c)
+            Else
+                r = s
+            End If
+        Catch ex As Exception
+            r = s
+        End Try
         Return r
     End Function
 
@@ -2498,11 +2515,11 @@ Module モジュール_番組表
                                         '開始時間
                                         Dim ystart As Integer = Val(youso(2))
                                         Dim ystartDate As DateTime = unix2time(Val(youso(2)))
-                                        Dim ystart_time As String = ystartDate.ToString("HH:mm")
+                                        Dim ystart_time As String = ystartDate.ToString("H:mm")
                                         '終了時間
                                         Dim yend As Integer = Val(youso(2)) + Val(youso(3))
                                         Dim yendDate As DateTime = DateAdd(DateInterval.Second, Val(youso(3)), ystartDate)
-                                        Dim yend_time As String = yendDate.ToString("HH:mm")
+                                        Dim yend_time As String = yendDate.ToString("H:mm")
 
                                         '放送局名
                                         Dim station As String
@@ -3270,11 +3287,11 @@ Module モジュール_番組表
                             'ch_list()にsidが登録されていれば
                             '録画開始時間
                             Dim ystart_day As String = ystartDate.ToShortDateString
-                            Dim ystart_time As String = ystartDate.ToString("HH:mm")
+                            Dim ystart_time As String = ystartDate.ToString("H:mm")
                             '録画終了時間
                             Dim yend As Integer = ystart + duration
                             Dim yendDate As DateTime = unix2time(yend)
-                            Dim yend_time As String = yendDate.ToString("HH:mm")
+                            Dim yend_time As String = yendDate.ToString("H:mm")
                             '録画時間
                             Dim delta As Integer = duration
                             Dim deltastr_time As String = Int(delta / (60 * 60)).ToString.PadLeft(2, "0")
@@ -3437,11 +3454,11 @@ Module モジュール_番組表
                             'ch_list()にsidが登録されていれば
                             '録画開始時間
                             Dim ystart_day As String = ystartDate.ToShortDateString
-                            Dim ystart_time As String = ystartDate.ToString("HH:mm")
+                            Dim ystart_time As String = ystartDate.ToString("H:mm")
                             '録画終了時間
                             Dim yend As Integer = ystart + duration
                             Dim yendDate As DateTime = unix2time(yend)
-                            Dim yend_time As String = yendDate.ToString("HH:mm")
+                            Dim yend_time As String = yendDate.ToString("H:mm")
                             '録画時間
                             Dim delta As Integer = duration
                             Dim deltastr_time As String = Int(delta / (60 * 60)).ToString.PadLeft(2, "0")

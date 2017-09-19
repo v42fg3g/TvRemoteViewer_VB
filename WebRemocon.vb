@@ -1827,11 +1827,11 @@ Class WebRemocon
         End If
         log1write("ISO再生用 DUMPフォルダとして" & ISO_DumpDirPath & "を設定しました")
         'ISO用サムネイルフォルダ
-        If ISO_ThumbPath.length = 0 Or folder_exist(ISO_ThumbPath) <= 0 Then
-            log1write("DVD用サムネイルフォルダが指定されていないか見つかりません（%FILEROOT%が使用されます）")
-            ISO_ThumbPath = Me._fileroot
-        End If
-        log1write("ISO再生用 サムネイルフォルダとして" & ISO_ThumbPath & "を設定しました")
+        'If ISO_ThumbPath.length = 0 Or folder_exist(ISO_ThumbPath) <= 0 Then
+        'log1write("DVD用サムネイルフォルダが指定されていないか見つかりません（%FILEROOT%が使用されます）")
+        'ISO_ThumbPath = Me._fileroot
+        'End If
+        'log1write("ISO再生用 サムネイルフォルダとして" & ISO_ThumbPath & "を設定しました")
         'ISO再生可能かチェック
         If mplayer4ISOPath.Length > 0 Then
             'mplayerはOK
