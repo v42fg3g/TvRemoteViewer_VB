@@ -115,7 +115,7 @@ HTTP配信	0	integer	HTTPSTREAM_METHOD	0	HTTPストリーム受信方法（0=従来通り 1=Read
 ファイル再生	0	integer	ISOPlayNEW	1	ISO再生を新方式で（行う=1）
 ファイル再生	1	string300	ISO_DumpDirPath		ISO新方式　DUMPするフォルダ	（無指定の場合は%FILEROO%）大きな容量が必要になります
 ファイル再生	0	integer	ISO_maxDump	2	ISO新方式　DUMPデータの最大保持数	4GB～7GBのISO_maxDump個分の空き容量が必要になります
-ファイル再生	1	string	VLC_ISO_option		ISO再生時にVLCに与える追加オプションを指定できます	（空白=標準設定使用）
+ファイル再生	1	string200	VLC_ISO_option		ISO再生時にVLCに与える追加オプションを指定できます	（空白=標準設定使用）
 ファイル再生	0	document			　
 ファイル再生	0	string380	NicoJK_path		NicoJKコメントフォルダ
 ファイル再生	0	string380	NicoConvAss_path		NicoConvAss.exeパス
@@ -125,5 +125,5 @@ HTTP配信	0	integer	HTTPSTREAM_METHOD	0	HTTPストリーム受信方法（0=従来通り 1=Read
 ファイル再生	0	integer	chapter_bufsec	3	見つかった地点の何秒前にチャプターを打つか
 ファイル再生	0	integer	NicoConvAss_copy2NicoJK	1	NicoConvAssでassを作成するついでにNicoJKフォルダ\jk～にassを作成（しない=0 する=1）
 ファイル再生	0	document			　
-ファイル再生	0	string	PipeRun_ffmpeg_option		PipeRun時にffmpegへ渡すパラメータ	無指定の場合は↓に設定されます。%VIDEOFILE%のみ変換されます\n-i %VIDEOFILE% -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1
+ファイル再生	0	string200	PipeRun_ffmpeg_option		PipeRun時にffmpegへ渡すパラメータ	無指定の場合は↓に設定されます。%VIDEOFILE%のみ変換されます\n-i %VIDEOFILE% -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1
 
