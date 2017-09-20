@@ -1928,6 +1928,7 @@ Public Class Form1
     'タブにini要素を追加
     Private iniLabel1() As System.Windows.Forms.Label
     Private iniTextbox() As System.Windows.Forms.TextBox
+    Private iniButton1() As System.Windows.Forms.Button
     Private Sub ini_init_tab()
         Dim i As Integer = 0
         If ini_array IsNot Nothing And ini_genre IsNot Nothing Then
@@ -1938,11 +1939,18 @@ Public Class Form1
 
             Me.iniLabel1 = New System.Windows.Forms.Label(ini_array.Length - 1) {}
             Me.iniTextbox = New System.Windows.Forms.TextBox(ini_array.Length - 1) {}
+            Me.iniButton1 = New System.Windows.Forms.Button(ini_array.Length - 1) {}
 
             Me.SuspendLayout()
             For i = 0 To ini_array.Length - 1
                 Dim iniTextbox_leftmove As Integer = 0
                 Dim label_width_plus As Integer = 0
+                'button1
+                Me.iniButton1(i) = New System.Windows.Forms.Button
+                Me.iniButton1(i).Visible = False
+                Me.iniButton1(i).Name = "Button1_-" & ini_array(i).name & "_-" & ini_array(i).value_type
+                Me.iniButton1(i).Text = ".."
+                Me.iniButton1(i).Size = New System.Drawing.Size(20, 20)
                 'textbox
                 Me.iniTextbox(i) = New System.Windows.Forms.TextBox
                 Me.iniTextbox(i).Name = "Textbox_-" & ini_array(i).name
@@ -1961,6 +1969,32 @@ Public Class Form1
                             If iniTextbox_leftmove <= 0 Then iniTextbox_leftmove = 0
                         End If
                         Me.iniTextbox(i).Size = New System.Drawing.Size(120 + iniTextbox_leftmove, 20)
+                    ElseIf ini_array(i).value_type.IndexOf("file") = 0 Then
+                        Dim vtype As String = ini_array(i).value_type
+                        Dim mleft As Integer = 0
+                        Dim ext As String = ""
+                        Dim d() As String = vtype.Split("_")
+                        If d.Length = 2 Then
+                            vtype = Trim(d(0))
+                            ext = Trim(d(1))
+                        End If
+                        Dim w As Integer = Val(vtype.Replace("file", ""))
+                        If w > 0 Then
+                            iniTextbox_leftmove = w - 120
+                            If iniTextbox_leftmove <= 0 Then iniTextbox_leftmove = 0
+                        End If
+                        Me.iniTextbox(i).Size = New System.Drawing.Size(120 + iniTextbox_leftmove - 22, 20)
+                        Me.iniButton1(i).Visible = True
+                        AddHandler Me.iniButton1(i).Click, AddressOf Me.ini_Dialog_file_folder
+                    ElseIf ini_array(i).value_type.IndexOf("folder") = 0 Then
+                        Dim w As Integer = Val(ini_array(i).value_type.Replace("folders", "").Replace("folder", ""))
+                        If w > 0 Then
+                            iniTextbox_leftmove = w - 120
+                            If iniTextbox_leftmove <= 0 Then iniTextbox_leftmove = 0
+                        End If
+                        Me.iniTextbox(i).Size = New System.Drawing.Size(120 + iniTextbox_leftmove - 22, 20)
+                        Me.iniButton1(i).Visible = True
+                        AddHandler Me.iniButton1(i).Click, AddressOf Me.ini_Dialog_file_folder
                     Else
                         Me.iniTextbox(i).Size = New System.Drawing.Size(120, 20)
                     End If
@@ -2004,36 +2038,60 @@ Public Class Form1
                 End If
                 Select Case ini_array(i).genre
                     Case "WEBサーバー"
+                        If Me.iniButton1(i).Visible = True Then
+                            Me.iniButton1(i).Location = New Point(490, y(2))
+                            TabPage2.Controls.Add(Me.iniButton1(i))
+                        End If
                         Me.iniLabel1(i).Location = New Point(x1, y(2) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(2))
                         y(2) += h1
                         TabPage2.Controls.Add(Me.iniTextbox(i))
                         TabPage2.Controls.Add(Me.iniLabel1(i))
                     Case "番組表全般"
+                        If Me.iniButton1(i).Visible = True Then
+                            Me.iniButton1(i).Location = New Point(490, y(3))
+                            TabPage3.Controls.Add(Me.iniButton1(i))
+                        End If
                         Me.iniLabel1(i).Location = New Point(x1, y(3) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(3))
                         y(3) += h1
                         TabPage3.Controls.Add(Me.iniTextbox(i))
                         TabPage3.Controls.Add(Me.iniLabel1(i))
                     Case "番組表データ"
+                        If Me.iniButton1(i).Visible = True Then
+                            Me.iniButton1(i).Location = New Point(490, y(4))
+                            TabPage4.Controls.Add(Me.iniButton1(i))
+                        End If
                         Me.iniLabel1(i).Location = New Point(x1, y(4) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(4))
                         y(4) += h1
                         TabPage4.Controls.Add(Me.iniTextbox(i))
                         TabPage4.Controls.Add(Me.iniLabel1(i))
                     Case "HLS配信"
+                        If Me.iniButton1(i).Visible = True Then
+                            Me.iniButton1(i).Location = New Point(490, y(5))
+                            TabPage5.Controls.Add(Me.iniButton1(i))
+                        End If
                         Me.iniLabel1(i).Location = New Point(x1, y(5) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(5))
                         y(5) += h1
                         TabPage5.Controls.Add(Me.iniTextbox(i))
                         TabPage5.Controls.Add(Me.iniLabel1(i))
                     Case "HTTP配信"
+                        If Me.iniButton1(i).Visible = True Then
+                            Me.iniButton1(i).Location = New Point(490, y(6))
+                            TabPage6.Controls.Add(Me.iniButton1(i))
+                        End If
                         Me.iniLabel1(i).Location = New Point(x1, y(6) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(6))
                         y(6) += h1
                         TabPage6.Controls.Add(Me.iniTextbox(i))
                         TabPage6.Controls.Add(Me.iniLabel1(i))
                     Case "ファイル再生"
+                        If Me.iniButton1(i).Visible = True Then
+                            Me.iniButton1(i).Location = New Point(490, y(7))
+                            TabPage7.Controls.Add(Me.iniButton1(i))
+                        End If
                         Me.iniLabel1(i).Location = New Point(x1, y(7) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(7))
                         y(7) += h1
@@ -2041,6 +2099,10 @@ Public Class Form1
                         TabPage7.Controls.Add(Me.iniLabel1(i))
                     Case Else
                         'Case "全般"
+                        If Me.iniButton1(i).Visible = True Then
+                            Me.iniButton1(i).Location = New Point(490, y(1))
+                            TabPage1.Controls.Add(Me.iniButton1(i))
+                        End If
                         Me.iniLabel1(i).Location = New Point(x1, y(1) + y1)
                         Me.iniTextbox(i).Location = New Point(x2, y(1))
                         y(1) += h1
@@ -2050,6 +2112,89 @@ Public Class Form1
             Next
             Me.ResumeLayout(False)
         End If
+    End Sub
+
+    'ボタンが押されたら
+    Private Sub ini_Dialog_file_folder(ByVal sender As Object, ByVal e As EventArgs)
+        Try
+            Dim name As String = (CType(sender, System.Windows.Forms.Button).Name).Replace("Button1_-", "")
+            Dim d() As String = Split(name, "_-")
+            If d.Length = 2 Then
+                '現在の値を取得
+                Dim textbox_name As String = "Textbox_-" & Trim(d(0))
+                Dim cs As Control() = Me.Controls.Find(textbox_name, True)
+                Dim value As String = ""
+                If cs.Length > 0 Then
+                    value = CType(cs(0), TextBox).Text.ToString
+                End If
+                'ダイアログ表示
+                If Trim(d(1)).IndexOf("file") = 0 Then
+                    DisplayOpenFileDialog("Textbox_-" & Trim(d(0)), value)
+                ElseIf Trim(d(1)).IndexOf("folders") = 0 Then
+                    DisplayFolderBrowserDialog("Textbox_-" & Trim(d(0)), value, 1)
+                ElseIf Trim(d(1)).IndexOf("folder") = 0 Then
+                    DisplayFolderBrowserDialog("Textbox_-" & Trim(d(0)), value, 0)
+                End If
+            End If
+        Catch ex As Exception
+            log1write("【エラー】ini設定内ボタンクリック処理中にエラーが発生しました" & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub DisplayOpenFileDialog(ByVal name As String, ByVal value As String)
+        Try
+            Dim openFile As New System.Windows.Forms.OpenFileDialog()
+            openFile.DefaultExt = "exe"
+            openFile.Filter = "(*.exe)|*.exe"
+            If value.Length > 0 Then
+                openFile.InitialDirectory = Path.GetDirectoryName(value)
+            Else
+                openFile.InitialDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+            End If
+            openFile.ShowDialog()
+            If openFile.FileNames.Length > 0 Then
+                Dim filename As String
+                For Each filename In openFile.FileNames
+                    Dim cs As Control() = Me.Controls.Find(name, True)
+                    If cs.Length > 0 Then
+                        CType(cs(0), TextBox).Text = filename
+                        Exit For
+                    End If
+                Next
+            End If
+        Catch ex As Exception
+            log1write("【エラー】ファイル選択ダイアログ表示中にエラーが発生しました。" & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub DisplayFolderBrowserDialog(ByVal name As String, ByVal value As String, ByVal a As Integer)
+        Try
+            Dim openFolder As New System.Windows.Forms.FolderBrowserDialog()
+            openFolder.RootFolder = Environment.SpecialFolder.Desktop
+            openFolder.SelectedPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+            If value.Length > 0 Then
+                Dim d() As String = value.Split(",")
+                If d.Length > 0 Then
+                    Try
+                        openFolder.SelectedPath = d(d.Length - 1)
+                    Catch ex2 As Exception
+                    End Try
+                End If
+            End If
+            'ダイアログを表示する
+            If openFolder.ShowDialog(Me) = DialogResult.OK Then
+                Dim cs As Control() = Me.Controls.Find(name, True)
+                If cs.Length > 0 Then
+                    If a = 0 Or Trim(value).Length = 0 Then
+                        CType(cs(0), TextBox).Text = openFolder.SelectedPath
+                    ElseIf ("," & Trim(value) & ",").IndexOf(openFolder.SelectedPath) < 0 Then
+                        CType(cs(0), TextBox).Text &= "," & openFolder.SelectedPath
+                    End If
+                End If
+            End If
+        Catch ex As Exception
+            log1write("【エラー】フォルダ選択ダイアログ表示中にエラーが発生しました。" & ex.Message)
+        End Try
     End Sub
 
     Private Sub iniTextbox_changed(ByVal sender As Object, ByVal e As EventArgs)

@@ -3,14 +3,14 @@
 ‘S”Ê	0	document			HLSƒAƒvƒŠ‚ğŒÂ•Êw’è‚Åg—p‚·‚éê‡‚ÍŠeƒAƒvƒŠ‚Ìexe‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢
 ‘S”Ê	0	document			“Á‚ÉƒTƒ€ƒlƒCƒ‹‹@”\‚ğg—p‚·‚éê‡‚Í•K‚¸exepath_ffmpeg‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢
 ‘S”Ê	0	document			—á@D:\TvRemoteViewer\ffmpeg\bin\ffmpeg.exe
-‘S”Ê	0	string400	exepath_ffmpeg		ffmpegƒpƒX
-‘S”Ê	0	string400	exepath_VLC		VLCƒpƒX
-‘S”Ê	0	string400	exepath_QSVEnc		QSVEncCƒpƒX
-‘S”Ê	0	string400	exepath_NVEnc		NVEncCƒpƒX
-‘S”Ê	0	string400	exepath_ISO_VLC		ISO—pVLCƒpƒX
-‘S”Ê	0	string400	exepath_mplayer		mplayerƒpƒX
-‘S”Ê	0	string300	RecTask_SPHD		SPƒvƒŒƒ~ƒAƒ€‹’®‚Ég—p‚·‚éRecTask
-‘S”Ê	0	string300	BS1_hlsApp		NHK BSÄ¶‚Ì‚İg—p‚·‚éVLCƒpƒX
+‘S”Ê	0	file400	exepath_ffmpeg		ffmpegƒpƒX
+‘S”Ê	0	file400	exepath_VLC		VLCƒpƒX
+‘S”Ê	0	file400	exepath_QSVEnc		QSVEncCƒpƒX
+‘S”Ê	0	file400	exepath_NVEnc		NVEncCƒpƒX
+‘S”Ê	0	file400	exepath_ISO_VLC		ISO—pVLCƒpƒX
+‘S”Ê	0	file400	exepath_mplayer		mplayerƒpƒX
+‘S”Ê	0	file300	RecTask_SPHD		SPƒvƒŒƒ~ƒAƒ€‹’®‚Ég—p‚·‚éRecTask
+‘S”Ê	0	file300	BS1_hlsApp		NHK BSÄ¶‚Ì‚İg—p‚·‚éVLCƒpƒX
 ‘S”Ê	0	document			@
 ‘S”Ê	0	integer	Stop_RecTask_at_StartEnd	1	‹N“®EI—¹E‘S’â~‚ÉRecTask‚ğ–¼‘Ow’è‚Å’â~i‚µ‚È‚¢=0 ‚·‚é=1j
 ‘S”Ê	0	integer	Stop_ffmpeg_at_StartEnd	1	‹N“®EI—¹E‘S’â~‚Éffmpeg‚ğ–¼‘Ow’è‚Å’â~i‚µ‚È‚¢=0 ‚·‚é=1j
@@ -19,7 +19,7 @@
 ‘S”Ê	0	integer	Stop_NVEnc_at_StartEnd	1	‹N“®EI—¹E‘S’â~‚ÉNVEncC‚ğ–¼‘Ow’è‚Å’â~i‚µ‚È‚¢=0 ‚·‚é=1j
 ‘S”Ê	0	document			@
 ‘S”Ê	0	integer	log_size	30000	ƒƒO‚ÌÅ‘å•¶š”
-‘S”Ê	0	string200	log_path	TvRemoteViewer_VB.log	I—¹‚ÌƒƒO•Û‘¶ƒtƒ@ƒCƒ‹–¼(â‘ÎƒpƒX‰Â) ‹ó”’=•Û‘¶‚µ‚È‚¢
+‘S”Ê	0	file200	log_path	TvRemoteViewer_VB.log	I—¹‚ÌƒƒO•Û‘¶ƒtƒ@ƒCƒ‹–¼(â‘ÎƒpƒX‰Â) ‹ó”’=•Û‘¶‚µ‚È‚¢
 ‘S”Ê	0	document			@
 
 WEBƒT[ƒo[	0	integer	TVRemoteFilesNEW	1	TvRemoteFilesV‰æ–Ê„ˆÚ‚ğg—p‚·‚é i•W€‚Í1@TvRemoteFiles–¢g—p‚Ìê‡‚Í0j	‹’®ŠJn‚ªƒXƒ€[ƒY‚©‚Â‚‘¬‚É‚È‚è‚Ü‚·
@@ -71,7 +71,7 @@ WEBƒT[ƒo[	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[–³Œø] HTMLo—ÍƒLƒƒƒ‰ƒNƒ^[ƒR
 ”Ô‘g•\ƒf[ƒ^	1	integer	EDCB_thru_addprogres	0	EDCB_Velmy_niisaka=1‚Å‚àEDCB”Ô‘g•\‚ª•\¦‚³‚ê‚È‚¢ê‡‚Í1
 ”Ô‘g•\ƒf[ƒ^	1	integer	EDCB_GetCh_method	0	EDCB‚ÌŠÇ—‚·‚éƒ`ƒƒƒ“ƒlƒ‹ˆê——æ“¾•û–@i0=CtrlCmdCLIg—p 1=‹Œ•û®j
 ”Ô‘g•\ƒf[ƒ^	0	document			@
-”Ô‘g•\ƒf[ƒ^	1	string260	ptTimer_path		ptTimer‚ÌƒtƒHƒ‹ƒ_iC:\ptTimerj
+”Ô‘g•\ƒf[ƒ^	1	folder260	ptTimer_path		ptTimer‚ÌƒtƒHƒ‹ƒ_iC:\ptTimerj
 ”Ô‘g•\ƒf[ƒ^	0	string260	TvProgramptTimer_NGword		ptTimer”Ô‘g•\‚É•\¦‚µ‚½‚­‚È‚¢•ú‘—‹Ç–¼	i,‹æØ‚è‚Å•¡”w’è‰Âj
 ”Ô‘g•\ƒf[ƒ^	0	document			@
 ”Ô‘g•\ƒf[ƒ^	0	string260	Tvmaid_url		Tvmaid‰‘ãƒT[ƒo[‚ÌURL(ƒNƒŠƒbƒN‚Å—á)	—áF@http://127.0.0.1:20000
@@ -104,7 +104,7 @@ HTTP”zM	0	integer	FFMPEG_HTTP_CUT_SECONDS	5	ffmpeg@ƒNƒ‰ƒCƒAƒ“ƒg‚©‚çØ’f‚³‚ê‚½
 HTTP”zM	1	integer	HTTPSTREAM_FFMPEG_BUFFER	32	ffmpeg@ƒoƒbƒtƒ@ * MB
 HTTP”zM	0	integer	HTTPSTREAM_METHOD	0	HTTPƒXƒgƒŠ[ƒ€óM•û–@i0=]—ˆ’Ê‚è 1=Read@•W€‚Í0j
 
-ƒtƒ@ƒCƒ‹Ä¶	1	string380	VideoPath		ƒrƒfƒIƒtƒHƒ‹ƒ_‚ÌƒpƒX	i,‹æØ‚è‚Å•¡”‰Âj\n—áF@"D:\My Videos", "\\COM1\My Videos"
+ƒtƒ@ƒCƒ‹Ä¶	1	folders380	VideoPath		ƒrƒfƒIƒtƒHƒ‹ƒ_‚ÌƒpƒX	i,‹æØ‚è‚Å•¡”‰Âj\n—áF@"D:\My Videos", "\\COM1\My Videos"
 ƒtƒ@ƒCƒ‹Ä¶	1	integer	AddSubFolder	1	ƒTƒuƒtƒHƒ‹ƒ_[‚ği0=ŠÜ‚ß‚È‚¢ 1=ŠÜ‚ß‚éj
 ƒtƒ@ƒCƒ‹Ä¶	0	string200	VideoExtensions		ƒrƒfƒIƒtƒ@ƒCƒ‹ˆê——‚É•\¦‚·‚éŠg’£qi•W€‚Í–³w’èj	i,‹æØ‚è‚Å•¡”‰Âj\n—áF@".ts",".mp4"
 ƒtƒ@ƒCƒ‹Ä¶	0	document			@
@@ -113,12 +113,12 @@ HTTP”zM	0	integer	HTTPSTREAM_METHOD	0	HTTPƒXƒgƒŠ[ƒ€óM•û–@i0=]—ˆ’Ê‚è 1=Read
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	TOT_get_duration	1	“®‰æ‚Ì’·‚³(•b)‚ğæ“¾i‚µ‚È‚¢=0,‚·‚é=1j
 ƒtƒ@ƒCƒ‹Ä¶	0	document			@
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	ISOPlayNEW	1	ISOÄ¶‚ğV•û®‚Åis‚¤=1j
-ƒtƒ@ƒCƒ‹Ä¶	1	string300	ISO_DumpDirPath		ISOV•û®@DUMP‚·‚éƒtƒHƒ‹ƒ_	i–³w’è‚Ìê‡‚Í%FILEROO%j‘å‚«‚È—e—Ê‚ª•K—v‚É‚È‚è‚Ü‚·
+ƒtƒ@ƒCƒ‹Ä¶	1	folder300	ISO_DumpDirPath		ISOV•û®@DUMP‚·‚éƒtƒHƒ‹ƒ_	i–³w’è‚Ìê‡‚Í%FILEROO%j‘å‚«‚È—e—Ê‚ª•K—v‚É‚È‚è‚Ü‚·
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	ISO_maxDump	2	ISOV•û®@DUMPƒf[ƒ^‚ÌÅ‘å•Û”	4GB`7GB‚ÌISO_maxDumpŒÂ•ª‚Ì‹ó‚«—e—Ê‚ª•K—v‚É‚È‚è‚Ü‚·
 ƒtƒ@ƒCƒ‹Ä¶	1	string200	VLC_ISO_option		ISOÄ¶‚ÉVLC‚É—^‚¦‚é’Ç‰ÁƒIƒvƒVƒ‡ƒ“‚ğw’è‚Å‚«‚Ü‚·	i‹ó”’=•W€İ’èg—pj
 ƒtƒ@ƒCƒ‹Ä¶	0	document			@
-ƒtƒ@ƒCƒ‹Ä¶	0	string380	NicoJK_path		NicoJKƒRƒƒ“ƒgƒtƒHƒ‹ƒ_
-ƒtƒ@ƒCƒ‹Ä¶	0	string380	NicoConvAss_path		NicoConvAss.exeƒpƒX
+ƒtƒ@ƒCƒ‹Ä¶	0	folder380	NicoJK_path		NicoJKƒRƒƒ“ƒgƒtƒHƒ‹ƒ_
+ƒtƒ@ƒCƒ‹Ä¶	0	file380	NicoConvAss_path		NicoConvAss.exeƒpƒX
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	NicoJK_first	0	‚·‚Å‚Éu“®‰æƒtƒ@ƒCƒ‹–¼.assvƒtƒ@ƒCƒ‹‚ª‘¶İ‚µ‚Ä‚¢‚éê‡‚Å‚àNicoJKƒtƒ@ƒCƒ‹‚ğ—Dæ‚·‚é=1
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	Nico_delay	0	NicoJKƒRƒƒ“ƒgÄ¶‚É‚¨‚¯‚é”÷–­‚ÈƒYƒŒ‚ğC³i•bj	iƒRƒƒ“ƒg‚ğ‘‚ß‚½‚¢‚Æ‚«‚Íƒ}ƒCƒiƒX’lA’x‚­‚µ‚½‚¢‚Æ‚«‚Íƒvƒ‰ƒX’lj
 ƒtƒ@ƒCƒ‹Ä¶	0	integer	make_chapter	0	assƒtƒ@ƒCƒ‹“à‚Ì•¶š—ñi·À„ª,OP,A,B,C,EDj‚ªŒ»‚ê‚é’n“_‚Éƒ`ƒƒƒvƒ^[‚ğ‘Å‚Â=1
