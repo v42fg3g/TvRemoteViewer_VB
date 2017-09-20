@@ -1987,6 +1987,9 @@ Public Class Form1
                         Me.iniButton1(i).Visible = True
                         AddHandler Me.iniButton1(i).Click, AddressOf Me.ini_Dialog_file_folder
                     ElseIf ini_array(i).value_type.IndexOf("folder") = 0 Then
+                        If ini_array(i).value_type.IndexOf("folders") = 0 Then
+                            Me.iniButton1(i).Text = "+"
+                        End If
                         Dim w As Integer = Val(ini_array(i).value_type.Replace("folders", "").Replace("folder", ""))
                         If w > 0 Then
                             iniTextbox_leftmove = w - 120

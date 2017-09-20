@@ -1,7 +1,7 @@
 全般	0	integer	close2min	0	×ボタン動作　1=最小化させる 2=最小化＆Alt+Tabに非表示
 全般	0	document			　
 全般	0	document			HLSアプリを個別指定で使用する場合は各アプリのexeを指定してください
-全般	0	document			特にサムネイル機能を使用する場合は必ずexepath_ffmpegを指定してください
+全般	0	document			特にサムネイル機能を使用する場合は必ずffmpegパスを指定してください
 全般	0	document			例　D:\TvRemoteViewer\ffmpeg\bin\ffmpeg.exe
 全般	0	file400	exepath_ffmpeg		ffmpegパス
 全般	0	file400	exepath_VLC		VLCパス
@@ -109,7 +109,7 @@ HTTP配信	0	integer	HTTPSTREAM_METHOD	0	HTTPストリーム受信方法（0=従来通り 1=Read
 ファイル再生	0	string200	VideoExtensions		ビデオファイル一覧に表示する拡張子（標準は無指定）	（,区切りで複数可）\n例：　".ts",".mp4"
 ファイル再生	0	document			　
 ファイル再生	0	integer	VideoSeekDefault	0	ファイル再生スタート時に指定秒数シークする
-ファイル再生	0	integer	VideoSizeCheck	0	ファイル一覧作成時にファイルサイズが0かどうか検査（1=する）
+ファイル再生	0	integer	VideoSizeCheck	1	ファイル一覧作成時にファイルサイズが0かどうか検査（1=する）
 ファイル再生	0	integer	TOT_get_duration	1	動画の長さ(秒)を取得（しない=0,する=1）
 ファイル再生	0	document			　
 ファイル再生	0	integer	ISOPlayNEW	1	ISO再生を新方式で（行う=1）
