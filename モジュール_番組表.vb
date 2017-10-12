@@ -957,14 +957,43 @@ Module モジュール_番組表
         Dim cnt As Integer = count_str(html, ",")
         If cnt > 100 And html.IndexOf("bema") > 0 Then
             '区切り記号が100個以上あればまぁ良しとするか
+            r = 1
+
+            '古いデータのままの場合があるのでチェック
+            Try
+                Dim sp As Integer = html.LastIndexOf(vbCrLf, html.Length - 2)
+                Dim ep As Integer = html.LastIndexOf(",")
+                If ep < 0 Then
+                    sp = html.LastIndexOf(vbCr, html.Length - 2)
+                End If
+                If sp > 0 And sp < ep Then
+
+                    Dim str As String = html.Substring(sp + 1)
+                    Dim d() As String = str.Split(",")
+                    If IsNumeric(d(3)) Then
+                        Dim d3 As Integer = Val(d(3))
+                        Dim ut As Integer = time2unix(Now())
+                        If ut > d3 - (3600 * 3) Then
+                            '異常 最終番組の終了時間まで3時間以内に迫っている（通常は1日以上間が開くはず）
+                            r = 0
+                        End If
+                    Else
+                        log1write("【エラー】AbemaTV番組情報が不正です。" & str)
+                    End If
+                End If
+                If r = 0 Then
+                    log1write("【エラー】AbemaTV番組情報が古いもののようです。AbemaTV番組情報元が更新されていないようです")
+                End If
+            Catch ex As Exception
+                log1write("【エラー】AbemaTV番組情報が不正です[B]。" & ex.Message)
+            End Try
 
             'と思ったがなんと途中で切れた状態で送られてくることがある（通信エラー？）
             '前回の3分の2以上のデータがあればOKとすることにする
             'チャンネル削減もありえるので余裕を持って判断
             Dim last_cnt As Integer = count_str(Outside_CustomURL_html, ",")
-            If cnt >= Int(last_cnt / 3 * 2) Then
-                r = 1
-            Else
+            If cnt < Int(last_cnt / 3 * 2) Then
+                r = 0
                 log1write("【エラー】AbemaTV番組情報が前回取得時のものより極端に短いためデータ取得に失敗したと判断しました")
             End If
         End If
