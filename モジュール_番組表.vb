@@ -1116,6 +1116,7 @@ Module モジュール_番組表
 
     Private Function get_TvRock_program() As TVprogramstructure()
         Dim r() As TVprogramstructure = Nothing
+        Dim err_count As Integer = 0
         Try
             If TvProgram_tvrock_tuner >= 0 Then
                 'チャンネル取得前にチューナーを指定する
@@ -1140,29 +1141,35 @@ Module モジュール_番組表
                 Dim sp As Integer = html.LastIndexOf("><small>", sp2 + 1) 'sp=チャンネルの頭
                 While sp > 0
                     Dim j As Integer = 0
-                    If r Is Nothing Then
-                        j = 0
-                    Else
-                        j = r.Length
-                    End If
-                    ReDim Preserve r(j)
-                    r(j).stationDispName = Instr_pickup(html, "<small>", " <small>", sp)
-                    If r(j).stationDispName.LastIndexOf(")""><small>") > 0 Then
+                    Dim temp_stationDispName As String = ""
+                    Dim temp_startDateTime As String = ""
+                    Dim temp_endDateTime As String = ""
+                    Dim temp_programTitle As String = ""
+                    Dim temp_programContent As String = ""
+                    Dim temp_genre As String = ""
+                    Dim temp_sid As Integer = 0
+
+                    temp_stationDispName = Instr_pickup(html, "<small>", " <small>", sp)
+                    If temp_stationDispName.LastIndexOf(")""><small>") > 0 Then
                         '番組表データが無いチャンネルが混じっていることがある
-                        r(j).stationDispName = r(j).stationDispName.Substring(r(j).stationDispName.IndexOf(")""><small>") + ")""><small>".Length)
+                        temp_stationDispName = temp_stationDispName.Substring(temp_stationDispName.IndexOf(")""><small>") + ")""><small>".Length)
                     End If
-                    r(j).stationDispName = Trim(r(j).stationDispName)
-                    r(j).stationDispName = Trim(delete_tag(r(j).stationDispName))
-                    r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp))))
-                    r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp))))
-                    r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
+                    temp_stationDispName = Trim(temp_stationDispName)
+                    temp_stationDispName = Trim(delete_tag(temp_stationDispName))
+                    temp_startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp))))
+                    temp_endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp))))
+                    temp_programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
                     Dim sp3 As Integer = html.IndexOf("<font color=", sp)
-                    r(j).programContent = escape_program_str(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
+                    If sp3 >= 0 Then
+                        temp_programContent = escape_program_str(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
+                    Else
+                        temp_programContent = ""
+                    End If
                     '予約番号がわからないのでタイトルから推測
-                    r(j).genre = get_tvrock_genre_from_program(0, 0, r(j).programTitle).ToString '"-1"
-                    If r(j).genre < 0 Then
+                    temp_genre = get_tvrock_genre_from_program(0, 0, temp_programTitle).ToString '"-1"
+                    If temp_genre < 0 Then
                         '予約のためわからなかった可能性
-                        r(j).genre = get_tvrock_genre_from_search(0, 0, r(j).programTitle).ToString
+                        temp_genre = get_tvrock_genre_from_search(0, 0, temp_programTitle).ToString
                     End If
 
                     '次のチャンネルが始まる地点
@@ -1172,66 +1179,38 @@ Module モジュール_番組表
                     End If
 
                     'サービスIDを取得
-                    Dim sp4 As Integer = html.IndexOf("javascript:reserv(", sp3)
-                    If sp4 < 0 Then
-                        sp4 = html.IndexOf("javascript:delsc(", sp3)
+                    Dim sp4 As Integer = html.IndexOf("javascript:reserv(", sp)
+                    If sp4 < 0 Or sp4 > se Then
+                        sp4 = html.IndexOf("javascript:delsc(", sp)
                     End If
                     If sp4 > 0 And sp4 < se Then
-                        r(j).sid = Val(Instr_pickup(html, ",", ",", sp4))
-                    Else
-                        log1write("【エラー】TvRock番組情報取得に失敗しました。TvRock携帯用番組表の「予約表示」を３番組以上にしてください")
-                        r = Nothing
-                        Exit While
-                    End If
+                        temp_sid = Val(Instr_pickup(html, ",", ",", sp4))
 
-                    '次の番組を取得
-                    sp3 = html.IndexOf("</i>", sp3 + 1)
-                    sp3 = html.LastIndexOf("<i>", sp3 + 1)
-                    If sp3 > 0 And sp3 < se Then
-                        '次の番組があれば
-                        '予約されているかどうか
-                        Dim rsv As Integer = 0
-                        If html.Substring(sp3 - 1, 1) = "]" Then
-                            '予約されている
-                            rsv = 1
-                        End If
-                        j = r.Length
-                        ReDim Preserve r(j)
-                        r(j).stationDispName = r(j - 1).stationDispName
-                        r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3))))
-                        r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3))))
-                        r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
-                        r(j).programContent = ""
-                        r(j).sid = r(j - 1).sid
-
-                        Dim spn As Integer = html.IndexOf("href=""javascript:", sp3)
-                        Dim sid As Integer = 0
-                        Dim trid As Integer = 0
-                        If spn > 0 Then
-                            Dim sidtrid_str As String = Instr_pickup(html, "(", ")", spn + 1, se)
-                            Dim d() As String = sidtrid_str.Split(",")
-                            If d.Length = 4 Then
-                                sid = Val(d(1))
-                                trid = Val(d(2))
-                            End If
-                        End If
-                        If rsv = 0 Then
-                            '予約されていない場合は番組表から
-                            r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).programTitle).ToString
+                        If r Is Nothing Then
+                            j = 0
                         Else
-                            '予約されている場合は検索から
-                            r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).programTitle).ToString
+                            j = r.Length
                         End If
+                        ReDim Preserve r(j)
+                        r(j).stationDispName = temp_stationDispName
+                        r(j).startDateTime = temp_startDateTime
+                        r(j).endDateTime = temp_endDateTime
+                        r(j).programTitle = temp_programTitle
+                        r(j).programContent = temp_programContent
+                        r(j).genre = temp_genre
+                        r(j).sid = temp_sid
 
-                        '次の番組であることを記録
-                        r(j).nextFlag = 1
-                    End If
-
-                    If next2_minutes > 0 Then
-                        '次の次の番組を取得
-                        sp3 = html.IndexOf("<i>", sp3 + 1)
+                        '次の番組を取得
+                        sp3 = html.IndexOf("</i>", sp3 + 1)
+                        sp3 = html.LastIndexOf("<i>", sp3 + 1)
                         If sp3 > 0 And sp3 < se Then
                             '次の番組があれば
+                            '予約されているかどうか
+                            Dim rsv As Integer = 0
+                            If html.Substring(sp3 - 1, 1) = "]" Then
+                                '予約されている
+                                rsv = 1
+                            End If
                             j = r.Length
                             ReDim Preserve r(j)
                             r(j).stationDispName = r(j - 1).stationDispName
@@ -1240,11 +1219,53 @@ Module モジュール_番組表
                             r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                             r(j).programContent = ""
                             r(j).sid = r(j - 1).sid
-                            r(j).genre = "-1" '次の次は必要無し
 
-                            '次の次の番組であることを記録
-                            r(j).nextFlag = 2
+                            Dim spn As Integer = html.IndexOf("href=""javascript:", sp3)
+                            Dim sid As Integer = 0
+                            Dim trid As Integer = 0
+                            If spn > 0 Then
+                                Dim sidtrid_str As String = Instr_pickup(html, "(", ")", spn + 1, se)
+                                Dim d() As String = sidtrid_str.Split(",")
+                                If d.Length = 4 Then
+                                    sid = Val(d(1))
+                                    trid = Val(d(2))
+                                End If
+                            End If
+                            If rsv = 0 Then
+                                '予約されていない場合は番組表から
+                                r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).programTitle).ToString
+                            Else
+                                '予約されている場合は検索から
+                                r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).programTitle).ToString
+                            End If
+
+                            '次の番組であることを記録
+                            r(j).nextFlag = 1
                         End If
+
+                        If next2_minutes > 0 Then
+                            '次の次の番組を取得
+                            sp3 = html.IndexOf("<i>", sp3 + 1)
+                            If sp3 > 0 And sp3 < se Then
+                                '次の番組があれば
+                                j = r.Length
+                                ReDim Preserve r(j)
+                                r(j).stationDispName = r(j - 1).stationDispName
+                                r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3))))
+                                r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3))))
+                                r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
+                                r(j).programContent = ""
+                                r(j).sid = r(j - 1).sid
+                                r(j).genre = "-1" '次の次は必要無し
+
+                                '次の次の番組であることを記録
+                                r(j).nextFlag = 2
+                            End If
+                        End If
+                    Else
+                        '番組情報取得失敗
+                        '数局なら番組情報の無い放送局という可能性有り
+                        err_count += 1
                     End If
 
                     sp2 = html.IndexOf(" <small><i>", sp2 + 1)
@@ -1256,6 +1277,10 @@ Module モジュール_番組表
         Catch ex As Exception
             log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)
         End Try
+
+        If r Is Nothing And err_count > 0 Then
+            log1write("【エラー】TvRockの番組情報取得に失敗しました。TvRock携帯用番組表の「予約表示」を３番組以上にしてください")
+        End If
 
         Return r
     End Function
