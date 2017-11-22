@@ -291,18 +291,30 @@ Module モジュール_ts解析
 
                     '始点
                     'PCR補正
+                    Dim pcr_delay As Long = 0
                     If pcr_first = pcr_last Then
                         'PCRが1個以下しか見つかっていない場合はTOTそのままでＯＫ
                     Else
-                        Dim pcr_delay As Long = pcr_last - pcr_first
+                        pcr_delay = pcr_last - pcr_first
                         If pcr_delay < 0 Then
                             pcr_delay = 8589934592 - pcr_last + pcr_first
                         End If
                         pcr_delay += 9000 '両端で最大0.2秒の誤差を考え平均値0.1秒足しておく
                         pcr_delay = Math.Ceiling(pcr_delay / 90000) '切り上げ
-                        log1write("最初のPCR出現より" & pcr_delay.ToString & "秒経過しています")
-                        log1write("最初のTOT" & tstart.ToString & "から" & pcr_delay & "秒遡ります")
-                        tstart = DateAdd(DateInterval.Second, -CType(pcr_delay, Integer), tstart)
+                        'おかしな差が返ってくることがあるので対処　'例：BS11 4251888757=47243秒　8589934592の半数の差かと思ったがそれでも478秒
+                        If pcr_delay < 20 Then 'TOTの送出間隔は標準で約5秒らしいので20秒未満ならOKとしておいた
+                            log1write("最初のPCR出現より" & pcr_delay.ToString & "秒経過しています")
+                            log1write("最初のTOT" & tstart.ToString & "から" & pcr_delay & "秒遡ります")
+                            tstart = DateAdd(DateInterval.Second, -CType(pcr_delay, Integer), tstart)
+                        ElseIf System.Math.Abs(time2unix(t2) - time2unix(tstart)) < 20 Then
+                            '異常な数値の場合はファイル作成日時を採用
+                            tstart = t2
+                            log1write("PCRによるTOT補正が不自然なのでファイル作成日時を採用します")
+                        Else
+                            'ファイル作成日時とも違う場合は仕方ないのでTOTそのままを使用　1秒だけ早めておく
+                            log1write("PCRによるTOT補正が不自然かつファイル作成日時も使用できないためTOT-1秒を採用します")
+                            tstart = DateAdd(DateInterval.Second, -1, tstart)
+                        End If
                     End If
                     'ファイル作成日時が1秒速ければそちらを採用する（誤差を考えて。早い分には団子防止で緩和されるので）
                     If time2unix(tstart) - time2unix(t2) = 1 Then
