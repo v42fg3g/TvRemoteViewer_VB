@@ -1275,7 +1275,7 @@ Module モジュール_番組表
                 log1write(log_temp)
             End If
         Catch ex As Exception
-            log1write("TvRockからの番組表取得に失敗しました。" & ex.Message)
+            log1write("【エラー】TvRockからの番組表取得に失敗しました。" & ex.Message)
         End Try
 
         If r Is Nothing And err_count > 0 Then
@@ -1401,112 +1401,117 @@ Module モジュール_番組表
     Private Function get_tvrock_genre_from_program(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
         Dim r As Integer = -1
 
-        If TvRock_genre_ON = 1 And TvRock_html_program_src.Length > 0 And TvRock_genre_color IsNot Nothing Then
-            Dim sp1 As Integer = -1
+        Try
+            If TvRock_genre_ON = 1 And TvRock_html_program_src.Length > 0 And TvRock_genre_color IsNot Nothing Then
+                Dim sp1 As Integer = -1
 
-            If sid > 0 And trid > 0 Then
-                '予約番号データから
-                Dim sstr As String = "c=" & sid.ToString & "&e=" & trid.ToString
-                sp1 = TvRock_html_program_src.IndexOf(sstr)
-            ElseIf title.Length > 0 Then
-                '番組タイトルから
-                'TvRock特有の変換に対応
-                title = title.Replace("/", "／")
-                title = title.Replace("＆", "&")
+                If sid > 0 And trid > 0 Then
+                    '予約番号データから
+                    Dim sstr As String = "c=" & sid.ToString & "&e=" & trid.ToString
+                    sp1 = TvRock_html_program_src.IndexOf(sstr)
+                ElseIf title.Length > 0 Then
+                    '番組タイトルから
+                    'TvRock特有の変換に対応
+                    title = title.Replace("/", "／")
+                    title = title.Replace("＆", "&")
 
-                sp1 = TvRock_html_program_src.IndexOf(title)
-                If sp1 < 0 Then
-                    'タイトルそのままでは見つからなかった
-                    '携帯版番組表では<～>が消されているので番組名が無茶苦茶になっている場合がある
+                    sp1 = TvRock_html_program_src.IndexOf(title)
+                    If sp1 < 0 Then
+                        'タイトルそのままでは見つからなかった
+                        '携帯版番組表では<～>が消されているので番組名が無茶苦茶になっている場合がある
 
-                    If title.IndexOf("<") < 0 And title.IndexOf(">") < 0 Then
-                        While title.LastIndexOf("[") > Int(title.Length * 2 / 3)
-                            '後半に[がある場合
-                            title = title.Substring(0, title.LastIndexOf("["))
-                            sp1 = TvRock_html_program_src.IndexOf(title)
-                            If sp1 >= 0 Then
-                                Exit While
-                            End If
-                        End While
-
-                        If sp1 < 0 Then
-                            While title.IndexOf("]") >= 0 And title.IndexOf("]") < Int(title.Length / 3)
-                                '前半に]がある場合
-                                Try
-                                    title = title.Substring(title.IndexOf("]") + 1)
-                                Catch ex As Exception
-                                    title = ""
-                                    sp1 = -1
-                                    Exit While
-                                End Try
+                        If title.IndexOf("<") < 0 And title.IndexOf(">") < 0 Then
+                            While title.LastIndexOf("[") > Int(title.Length * 2 / 3)
+                                '後半に[がある場合
+                                title = title.Substring(0, title.LastIndexOf("["))
                                 sp1 = TvRock_html_program_src.IndexOf(title)
                                 If sp1 >= 0 Then
                                     Exit While
                                 End If
                             End While
+
+                            If sp1 < 0 Then
+                                While title.IndexOf("]") >= 0 And title.IndexOf("]") < Int(title.Length / 3)
+                                    '前半に]がある場合
+                                    Try
+                                        title = title.Substring(title.IndexOf("]") + 1)
+                                    Catch ex As Exception
+                                        title = ""
+                                        sp1 = -1
+                                        Exit While
+                                    End Try
+                                    sp1 = TvRock_html_program_src.IndexOf(title)
+                                    If sp1 >= 0 Then
+                                        Exit While
+                                    End If
+                                End While
+                            End If
+                        End If
+
+                        If sp1 < 0 And title.Length > 0 Then
+                            '【】[]<>を取り除いて一番長い文字列
+                            title = Regex.Replace(title, "【+.*?】", "")
+                            title = Regex.Replace(title, "\[+.*?\]", "")
+                            title = Regex.Replace(title, "\(+.*?\)", "")
+                            title = Regex.Replace(title, "&lt;+.*?&gt;", "")
+                            title = Regex.Replace(title, "<+.*?>", "")
+                            title = Regex.Replace(title, "＜+.*?＞", "")
+                            Dim tz As String = zenkakudake_max(title)
+                            If tz.Length > 1 Then
+                                sp1 = TvRock_html_program_src.IndexOf(Trim(tz))
+                            Else
+                                '1文字以下ならばたぶん英文タイトル 一番長い単語
+                                title = title.Replace("　", " ")
+                                Dim str As String = ""
+                                Dim d() As String = title.Split(" ")
+                                For k As Integer = 0 To d.Length - 1
+                                    If d(k).Length > str.Length Then
+                                        str = d(k)
+                                    End If
+                                Next
+                                If str.Length > 2 Then
+                                    sp1 = TvRock_html_program_src.IndexOf(str)
+                                End If
+                            End If
                         End If
                     End If
+                End If
 
-                    If sp1 < 0 And title.Length > 0 Then
-                        '【】[]<>を取り除いて一番長い文字列
-                        title = Regex.Replace(title, "【+.*?】", "")
-                        title = Regex.Replace(title, "\[+.*?\]", "")
-                        title = Regex.Replace(title, "\(+.*?\)", "")
-                        title = Regex.Replace(title, "&lt;+.*?&gt;", "")
-                        title = Regex.Replace(title, "<+.*?>", "")
-                        title = Regex.Replace(title, "＜+.*?＞", "")
-                        Dim tz As String = zenkakudake_max(title)
-                        If tz.Length > 1 Then
-                            sp1 = TvRock_html_program_src.IndexOf(Trim(tz))
-                        Else
-                            '1文字以下ならばたぶん英文タイトル 一番長い単語
-                            title = title.Replace("　", " ")
-                            Dim str As String = ""
-                            Dim d() As String = title.Split(" ")
-                            For k As Integer = 0 To d.Length - 1
-                                If d(k).Length > str Then
-                                    str = d(k)
-                                End If
-                            Next
-                            If str.Length > 2 Then
-                                sp1 = TvRock_html_program_src.IndexOf(str)
+                If sp1 >= 0 Then
+                    Dim sps As Integer = 0
+                    If sid > 0 And trid > 0 Then
+                        sps = TvRock_html_program_src.LastIndexOf("&c=", sp1 - 10)
+                    Else
+                        sps = TvRock_html_program_src.LastIndexOf("title=", sp1 - 50)
+                    End If
+                    If sps < 0 Then
+                        sps = 0
+                    End If
+                    Dim sp2 As Integer = TvRock_html_program_src.LastIndexOf("<td rowspan=", sp1)
+                    If sp2 < sps Then
+                        '見つかっていない場合、直近の色を使用
+                        sp2 = TvRock_html_program_src.LastIndexOf(" bgcolor=", sp1)
+                        If sp2 < sps Then
+                            sp2 = -1
+                        End If
+                    End If
+                    If sp2 >= 0 Then
+                        Dim bgcolor As String = Trim(Instr_pickup(TvRock_html_program_src, "bgcolor=", " ", sp2, sp1).ToString.ToLower)
+                        If bgcolor.Length > 0 Then
+                            r = Array.LastIndexOf(TvRock_genre_color, bgcolor) '後ろから。その他優先
+                            If r < 0 Then
+                                r = -1
+                            Else
+                                r = r * 256
                             End If
                         End If
                     End If
                 End If
             End If
-
-            If sp1 >= 0 Then
-                Dim sps As Integer = 0
-                If sid > 0 And trid > 0 Then
-                    sps = TvRock_html_program_src.LastIndexOf("&c=", sp1 - 10)
-                Else
-                    sps = TvRock_html_program_src.LastIndexOf("title=", sp1 - 50)
-                End If
-                If sps < 0 Then
-                    sps = 0
-                End If
-                Dim sp2 As Integer = TvRock_html_program_src.LastIndexOf("<td rowspan=", sp1)
-                If sp2 < sps Then
-                    '見つかっていない場合、直近の色を使用
-                    sp2 = TvRock_html_program_src.LastIndexOf(" bgcolor=", sp1)
-                    If sp2 < sps Then
-                        sp2 = -1
-                    End If
-                End If
-                If sp2 >= 0 Then
-                    Dim bgcolor As String = Trim(Instr_pickup(TvRock_html_program_src, "bgcolor=", " ", sp2, sp1).ToString.ToLower)
-                    If bgcolor.Length > 0 Then
-                        r = Array.LastIndexOf(TvRock_genre_color, bgcolor) '後ろから。その他優先
-                        If r < 0 Then
-                            r = -1
-                        Else
-                            r = r * 256
-                        End If
-                    End If
-                End If
-            End If
-        End If
+        Catch ex As Exception
+            r = -1
+            log1write("【エラー】TvRockジャンル判定中にエラーが発生しました。" & ex.Message)
+        End Try
 
         Return r
     End Function
@@ -2108,36 +2113,40 @@ Module モジュール_番組表
 
     '番組表で使えない文字をエスケープ
     Public Function escape_program_str(ByVal s As String, Optional ByVal m As Integer = 0) As String
-        Dim r As String = ""
-        'Outside
-        s = s.Replace("&#34;", """")
-        s = s.Replace("&#39;", "'")
-        's = s.Replace("　", " ")
-        '念のため
-        s = s.Replace("&lt;", "＜")
-        s = s.Replace("&gt;", "＞")
-        s = s.Replace("&amp;", "＆")
-        'エスケープするべき文字
-        s = s.Replace(",", "，")
-        s = s.Replace("<", "＜")
-        s = s.Replace(">", "＞")
-        s = s.Replace("&", "＆")
-        '改行をエスケープ
-        '改行をエスケープ
-        Select Case m
-            Case 0
-                '従来通り
-                s = s.Replace(vbCrLf, " ")
-                s = s.Replace(vbLf, " ")
-                s = s.Replace(vbCr, " ")
-                s = s.Replace("\n", " ")
-            Case 1
-                s = s.Replace(vbCrLf, "\n")
-                s = s.Replace(vbLf, "\n")
-                s = s.Replace(vbCr, "\n")
-        End Select
-        'trim
-        s = Trim(s)
+        Try
+            'Outside
+            s = s.Replace("&#34;", """")
+            s = s.Replace("&#39;", "'")
+            's = s.Replace("　", " ")
+            '念のため
+            s = s.Replace("&lt;", "＜")
+            s = s.Replace("&gt;", "＞")
+            s = s.Replace("&amp;", "＆")
+            'エスケープするべき文字
+            s = s.Replace(",", "，")
+            s = s.Replace("<", "＜")
+            s = s.Replace(">", "＞")
+            s = s.Replace("&", "＆")
+            '改行をエスケープ
+            '改行をエスケープ
+            Select Case m
+                Case 0
+                    '従来通り
+                    s = s.Replace(vbCrLf, " ")
+                    s = s.Replace(vbLf, " ")
+                    s = s.Replace(vbCr, " ")
+                    s = s.Replace("\n", " ")
+                Case 1
+                    s = s.Replace(vbCrLf, "\n")
+                    s = s.Replace(vbLf, "\n")
+                    s = s.Replace(vbCr, "\n")
+            End Select
+            'trim
+            s = Trim(s)
+        Catch ex As Exception
+            log1write("【エラー】escape_program_str処理中にエラーが発生しました。s=" & s & " " & ex.Message)
+        End Try
+
         Return s
     End Function
 
