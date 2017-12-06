@@ -920,7 +920,7 @@ Module モジュール_番組表
                 'force=1 タイマーからの指令ならば必ず取得
                 Dim nocache_str As String = ""
                 Dim ext As String = Path.GetExtension(Outside_CustomURL)
-                If ext = ".txt" Then
+                If ext = ".txt" And Outside_CustomURL.IndexOf("abemagraph.info") < 0 Then
                     nocache_str = "?tvrvtm=" & ut.ToString 'txtの場合内部キャッシュさせないよう
                 End If
                 html = get_html_by_webclient(Outside_CustomURL & nocache_str, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
