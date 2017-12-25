@@ -6,7 +6,7 @@ Imports System.Text.RegularExpressions
 Public Class Form1
 
     '指定語句が含まれるBonDriverは無視する
-    Private BonDriver_NGword As String() = {"_file", "_udp", "_pipe", "_tstask"}
+    Private BonDriver_NGword As String() = {"_file", "_pipe"}
 
     Private chk_timer1 As Integer = 0 'timer1重複回避用temp
     Private chk_timer1_deleteTS As Integer = 0 '古いtsファイルを削除する間隔調整用
@@ -798,7 +798,7 @@ Public Class Form1
                                     End If
                                 Next
                             End If
-                            If bonfile.IndexOf("_file") >= 0 Or bonfile.IndexOf("_udp") >= 0 Or bonfile.IndexOf("_pipe") >= 0 Or bonfile.IndexOf("_tstask") >= 0 Then
+                            If bonfile.IndexOf("_file") >= 0 Or bonfile.IndexOf("_pipe") >= 0 Then
                                 bonfile = ""
                             End If
                             If bonfile.IndexOf("bondriver") = 0 Then

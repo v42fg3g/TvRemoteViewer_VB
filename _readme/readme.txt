@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.80
+TvRemoteViewer_VB v2.81
 
 
 
@@ -202,6 +202,21 @@ TvRemoteViewer_VB v2.80
 3.VLC-2.1.2をダウンロードして適当なフォルダに解凍します（今まで使用してきたものとは別フォルダ）
 　http://download.videolan.org/pub/videolan/vlc/2.1.2/
 4.TvRemoteViewer_VB.iniにexepath_ISO_VLC=(↑のvlc.exeへのパス)の記述を追加すればOKです
+
+
+■EDCBのUDP送信を受信するには
+まず、EDCBにてUDP送信の設定を行ってください
+次にBonDriver_UDP.dllと同じ場所にBonDriver_UDP.ch2を作成してください。内容は例えば
+;▼ここから=============
+; TVTest チャンネル設定ファイル
+; 名称,チューニング空間,チャンネル,リモコン番号,サービス,サービスID,ネットワークID,TSID,状態
+;#SPACE(0,ネットワーク)
+UDP1234,0,0,0,0,48834,0,0,1
+UDP1235,0,1,0,0,48835,0,0,1
+;▲ここまで=============
+のようになります。内容は確実ではありません
+後はTvRemoteFilesの管理タブから手動配信で視聴できます
+なお、BonDriver_RecTaskやBonDriver_TSTaskでの配信は実験していません
 
 
 
@@ -793,6 +808,9 @@ TvRemoteViewer_VB v2.80
 	2.78	TvRock番組表の取得に失敗することがあったバグを修正
 	2.79	TOT補正に使用するPCRの値が不自然な場合にファイル作成日時を動画開始日時とするようにした
 	2.80	TvRock番組表で英数字のみの番組名でエラーが発生していたバグを修正
+			AbemaGraphさんから番組表を取得する際にタイムスタンプを送らないようにした(2.80c)
+	2.81	標準除外BonDriverだったBonDriver_UDPとBonDriver_TSTaskを除外しないことにした
+			上記「EDCBのUDP送信を受信するには」を参照のこと
 
 
 
