@@ -1355,11 +1355,11 @@ Module モジュール_番組表
 
                     If sp < 0 And title.Length > 0 Then
                         '【】[]<>を取り除いて一番長い文字列
-                        title = Regex.Replace(title, "【+.*?】", "")
-                        title = Regex.Replace(title, "\[+.*?\]", "")
-                        title = Regex.Replace(title, "&lt;+.*?&gt;", "")
-                        title = Regex.Replace(title, "<+.*?>", "")
-                        title = Regex.Replace(title, "＜+.*?＞", "")
+                        title = Regex.Replace(title, "【+.*?】", " ")
+                        title = Regex.Replace(title, "\[+.*?\]", " ")
+                        title = Regex.Replace(title, "&lt;+.*?&gt;", " ")
+                        title = Regex.Replace(title, "<+.*?>", " ")
+                        title = Regex.Replace(title, "＜+.*?＞", " ")
                         Dim tz As String = zenkakudake_max(title)
                         If tz.Length > 1 Then
                             sp = TvRock_html_search_src.IndexOf(Trim(tz))
@@ -1454,12 +1454,12 @@ Module モジュール_番組表
 
                         If sp1 < 0 And title.Length > 0 Then
                             '【】[]<>を取り除いて一番長い文字列
-                            title = Regex.Replace(title, "【+.*?】", "")
-                            title = Regex.Replace(title, "\[+.*?\]", "")
-                            title = Regex.Replace(title, "\(+.*?\)", "")
-                            title = Regex.Replace(title, "&lt;+.*?&gt;", "")
-                            title = Regex.Replace(title, "<+.*?>", "")
-                            title = Regex.Replace(title, "＜+.*?＞", "")
+                            title = Regex.Replace(title, "【+.*?】", " ")
+                            title = Regex.Replace(title, "\[+.*?\]", " ")
+                            title = Regex.Replace(title, "\(+.*?\)", " ")
+                            title = Regex.Replace(title, "&lt;+.*?&gt;", " ")
+                            title = Regex.Replace(title, "<+.*?>", " ")
+                            title = Regex.Replace(title, "＜+.*?＞", " ")
                             Dim tz As String = zenkakudake_max(title)
                             If tz.Length > 1 Then
                                 sp1 = TvRock_html_program_src.IndexOf(Trim(tz))
