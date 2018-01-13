@@ -2287,7 +2287,7 @@ Public Class ProcessManager
     End Function
 
     '配信可能なチャンネル情報
-    Public Function WI_GET_CHANNELS(ByVal BonDriverPath As String, ByVal udpApp As String, ByVal BonDriver_NGword() As String) As String
+    Public Function WI_GET_CHANNELS(ByVal BonDriverPath As String, ByVal udpApp As String) As String
         'BonDriver
         'ServiceID, ch_space, チャンネル名
         Dim r As String = ""

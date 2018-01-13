@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.81
+TvRemoteViewer_VB v2.82
 
 
 
@@ -811,6 +811,8 @@ UDP1235,0,1,0,0,48835,0,0,1
 			AbemaGraphさんから番組表を取得する際にタイムスタンプを送らないようにした(2.80c)
 	2.81	標準除外BonDriverだったBonDriver_UDPとBonDriver_TSTaskを除外しないことにした
 			上記「EDCBのUDP送信を受信するには」を参照のこと
+			TvRockジャンル判定精度向上（2.81b）
+	2.82	iniのBonDriver_NGwordが機能していなかったバグを修正
 
 
 

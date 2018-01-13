@@ -2,7 +2,7 @@
 
 Module モジュール_その他
     'バージョン
-    Public TvRemoteViewer_VB_version As Double = 2.81
+    Public TvRemoteViewer_VB_version As Double = 2.82
     Public TvRemoteViewer_VB_notrecommend_version As Double = 0
     Public TvRemoteViewer_VB_recommend_version As Double = 0
     Public TvRemoteViewer_VB_version_check_datetime As DateTime = CDate("2000/01/01") '何分何秒にチェックするか　起動時に決定
@@ -28,6 +28,9 @@ Module モジュール_その他
             log1 = "　" & vbCrLf & "　" & vbCrLf & log1
         End If
     End Sub
+
+    '指定語句が含まれるBonDriverは無視する
+    Public BonDriver_NGword As String() = Nothing
 
     'クライアント設定
     Public client_allowDomains() As String 'アクセス許可するドメイン

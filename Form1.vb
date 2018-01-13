@@ -4,10 +4,6 @@ Imports System.Threading
 Imports System.Text.RegularExpressions
 
 Public Class Form1
-
-    '指定語句が含まれるBonDriverは無視する
-    Private BonDriver_NGword As String() = {"_file", "_pipe"}
-
     Private chk_timer1 As Integer = 0 'timer1重複回避用temp
     Private chk_timer1_deleteTS As Integer = 0 '古いtsファイルを削除する間隔調整用
     Private ServiceID_temp As String '起動時、前回終了時のサービスIDを復活するための一時待避用temp
@@ -513,10 +509,6 @@ Public Class Form1
 
         'フォームの項目を復元
         F_window_set()
-        'コンボボックスの項目をセット
-        search_BonDriver()
-        search_ServiceID()
-        ComboBoxServiceID.Text = ServiceID_temp '前回終了時に選択していたものをセット
 
         'バージョンチェック
         If TvRemoteViewer_VB_version_check_on = 1 Then
@@ -569,6 +561,11 @@ Public Class Form1
         Me._worker.read_client_ini()
         'フォーム上のiniタブを初期化
         ini_init_tab()
+
+        'コンボボックスの項目をセット
+        search_BonDriver()
+        search_ServiceID()
+        ComboBoxServiceID.Text = ServiceID_temp '前回終了時に選択していたものをセット
 
         'Outside_CustomURL取得
         If TvProgram_ch IsNot Nothing Then
@@ -797,9 +794,6 @@ Public Class Form1
                                         bonfile = ""
                                     End If
                                 Next
-                            End If
-                            If bonfile.IndexOf("_file") >= 0 Or bonfile.IndexOf("_pipe") >= 0 Then
-                                bonfile = ""
                             End If
                             If bonfile.IndexOf("bondriver") = 0 Then
                                 bchk += 1
@@ -1295,7 +1289,7 @@ Public Class Form1
                     '表示しないBonDriverかをチェック
                     If BonDriver_NGword IsNot Nothing Then
                         For i As Integer = 0 To BonDriver_NGword.Length - 1
-                            If sl.IndexOf(BonDriver_NGword(i)) >= 0 Then
+                            If sl.IndexOf(BonDriver_NGword(i).ToLower) >= 0 Then
                                 sl = ""
                             End If
                         Next
@@ -2254,6 +2248,8 @@ Public Class Form1
                     iniTextbox(i).BackColor = Color.White
                 Next
             End If
+            'フォームのBonDriverコンボボックス更新
+            search_BonDriver()
             log1write("iniを変更し適用作業を行いました")
         End If
     End Sub

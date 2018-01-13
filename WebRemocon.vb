@@ -51,7 +51,6 @@ Class WebRemocon
     Public _wwwroot As String = Nothing
     Private _fileroot As String = Nothing
     Private _wwwport As Integer = Nothing
-    Private _BonDriver_NGword As String() = Nothing
     Public _videopath() As String
     Public _videopath_ini() As String 'サブフォルダ監視修正
     Public _AddSubFolder As Integer
@@ -106,7 +105,6 @@ Class WebRemocon
         Me._wwwroot = wwwroot
         Me._wwwport = wwwport
         Me._fileroot = fileroot
-        Me._BonDriver_NGword = BonDriver_NGword
 
         '現在ファームにセットされている値をセット
         Me._udpApp = udpApp
@@ -770,9 +768,9 @@ Class WebRemocon
                         s = Path.GetFileName(s)
                         Dim sl As String = s.ToLower() '小文字に変換
                         '表示しないBonDriverかをチェック
-                        If Me._BonDriver_NGword IsNot Nothing Then
-                            For j As Integer = 0 To Me._BonDriver_NGword.Length - 1
-                                If sl.IndexOf(Me._BonDriver_NGword(j).ToLower) >= 0 Then
+                        If BonDriver_NGword IsNot Nothing Then
+                            For j As Integer = 0 To BonDriver_NGword.Length - 1
+                                If sl.IndexOf(BonDriver_NGword(j).ToLower) >= 0 Then
                                     sl = ""
                                 End If
                             Next
@@ -1367,20 +1365,23 @@ Class WebRemocon
                                     Next
                                 End If
                             Case "BonDriver_NGword"
+                                ReDim Preserve BonDriver_NGword(1)
+                                BonDriver_NGword(0) = "_file"
+                                BonDriver_NGword(1) = "_pipe"
                                 youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                 Dim clset() As String = youso(1).Split(",")
                                 If clset Is Nothing Then
                                 ElseIf clset.Length > 0 Then
                                     '既存のBonDriver_NGwordに追加
-                                    Dim k As Integer = Me._BonDriver_NGword.Length
+                                    Dim k As Integer = BonDriver_NGword.Length
                                     For j = 0 To clset.Length - 1
                                         If clset(j).Length > 0 Then
-                                            If Me._BonDriver_NGword Is Nothing Then
-                                                ReDim Preserve Me._BonDriver_NGword(0)
+                                            If BonDriver_NGword Is Nothing Then
+                                                ReDim Preserve BonDriver_NGword(0)
                                             Else
-                                                ReDim Preserve Me._BonDriver_NGword(Me._BonDriver_NGword.Length)
+                                                ReDim Preserve BonDriver_NGword(BonDriver_NGword.Length)
                                             End If
-                                            Me._BonDriver_NGword(Me._BonDriver_NGword.Length - 1) = trim8(clset(j))
+                                            BonDriver_NGword(BonDriver_NGword.Length - 1) = trim8(clset(j))
                                         End If
                                     Next
                                 End If
@@ -5147,7 +5148,7 @@ Class WebRemocon
                                 Select Case WI_cmd
                                     Case "WI_GET_CHANNELS"
                                         'BonDriver, ServiceID, ch_space, チャンネル名
-                                        WI_cmd_reply = Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp, Me._BonDriver_NGword)
+                                        WI_cmd_reply = Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp)
                                         WI_cmd_reply_force = 1
                                     Case "WI_START_STREAM"
                                         '配信スタート
@@ -7117,7 +7118,7 @@ Class WebRemocon
 
     '　本体はProcessManager.vbに
     Public Function WI_GET_CHANNELS() As String
-        Return Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp, Me._BonDriver_NGword)
+        Return Me._procMan.WI_GET_CHANNELS(Me._BonDriverPath, Me._udpApp)
     End Function
 
     '　本体はProcessManager.vbに

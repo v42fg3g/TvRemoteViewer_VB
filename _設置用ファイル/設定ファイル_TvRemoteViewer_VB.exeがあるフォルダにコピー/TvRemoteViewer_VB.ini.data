@@ -58,12 +58,12 @@ WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコ
 番組表データ	0	integer	AvemaTV_data_get_method	1	AbemaTV情報取得先（1=自動選択 2=かっぱ手作業限定 3=有志サイト限定)	1=自動選択(有志の方サイト優先) 2=作者が用意したカッパ手入力サイト限定 3=有志の方サイト限定
 番組表データ	0	string	AbemaTV_CustomURL		AbemaTV情報取得先URL	AbemaTV番組情報を自前で用意できる方用設定（今のところTvRemoteViewer_VB用に加工されたデータ限定）\nデータ形式詳細は別途readme_dev.txt内「資料_AbemaTVカスタムデータ形式」で説明\nURLまたはファイル(絶対パス)が指定できます。指定するとAvemaTV_data_get_methodの設定は無視されます
 番組表データ	0	document			　
-番組表データ	0	string260	TvProgram_tvrock_url		TvRockのiPhone用番組表URL(クリックで例)	http://127.0.0.1:8969/ユーザー名/iphone\n例：　http://127.0.0.1:8969/nobody/iphone \nあらかじめiPhone用番組表にアクセスして予約表示数を3番組以上に設定してください
+番組表データ	1	string260	TvProgram_tvrock_url		TvRockのiPhone用番組表URL(クリックで例)	http://127.0.0.1:8969/ユーザー名/iphone\n例：　http://127.0.0.1:8969/nobody/iphone \nあらかじめiPhone用番組表にアクセスして予約表示数を3番組以上に設定してください
 番組表データ	0	string260	TvProgramTvRock_NGword		TvRock番組表に表示しない放送局名
 番組表データ	0	integer	TvRock_genre_ON	1	TvRockジャンル情報を取得する=1 しない=0
 番組表データ	0	string260	TvRock_genre_color		TVRLauncher用ジャンル判別色データ	TvRock番組表でジャンル色をカスタマイズしている場合は使用中のジャンル色0～15まで16個の色データを指定してください。例えば先頭のデータはジャンル0・ニュースの色を示しています。\n現在使用中の色はレジストリHKEY_CURRENT_USER\Software\TvRockののCC0～CC15に記録されています\n例：TvRock_genre_color=#d4ffc8,#ffccef,#f0f0f0,#ffbbbb,#b6f2ff,#faffb0,#ccfcf4,#dcddff,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0,#f0f0f0
 番組表データ	0	document			　
-番組表データ	0	string260	TvProgram_EDCB_url		EDCBのWEBインターフェースURL(クリックで例)	例：　http://127.0.0.1:5510/api/EnumEventInfo
+番組表データ	1	string260	TvProgram_EDCB_url		EDCBのWEBインターフェースURL(クリックで例)	例：　http://127.0.0.1:5510/api/EnumEventInfo
 番組表データ	0	string260	TvProgramEDCB_NGword		EDCB番組表に表示したくない放送局名	（,区切りで複数指定可）
 番組表データ	0	string180	TvProgramEDCB_ignore		EDCB番組表に表示はするが番組データは取得しない放送局名
 番組表データ	0	integer	TvProgramEDCB_premium	0	EDCB番組表に表示する局（0=全て 1=SPプレミアムのみ 2=SPプレミアム以外）
@@ -74,8 +74,8 @@ WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコ
 番組表データ	1	folder260	ptTimer_path		ptTimerのフォルダ（C:\ptTimer）
 番組表データ	0	string260	TvProgramptTimer_NGword		ptTimer番組表に表示したくない放送局名	（,区切りで複数指定可）
 番組表データ	0	document			　
-番組表データ	0	string260	Tvmaid_url		Tvmaid初代サーバーのURL(クリックで例)	例：　http://127.0.0.1:20000
-番組表データ	0	string260	TvmaidYUI_url		TvmaidEX以降のサーバーURL(クリックで例)	例：　http://127.0.0.1:20001
+番組表データ	1	string260	Tvmaid_url		Tvmaid初代サーバーのURL(クリックで例)	例：　http://127.0.0.1:20000
+番組表データ	1	string260	TvmaidYUI_url		TvmaidEX以降のサーバーURL(クリックで例)	例：　http://127.0.0.1:20001
 番組表データ	0	string260	TvProgramTvmaid_NGword		Tvmaid番組表に表示したくない放送局名	（,区切りで複数指定可）
 
 HLS配信	0	integer	MAX_STREAM_NUMBER	100	最大配信ナンバー
