@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.82
+TvRemoteViewer_VB v2.83
 
 
 
@@ -813,6 +813,9 @@ UDP1235,0,1,0,0,48835,0,0,1
 			上記「EDCBのUDP送信を受信するには」を参照のこと
 			TvRockジャンル判定精度向上（2.81b）
 	2.82	iniのBonDriver_NGwordが機能していなかったバグを修正
+	2.83	ptTimer番組表に改行が含まれていたバグを修正
+			EDCB番組表の内容が不完全なときがあったバグを修正
+			TVRVLauncher用に放送局別番組表を提供出来るようにした
 
 
 

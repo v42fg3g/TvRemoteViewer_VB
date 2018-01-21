@@ -25,6 +25,7 @@ Module モジュール_番組表
     Public TvProgram_tvrock_url As String = ""
     Public TvProgram_tvrock_tuner As Integer = -1 '事前に合わせるTvrockチューナー番号
     Public TvProgram_EDCB_url As String = ""
+    Public TvProgram_tvrock_sch As String = ""
     'ptTimer
     Public ptTimer_path As String = "" 'pttimerのパス　末尾\
     Public pttimer_pt2count As Integer = 0
@@ -1165,6 +1166,7 @@ Module モジュール_番組表
                             temp_programContent = escape_program_str(delete_tag(Instr_pickup(html, ">", "</font>", sp3)))
                         Else
                             temp_programContent = ""
+                            sp3 = html.IndexOf("<small><b>", sp)
                         End If
                         '予約番号がわからないのでタイトルから推測
                         temp_genre = get_tvrock_genre_from_program(0, 0, temp_programTitle).ToString '"-1"
@@ -1307,7 +1309,7 @@ Module モジュール_番組表
     End Function
 
     'TvRock PC用番組表からジャンルを推測する
-    Private Function get_tvrock_genre_from_search(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
+    Public Function get_tvrock_genre_from_search(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
         Dim r As Integer = -1
 
         If TvRock_genre_ON = 1 And TvRock_html_search_src.Length > 0 Then
@@ -1402,7 +1404,7 @@ Module モジュール_番組表
     End Function
 
     'TvRock PC用番組表からジャンルを推測する
-    Private Function get_tvrock_genre_from_program(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
+    Public Function get_tvrock_genre_from_program(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
         Dim r As Integer = -1
 
         Try
@@ -2492,6 +2494,7 @@ Module モジュール_番組表
         '次の番組を取得するためデータベースから3時間分のデータを取得
 
         If pttimer_pt2count > 0 Then
+            Dim log_temp As String = ">>ptTimer番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
             'データベースから番組一覧を取得する
             Dim results As String = ""
             Dim psi As New System.Diagnostics.ProcessStartInfo()
@@ -2527,9 +2530,9 @@ Module モジュール_番組表
                 Dim ut As Integer = time2unix(nowtime) '現在のunixtime
 
                 If nextsec = 0 Then
-                    msql = """SELECT sid, eid, stime, length, title, texts, gen1 FROM t_event WHERE stime <= " & ut & " AND (stime + length) > " & ut & " ORDER BY sid"""
+                    msql = """SELECT sid, eid, stime, length, title, texts, gen1, '_BR_' as cr FROM t_event WHERE stime <= " & ut & " AND (stime + length) > " & ut & " ORDER BY sid,stime"""
                 Else
-                    msql = """SELECT sid, eid, stime, length, title, texts, gen1 FROM t_event WHERE (stime <= " & ut & " AND (stime + length) > " & ut & ") OR (stime <= " & ut + nextsec & " AND stime > " & ut & ") ORDER BY sid,stime"""
+                    msql = """SELECT sid, eid, stime, length, title, texts, gen1, '_BR_' as cr FROM t_event WHERE (stime <= " & ut & " AND (stime + length) > " & ut & ") OR (stime <= " & ut + nextsec & " AND stime > " & ut & ") ORDER BY sid,stime"""
                 End If
                 psi.Arguments = "/c sqlite3.exe """ & db_name & """ -separator " & "//_//" & " " & msql
 
@@ -2545,6 +2548,12 @@ Module モジュール_番組表
                     log1write("sqlite3.exe実行エラー[" & pt2number & "]")
                 End Try
 
+                '結果に数種類の改行が入っておりREPLACEが動作しないことへの対策 「, '_BR_' as cr」
+                results = results.Replace(vbCrLf, " ").Replace(vbCr, " ")
+                results = results.Replace("//_//_BR_ ", vbCrLf)
+
+                log_temp &= " > 取得完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+
                 '行ごとの配列として、テキストファイルの中身をすべて読み込む
                 Dim line As String() = Split(results, vbCrLf) 'results.Split(vbCrLf)
 
@@ -2558,7 +2567,7 @@ Module モジュール_番組表
                             '番組表の数だけ繰り返す
                             Try
                                 Dim youso() As String = Split(line(j), "//_//")
-                                If youso.Length >= 6 Then
+                                If youso.Length >= 7 Then
                                     '番組内容
                                     Dim sid As Integer = Val(youso(0))
                                     Dim chk161 As Integer = 0
@@ -2652,6 +2661,8 @@ Module モジュール_番組表
                     End If
                 End If
             Next
+            log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+            log1write(log_temp)
         End If
 
         Return r
@@ -2736,6 +2747,8 @@ Module モジュール_番組表
         Dim r() As TVprogramstructure = Nothing
 
         If TvProgram_EDCB_url.Length > 0 Then
+            Dim log_temp As String = ">>EDCB番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+
             If ch_list IsNot Nothing Then
                 Dim i As Integer = 0
                 Dim k As Integer = 0
@@ -2754,6 +2767,7 @@ Module モジュール_番組表
                     EDCB_cmd.SetNWSetting(ip, port)
                     Dim epgList As New System.Collections.Generic.List(Of CtrlCmdCLI.Def.EpgServiceEventInfo)()
                     Dim ret As Integer = EDCB_cmd.SendEnumPgAll(epgList) 'IPやportがおかしいとここで止まる可能性有り
+                    log_temp &= " > 取得完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                     If ret = 1 Then
                         For i = 0 To ch_list.Length - 1
                             Dim kc As Integer = -1
@@ -2867,7 +2881,11 @@ Module モジュール_番組表
                                                     r(j).tsid = ch_list(i).tsid '一致しない可能性がある
                                                     '番組ジャンル
                                                     Dim jnr As CtrlCmdCLI.Def.EpgContentInfo = info.eventList.Item(k).ContentInfo
-                                                    r(j).genre = (jnr.nibbleList(0).content_nibble_level_1 * 256 + jnr.nibbleList(0).content_nibble_level_2).ToString
+                                                    If jnr IsNot Nothing Then
+                                                        r(j).genre = (jnr.nibbleList(0).content_nibble_level_1 * 256 + jnr.nibbleList(0).content_nibble_level_2).ToString
+                                                    Else
+                                                        r(j).genre = -1
+                                                    End If
 
                                                     '次番組を探すための開始時間
                                                     t2next = t2
@@ -2927,7 +2945,11 @@ Module モジュール_番組表
                                                         r(j).tsid = ch_list(i).tsid '一致しない可能性がある
                                                         '番組ジャンル
                                                         Dim gnr As CtrlCmdCLI.Def.EpgContentInfo = info.eventList.Item(k2).ContentInfo
-                                                        r(j).genre = (gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2).ToString
+                                                        If gnr IsNot Nothing Then
+                                                            r(j).genre = (gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2).ToString
+                                                        Else
+                                                            r(j).genre = -1
+                                                        End If
 
                                                         '次の番組であることを記録
                                                         r(j).nextFlag = 1
@@ -2979,7 +3001,9 @@ Module モジュール_番組表
                                                                             r(j).tsid = ch_list(i).tsid '一致しない可能性がある
                                                                             '番組ジャンル
                                                                             gnr = info.eventList.Item(k2).ContentInfo
-                                                                            r(j).genre = (gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2).ToString
+                                                                            If gnr IsNot Nothing Then
+                                                                                r(j).genre = (gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2).ToString
+                                                                            End If
 
                                                                             '次の次の番組であることを記録
                                                                             r(j).nextFlag = 2
@@ -3037,17 +3061,25 @@ Module モジュール_番組表
                     End If
                 End If
             End If
+            log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+            log1write(log_temp)
         End If
 
         Return r
     End Function
 
     'ホストネームからIP
+    Private host2ip_last As String = ""
     Public Function host2ip(ByVal url As String) As String
+        If host2ip_last.Length > 0 Then
+            Return host2ip_last
+            Exit Function
+        End If
+
         'ホスト名からIPアドレス、IPアドレスからホスト名を取得する
         'http://dobon.net/vb/dotnet/internet/dnslookup.html
 
-        Dim r As String = url
+        Dim r As String = ""
 
         'まずipかどうかチェック
         Dim isIP As Integer = 0
@@ -3055,6 +3087,7 @@ Module モジュール_番組表
         If d.Length = 4 Then
             If IsNumeric(d(0)) And IsNumeric(d(1)) And IsNumeric(d(2)) And IsNumeric(d(3)) Then
                 isIP = 1
+                r = url
             End If
         End If
 
@@ -3084,6 +3117,10 @@ Module モジュール_番組表
                     log1write("【エラー】iniのTvProgram_EDCB_urlで指定された" & url & "のIPアドレス変換に失敗しました")
                 End Try
             End If
+        End If
+
+        If r.Length > 0 Then
+            host2ip_last = r
         End If
 
         Return r
@@ -3283,6 +3320,7 @@ Module モジュール_番組表
 
         If Tvmaid_url.Length > 0 Then
             'データベースから番組一覧を取得する
+            Dim log_temp As String = ">>Tvmaid番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
             Try
                 Dim nowtime As DateTime = Now()
                 Dim nowtime_n As DateTime = DateAdd(DateInterval.Second, nextsec, nowtime)
@@ -3310,6 +3348,8 @@ Module モジュール_番組表
                 sw.Write(s)
                 sw.Flush()
                 ms.Position = 0
+
+                log_temp &= " > 取得完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
 
                 Dim jsonRead As New Json.DataContractJsonSerializer(GetType(tvmaidData.TvmaidReserve))
                 Dim tr As tvmaidData.TvmaidReserve = jsonRead.ReadObject(ms)
@@ -3436,6 +3476,9 @@ Module モジュール_番組表
             Catch ex As Exception
                 log1write("Tvmaid番組情報取得中にエラーが発生しました。" & ex.Message)
             End Try
+
+            log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+            log1write(log_temp)
         End If
 
         Return r
@@ -3449,6 +3492,7 @@ Module モジュール_番組表
         '次の番組を取得するため期間を2時間半にしてデータベースから取得
 
         If Tvmaid_url.Length > 0 Then
+            Dim log_temp As String = ">>TvmaidEX番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
             'データベースから番組一覧を取得する
             Try
                 Dim nowtime As DateTime = Now()
@@ -3477,6 +3521,8 @@ Module モジュール_番組表
                 sw.Write(s)
                 sw.Flush()
                 ms.Position = 0
+
+                log_temp &= " > 取得完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
 
                 Dim jsonRead As New Json.DataContractJsonSerializer(GetType(tvmaidExData.TvmaidExReserve))
                 Dim tr As tvmaidExData.TvmaidExReserve = jsonRead.ReadObject(ms)
@@ -3628,7 +3674,39 @@ Module モジュール_番組表
             Catch ex As Exception
                 log1write("【エラー】TvmaidYUI番組情報取得中にエラーが発生しました。" & ex.Message)
             End Try
+
+            log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+            log1write(log_temp)
         End If
+
+        Return r
+    End Function
+
+    'TvRockデータからジャンルを判定するテスト
+    Public Function WI_TVROCK_GENRE_TEST(ByVal temp As String) As String
+        Dim r As String = ""
+
+        'temp= sid,trid,title
+        Dim d() As String = temp.Split(",")
+        Dim i As Integer = 0
+        For i = 0 To d.Length - 1
+            d(i) = Trim(filename_escape_recall(d(i)))
+        Next
+        Dim logdir As String = Path.GetDirectoryName(log_path) & "\"
+        Dim html1 As String = TvRock_html_program_src
+        str2file(logdir & "TvRock_html_program_src", html1)
+        log1write(logdir & "TvRock_html_program_srcを保存しました")
+        System.Threading.Thread.Sleep(100)
+        Dim html2 As String = TvRock_html_search_src
+        str2file(logdir & "TvRock_html_search_src", html2)
+        log1write(logdir & "TvRock_html_search_srcを保存しました")
+        System.Threading.Thread.Sleep(100)
+        Dim g1 As String = get_tvrock_genre_from_program(Val(d(0)), Val(d(1)), d(2))
+        System.Threading.Thread.Sleep(100)
+        Dim g2 As String = get_tvrock_genre_from_search(Val(d(0)), Val(d(1)), d(2))
+
+        r &= d(0) & " , " & d(1) & " , " & d(2) & vbCrLf
+        r &= "programから=" & Int(g1 / 256).ToString & " searchから=" & Int(g2 / 256).ToString
 
         Return r
     End Function

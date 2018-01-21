@@ -156,6 +156,7 @@
     <Compile Include="モジュール_ログ.vb" />
     <Compile Include="モジュール_番組表.vb" />
     <Compile Include="モジュール_名前付きパイプ取得.vb" />
+    <Compile Include="モジュール_番組表_放送局指定.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx">

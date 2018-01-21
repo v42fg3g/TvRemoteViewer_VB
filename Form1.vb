@@ -198,10 +198,10 @@ Public Class Form1
             End If
         End If
 
-        '2時間に1回TvRockPC用番組表を取得（ランチャー用ジャンル判別のため）
+        '1時間に1回TvRockPC用番組表を取得（ランチャー用ジャンル判別のため）
         If TvRock_genre_ON = 1 And TvProgram_tvrock_url.Length > 0 Then
             If TvProgram_ch IsNot Nothing And TvRock_genre_color IsNot Nothing Then
-                If ut2 - TvRock_html_getutime > (3600 * 2 - 180) Then
+                If ut2 - TvRock_html_getutime > (3600 * 1 - 180) Then
                     TvRock_html_getutime = ut2
                     check_TvRock_Program_PC_multi()
                 End If
@@ -1082,10 +1082,13 @@ Public Class Form1
     End Sub
 
     Private Sub check_TvRock_Program_PC()
-        If TvRock_genre_ON = 1 Then
-            Dim i1 As Integer = get_tvrock_html_program()
-            System.Threading.Thread.Sleep(100)
-            Dim i2 As Integer = get_tvrock_html_search()
+        Dim i1 As Integer = get_tvrock_html_program()
+        System.Threading.Thread.Sleep(100)
+        Dim i2 As Integer = get_tvrock_html_search()
+        If i1 + i2 < 2 Then
+            'どちらか一方でも失敗していれば10分後に再チャレンジ
+            TvRock_html_getutime = time2unix(Now()) - 3600 + 180 + 600
+            log1write("TvRockジャンル判定用HTML取得を約10分後に再度試みます")
         End If
     End Sub
 
@@ -1129,7 +1132,7 @@ Public Class Form1
                 log1write("【エラー】TvRockのPC用番組表取得に失敗しました")
             End If
         Else
-            log1write("TvRockの番組取得URL（TvProgram_tvrock_url）が未知の形式です。末尾に/iphoneが記入されていません")
+            log1write("TvRockの番組取得URL（TvProgram_tvrock_url）が未知の形式です。末尾に/iphoneが記入されていません。TvProgram_tvrock_url=" & TvProgram_tvrock_url)
         End If
 
         Return r
@@ -1179,16 +1182,30 @@ Public Class Form1
                 Dim m2 As Integer = Month(t2)
                 Dim d2 As Integer = Microsoft.VisualBasic.Day(t2)
 
+                Dim chk As Integer = 0
                 If TvRock_html_search_src_last.Length = 0 Then
+                    chk = 1
                     '起動直後で前回取得分無しの場合は本日分を遡って検索 結果がおかしくなるので1日前は含まない
                     TvRock_html_search_src_last = get_TvRock_search_html(m0, d0, m0, d0, 0, h0 + 1, 0)
                     System.Threading.Thread.Sleep(100)
+                    If TvRock_html_search_src_last.Length > 500 Or Hour(t) = 23 Then
+                        '0時直前ならデータが少ないことも有り得る
+                        chk = 2
+                    Else
+                        log1write("【エラー】本日分のTvRock_html_search_src取得に失敗しました")
+                    End If
                 End If
                 Dim html As String = get_TvRock_search_html(m0, d0, m2, d2, h0, 4, 0) '日またぎでおかしくなるかもだが
+                If html.Length > 500 Then
+                    r = 1
+                    If chk = 1 Then
+                        r = 0 '失敗している
+                    End If
+                Else
+                    log1write("【エラー】4時間分のTvRock_html_search_src取得に失敗しました")
+                End If
                 TvRock_html_search_src = TvRock_html_search_src_last & vbCrLf & html
                 TvRock_html_search_src_last = html
-
-                r = 1
             End If
         Else
             log1write("TvRockの番組取得URL（TvProgram_tvrock_url）が未知の形式です。末尾に/iphoneが記入されていません")

@@ -1288,6 +1288,8 @@ Class WebRemocon
                                     TvProgram_tvrock_url = TvProgram_tvrock_url.Substring(0, sp)
                                     log1write("TVROCK番組表チューナーに" & TvProgram_tvrock_tuner.ToString & "番を指定しました")
                                 End If
+                            Case "TvProgram_tvrock_sch"
+                                TvProgram_tvrock_sch = trim8(youso(1).ToString)
                             Case "TvProgram_Force_NoRec"
                                 If Val(trim8(youso(1).ToString)) = 1 Then
                                     TvProgram_Force_NoRec = 1
@@ -5397,6 +5399,13 @@ Class WebRemocon
                                         log1write("番組情報キャッシュをクリアしました")
                                         WI_cmd_reply = "OK"
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_STATION_PROGRAM"
+                                        '番組表取得(放送局毎)
+                                        WI_cmd_reply = WI_GET_STATION_PROGRAM(temp)
+                                        WI_cmd_reply_force = 1
+                                    Case "WI_TVROCK_GENRE_TEST"
+                                        WI_cmd_reply = WI_TVROCK_GENRE_TEST(temp)
+                                        WI_cmd_reply_force = 1
                                 End Select
                             End If
 
@@ -6328,6 +6337,7 @@ Class WebRemocon
         r &= "Stop_NVEnc_at_StartEnd=" & Stop_NVEnc_at_StartEnd & vbCrLf
         r &= "MAX_STREAM_NUMBER=" & MAX_STREAM_NUMBER & vbCrLf
         r &= "STOP_IDLEMINUTES=" & STOP_IDLEMINUTES & vbCrLf
+        r &= "TvRemoteViewer_VB_version=" & Format(TvRemoteViewer_VB_version, "0.00")
         r &= vbCrLf
         r &= "【UDPアプリ】" & vbCrLf
         r &= "_udpApp=" & Me._udpApp & vbCrLf

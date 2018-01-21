@@ -396,6 +396,13 @@ TvRock_genre_color =
 TvRock_genre_ON = 1
 
 
+;【TvRock】
+;【2.83】tvrock.schへのパス　記入があればTVRVLauncherで使用されます（放送局別番組一覧の先頭番組の予約の有無判定）
+; 予約の有無確認に使用。指定しない場合はWEBの予約一覧から取得します。コンマ秒の速さを求めるときに記入してください
+;例：TvProgram_tvrock_sch = C:\tvrock\tvrock.sch
+TvProgram_tvrock_sch = 
+
+
 ;【EDCB】
 ;EDCBの番組表WEBインターフェースURL
 ;準備
