@@ -1581,16 +1581,17 @@ Module モジュール_番組表
                     'Next調査期間4分はキャッシュを使用しない
                     If pcache(i2).min_utime <= ut And ut < (pcache(i2).max_utime) Then
                         '最小時間帯をはみ出してなければキャッシュを利用
-                        log1write("【番組表】" & unix2time(pcache(i2).min_utime) & " <= " & t.ToString & " < " & unix2time(pcache(i2).max_utime))
+                        log1write("【キャッシュ判定】" & unix2time(pcache(i2).min_utime) & " <= now:" & t.ToString & " < " & unix2time(pcache(i2).max_utime))
                         msg = "[In a range 1]"
                         Return convert_str_tvprogram(pcache(i2).value_str)
                         Exit Function
                     ElseIf (pcache(i2).max_utime - (3 * 60)) < ut And ut < pcache(i2).max_utime Then
                         'Nextを調べる時間帯～次の番組までの短い間（NEXT期間4分間は実際に調べる）
-                        log1write("【番組表】" & unix2time(pcache(i2).max_utime - (3 * 60)) & " < " & t.ToString & " < " & unix2time(pcache(i2).max_utime))
+                        log1write("【キャッシュ判定】" & unix2time(pcache(i2).max_utime - (3 * 60)) & " < now:" & t.ToString & " < " & unix2time(pcache(i2).max_utime))
                         msg = "[In a range 2]"
                         Return convert_str_tvprogram(pcache(i2).value_str)
                         Exit Function
+                    Else
                         log1write("【番組表】有効範囲内のキャッシュが存在しませんでした。" & region2softname(RegionID))
                     End If
                 Else
@@ -1600,7 +1601,7 @@ Module モジュール_番組表
                 log1write("【番組表】キャッシュが見つかりませんでした。" & region2softname(RegionID))
             End If
         End If
-            Return Nothing
+        Return Nothing
     End Function
 
     'キャッシュに格納

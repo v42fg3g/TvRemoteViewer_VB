@@ -151,7 +151,7 @@ Module モジュール_番組表_放送局指定
             If Outside_CustomURL_method = 1 Then
                 '都合の良いデータ形式の場合
                 If html.Length >= 300 Then
-                    'Dim log_temp As String = ">>AbemaTV放送局別番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                    Dim log_temp As String = "　　>>AbemaTV放送局別番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
 
                     Try
                         Dim line() As String = Split(html, vbCrLf)
@@ -193,8 +193,8 @@ Module モジュール_番組表_放送局指定
                                 End If
                             End If
                         Next
-                        'log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
-                        'log1write(log_temp)
+                        log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                        log1write(log_temp)
                         If chk_inTime = 0 Then
                             log1write("【エラー】" & Outside_StationName & "番組情報内に現在の情報が含まれていません")
                         End If
@@ -220,7 +220,7 @@ Module モジュール_番組表_放送局指定
         If TvProgram_EDCB_url.Length > 0 Then
             If ch_list IsNot Nothing Then
                 Try
-                    'Dim log_temp As String = ">>EDCB放送局別番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                    Dim log_temp As String = "　　>>EDCB放送局別番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                     Dim i As Integer = 0
                     Dim k As Integer = 0
 
@@ -243,6 +243,7 @@ Module モジュール_番組表_放送局指定
                         EDCB_cmd.SetNWSetting(ip, port)
                         Dim epgList As New System.Collections.Generic.List(Of CtrlCmdCLI.Def.EpgEventInfo)()
                         Dim ret As Integer = EDCB_cmd.SendEnumPgInfo(fsid_long, epgList) 'IPやportがおかしいとここで止まる可能性有り
+                        log_temp &= " > 取得完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                         If ret = 1 Then
                             For Each a As CtrlCmdCLI.Def.EpgEventInfo In epgList
                                 'まず現在時刻にあてはまるかチェック
@@ -278,6 +279,7 @@ Module モジュール_番組表_放送局指定
 
                             '予約状況を照らし合わせr()を修正
                             If r IsNot Nothing Then
+                                log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                                 '予約状況を照らし合わせr()を修正
                                 Dim spReserve() As spReservestructure = get_station_program_EDCB_reserve(p_sid)
                                 If spReserve IsNot Nothing Then
@@ -293,8 +295,8 @@ Module モジュール_番組表_放送局指定
                                 End If
                             End If
 
-                            'log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
-                            'log1write(log_temp)
+                            log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                            log1write(log_temp)
                         End If
                     End If
                 Catch ex As Exception
@@ -374,7 +376,7 @@ Module モジュール_番組表_放送局指定
         If Tvmaid_url.Length > 0 Then
             'データベースから番組一覧を取得する
             Try
-                'Dim log_temp As String = ">>TvmaidEX放送局別番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                Dim log_temp As String = "　　>>TvmaidEX放送局別番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
 
                 'fsid算出
                 Dim fsid As String = ""
@@ -408,9 +410,10 @@ Module モジュール_番組表_放送局指定
                     sw.Flush()
                     ms.Position = 0
 
+                    log_temp &= " > 取得完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+
                     Dim jsonRead As New Json.DataContractJsonSerializer(GetType(tvmaidExData.TvmaidExReserve))
                     Dim tr As tvmaidExData.TvmaidExReserve = jsonRead.ReadObject(ms)
-
                     If tr.code = 0 Then
                         For i = 0 To tr.data1.Count - 1
                             'タイトル
@@ -539,6 +542,7 @@ Module モジュール_番組表_放送局指定
                     st.Close()
 
                     If r IsNot Nothing Then
+                        log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                         '予約状況を照らし合わせr()を修正
                         Dim spReserve() As spReservestructure = get_station_program_TvmaidEX_reserve(fsid_long_str, maya)
                         If spReserve IsNot Nothing Then
@@ -553,8 +557,8 @@ Module モジュール_番組表_放送局指定
                     End If
                 End If
 
-                'log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
-                'log1write(log_temp)
+                log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                log1write(log_temp)
             Catch ex As Exception
                 log1write("【エラー】Tvmaid放送局別番組情報取得中にエラーが発生しました。" & ex.Message)
             End Try
@@ -678,20 +682,18 @@ Module モジュール_番組表_放送局指定
             End If
 
             If TvProgram_tvrock_url.Length > 0 Then
-                'Dim log_temp As String = ">>TvRock放送局別番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                Dim log_temp As String = "　　>>TvRock放送局別番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                 Dim html As String = ""
                 Dim t As DateTime = Now
                 If force = 1 Or Minute(t) <> Minute(TvRock_station_program_date) Then
                     TvRock_station_program_date = t
                     html = get_html_by_webclient(TvProgram_tvrock_url, "Shift_JIS")
                     TvRock_station_program_backup = html
-                    'log_temp &= " > 取得完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                    log_temp &= " > 取得完了(" & html.Length.ToString & ")：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                 Else
                     html = TvRock_station_program_backup
-                    'log_temp &= " > 取得完了(キャッシュ)：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                    log_temp &= " > 取得完了(キャッシュ" & html.Length.ToString & ")：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                 End If
-
-                str2file("d:\tvrock.html", html)
 
                 '<small>ＮＨＫＢＳ１ <small><i> のようになっている
                 Dim sp2 As Integer = html.IndexOf(" <small><i>")
@@ -876,6 +878,7 @@ Module モジュール_番組表_放送局指定
                 End If
 
                 If r IsNot Nothing Then
+                    log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                     '予約状況を照らし合わせr()を修正
                     Dim spReserve() As spReservestructure = get_station_program_TvRock_reserve()
                     If spReserve IsNot Nothing Then
@@ -896,8 +899,8 @@ Module モジュール_番組表_放送局指定
                     End If
                 End If
 
-                'log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
-                'log1write(log_temp)
+                log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                log1write(log_temp)
             End If
         Catch ex As Exception
             Write("【エラー】TvRockからの放送局別番組表取得に失敗しました。" & ex.Message)
@@ -913,7 +916,7 @@ Module モジュール_番組表_放送局指定
         Dim i, j As Integer
         Dim ut As Integer = time2unix(Now())
 
-        If TvProgram_tvrock_sch.Length > 0 And False Then 'teststettttt
+        If TvProgram_tvrock_sch.Length > 0 And False Then
             'tvrock.schから取得
             Dim html As String = file2str(TvProgram_tvrock_sch, "Shift_JIS")
             If html.Length > 100 Then
@@ -1092,6 +1095,8 @@ Module モジュール_番組表_放送局指定
         Dim nextsec As Integer = p_endtt - p_startt
 
         If pttimer_pt2count > 0 Then
+            Dim log_temp As String = "　　>>ptTimer放送局別番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+
             'データベースから番組一覧を取得する
             Dim results As String = ""
             Dim psi As New System.Diagnostics.ProcessStartInfo()
@@ -1144,6 +1149,9 @@ Module モジュール_番組表_放送局指定
                 Catch ex As Exception
                     log1write("sqlite3.exe実行エラー[" & pt2number & "]")
                 End Try
+
+                If results Is Nothing Then results = ""
+                log_temp &= " > 取得完了(" & results.Length.ToString & ")：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
 
                 '結果に数種類の改行が入っておりREPLACEが動作しないことへの対策 「, '_BR_' as cr」
                 results = results.Replace(vbCrLf, " ").Replace(vbCr, " ")
@@ -1248,6 +1256,7 @@ Module モジュール_番組表_放送局指定
             Next
 
             If r IsNot Nothing Then
+                log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                 '予約状況を照らし合わせr()を修正
                 Dim spReserve() As spReservestructure = get_station_program_ptTimer_reserve(p_sid)
                 If spReserve IsNot Nothing Then
@@ -1260,6 +1269,8 @@ Module モジュール_番組表_放送局指定
                     Next
                 End If
             End If
+            log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+            log1write(log_temp)
         End If
 
         Return r
@@ -1318,6 +1329,8 @@ Module モジュール_番組表_放送局指定
                 Catch ex As Exception
                     log1write("sqlite3.exe実行エラー[" & pt2number & "]")
                 End Try
+
+                If results Is Nothing Then results = ""
 
                 '行ごとの配列として、テキストファイルの中身をすべて読み込む
                 Dim line As String() = Split(results, vbCrLf) 'results.Split(vbCrLf)
