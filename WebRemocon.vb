@@ -1038,21 +1038,28 @@ Class WebRemocon
                 If line Is Nothing Then
                     log1write("【エラー】[HlsOpt] " & filename & "内にオプション記述がありませんでした[A]")
                 Else
-                    Dim chk As Integer = 0
+                    Dim j As Integer = 0
                     For i = 0 To line.Length - 1
-                        Dim youso() As String = line(i).Split("]")
-                        If youso Is Nothing Then
-                        Else
-                            If youso.Length = 2 Then
-                                ReDim Preserve r(i)
-                                r(i).resolution = Trim(youso(0)).Replace("[", "")
-                                r(i).opt = youso(1)
-                                chk = 1
+                        If line(i).Length > 0 Then
+                            'コメントアウト「;」「#」がオプション中に使用されるかもなので丁寧に
+                            Dim sp1 As Integer = line(i).IndexOf("[")
+                            Dim sp2 As Integer = line(i).IndexOf("]", sp1 + 1)
+                            If sp1 >= 0 And sp2 > sp1 + 1 And line(i).Length > sp2 + 1 Then
+                                Dim d0 As String = ""
+                                If sp1 > 0 Then
+                                    d0 = Trim(line(i).Substring(0, sp1))
+                                End If
+                                If d0.IndexOf(";") <> 0 And d0.IndexOf("#") <> 0 Then 'コメントアウトされていなければ
+                                    ReDim Preserve r(j)
+                                    r(j).resolution = Trim(line(i).Substring(sp1 + 1, sp2 - sp1 - 1))
+                                    r(j).opt = Trim(line(i).Substring(sp2 + 1))
+                                    j += 1
+                                End If
                             End If
                         End If
                     Next
-                    If chk = 1 Then
-                        log1write("[HlsOpt] " & filename & "からHLSオプションを取得しました")
+                    If j > 0 Then
+                        log1write("[HlsOpt] " & filename & "からHLSオプションを取得しました（" & j.ToString & ")")
                     Else
                         log1write("【エラー】[HlsOpt] " & filename & "内にオプション記述がありませんでした")
                     End If
