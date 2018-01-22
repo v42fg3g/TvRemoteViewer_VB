@@ -264,7 +264,7 @@ Module モジュール_番組表_放送局指定
                                     r(j).title = escape_program_str(a.ShortInfo.event_name)
                                     r(j).content = escape_program_str(a.ShortInfo.text_char)
                                     r(j).thumbnail = ""
-                                    r(j).reserve = 0
+                                    r(j).reserve = -1
                                     r(j).rsv_change = RecSrc & p_sid & "," & r(j).startt & "," & r(j).endt & "," & a.event_id & "," & "-1" & "," & "-1"
                                     Dim jnr As CtrlCmdCLI.Def.EpgContentInfo = a.ContentInfo
                                     If jnr IsNot Nothing Then
@@ -288,11 +288,19 @@ Module モジュール_番組表_放送局指定
                                         If ri >= 0 Then
                                             If spReserve(i).recmode <> 5 Then '5=無効
                                                 r(ri).reserve = 1
+                                            Else
+                                                r(ri).reserve = 0
                                             End If
                                             r(ri).rsv_change = RecSrc & spReserve(i).sid & "," & r(ri).startt & "," & r(ri).endt & "," & spReserve(i).eid & "," & spReserve(i).yid & "," & spReserve(i).recmode
                                         End If
                                     Next
                                 End If
+                                '一巡してr()に対して判定がなされてなければ予約されていないとわかる
+                                For kk As Integer = 0 To r.Length - 1
+                                    If r(kk).reserve < 0 Then
+                                        r(kk).reserve = 0
+                                    End If
+                                Next
                             End If
 
                             log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
@@ -526,7 +534,7 @@ Module モジュール_番組表_放送局指定
                                     r(j).title = title
                                     r(j).content = texts
                                     r(j).thumbnail = ""
-                                    r(j).reserve = 0
+                                    r(j).reserve = -1
                                     r(j).rsv_change = RecSrc & fsid_long_str & "," & eid & "," & "-1"
                                     r(j).genre = genre
                                     r(j).fsid_startt = fsid_long_str & "_" & eid 'ystart
@@ -554,6 +562,12 @@ Module モジュール_番組表_放送局指定
                                 End If
                             Next
                         End If
+                        '一巡してr()に対して判定がなされてなければ予約されていないとわかる
+                        For kk As Integer = 0 To r.Length - 1
+                            If r(kk).reserve < 0 Then
+                                r(kk).reserve = 0
+                            End If
+                        Next
                     End If
                 End If
 
@@ -763,7 +777,7 @@ Module モジュール_番組表_放送局指定
                                     r(j).title = temp_programTitle
                                     r(j).content = temp_programContent
                                     r(j).thumbnail = ""
-                                    r(j).reserve = 0
+                                    r(j).reserve = -1
                                     r(j).rsv_change = ""
                                     r(j).genre = temp_genre
                                     r(j).fsid_startt = temp_stationDispName & "_" & temp_startt.ToString
@@ -816,13 +830,14 @@ Module モジュール_番組表_放送局指定
                                         r(j).title = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                                         r(j).content = ""
                                         r(j).thumbnail = ""
-                                        r(j).reserve = 0 'iphone画面では確定できない
-                                        r(j).rsv_change = ""
-                                        r(j).fsid_startt = temp_stationDispName & "_" & temp_startt.ToString
+                                        r(j).reserve = -1 'iphone画面では確定できない 'rsv
                                         Dim s5 As Integer = html.IndexOf("<a href=""javascript", sp3)
                                         If s5 > 0 And s5 < se Then
                                             r(j).rsv_change = RecSrc & "javascript" & Instr_pickup(html, "<a href=""javascript", ")", sp3) & ")"
+                                        Else
+                                            r(j).rsv_change = ""
                                         End If
+                                        r(j).fsid_startt = temp_stationDispName & "_" & temp_startt.ToString
                                         If TvRock_genre_ON = 1 Then
                                             Dim r1chk As Integer = 0
                                             If rsv = 0 Then
@@ -863,16 +878,18 @@ Module モジュール_番組表_放送局指定
                     sp = html.LastIndexOf("><small>", sp2 + 1)
                 End While
 
-                '先頭の予約IDを推定する
+                '先頭の番組IDを推定する
+                Dim r0_chk As Integer = 0
                 If TvRock_html_program_src.Length > 0 Then
-                    '予約IDがわからない・・1番始めに見つかったtridから遡った直近のものだろう
+                    '番組IDがわからない・・1番始めに見つかったtridから遡った直近のものだろう
                     Dim s5 As Integer = TvRock_html_program_src.IndexOf("&c=" & p_sid & "&e=" & first_trid)
                     If s5 > 0 Then
                         Dim s6 As Integer = TvRock_html_program_src.LastIndexOf("&c=" & p_sid, s5 - 1)
                         If s6 > 0 Then
                             Dim s7 As String = Instr_pickup(TvRock_html_program_src, "&e=", "&", s6)
-                            r(0).reserve = 0
+                            r(0).reserve = -1 'まだ確定できない
                             r(0).rsv_change = RecSrc & "javascript:reserv(0," & p_sid & "," & s7 & ",0)"
+                            r0_chk = 1 '最初の項目のチェックが終わった
                         End If
                     End If
                 End If
@@ -880,11 +897,12 @@ Module モジュール_番組表_放送局指定
                 If r IsNot Nothing Then
                     log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                     '予約状況を照らし合わせr()を修正
-                    Dim spReserve() As spReservestructure = get_station_program_TvRock_reserve()
+                    Dim spReserve() As spReservestructure = get_station_program_TvRock_reserve(p_sid)
                     If spReserve IsNot Nothing Then
                         For i = 0 To spReserve.Length - 1
                             Dim ri As Integer = Array.IndexOf(r, spReserve(i).station & "_" & spReserve(i).startt)
                             If ri >= 0 Then
+                                '放送局名と開始時間が一致
                                 If spReserve(i).recmode = 1 Then
                                     r(ri).reserve = 1
                                     r(ri).rsv_change = RecSrc & "list?i=" & spReserve(i).yid & "&amp;val=" & (Val(spReserve(i).recmode) + 1)
@@ -893,10 +911,20 @@ Module モジュール_番組表_放送局指定
                                     r(ri).rsv_change = RecSrc & "list?i=" & spReserve(i).yid & "&amp;val=" & (Val(spReserve(i).recmode) + 1)
                                 End If
                             Else
-                                log1write("【エラー】TvRock予約状況照合中に当てはまらないデータがありました。" & spReserve(i).station & "_" & spReserve(i).startt)
+                                'webから返ってくるデータはsidが不明なので、該当局以外ののデータも含まれている
+                                'log1write("【エラー】TvRock予約状況照合中に当てはまらないデータがありました。" & spReserve(i).station & "_" & spReserve(i).startt)
                             End If
                         Next
                     End If
+                    '一巡してr()に対して判定がなされてなければ予約されていないとわかる
+                    If r0_chk = 1 And r(0).reserve < 0 Then
+                        r(0).reserve = 0
+                    End If
+                    For kk As Integer = 1 To r.Length - 1
+                        If r(kk).reserve < 0 Then
+                            r(kk).reserve = 0
+                        End If
+                    Next
                 End If
 
                 log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
@@ -909,7 +937,7 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Private Function get_station_program_TvRock_reserve() As spReservestructure()
+    Private Function get_station_program_TvRock_reserve(ByVal p_sid As Integer) As spReservestructure()
         'fsid_startunixtime_endunixtimeの形式
         Dim r() As spReservestructure = Nothing
 
@@ -924,22 +952,24 @@ Module モジュール_番組表_放送局指定
                 Dim k As Integer = Int(line.Length / 43)
                 If k > 0 Then
                     For i = 0 To k - 1
-                        Dim p_startt As Integer = Val(Trim(line(i * 43 + 0).Replace(i.ToString & " START ", "")))
-                        Dim p_endt As Integer = Val(Trim(line(i * 43 + 1).Replace(i.ToString & " END ", "")))
-                        Dim p_sid As Integer = Val(Trim(line(i * 43 + 12).Replace(i.ToString & " SERVICEID ", "")))
-                        Dim p_uid As String = Trim(line(i * 43 + 4).Replace(i.ToString & " UNIQID ", ""))
-                        Dim p_validate As String = Trim(line(i * 43 + 16).Replace(i.ToString & " VALIDATE ", ""))
-                        Dim p_station As String = Trim(line(i * 43 + 38).Replace(i.ToString & " STATION ", ""))
-                        Dim p_title As String = Trim(line(i * 43 + 39).Replace(i.ToString & " TITLE ", ""))
-                        ReDim Preserve r(j)
-                        r(j).startt = p_startt
-                        r(j).endt = p_endt
-                        r(j).sid = p_sid
-                        r(j).yid = p_uid
-                        r(j).recmode = p_validate
-                        r(j).station = p_station
-                        r(j).title = p_title
-                        j += 1
+                        Dim startt As Integer = Val(Trim(line(i * 43 + 0).Replace(i.ToString & " START ", "")))
+                        Dim endt As Integer = Val(Trim(line(i * 43 + 1).Replace(i.ToString & " END ", "")))
+                        Dim sid As Integer = Val(Trim(line(i * 43 + 12).Replace(i.ToString & " SERVICEID ", "")))
+                        Dim uid As String = Trim(line(i * 43 + 4).Replace(i.ToString & " UNIQID ", ""))
+                        Dim validate As String = Trim(line(i * 43 + 16).Replace(i.ToString & " VALIDATE ", ""))
+                        Dim station As String = Trim(line(i * 43 + 38).Replace(i.ToString & " STATION ", ""))
+                        Dim title As String = Trim(line(i * 43 + 39).Replace(i.ToString & " TITLE ", ""))
+                        If sid = p_sid Then
+                            ReDim Preserve r(j)
+                            r(j).startt = startt
+                            r(j).endt = endt
+                            r(j).sid = sid
+                            r(j).yid = uid
+                            r(j).recmode = validate
+                            r(j).station = station
+                            r(j).title = title
+                            j += 1
+                        End If
                     Next
                 Else
                     log1write("tvrock.schからデータが読み込めませんでした。予約が0またはファイルが存在していない可能性があります")
@@ -947,7 +977,6 @@ Module モジュール_番組表_放送局指定
             End If
         Else
             'WEBから取得
-
             '番組表読み込み
             Dim url As String = TvProgram_tvrock_url.Replace("/iphone", "/list")
             log1write("TvRock予約一覧を読み込みます。" & url)
@@ -991,12 +1020,28 @@ Module モジュール_番組表_放送局指定
                                 Dim yyyy As String = Year(Now()).ToString
                                 Dim d1_str As String = yyyy & "/" & mm & "/" & dd & " " & hm1
                                 Dim d2_str As String = yyyy & "/" & mm & "/" & dd & " " & hm2
+                                Dim d1t As DateTime
+                                Dim d2t As DateTime
                                 Dim d1 As Integer = 0
                                 Dim d2 As Integer = 0
                                 Try
-                                    d1 = time2unix(CDate(d1_str))
-                                    d2 = time2unix(CDate(d2_str))
+                                    d1t = CDate(d1_str)
+                                    d2t = CDate(d2_str)
+                                    d1 = time2unix(d1t)
+                                    d2 = time2unix(d2t)
+                                    '年またぎを考慮
+                                    If d1 < ut - (3600 * 24 * 30 * 6) Then
+                                        '半年より前というおかしな日付なら1年足す
+                                        d1t = DateAdd(DateInterval.Year, 1, d1t)
+                                        d1 = time2unix(d1t)
+                                    End If
+                                    If d2 < ut - (3600 * 24 * 30 * 6) Then
+                                        '半年より前というおかしな日付なら1年足す
+                                        d2t = DateAdd(DateInterval.Year, 1, d2t)
+                                        d2 = time2unix(d2t)
+                                    End If
                                     While d2 < d1
+                                        '日をまたいでいれば
                                         d2 += 3600 * 24
                                     End While
                                 Catch ex As Exception
@@ -1237,8 +1282,8 @@ Module モジュール_番組表_放送局指定
                                                 r(i).title = title
                                                 r(i).content = texts
                                                 r(i).thumbnail = ""
-                                                r(i).reserve = 0
-                                                r(i).rsv_change = ""
+                                                r(i).reserve = -1
+                                                r(i).rsv_change = "" '現在対応不可能
                                                 r(i).genre = Int(Val(youso(6)) / 16) * 256
                                                 r(i).fsid_startt = eid.ToString & "_" & ystart.ToString
 
@@ -1264,10 +1309,17 @@ Module モジュール_番組表_放送局指定
                         Dim ri As Integer = Array.IndexOf(r, spReserve(i).eid & "_" & spReserve(i).startt.ToString)
                         If ri >= 0 Then
                             r(ri).reserve = 1
-                            'r(ri).rsv_change = "[ptTimer]現在対応不可能"
+                            r(ri).rsv_change = "" '現在対応不可能
                         End If
                     Next
                 End If
+                '一巡してr()に対して判定がなされてなければ予約されていないとわかる
+                For kk As Integer = 0 To r.Length - 1
+                    If r(kk).reserve < 0 Then
+                        r(kk).reserve = 0
+                        r(kk).rsv_change = "" '現在対応不可能
+                    End If
+                Next
             End If
             log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
             log1write(log_temp)
