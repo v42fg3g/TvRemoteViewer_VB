@@ -185,6 +185,9 @@ Module モジュール_番組表_放送局指定
                                     r(j).title = escape_program_str(d(4))
                                     r(j).content = escape_program_str(d(5))
                                     r(j).thumbnail = ""
+                                    If d.Length >= 7 Then
+                                        r(j).thumbnail = filename_escape_recall(d(6))
+                                    End If
                                     r(j).reserve = -1
                                     r(j).rsv_change = ""
                                     r(j).genre = -1
