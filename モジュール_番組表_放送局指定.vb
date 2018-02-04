@@ -291,7 +291,7 @@ Module モジュール_番組表_放送局指定
                                         If ri >= 0 Then
                                             If spReserve(i).recmode <> 5 Then '5=無効
                                                 r(ri).reserve = 1
-                                            Else
+                                            ElseIf r(ri).reserve < 0 Then
                                                 r(ri).reserve = 0
                                             End If
                                             r(ri).rsv_change = RecSrc & spReserve(i).sid & "," & r(ri).startt & "," & r(ri).endt & "," & spReserve(i).eid & "," & spReserve(i).yid & "," & spReserve(i).recmode
@@ -909,7 +909,7 @@ Module モジュール_番組表_放送局指定
                                 If spReserve(i).recmode = 1 Then
                                     r(ri).reserve = 1
                                     r(ri).rsv_change = RecSrc & "list?i=" & spReserve(i).yid & "&amp;val=" & (Val(spReserve(i).recmode) + 1)
-                                Else
+                                ElseIf r(ri).reserve < 0 Then
                                     r(ri).reserve = 0
                                     r(ri).rsv_change = RecSrc & "list?i=" & spReserve(i).yid & "&amp;val=" & (Val(spReserve(i).recmode) + 1)
                                 End If
@@ -947,7 +947,7 @@ Module モジュール_番組表_放送局指定
         Dim i, j As Integer
         Dim ut As Integer = time2unix(Now())
 
-        If TvProgram_tvrock_sch.Length > 0 And False Then
+        If TvProgram_tvrock_sch.Length > 0 Then
             'tvrock.schから取得
             Dim html As String = file2str(TvProgram_tvrock_sch, "Shift_JIS")
             If html.Length > 100 Then
