@@ -1754,6 +1754,12 @@ Public Class Form1
                         "」が名前変更されました。"))
             End Select
 
+            '更新されたファイルがあるフォルダを記録
+            Dim folder As String = Path.GetDirectoryName(e.FullPath)
+            If VideoChangedFolders.IndexOf(vbCrLf & folder & vbCrLf) < 0 Then
+                VideoChangedFolders &= folder & vbCrLf
+            End If
+
             watcher_lasttime = Now()
             '最後の変更からタイマーで10秒経ったら更新
         End If

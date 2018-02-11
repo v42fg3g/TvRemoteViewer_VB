@@ -3687,27 +3687,31 @@ Module モジュール_番組表
     Public Function WI_TVROCK_GENRE_TEST(ByVal temp As String) As String
         Dim r As String = ""
 
-        'temp= sid,trid,title
-        Dim d() As String = temp.Split(",")
-        Dim i As Integer = 0
-        For i = 0 To d.Length - 1
-            d(i) = Trim(filename_escape_recall(d(i)))
-        Next
-        Dim logdir As String = Path.GetDirectoryName(log_path) & "\"
-        Dim html1 As String = TvRock_html_program_src
-        str2file(logdir & "TvRock_html_program_src", html1)
-        log1write(logdir & "TvRock_html_program_srcを保存しました")
-        System.Threading.Thread.Sleep(100)
-        Dim html2 As String = TvRock_html_search_src
-        str2file(logdir & "TvRock_html_search_src", html2)
-        log1write(logdir & "TvRock_html_search_srcを保存しました")
-        System.Threading.Thread.Sleep(100)
-        Dim g1 As String = get_tvrock_genre_from_program(Val(d(0)), Val(d(1)), d(2))
-        System.Threading.Thread.Sleep(100)
-        Dim g2 As String = get_tvrock_genre_from_search(Val(d(0)), Val(d(1)), d(2))
+        Try
+            'temp= sid,trid,title
+            Dim d() As String = temp.Split(",")
+            Dim i As Integer = 0
+            For i = 0 To d.Length - 1
+                d(i) = Trim(filename_escape_recall(d(i)))
+            Next
+            Dim logdir As String = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\"
+            Dim html1 As String = TvRock_html_program_src
+            str2file(logdir & "TvRock_html_program_src.html", html1)
+            log1write(logdir & "TvRock_html_program_src.htmlを保存しました")
+            System.Threading.Thread.Sleep(100)
+            Dim html2 As String = TvRock_html_search_src
+            str2file(logdir & "TvRock_html_search_src.html", html2)
+            log1write(logdir & "TvRock_html_search_src.htmlを保存しました")
+            System.Threading.Thread.Sleep(100)
+            Dim g1 As String = get_tvrock_genre_from_program(Val(d(0)), Val(d(1)), d(2))
+            System.Threading.Thread.Sleep(100)
+            Dim g2 As String = get_tvrock_genre_from_search(Val(d(0)), Val(d(1)), d(2))
 
-        r &= d(0) & " , " & d(1) & " , " & d(2) & vbCrLf
-        r &= "programから=" & Int(g1 / 256).ToString & " searchから=" & Int(g2 / 256).ToString
+            r &= d(0) & " , " & d(1) & " , " & d(2) & vbCrLf
+            r &= "programから=" & Int(g1 / 256).ToString & " searchから=" & Int(g2 / 256).ToString
+        Catch ex As Exception
+            log1write("【エラー】ジャンルテスト中にエラーが発生しました。" & ex.Message)
+        End Try
 
         Return r
     End Function

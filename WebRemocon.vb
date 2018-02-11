@@ -475,97 +475,140 @@ Class WebRemocon
         Dim cnt As Integer = 0
         Dim i As Integer
 
-        add_subfolder() 'サブフォルダを加える
+        Dim changeList() As String = Nothing  '更新されたファイルのフルパス
+        If VideoChangedFolders.Length > vbCrLf.Length Then
+            changeList = Split(VideoChangedFolders, vbCrLf)
+            VideoChangedFolders = vbCrLf '更新されたビデオファイルリストをクリア
+        End If
 
-        If Me._videopath IsNot Nothing Then
-            If Me._videopath.Length > 0 Then
+        If changeList Is Nothing Then
+            '全更新
+            add_subfolder() 'サブフォルダを加える
 
-                For i = 0 To Me._videopath.Length - 1
+            If Me._videopath IsNot Nothing Then
+                If Me._videopath.Length > 0 Then
+                    For i = 0 To Me._videopath.Length - 1
+                        Try
+                            If Me._videopath(i).Length > 0 Then
+                                Try
+                                    Dim files As String() = System.IO.Directory.GetFiles(Me._videopath(i), "*")
+                                    'For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
+                                    For Each stFilePath As String In files
+                                        Try
+                                            '1ファイル追加 video2とcntはByRef
+                                            add_file_to_video2(video2, cnt, stFilePath, videoexword)
+                                        Catch ex As Exception
+                                            log1write("ビデオフォルダ一覧作成中に" & stFilePath & "の処理に失敗しました。" & ex.Message)
+                                        End Try
+                                    Next stFilePath
+                                Catch ex As Exception
+                                    log1write("ビデオフォルダ " & Me._videopath(i) & " の読み込みに失敗しました。" & ex.Message)
+                                End Try
+                            End If
+                        Catch ex As Exception
+                            log1write("【エラー】ビデオリストリフレッシュ中に例外エラーが発生しました。" & ex.Message)
+                        End Try
+                    Next
+
+                    '並べ替え（日付の新しい順）
+                    If video2 IsNot Nothing Then
+                        Array.Sort(video2)
+                    End If
+                End If
+            End If
+            log1write("ビデオファイル一覧を取得しました")
+        Else
+            '更新されたファイルがあるフォルダのみ更新（更新ファイルのみは不安なので）
+            Dim j As Integer = 0
+            For j = 0 To changeList.Length - 1
+                If Trim(changeList(j)).Length > 0 Then
                     Try
-                        If Me._videopath(i).Length > 0 Then
+                        Dim files As String() = System.IO.Directory.GetFiles(changeList(j), "*")
+                        For Each stFilePath As String In files
                             Try
-                                Dim files As String() = System.IO.Directory.GetFiles(Me._videopath(i), "*")
-                                'For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
-                                For Each stFilePath As String In files
-                                    Try
-                                        Dim fullpath As String = stFilePath
-                                        '拡張子を取得
-                                        Dim ext As String = System.IO.Path.GetExtension(fullpath).ToLower
-                                        '表示拡張子が指定されていれば該当するかチェックする
-                                        Dim chk As Integer = -2
-                                        If VideoExtensions IsNot Nothing And ext.Length > 0 Then
-                                            chk = Array.IndexOf(VideoExtensions, ext)
-                                        End If
-                                        'chk=-2 拡張子指定は無い
-                                        'chk>=0 拡張子指定が有り、一致した
-                                        'chk=-1 拡張子指定が有り、一致しなかった
-                                        If chk >= 0 Or (chk = -2 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass") Then
-                                            '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
-                                            Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
-                                            Dim datestr As String = modifytime.ToString("yyyyMMddHH")
-                                            Dim filename As String = System.IO.Path.GetFileName(fullpath)
-                                            'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
-                                            'UTF-8化で解決
-                                            'Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
-                                            Dim encstr As String = fullpath
-
-                                            '抽出
-                                            If videoexword.Length > 0 Then
-                                                videoexword = videoexword.Replace("　", " ")
-                                                Dim v() As String = videoexword.Split(" ")
-                                                '全てのワードに当てはまるかチェック
-                                                For j As Integer = 0 To v.Length - 1
-                                                    'If filename.IndexOf(v(j)) < 0 Then
-                                                    If encstr.IndexOf(v(j)) < 0 Then 'フォルダもフィルタに含めるようにした
-                                                        filename = ""
-                                                    End If
-                                                Next
-                                            End If
-
-                                            If filename.Length > 0 Then
-                                                'ファイルのサイズを取得 fi.length
-                                                Dim flength As Long = 100
-                                                If VideoSizeCheck = 1 Then
-                                                    Dim fi As New System.IO.FileInfo(fullpath)
-                                                    flength = fi.Length
-                                                End If
-                                                If flength >= 100 Then
-                                                    '登録
-                                                    ReDim Preserve video2(cnt)
-                                                    fullpath = filename_escape_set(fullpath) ',をエスケープ
-                                                    video2(cnt).fullpathfilename = fullpath
-                                                    filename = filename_escape_set(filename) ',をエスケープ
-                                                    video2(cnt).filename = filename
-                                                    encstr = filename_escape_set(encstr) ',をエスケープ
-                                                    video2(cnt).encstr = encstr
-                                                    video2(cnt).modifytime = modifytime
-                                                    video2(cnt).datestr = datestr
-                                                    cnt += 1
-                                                End If
-                                            End If
-                                        End If
-                                    Catch ex As Exception
-                                        log1write("ビデオフォルダ一覧作成中に" & stFilePath & "の処理に失敗しました。" & ex.Message)
-                                    End Try
-                                Next stFilePath
+                                '1ファイル追加 video2とcntはByRef
+                                add_file_to_video2(video2, cnt, stFilePath, videoexword)
                             Catch ex As Exception
-                                log1write("ビデオフォルダ " & Me._videopath(i) & " の読み込みに失敗しました。" & ex.Message)
+                                log1write("ビデオフォルダ一覧作成中に" & stFilePath & "の処理に失敗しました。" & ex.Message)
                             End Try
-                        End If
+                        Next stFilePath
                     Catch ex As Exception
-                        log1write("【エラー】ビデオリストリフレッシュ中に例外エラーが発生しました。" & ex.Message)
+                        log1write("ビデオフォルダ " & changeList(j) & " の読み込みに失敗しました。" & ex.Message)
                     End Try
+                End If
+            Next
+            'その他のフォルダのファイルを追加
+            If video IsNot Nothing Then
+                For j = 0 To video.Length - 1
+                    Dim fstr As String = Path.GetDirectoryName(video(j).fullpathfilename)
+                    If Array.IndexOf(changeList, fstr) < 0 Then
+                        '1ファイル追加 video2とcntはByRef
+                        add_file_to_video2(video2, cnt, video(j).fullpathfilename, videoexword)
+                    End If
                 Next
+            End If
+        End If
 
-                '並べ替え（日付の新しい順）
-                If video2 IsNot Nothing Then
-                    Array.Sort(video2)
+        Return video2
+    End Function
+
+    Public Sub add_file_to_video2(ByRef video2() As videostructure, ByRef cnt As Integer, ByVal fullpath As String, ByVal videoexword As String)
+        '拡張子を取得
+        Dim ext As String = System.IO.Path.GetExtension(fullpath).ToLower
+        '表示拡張子が指定されていれば該当するかチェックする
+        Dim chk As Integer = -2
+        If VideoExtensions IsNot Nothing And ext.Length > 0 Then
+            chk = Array.IndexOf(VideoExtensions, ext)
+        End If
+        'chk=-2 拡張子指定は無い
+        'chk>=0 拡張子指定が有り、一致した
+        'chk=-1 拡張子指定が有り、一致しなかった
+        If chk >= 0 Or (chk = -2 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass") Then
+            '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
+            Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
+            Dim datestr As String = modifytime.ToString("yyyyMMddHH")
+            Dim filename As String = System.IO.Path.GetFileName(fullpath)
+            'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
+            'UTF-8化で解決
+            'Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
+            Dim encstr As String = fullpath
+
+            '抽出
+            If videoexword.Length > 0 Then
+                videoexword = videoexword.Replace("　", " ")
+                Dim v() As String = videoexword.Split(" ")
+                '全てのワードに当てはまるかチェック
+                For j As Integer = 0 To v.Length - 1
+                    'If filename.IndexOf(v(j)) < 0 Then
+                    If encstr.IndexOf(v(j)) < 0 Then 'フォルダもフィルタに含めるようにした
+                        filename = ""
+                    End If
+                Next
+            End If
+
+            If filename.Length > 0 Then
+                'ファイルのサイズを取得 fi.length
+                Dim flength As Long = 100
+                If VideoSizeCheck = 1 Then
+                    Dim fi As New System.IO.FileInfo(fullpath)
+                    flength = fi.Length
+                End If
+                If flength >= 100 Then
+                    '登録
+                    ReDim Preserve video2(cnt)
+                    fullpath = filename_escape_set(fullpath) ',をエスケープ
+                    video2(cnt).fullpathfilename = fullpath
+                    filename = filename_escape_set(filename) ',をエスケープ
+                    video2(cnt).filename = filename
+                    encstr = filename_escape_set(encstr) ',をエスケープ
+                    video2(cnt).encstr = encstr
+                    video2(cnt).modifytime = modifytime
+                    video2(cnt).datestr = datestr
+                    cnt += 1
                 End If
             End If
         End If
-        log1write("ビデオファイル一覧を取得しました")
-        Return video2
-    End Function
+    End Sub
 
     'エラーページ用ひな形
     Public Function ERROR_PAGE(ByVal title As String, ByVal body As String, Optional ByVal a As Integer = 0) As String

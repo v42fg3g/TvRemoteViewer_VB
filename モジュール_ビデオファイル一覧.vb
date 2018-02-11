@@ -30,4 +30,7 @@
 
     '最後にファイル一覧に変化があったことを検知した日時
     Public watcher_lasttime As DateTime = C_DAY2038
+
+    '変更されたファイルが存在するフォルダ
+    Public VideoChangedFolders As String = vbCrLf
 End Module
