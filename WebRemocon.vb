@@ -563,7 +563,7 @@ Class WebRemocon
         'chk=-2 拡張子指定は無い
         'chk>=0 拡張子指定が有り、一致した
         'chk=-1 拡張子指定が有り、一致しなかった
-        If chk >= 0 Or (chk = -2 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass") Then
+        If chk >= 0 Or (chk = -2 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass" And ext <> ".ini" And ext <> ".txt") Then
             '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
             Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
             Dim datestr As String = modifytime.ToString("yyyyMMddHH")
@@ -588,24 +588,24 @@ Class WebRemocon
 
             If filename.Length > 0 Then
                 'ファイルのサイズを取得 fi.length
-                Dim flength As Long = 100
-                If VideoSizeCheck = 1 Then
-                    Dim fi As New System.IO.FileInfo(fullpath)
-                    flength = fi.Length
-                End If
-                If flength >= 100 Then
-                    '登録
-                    ReDim Preserve video2(cnt)
-                    fullpath = filename_escape_set(fullpath) ',をエスケープ
-                    video2(cnt).fullpathfilename = fullpath
-                    filename = filename_escape_set(filename) ',をエスケープ
-                    video2(cnt).filename = filename
-                    encstr = filename_escape_set(encstr) ',をエスケープ
-                    video2(cnt).encstr = encstr
-                    video2(cnt).modifytime = modifytime
-                    video2(cnt).datestr = datestr
-                    cnt += 1
-                End If
+                'Dim flength As Long = 100
+                'If VideoSizeCheck = 1 Then
+                'Dim fi As New System.IO.FileInfo(fullpath)
+                'flength = fi.Length
+                'End If
+                'If flength >= 100 Then
+                '登録
+                ReDim Preserve video2(cnt)
+                fullpath = filename_escape_set(fullpath) ',をエスケープ
+                video2(cnt).fullpathfilename = fullpath
+                filename = filename_escape_set(filename) ',をエスケープ
+                video2(cnt).filename = filename
+                encstr = filename_escape_set(encstr) ',をエスケープ
+                video2(cnt).encstr = encstr
+                video2(cnt).modifytime = modifytime
+                video2(cnt).datestr = datestr
+                cnt += 1
+                'End If
             End If
         End If
     End Sub
