@@ -547,6 +547,11 @@ Class WebRemocon
                     End If
                 Next
             End If
+            '並べ替え（日付の新しい順）
+            If video2 IsNot Nothing Then
+                Array.Sort(video2)
+            End If
+            log1write("ビデオファイル一覧を更新しました")
         End If
 
         Return video2
