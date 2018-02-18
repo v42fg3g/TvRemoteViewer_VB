@@ -1088,20 +1088,29 @@ Class WebRemocon
                 Else
                     Dim j As Integer = 0
                     For i = 0 To line.Length - 1
+                        line(i) = Trim(line(i))
                         If line(i).Length > 0 Then
-                            'コメントアウト「;」「#」がオプション中に使用されるかもなので丁寧に
-                            Dim sp1 As Integer = line(i).IndexOf("[")
-                            Dim sp2 As Integer = line(i).IndexOf("]", sp1 + 1)
-                            If sp1 >= 0 And sp2 > sp1 + 1 And line(i).Length > sp2 + 1 Then
-                                Dim d0 As String = ""
-                                If sp1 > 0 Then
-                                    d0 = Trim(line(i).Substring(0, sp1))
-                                End If
-                                If d0.IndexOf(";") <> 0 And d0.IndexOf("#") <> 0 Then 'コメントアウトされていなければ
-                                    ReDim Preserve r(j)
-                                    r(j).resolution = Trim(line(i).Substring(sp1 + 1, sp2 - sp1 - 1))
-                                    r(j).opt = Trim(line(i).Substring(sp2 + 1))
-                                    j += 1
+                            Dim youso() As String = line(i).Split("]")
+                            If youso IsNot Nothing Then
+                                If youso.Length >= 2 Then
+                                    If youso.Length > 2 Then
+                                        For k As Integer = 2 To youso.Length - 1
+                                            youso(1) &= "]" & youso(k)
+                                        Next
+                                    End If
+                                    If youso(0).Length > 0 Then
+                                        If youso(0).Substring(0, 1) <> "#" And youso(0).Substring(0, 1) <> ";" Then
+                                            Dim rez0 As String = Trim(Instr_pickup(youso(0) & "]", "[", "]", 0))
+                                            If rez0.Length > 0 And Trim(youso(1)).Length > 0 Then
+                                                ReDim Preserve r(i)
+                                                r(i).resolution = rez0
+                                                r(i).opt = Trim(youso(1))
+                                                j += 1
+                                            Else
+                                                log1write("【エラー】[HlsOpt] " & filename & "内に不正なオプション記述があります。" & line(i))
+                                            End If
+                                        End If
+                                    End If
                                 End If
                             End If
                         End If
