@@ -1101,10 +1101,10 @@ Class WebRemocon
                                     If youso(0).Length > 0 Then
                                         If youso(0).Substring(0, 1) <> "#" And youso(0).Substring(0, 1) <> ";" Then
                                             Dim rez0 As String = Trim(Instr_pickup(youso(0) & "]", "[", "]", 0))
-                                            If rez0.Length > 0 And Trim(youso(1)).Length > 0 Then
+                                            If rez0.Length > 0 Then
                                                 ReDim Preserve r(j)
                                                 r(j).resolution = rez0
-                                                r(j).opt = Trim(youso(1))
+                                                r(j).opt = Trim(youso(1) & "")
                                                 j += 1
                                             Else
                                                 log1write("【エラー】[HlsOpt] " & filename & "内に不正なオプション記述があります。" & line(i))
