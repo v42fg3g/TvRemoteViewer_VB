@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.85
+TvRemoteViewer_VB v2.86
 
 
 
@@ -827,6 +827,7 @@ UDP1235,0,1,0,0,48835,0,0,1
 			録画ファイル一覧更新時に並び替えを忘れていたバグを修正（2.85c）
 			HLS_option読み込みを厳密にした（2.85d,2.85e）
 			HLS_optionにおいて、2.83c以降パラメーター無しの解像度指定を受け付けなかった不具合を修正（2.85f）
+	2.86	AbemaTVのジャンル分けにてきとーに対応（ini AbemaTV情報取得先 AvemaTV_data_get_method=2）
 
 
 

@@ -190,7 +190,11 @@ Module モジュール_番組表_放送局指定
                                     End If
                                     r(j).reserve = -1
                                     r(j).rsv_change = ""
-                                    r(j).genre = -1
+                                    If d.Length >= 8 Then
+                                        r(j).genre = d(7)
+                                    Else
+                                        r(j).genre = -1
+                                    End If
                                 ElseIf chk_past.Length > 0 And sid_str <> chk_past Then
                                     Exit For
                                 End If

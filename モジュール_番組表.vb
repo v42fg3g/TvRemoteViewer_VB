@@ -1049,7 +1049,11 @@ Module モジュール_番組表
                                 r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
                                 r(j).programTitle = escape_program_str(d(4))
                                 r(j).programContent = escape_program_str(d(5))
-                                r(j).genre = -1
+                                If d.Length >= 8 Then
+                                    r(j).genre = d(7)
+                                Else
+                                    r(j).genre = -1
+                                End If
                                 '次の番組
                                 Try
                                     Dim chk As Integer = 0
@@ -1065,7 +1069,11 @@ Module モジュール_番組表
                                                 r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
                                                 r(j).programTitle = escape_program_str(d(4))
                                                 r(j).programContent = escape_program_str(d(5))
-                                                r(j).genre = -1
+                                                If d.Length >= 8 Then
+                                                    r(j).genre = d(7)
+                                                Else
+                                                    r(j).genre = -1
+                                                End If
                                                 '次の番組であることを記録
                                                 r(j).nextFlag = 1
                                                 If next2_minutes > 0 Then
