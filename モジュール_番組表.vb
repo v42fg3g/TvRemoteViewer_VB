@@ -958,32 +958,39 @@ Module モジュール_番組表
         Dim cnt As Integer = count_str(html, ",")
         If cnt > 100 And html.IndexOf("bema") > 0 Then
             '区切り記号が100個以上あればまぁ良しとするか
-            r = 1
 
             '古いデータのままの場合があるのでチェック
             Try
-                Dim sp As Integer = html.LastIndexOf(vbCrLf, html.Length - 2)
-                Dim ep As Integer = html.LastIndexOf(",")
-                If ep < 0 Then
-                    sp = html.LastIndexOf(vbCr, html.Length - 2)
+                Dim cr_code As String = vbCrLf
+                Dim from1 As Integer = Int(html.Length / 2)
+                Dim sp As Integer = html.LastIndexOf(vbCrLf, from1)
+                If sp <= 0 Then
+                    cr_code = vbCr
                 End If
-                If sp > 0 And sp < ep Then
-
-                    Dim str As String = html.Substring(sp + 1)
-                    Dim d() As String = str.Split(",")
-                    If IsNumeric(d(3)) Then
-                        Dim d3 As Integer = Val(d(3))
-                        Dim ut As Integer = time2unix(Now())
-                        If ut > d3 - (3600 * 3) Then
-                            '異常 最終番組の終了時間まで3時間以内に迫っている（通常は1日以上間が開くはず）
-                            r = 0
+                Dim line() As String = Split(html, cr_code)
+                Dim chk As Integer = 0
+                Dim err As Integer = 0
+                Dim ut As Integer = time2unix(Now())
+                If line.Length >= 5 Then
+                    For i As Integer = 0 To line.Length - 1
+                        Dim d() As String = line(i).Split(",")
+                        If d.Length >= 4 Then
+                            If IsNumeric(d(3)) Then
+                                Dim d3 As Integer = Val(d(3))
+                                If d3 > ut + (3600 * 16) Then
+                                    '正常　16時間後以降の番組データが存在する
+                                    r = 1
+                                    Exit For
+                                End If
+                            End If
                         End If
-                    Else
-                        log1write("【エラー】AbemaTV番組情報が不正です。" & str)
+                    Next
+                    If r = 0 Then
+                        log1write("【エラー】AbemaTV番組情報が古いもののようです。AbemaTV番組情報元が更新されていないようです")
                     End If
-                End If
-                If r = 0 Then
-                    log1write("【エラー】AbemaTV番組情報が古いもののようです。AbemaTV番組情報元が更新されていないようです")
+                Else
+                    'うまくsplitできていない
+                    log1write("【エラー】AbemaTV番組情報が不正です。行分割に失敗しているようです")
                 End If
             Catch ex As Exception
                 log1write("【エラー】AbemaTV番組情報が不正です[B]。" & ex.Message)
