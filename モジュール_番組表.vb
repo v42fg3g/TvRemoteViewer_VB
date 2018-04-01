@@ -1377,7 +1377,7 @@ Module モジュール_番組表
                         title = Regex.Replace(title, "&lt;+.*?&gt;", " ")
                         title = Regex.Replace(title, "<+.*?>", " ")
                         title = Regex.Replace(title, "＜+.*?＞", " ")
-                        Dim tz As String = zenkakudake_max(title)
+                        Dim tz As String = zenkakudake_max(title, 0, 1)
                         If tz.Length > 1 Then
                             sp = TvRock_html_search_src.IndexOf(Trim(tz))
                         Else
@@ -1477,7 +1477,7 @@ Module モジュール_番組表
                             title = Regex.Replace(title, "&lt;+.*?&gt;", " ")
                             title = Regex.Replace(title, "<+.*?>", " ")
                             title = Regex.Replace(title, "＜+.*?＞", " ")
-                            Dim tz As String = zenkakudake_max(title)
+                            Dim tz As String = zenkakudake_max(title, 0, 1)
                             If tz.Length > 1 Then
                                 sp1 = TvRock_html_program_src.IndexOf(Trim(tz))
                             Else
