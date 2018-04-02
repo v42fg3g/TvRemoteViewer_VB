@@ -965,7 +965,11 @@ Module モジュール_番組表
                 Dim from1 As Integer = Int(html.Length / 2)
                 Dim sp As Integer = html.LastIndexOf(vbCrLf, from1)
                 If sp <= 0 Then
-                    cr_code = vbCr
+                    If html.LastIndexOf(vbLf, from1) > 0 Then
+                        cr_code = vbLf
+                    ElseIf html.LastIndexOf(vbCr, from1) > 0 Then
+                        cr_code = vbCr
+                    End If
                 End If
                 Dim line() As String = Split(html, cr_code)
                 Dim chk As Integer = 0
