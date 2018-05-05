@@ -841,9 +841,11 @@ Module モジュール_番組表
                         Dim d() As String = Nothing
                         'ランダム選択　最初の1回目は2行目以降にかかれた有志サーバーで取得することとする
                         If Outside_CustomURL.Length = 0 And rcount >= 2 And Outside_data_get_method = 1 Then
-                            log1write(Outside_StationName & "番組情報取得先決定方法がランダムの場合、初回は有志提供サイトが優先されます")
-                            rp = 1
-                            rcount -= 1
+                            'log1write(Outside_StationName & "番組情報取得先決定方法がランダムの場合、初回は有志提供サイトが優先されます")
+                            'rp = 1
+                            'rcount -= 1
+                            log1write(Outside_StationName & "番組情報取得先決定方法がランダムの場合、初回はカッパサイトが優先されます")
+                            ri = 0
                         ElseIf rcount = 1 Or Outside_data_get_method = 2 Then
                             '選択肢無し
                             ri = 0
@@ -851,6 +853,8 @@ Module モジュール_番組表
                             '有志サイト
                             rp = 1
                             rcount -= 1
+                        Else
+                            'Outside_data_get_method=1ですでに1度取得URLを決定している場合は全リストからランダム
                         End If
                         If ri < 0 Then
                             'Outside_data_get_method=1 or 3
