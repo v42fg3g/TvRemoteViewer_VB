@@ -9,7 +9,7 @@ Module モジュール_その他
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
     Public TvRemoteViewer_VB_version_URL As String = "http://vb45wb5b.up.seesaa.net/image/version.txt"
-    Public TvRemoteViewer_VB_revision As String = "e"
+    Public TvRemoteViewer_VB_revision As String = "f"
 
     'debug
     Public log_debug As Integer = 0
@@ -171,7 +171,8 @@ Module モジュール_その他
     Public Function unix2time(ByVal unixTimeStamp As Integer) As DateTime
         unixTimeStamp = unixTimeStamp + (60 * 60 * 9) '日本時間
         Dim unixDate As DateTime = (New DateTime(1970, 1, 1, 0, 0, 0, 0)).AddSeconds(unixTimeStamp) '.ToLocalTime()
-        Return CDate(unixDate.ToShortDateString & " " & unixDate.ToLongTimeString)
+        'Return CDate(unixDate.ToShortDateString & " " & unixDate.ToLongTimeString)
+        Return unixDate
     End Function
 
     'ファイル名に含まれている,をエスケープ
