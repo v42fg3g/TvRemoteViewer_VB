@@ -2244,7 +2244,7 @@ Module モジュール_番組表
                 If ret = 1 Then
                     Dim last_name As String = ""
                     For k = 0 To serviceList.Count - 1
-                        If serviceList(k).SID > 0 And serviceList(k).service_type = 1 Then
+                        If serviceList(k).SID > 0 Then ' And serviceList(k).service_type = 1 Then
                             'ch_listに存在するTSIDならばリストに追加
                             If i = 0 Then
                                 ReDim Preserve EDCB_TSID(i)
