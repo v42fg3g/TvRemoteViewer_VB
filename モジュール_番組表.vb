@@ -768,10 +768,10 @@ Module モジュール_番組表
     Private Function get_D_program(ByVal regionID As Integer) As TVprogramstructure()
         Dim r() As TVprogramstructure = Nothing
         Try
-            Dim url As String = "http://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=10&stationAreaId=" & regionID.ToString
+            Dim url As String = "https://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=10&stationAreaId=" & regionID.ToString
 
             'ネットから地域の番組表を取得
-            Dim html As String = get_html_by_webclient(url, "UTF-8")
+            Dim html As String = get_html_by_webclient(url, "UTF-8") ', "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36"
 
             Dim hosokyoku As String = ""
             Dim programtitle As String = ""
