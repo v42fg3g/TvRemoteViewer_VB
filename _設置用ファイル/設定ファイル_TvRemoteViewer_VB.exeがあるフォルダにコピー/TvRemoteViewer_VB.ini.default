@@ -437,6 +437,11 @@ EDCB_thru_addprogres = 0
 EDCB_GetCh_method = 0
 
 
+;yEDCBz
+;y2.86iz”Ô‘gî•ñ‚ª–³‚¢SPHD StarDigio•ú‘—‹Ç‚ğ•\¦‚·‚é=1
+StarDigio_dummy_ON = 0
+
+
 ;yptTimerz
 ;ptTimer‚ÌƒpƒX
 ;—á@ptTimer_path = "C:\ptTimer"

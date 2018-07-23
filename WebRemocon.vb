@@ -1818,7 +1818,9 @@ Class WebRemocon
                                         log1write("【エラー】TvRock_genre_colorの要素数が16個ではありません")
                                     End If
                                 End If
-
+                            Case "StarDigio_dummy_ON"
+                                StarDigio_dummy_ON = Val(youso(1))
+                                log1write("StarDigioダミー番組表を表示するよう設定しました")
 
 
 

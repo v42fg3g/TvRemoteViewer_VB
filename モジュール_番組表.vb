@@ -3123,7 +3123,7 @@ Module モジュール_番組表
                                     r(j).tsid = ch_list(i).tsid
                                     r(j).genre = "-1"
                                 End If
-                            ElseIf ch_list(i).sid >= 400 And ch_list(i).sid <= 499 And ch_list(i).jigyousha.Length > 0 Then
+                            ElseIf StarDigio_dummy_ON = 1 And ch_list(i).sid >= 400 And ch_list(i).sid <= 499 And ch_list(i).jigyousha.Length > 0 Then
                                 'ch2には記載があるがEDCBのEPGデータにはデータが無い
                                 'StarDigio 放送局名のみ表示
                                 Dim chk_j As Integer = 0

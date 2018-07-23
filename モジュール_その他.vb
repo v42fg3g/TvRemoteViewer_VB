@@ -29,6 +29,9 @@ Module モジュール_その他
         End If
     End Sub
 
+    'StarDigioダミー
+    Public StarDigio_dummy_ON As Integer = 0 '1の場合は番組データが無くとも放送局名だけは表示する
+
     '指定語句が含まれるBonDriverは無視する
     Public BonDriver_NGword As String() = Nothing
 
