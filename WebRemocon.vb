@@ -2814,7 +2814,8 @@ Class WebRemocon
         End If
 
         'プレミアムSPHDならばRecTask入れ替え
-        If RecTask_SPHD.Length > 0 And sid >= SPHD_sid_start And sid <= SPHD_sid_end Then
+        'If RecTask_SPHD.Length > 0 And sid >= SPHD_sid_start And sid <= SPHD_sid_end Then 'StarDigio
+        If RecTask_SPHD.Length > 0 And ((sid >= SPHD_sid_start And sid <= SPHD_sid_end) Or (sid >= 400 And sid <= 499)) Then '■■■StarDigio
             udpApp = RecTask_SPHD
             log1write("SPHD用UDPアプリとして " & RecTask_SPHD & " を使用します")
         End If

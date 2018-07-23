@@ -2793,6 +2793,49 @@ Module モジュール_番組表
                     Dim ret As Integer = EDCB_cmd.SendEnumPgAll(epgList) 'IPやportがおかしいとここで止まる可能性有り
                     log_temp &= " > 取得完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                     If ret = 1 Then
+                        'StarDigio テスト
+                        'log1write("EDCB StarDigioテスト")
+                        'For k = 0 To epgList.Count - 1
+                        'Dim info As CtrlCmdCLI.Def.EpgServiceEventInfo = epgList(k)
+                        'Dim dstr As String = ""
+                        'dstr &= info.serviceInfo.service_name & " "
+                        'dstr &= info.serviceInfo.TSID & " "
+                        'dstr &= info.serviceInfo.SID & " "
+                        'If info.eventList IsNot Nothing Then
+                        'If info.eventList.Count > 0 Then
+                        'dstr &= info.eventList.Item(0).start_time.ToString("yyyy/MM/dd H:mm:ss") & " "
+                        'Dim ei As CtrlCmdCLI.Def.EpgShortEventInfo
+                        'ei = info.eventList.Item(0).ShortInfo
+                        'If ei IsNot Nothing Then
+                        'dstr &= ei.event_name & " "
+                        'End If
+                        'log1write(dstr)
+                        'dstr = ""
+                        'dstr &= info.serviceInfo.service_name & " "
+                        'dstr &= info.serviceInfo.TSID & " "
+                        'dstr &= info.serviceInfo.SID & " "
+                        'If info.eventList.Count > 1 Then
+                        'dstr &= info.eventList.Item(info.eventList.Count - 1).start_time.ToString("yyyy/MM/dd H:mm:ss") & " "
+                        'Dim ei2 As CtrlCmdCLI.Def.EpgShortEventInfo
+                        'ei2 = info.eventList.Item(info.eventList.Count - 1).ShortInfo
+                        'If ei2 IsNot Nothing Then
+                        'dstr &= ei2.event_name & " "
+                        'End If
+                        'Else
+                        'dstr &= "最終番組データ無し"
+                        'End If
+                        'log1write(dstr)
+                        'Else
+                        'dstr &= "番組データ無し"
+                        'log1write(dstr)
+                        'End If
+                        'Else
+                        'dstr &= "番組データ無し"
+                        'log1write(dstr)
+                        'End If
+                        'Next
+                        'log1write("====================")
+
                         For i = 0 To ch_list.Length - 1
                             Dim kc As Integer = -1
                             For k = 0 To epgList.Count - 1
@@ -3080,6 +3123,43 @@ Module モジュール_番組表
                                     r(j).tsid = ch_list(i).tsid
                                     r(j).genre = "-1"
                                 End If
+                            ElseIf ch_list(i).sid >= 400 And ch_list(i).sid <= 499 And ch_list(i).jigyousha.Length > 0 Then
+                                'ch2には記載があるがEDCBのEPGデータにはデータが無い
+                                'StarDigio 放送局名のみ表示
+                                Dim chk_j As Integer = 0
+                                'プレミアム指定（1.16からは指定しなくてもOK）
+                                If TvProgramEDCB_premium = 2 Then
+                                    'プレミアムを表示しないよう指定されている場合はプレミアムは無視
+                                    chk_j = 1
+                                End If
+                                'NGワードに指定されているものは無視
+                                If chk_j = 0 Then
+                                    chk_j = isMATCHhosokyoku(TvProgramEDCB_NGword, ch_list(i).jigyousha, ch_list(i).sid)
+                                End If
+                                '番組情報を取得しないものは無視
+                                If chk_j = 0 Then
+                                    chk_j = isMATCHhosokyoku(TvProgramEDCB_ignore, ch_list(i).jigyousha, ch_list(i).sid)
+                                End If
+
+                                If chk_j = 0 Then
+                                    'ダミー時刻　開始は現在時　終了は7時間後
+                                    Dim t1s As String = "1970/01/01 " & Hour(Now()).ToString & ":00"
+                                    Dim t2s As String = "1970/01/01 " & ((Hour(Now()) + 6) Mod 24).ToString & ":59"
+                                    Dim j As Integer = 0
+                                    If r IsNot Nothing Then
+                                        j = r.Length
+                                    End If
+                                    ReDim Preserve r(j)
+                                    r(j).stationDispName = ch_list(i).jigyousha
+                                    r(j).startDateTime = t1s
+                                    r(j).endDateTime = t2s
+                                    r(j).programTitle = "_"
+                                    r(j).programContent = ""
+                                    r(j).sid = ch_list(i).sid
+                                    r(j).tsid = ch_list(i).tsid '一致しない可能性がある
+                                    r(j).genre = -1
+                                End If
+                                'log1write(".ch2に記載された放送局に合致するものがありませんでした。" & ch_list(i).jigyousha & " " & ch_list(i).chspace & " " & ch_list(i).sid)
                             End If
                         Next
                     End If

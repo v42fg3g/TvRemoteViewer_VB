@@ -9,7 +9,7 @@ Module モジュール_その他
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
     Public TvRemoteViewer_VB_version_URL As String = "http://vb45wb5b.up.seesaa.net/image/version.txt"
-    Public TvRemoteViewer_VB_revision As String = "h"
+    Public TvRemoteViewer_VB_revision As String = "i"
 
     'debug
     Public log_debug As Integer = 0
