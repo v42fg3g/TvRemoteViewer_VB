@@ -23,7 +23,7 @@ exepath_mplayer =
 ;【0.49】最大配信ナンバー
 MAX_STREAM_NUMBER = 8
 
-;【0.49】UDP,HLSアプリのCPU優先度 Idle,Normal,High,RealTime,空白は無指定
+;【0.49】UDP,HLSアプリのCPU優先度 Idle,BelowNormal,Normal,AboveNormal,High,RealTime,空白は無指定
 ;例：　UDP_PRIORITY = High
 UDP_PRIORITY =
 HLS_PRIORITY =

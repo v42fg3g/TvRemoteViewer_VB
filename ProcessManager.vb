@@ -266,8 +266,12 @@ Public Class ProcessManager
                         Select Case UDP_PRIORITY
                             Case "Idle"
                                 udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
+                            Case "BelowNormal"
+                                udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.BelowNormal
                             Case "Normal"
                                 udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
+                            Case "AboveNormal"
+                                udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.AboveNormal
                             Case "High"
                                 udpProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
                             Case "RealTime"
@@ -461,8 +465,12 @@ Public Class ProcessManager
                                 Select Case HLS_PRIORITY
                                     Case "Idle"
                                         hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Idle
+                                    Case "BelowNormal"
+                                        hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.BelowNormal
                                     Case "Normal"
                                         hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal
+                                    Case "AboveNormal"
+                                        hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.AboveNormal
                                     Case "High"
                                         hlsProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.High
                                     Case "RealTime"

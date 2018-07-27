@@ -50,7 +50,8 @@ WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコ
 番組表全般	0	integer	TvProgram_Force_NoRec	0	番組情報を取得できない環境でダミーのTvRockを表示する=1
 番組表全般	0	document			　
 番組表全般	0	string400	TvProgramD_sort		番組表の並び順	指定の無い放送局は指定された放送局の後に表示されます\n例　TvProgramD_sort = "NHK総合","NHK Eテレ","日本テレビ","TBSテレビ","フジテレビ","テレビ朝日","テレビ東京","TOKYO MX"\n※並び順は地デジ・EDCB・TvRock共通で適用されます
-番組表全般	0	integer	StarDigio_dummy_ON	0	番組情報が無いSPHD StarDigio放送局を表示する=1
+番組表全般	0	document			　
+番組表全般	0	integer	StarDigio_dummy_ON	0	EDCB番組表に番組情報が無いSPHD StarDigio放送局を表示する=1
 
 番組表データ	1	string	TvProgramD		ネット番組表都道府県コード AbemaTV:801	例　福岡＆佐賀の場合　TvProgramD = 55,61\nさらに、その中から表示したくない放送局名を指定することができます。\n　　福岡の特定局を除く TvProgramD_NGword = "ＲＫＢ毎日放送","ＦＢＳ福岡放送"\n10:北海道（札幌）11:北海道（函館）12:北海道（旭川）13:北海道（帯広）14:北海道（釧路）15:北海道（北見）16:北海道（室蘭）\n22:青森　20:岩手　17:宮城　18:秋田　19:山形　21:福島　26:茨城　28:栃木　25:群馬　29:埼玉　27:千葉\n23:東京　24:神奈川　31:新潟　37:富山　34:石川　36:福井　32:山梨　30:長野　39:岐阜　35:静岡\n33:愛知　38:三重　45:滋賀　41:京都　40:大阪　42:兵庫　44:奈良　43:和歌山\n49:鳥取　48:島根　47:岡山　46:広島　50:山口　53:徳島　52:香川　51:愛媛　54:高知\n55:福岡　61:佐賀　57:長崎　56:熊本　60:大分　59:宮崎　58:鹿児島　62:沖縄\n801:AbemaTV
 番組表データ	0	string260	TvProgramD_NGword		ネット番組表に表示したくない放送局名	（,区切りで複数指定可）
@@ -93,8 +94,8 @@ HLS配信	0	document			　
 HLS配信	0	integer	STOP_IDLEMINUTES	300	アイドル時に全切断されるまでの分数（0の場合は切断しません）
 HLS配信	0	integer	STOP_IDLEMINUTES_METHOD	1	アイドル抑止イベント（1=WIアクセス 2=WEBアクセス全て 3=HLSアクセスも含む）
 HLS配信	0	document			　
-HLS配信	0	string	UDP_PRIORITY		UDP CPU優先度(Idle,Normal,High,RealTime)
-HLS配信	0	string	HLS_PRIORITY		HLS CPU優先度(Idle,Normal,High,RealTime)
+HLS配信	0	string	UDP_PRIORITY		UDP CPU優先度(Idle,BelowNormal,Normal,AboveNormal,High,RealTime)
+HLS配信	0	string	HLS_PRIORITY		HLS CPU優先度(Idle,BelowNormal,Normal,AboveNormal,High,RealTime)
 HLS配信	0	document			　
 HLS配信	0	string180	openfix_BonSid		OPENFIX　チューナー初使用時に一旦別のチャンネルを経由する	openfix_BonSid = BonDriverファイル名:一時的に合わせるサービスID(:チャンネル空間)\n例：openfix_BonSid = BonDriver_Spinel_PT3_s0.dll:100\n例：openfix_BonSid = BonDriver_Spinel_PT3_s0.dll:100:1\n ,で区切って複数指定可能
 一時的に合わせるサービスID	:区切りでチャンネル空間指定可能 ,で区切って複数指定可能\n例：　101　　　　　例2：　101:0,
