@@ -2624,14 +2624,20 @@ Module モジュール_番組表
                                         '放送局名
                                         Dim station As String
                                         station = sid2jigyousha(sid) 'BS-TBSとQVCが区別できない
-                                        If chk161 = 1 Then
-                                            station = "ＱＶＣ"
+                                        If sid = 161 Then
+                                            If chk161 = 1 Then
+                                                station = sid2jigyousha(sid, 29024)
+                                                'station = "ＱＶＣ"
+                                            Else
+                                                station = sid2jigyousha(sid, 16401)
+                                                'station = "ＢＳ－ＴＢＳ"
+                                            End If
                                         End If
                                         If chk161 = 2 Then
                                             station = ""
                                         End If
 
-                                        If station.Length > 0 And skip_sid.IndexOf(":" & sid.ToString & ":") < 0 Then
+                                        If station.Length > 0 And skip_sid.IndexOf(":" & sid.ToString & "_" & station.ToString & ":") < 0 Then
                                             '放送局名が見つかっていれば
                                             Dim chk As Integer = -1
                                             If r IsNot Nothing Then
@@ -2664,16 +2670,16 @@ Module モジュール_番組表
                                                 r(i).programContent = texts
                                                 r(i).genre = Int(Val(youso(6)) / 16) * 256
                                                 '次番組かどうかチェック
-                                                Dim cnt As Integer = count_str(last_sid, ":" & sid.ToString & ":")
+                                                Dim cnt As Integer = count_str(last_sid, ":" & sid.ToString & "_" & station.ToString & ":")
                                                 If cnt = 1 Then
                                                     '2回目の場合は次番組であろう
                                                     r(i).nextFlag = 1
                                                 ElseIf cnt = 2 Then
                                                     '3回目
                                                     r(i).nextFlag = 2
-                                                    skip_sid &= sid.ToString & ":" '4回目以降はスキップするように
+                                                    skip_sid &= sid.ToString & "_" & station.ToString & ":" '4回目以降はスキップするように
                                                 End If
-                                                last_sid &= sid.ToString & "::"
+                                                last_sid &= sid.ToString & "_" & station.ToString & "::"
                                             End If
                                         End If
                                     End If
@@ -3518,7 +3524,7 @@ Module モジュール_番組表
                             Dim station As String
                             station = sid2jigyousha(sid, tsid)
 
-                            If station.Length > 0 And skip_sid.IndexOf(":" & sid.ToString & ":") < 0 Then
+                            If station.Length > 0 And skip_sid.IndexOf(":" & sid.ToString & "_" & tsid.ToString & ":") < 0 Then
                                 '放送局名が見つかっていれば
                                 Dim chk As Integer = -1
                                 If r IsNot Nothing Then
@@ -3551,16 +3557,16 @@ Module モジュール_番組表
                                     r(j).programContent = texts
                                     r(j).genre = genre.ToString
                                     '次番組かどうかチェック
-                                    Dim cnt As Integer = count_str(last_sid, ":" & sid.ToString & ":")
+                                    Dim cnt As Integer = count_str(last_sid, ":" & sid.ToString & "_" & tsid.ToString & ":")
                                     If cnt = 1 Then
                                         '2回目の場合は次番組であろう
                                         r(j).nextFlag = 1
                                     ElseIf cnt = 2 Then
                                         '3回目
                                         r(j).nextFlag = 2
-                                        skip_sid &= sid.ToString & ":" '4回目以降はスキップするように
+                                        skip_sid &= sid.ToString & "_" & tsid.ToString & ":" '4回目以降はスキップするように
                                     End If
-                                    last_sid &= sid.ToString & "::"
+                                    last_sid &= sid.ToString & "_" & tsid.ToString & "::"
                                 End If
                             End If
                         End If

@@ -114,7 +114,7 @@ Module モジュール_番組表_放送局指定
                         p = get_station_program_TvmaidEX(sid, startt, endt, station_name)
                     Case "pttimer"
                         url = ptTimer_path
-                        p = get_station_program_ptTimer(sid, startt, endt)
+                        p = get_station_program_ptTimer(sid, startt, endt, station_name)
                     Case "abematv"
                         sid = 99999801
                         url = sid_str
@@ -1170,7 +1170,7 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Public Function get_station_program_ptTimer(ByVal p_sid As Integer, ByVal p_startt As Integer, ByVal p_endtt As Integer) As StationTVprogramstructure()
+    Public Function get_station_program_ptTimer(ByVal p_sid As Integer, ByVal p_startt As Integer, ByVal p_endtt As Integer, ByVal p_station As String) As StationTVprogramstructure()
         'ptTimer番組表
         Dim r() As StationTVprogramstructure = Nothing
 
@@ -1213,10 +1213,22 @@ Module モジュール_番組表_放送局指定
                 Dim nowtime As DateTime = Now()
                 Dim ut As Integer = time2unix(nowtime) '現在のunixtime
 
-                If nextsec = 0 Then
-                    msql = """SELECT sid, eid, stime, length, title ,texts, gen1, '_BR_' as cr FROM t_event WHERE (sid = " & p_sid & " OR sid = " & (p_sid + 65536) & ") AND ((stime <= " & ut & " AND (stime + length) > " & ut & ") OR stime >= " & ut & ") ORDER BY stime"""
+                If p_sid = 161 Then
+                    Dim n_sid As Integer = 161
+                    If p_station = "ＱＶＣ" Then
+                        n_sid += 65536
+                    End If
+                    If nextsec = 0 Then
+                        msql = """SELECT sid, eid, stime, length, title ,texts, gen1, '_BR_' as cr FROM t_event WHERE sid = " & n_sid & " AND ((stime <= " & ut & " AND (stime + length) > " & ut & ") OR stime >= " & ut & ") ORDER BY stime"""
+                    Else
+                        msql = """SELECT sid, eid, stime, length, title ,texts, gen1, '_BR_' as cr FROM t_event WHERE sid = " & n_sid & " AND ((stime <= " & ut & " AND (stime + length) > " & ut & ") OR (stime <= " & ut + nextsec & " AND stime > " & ut & ")) ORDER BY stime"""
+                    End If
                 Else
-                    msql = """SELECT sid, eid, stime, length, title ,texts, gen1, '_BR_' as cr FROM t_event WHERE (sid = " & p_sid & " OR sid = " & (p_sid + 65536) & ") AND ((stime <= " & ut & " AND (stime + length) > " & ut & ") OR (stime <= " & ut + nextsec & " AND stime > " & ut & ")) ORDER BY stime"""
+                    If nextsec = 0 Then
+                        msql = """SELECT sid, eid, stime, length, title ,texts, gen1, '_BR_' as cr FROM t_event WHERE (sid = " & p_sid & " OR sid = " & (p_sid + 65536) & ") AND ((stime <= " & ut & " AND (stime + length) > " & ut & ") OR stime >= " & ut & ") ORDER BY stime"""
+                    Else
+                        msql = """SELECT sid, eid, stime, length, title ,texts, gen1, '_BR_' as cr FROM t_event WHERE (sid = " & p_sid & " OR sid = " & (p_sid + 65536) & ") AND ((stime <= " & ut & " AND (stime + length) > " & ut & ") OR (stime <= " & ut + nextsec & " AND stime > " & ut & ")) ORDER BY stime"""
+                    End If
                 End If
                 psi.Arguments = "/c sqlite3.exe """ & db_name & """ -separator " & "//_//" & " " & msql
 
