@@ -3716,7 +3716,7 @@ Module モジュール_番組表
                             Dim station As String
                             station = sid2jigyousha(sid, tsid)
 
-                            If station.Length > 0 And skip_sid.IndexOf(":" & sid.ToString & ":") < 0 Then
+                            If station.Length > 0 And skip_sid.IndexOf(":" & sid.ToString & "_" & tsid.ToString & ":") < 0 Then
                                 '放送局名が見つかっていれば
                                 Dim chk As Integer = -1
                                 If r IsNot Nothing Then
@@ -3749,16 +3749,16 @@ Module モジュール_番組表
                                     r(j).programContent = texts
                                     r(j).genre = genre.ToString
                                     '次番組かどうかチェック
-                                    Dim cnt As Integer = count_str(last_sid, ":" & sid.ToString & ":")
+                                    Dim cnt As Integer = count_str(last_sid, ":" & sid.ToString & "_" & tsid.ToString & ":")
                                     If cnt = 1 Then
                                         '2回目の場合は次番組であろう
                                         r(j).nextFlag = 1
                                     ElseIf cnt = 2 Then
                                         '3回目
                                         r(j).nextFlag = 2
-                                        skip_sid &= sid.ToString & ":" '4回目以降はスキップするように
+                                        skip_sid &= sid.ToString & "_" & tsid.ToString & ":" '4回目以降はスキップするように
                                     End If
-                                    last_sid &= sid.ToString & "::"
+                                    last_sid &= sid.ToString & "_" & tsid.ToString & "::"
                                 End If
                             End If
                         End If
