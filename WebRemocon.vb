@@ -1820,8 +1820,14 @@ Class WebRemocon
                                 End If
                             Case "StarDigio_dummy_ON"
                                 StarDigio_dummy_ON = Val(youso(1))
-                                log1write("StarDigioダミー番組表を表示するよう設定しました")
-
+                                If StarDigio_dummy_ON = 1 Then
+                                    log1write("StarDigioダミー番組表を表示するよう設定しました")
+                                End If
+                            Case "skip_genre_NextShortProgram"
+                                skip_genre_NextShortProgram = Val(youso(1))
+                                If skip_genre_NextShortProgram = 1 Then
+                                    log1write("次の番組が短時間のものならばジャンル判定を次の次の番組のものとするように設定しました")
+                                End If
 
 
                                 'Case "video_force_ffmpeg"

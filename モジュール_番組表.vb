@@ -44,6 +44,7 @@ Module モジュール_番組表
     Public tvrock_genre_str() As String = {"ニュース／報道", "スポーツ", "情報／ワイドショー", "ドラマ", "音楽", "バラエティー", "映画", "アニメ／特撮", "ドキュメンタリー／教養", "劇場／公演", "趣味／教育", "福祉", "その他１", "その他２", "その他３", "その他４"}
     Public TvRock_web_ch_str As String = "" '&z=～&z=～
     Public TvRock_genre_ON As Integer = 1 '1=ジャンル判定する 0=従来通り
+    Public skip_genre_NextShortProgram As Integer = 2 '1=次の番組が短時間なものならば3番目の番組ジャンルを2番目として表示 2=次の次の番組ジャンルを追記
 
     Public LIVE_STREAM_STR As String = ""
     Public TvProgram_SelectUptoNum As Integer = 0 '番組表上の配信ナンバーを制限する
@@ -677,6 +678,7 @@ Module モジュール_番組表
                                     Dim n1_str As String = r(i + 1).programTitle
                                     Dim n1_genre As String = r(i + 1).genre
                                     '次の次の番組があれば
+                                    Dim exist_next2program As Integer = 0
                                     If n2_str.Length > 0 Then
                                         Dim du As Integer = time2unix(r(i + 1).endDateTime) - time2unix(r(i + 1).startDateTime)
                                         If du < 0 Then
@@ -684,6 +686,11 @@ Module モジュール_番組表
                                         End If
                                         If du <= (next2_minutes * 60) Then 'next2_minutes分以下の番組
                                             If next2_minutes < 120 Then
+                                                exist_next2program = 1
+                                                If skip_genre_NextShortProgram = 1 Then
+                                                    n1_genre = n2_genre '次の番組が短時間ならば次の次の番組のジャンルを表示
+                                                    exist_next2program = 0
+                                                End If
                                                 '全ての番組において次の次を調べるわけでないなら、次の次の番組情報が表示されていることを示す印を付ける
                                                 n1_str = "≫ " & n1_str
                                             End If
@@ -721,6 +728,10 @@ Module モジュール_番組表
                                     End If
                                     r(i).programContent = "[Next] " & Trim(r(i + 1).startDateTime.Substring(r(i + 1).startDateTime.IndexOf(" "))) & "-" & Trim(r(i + 1).endDateTime.Substring(r(i + 1).endDateTime.IndexOf(" "))) & " " & n1_str & n2_str
                                     r(i).genre &= ":" & n1_genre
+                                    If skip_genre_NextShortProgram = 2 And exist_next2program = 1 Then
+                                        '次の次の番組のジャンルを3番目に追記
+                                        r(i).genre &= ":" & n2_genre
+                                    End If
                                 End If
                             End If
                         Catch ex As Exception
@@ -1105,9 +1116,13 @@ Module モジュール_番組表
                                                             r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
                                                             r(j).programTitle = escape_program_str(d(4))
                                                             r(j).programContent = escape_program_str(d(5))
-                                                            r(j).genre = -1
-                                                            '次の次の番組であることを記録
                                                             r(j).nextFlag = 2
+                                                            '次の次の番組であることを記録
+                                                            If d.Length >= 8 Then
+                                                                r(j).genre = d(7)
+                                                            Else
+                                                                r(j).genre = -1
+                                                            End If
                                                         End If
                                                     End If
                                                 End If
@@ -1257,12 +1272,16 @@ Module モジュール_番組表
                                         trid = Val(d(2))
                                     End If
                                 End If
-                                If rsv = 0 Then
-                                    '予約されていない場合は番組表から
-                                    r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).programTitle).ToString
+                                If sid > 0 And trid > 0 Then
+                                    If rsv = 0 Then
+                                        '予約されていない場合は番組表から
+                                        r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).programTitle).ToString
+                                    Else
+                                        '予約されている場合は検索から
+                                        r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).programTitle).ToString
+                                    End If
                                 Else
-                                    '予約されている場合は検索から
-                                    r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).programTitle).ToString
+                                    r(j).genre = "-1"
                                 End If
 
                                 '次の番組であることを記録
@@ -1274,6 +1293,12 @@ Module モジュール_番組表
                                 sp3 = html.IndexOf("<i>", sp3 + 1)
                                 If sp3 > 0 And sp3 < se Then
                                     '次の番組があれば
+                                    '予約されているかどうか
+                                    Dim rsv As Integer = 0
+                                    If html.Substring(sp3 - 1, 1) = "]" Then
+                                        '予約されている
+                                        rsv = 1
+                                    End If
                                     j = r.Length
                                     ReDim Preserve r(j)
                                     r(j).stationDispName = r(j - 1).stationDispName
@@ -1282,7 +1307,33 @@ Module モジュール_番組表
                                     r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                                     r(j).programContent = ""
                                     r(j).sid = r(j - 1).sid
-                                    r(j).genre = "-1" '次の次は必要無し
+
+                                    If skip_genre_NextShortProgram > 0 Then
+                                        Dim spn As Integer = html.IndexOf("href=""javascript:", sp3)
+                                        Dim sid As Integer = 0
+                                        Dim trid As Integer = 0
+                                        If spn > 0 Then
+                                            Dim sidtrid_str As String = Instr_pickup(html, "(", ")", spn + 1, se)
+                                            Dim d() As String = sidtrid_str.Split(",")
+                                            If d.Length = 4 Then
+                                                sid = Val(d(1))
+                                                trid = Val(d(2))
+                                            End If
+                                        End If
+                                        If sid > 0 And trid > 0 Then
+                                            If rsv = 0 Then
+                                                '予約されていない場合は番組表から
+                                                r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).programTitle).ToString
+                                            Else
+                                                '予約されている場合は検索から
+                                                r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).programTitle).ToString
+                                            End If
+                                        Else
+                                            r(j).genre = "-1"
+                                        End If
+                                    Else
+                                        r(j).genre = "-1" '次の次は必要無し
+                                    End If
 
                                     '次の次の番組であることを記録
                                     r(j).nextFlag = 2
