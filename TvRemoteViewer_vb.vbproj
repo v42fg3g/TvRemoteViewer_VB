@@ -132,6 +132,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="M_スリープ抑止.vb" />
     <Compile Include="ProcessBeans.vb" />
     <Compile Include="ProcessManager.vb" />
     <Compile Include="SharedMemory.vb" />

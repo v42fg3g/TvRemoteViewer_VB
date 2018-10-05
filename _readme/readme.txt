@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.86
+TvRemoteViewer_VB v2.87
 
 
 
@@ -839,6 +839,12 @@ UDP1235,0,1,0,0,48835,0,0,1
 			インターネット番組表が表示されなくなっていた不具合に対応（2.86h）
 			SPHD StarDigioの番組表表示に対応（番組データが無い場合は放送局名のみ表示するStarDigio_dummy_ONをiniに追加）（2.86i）
 			UDPアプリ＆HLSアプリのCPU優先度にBelowNormalとAboveNormalを追加（2.86j）
+	2.87	iniのTvmaidYUI_urlで末尾に/が無い場合に起こっていた不具合を修正
+			Tvmaid,ptTimer番組表でBS-TBSまたはQVCが表示されていなかった不具合を修正
+			放送局別番組表でBS-TBSとQVCが判別できていなかった不具合を修正
+			番組情報に次の次の番組ジャンル情報を付加するようにした（2.87b）
+			TvRock番組表でエンタメ～テレの終了時間がおかしくなる不具合を修正（2.87c）
+			iniに再生中のスリープを抑止するオプションを追加（viewing_NoSleep）（2.87d）
 
 
 

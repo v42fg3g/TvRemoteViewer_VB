@@ -1828,6 +1828,11 @@ Class WebRemocon
                                 If skip_genre_NextShortProgram = 1 Then
                                     log1write("次の番組が短時間のものならばジャンル判定を次の次の番組のものとするように設定しました")
                                 End If
+                            Case "viewing_NoSleep"
+                                viewing_NoSleep = Val(youso(1))
+                                If viewing_NoSleep = 1 Then
+                                    log1write("視聴時にスリープを抑止するよう設定しました")
+                                End If
 
 
                                 'Case "video_force_ffmpeg"
@@ -6167,6 +6172,15 @@ Class WebRemocon
                             'HTML以外なら
                             If STOP_IDLEMINUTES_METHOD = 3 Then
                                 STOP_IDLEMINUTES_LAST = Now()
+                            End If
+                            If viewing_NoSleep = 1 Then
+                                If Url_ext = ".ts" Then
+                                    sleep_stopping_utime = time2unix(Now())
+                                    If DisableSleep_ON = 0 Then
+                                        DisableSleep(1)
+                                        log1write("スリープ抑止コマンドを発行しました")
+                                    End If
+                                End If
                             End If
                             If File.Exists(path) Then
                                 ' ローカルファイルが存在すればレスポンス・ストリームに書き出す

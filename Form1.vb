@@ -181,6 +181,14 @@ Public Class Form1
         '現在時刻unixtime
         Dim ut2 As Integer = time2unix(Now())
 
+        'スリープ抑止解除
+        If DisableSleep_ON = 1 Then
+            If ut2 - sleep_stopping_utime >= 60 Then
+                '最後の.tsアクセスから1分以上経過した場合はスリープ抑止解除
+                DisableSleep(0)
+            End If
+        End If
+
         '6時間に1回バージョンチェック
         If TvRemoteViewer_VB_version_check_on = 1 Then
             LabelVersionCheckDate.Text = TvRemoteViewer_VB_version_check_datetime
@@ -566,6 +574,16 @@ Public Class Form1
         search_BonDriver()
         search_ServiceID()
         ComboBoxServiceID.Text = ServiceID_temp '前回終了時に選択していたものをセット
+
+        '起動時のスリープ状態を取得
+        If viewing_NoSleep = 1 Then
+            previousExecutionState = DisableSleepMode()
+            If previousExecutionState = 0 Then
+                log1write("【エラー】スリープ状態取得に失敗しました")
+            Else
+                log1write("起動時のスリープ状態を取得しました")
+            End If
+        End If
 
         'Outside_CustomURL取得
         If TvProgram_ch IsNot Nothing Then
@@ -1016,6 +1034,13 @@ Public Class Form1
                     log_path2 = log_path.Substring(0, sp) & "_edited" & ext
                     str2file(log_path2, edit_log(log1), "UTF-8")
                 End If
+            End If
+        End If
+
+        'スリープ状態復帰
+        If viewing_NoSleep = 1 Then
+            If previousExecutionState <> 0 Then
+                SetSleepMode(previousExecutionState)
             End If
         End If
 

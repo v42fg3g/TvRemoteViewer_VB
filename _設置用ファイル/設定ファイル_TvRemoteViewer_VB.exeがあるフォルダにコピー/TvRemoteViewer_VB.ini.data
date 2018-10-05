@@ -21,6 +21,7 @@
 全般	0	integer	log_size	30000	ログの最大文字数
 全般	0	file200	log_path	TvRemoteViewer_VB.log	終了時のログ保存ファイル名(絶対パス可) 空白=保存しない
 全般	0	document			　
+全般	0	integer	viewing_NoSleep	0	再生中はスリープを抑止する=1（テスト不足）
 
 WEBサーバー	0	integer	TVRemoteFilesNEW	1	TvRemoteFiles新画面推移を使用する （標準は1　TvRemoteFiles未使用の場合は0）	視聴開始がスムーズかつ高速になります
 WEBサーバー	0	document			　
