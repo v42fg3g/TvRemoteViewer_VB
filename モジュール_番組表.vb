@@ -1197,7 +1197,7 @@ Module モジュール_番組表
                         temp_stationDispName = Trim(temp_stationDispName)
                         temp_stationDispName = Trim(delete_tag(temp_stationDispName))
                         temp_startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp))))
-                        temp_endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp))))
+                        temp_endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp2))))
                         temp_programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
                         Dim sp3 As Integer = html.IndexOf("<font color=", sp)
                         If sp3 >= 0 Then
