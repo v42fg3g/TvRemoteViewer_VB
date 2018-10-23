@@ -1833,6 +1833,15 @@ Class WebRemocon
                                 If viewing_NoSleep = 1 Then
                                     log1write("視聴時にスリープを抑止するよう設定しました")
                                 End If
+                            Case "AbemaTV_Program_get_interval_min", "Outside_Program_get_interval_min"
+                                If IsNumeric(youso(1)) Then
+                                    Outside_Program_get_interval_min = Val(youso(1))
+                                    If Outside_Program_get_interval_min < 30 Then
+                                        Outside_Program_get_interval_min = 30
+                                        log1write("負担軽減のため" & Outside_StationName & "番組情報の取得間隔を30分未満にはできません")
+                                    End If
+                                    log1write(Outside_StationName & "番組情報の取得間隔を" & Outside_Program_get_interval_min.ToString & "分間に設定しました")
+                                End If
 
 
                                 'Case "video_force_ffmpeg"

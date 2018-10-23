@@ -1,4 +1,4 @@
-﻿Module M_スリープ抑止
+﻿Module モジュール_スリープ抑止
     'http://akademeia.info/index.php?VB.NET%2F%A5%C6%A5%AF%A5%CB%A5%C3%A5%AF%2F%A5%B9%A5%EA%A1%BC%A5%D7%A5%E2%A1%BC%A5%C9%CD%DE%BB%DF
 
     Public viewing_NoSleep As Integer = 0

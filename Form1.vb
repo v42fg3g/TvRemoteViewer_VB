@@ -199,9 +199,9 @@ Public Class Form1
             End If
         End If
 
-        '3時間に1回カスタムOutside番組表チェック(タイマー起動直後にも実行される）
+        '指定時間に1回カスタムOutside番組表チェック(タイマー起動直後にも実行される）
         If Outside_CustomURL.Length > 0 Then
-            If ut2 - Outside_CustomURL_getutime > 3600 * 3 Then
+            If ut2 - Outside_CustomURL_getutime > (Outside_Program_get_interval_min * 60) Then
                 check_Outside_CustomURL_multi()
             End If
         End If
@@ -818,6 +818,14 @@ Public Class Form1
                                 Dim ch2file As String = f_bondriver & "\" & IO.Path.GetFileNameWithoutExtension(s) & ".ch2"
                                 If file_exist(ch2file) <= 0 Then
                                     log1write("【警告】" & bonfile & " に対応するch2ファイルが見つかりませんでした")
+                                Else
+                                    '文字コード判別
+                                    'テキストファイルを開く
+                                    Dim bs As Byte() = System.IO.File.ReadAllBytes(ch2file)
+                                    '文字コードを判別する
+                                    If IsThisShiftJIS_GetCode(bs) = 0 Then
+                                        log1write("【警告】" & ch2file & " の文字コードがRecTaskで使用できる形式では無い可能性があります。ch2ファイルはshift_jis形式で保存してください")
+                                    End If
                                 End If
                             End If
                         End If
@@ -2357,7 +2365,7 @@ Public Class Form1
         If file_exist(ini_filename) = 1 Then
             Dim line() As String = file2line(ini_filename)
             If line IsNot Nothing Then
-                Dim i, j, k As Integer
+                Dim i, j As Integer
                 Dim need_reset As Integer = 0
 
                 If line Is Nothing Then

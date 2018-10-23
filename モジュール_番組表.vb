@@ -78,6 +78,8 @@ Module モジュール_番組表
     Public Outside_CustomURL_html As String = "" 'キャッシュ
     Public Outside_CH_NAME() As String 'チャンネル名一覧　「チャンネル」は削除
     Public Outside_sid_temp_str As String = "99999801" '本来は""だが番組表に表示させるため暫定。sid=99999801～がOutsideを示す目印
+    '何分間に1度Outside番組情報をチェックするか　標準は3時間
+    Public Outside_Program_get_interval_min As Integer = 180
 
     Public NoUseProgramCache As Integer = 0 'キャッシュを使用しない場合は1
     Public pcache() As TVprogram_cache_structure
@@ -1019,7 +1021,7 @@ Module モジュール_番組表
             '前回の3分の2以上のデータがあればOKとすることにする
             'チャンネル削減もありえるので余裕を持って判断
             Dim last_cnt As Integer = count_str(Outside_CustomURL_html, ",")
-            If cnt < Int(last_cnt / 3 * 2) Then
+            If cnt < Int(last_cnt / 2) Then
                 r = 0
                 log1write("【エラー】AbemaTV番組情報が前回取得時のものより極端に短いためデータ取得に失敗したと判断しました")
             End If

@@ -281,6 +281,9 @@ AvemaTV_data_get_method=1
 ;URLまたはファイル(絶対パス)が指定できます。指定するとAvemaTV_data_get_methodの設定は無視されます
 AbemaTV_CustomURL=
 
+;【2.87e】AbemaTV情報取得間(分)。標準は180分、負担軽減のため最小値は30です 
+AbemaTV_Program_get_interval_min = 180
+
 ;【ネット】
 ;番組表の放送局名からBonDriver.ch2で記述されている放送局名への変換
 ;（地デジ番組表を表示した際に自動判別できていないものを記入してください）

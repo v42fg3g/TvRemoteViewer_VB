@@ -60,6 +60,7 @@ WEBサーバー	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[無効] HTML出力キャラクターコ
 番組表データ	0	document			　
 番組表データ	0	integer	AvemaTV_data_get_method	1	AbemaTV情報取得先（1=自動選択 2=かっぱ手作業限定 3=有志サイト限定)	1=自動選択(有志の方サイト優先) 2=作者が用意したカッパ手入力サイト限定 3=有志の方サイト限定
 番組表データ	0	string260	AbemaTV_CustomURL		AbemaTV情報取得先URL	AbemaTV番組情報を自前で用意できる方用設定（今のところTvRemoteViewer_VB用に加工されたデータ限定）\nデータ形式詳細は別途readme_dev.txt内「資料_AbemaTVカスタムデータ形式」で説明\nURLまたはファイル(絶対パス)が指定できます。指定するとAvemaTV_data_get_methodの設定は無視されます
+番組表データ	0	integer	AbemaTV_Program_get_interval_min	180	AbemaTV情報取得間(分)。標準は180分、負担軽減のため最小値は30です
 番組表データ	0	document			　
 番組表データ	1	string260	TvProgram_tvrock_url		TvRockのiPhone用番組表URL(クリックで例)	http://127.0.0.1:8969/ユーザー名/iphone\n例：　http://127.0.0.1:8969/nobody/iphone \nあらかじめiPhone用番組表にアクセスして予約表示数を3番組以上に設定してください
 番組表データ	0	string260	TvProgramTvRock_NGword		TvRock番組表に表示しない放送局名

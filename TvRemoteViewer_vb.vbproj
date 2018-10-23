@@ -132,7 +132,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="M_スリープ抑止.vb" />
+    <Compile Include="モジュール_スリープ抑止.vb" />
     <Compile Include="ProcessBeans.vb" />
     <Compile Include="ProcessManager.vb" />
     <Compile Include="SharedMemory.vb" />
@@ -155,6 +155,7 @@
     <Compile Include="モジュール_ファイル.vb" />
     <Compile Include="モジュール_プロファイル.vb" />
     <Compile Include="モジュール_ログ.vb" />
+    <Compile Include="モジュール_文字コード判別.vb" />
     <Compile Include="モジュール_番組表.vb" />
     <Compile Include="モジュール_名前付きパイプ取得.vb" />
     <Compile Include="モジュール_番組表_放送局指定.vb" />
