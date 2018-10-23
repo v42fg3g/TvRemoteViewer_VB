@@ -174,6 +174,6 @@
             Return 0
         End If
 
-        Return Nothing
+        Return 0
     End Function
 End Module
