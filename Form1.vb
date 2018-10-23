@@ -550,6 +550,11 @@ Public Class Form1
         'チャンネル情報を取得　今までは表示要求があった時点で１つ１つ取得していた
         Me._worker.WI_GET_CHANNELS()
 
+        If file_exist("TvRemoteViewer_VB_r.exe") = 1 Then
+            RestartExe_path = path_s2z("TvRemoteViewer_VB_r.exe")
+            log1write("ini更新適用プログラムが見つかりました。" & RestartExe_path)
+        End If
+
         '標準ini読み込み
         If read_ini_default() = 0 Then
             'TvRemoteViewer_VB.ini.dataが存在しなかった
@@ -2289,24 +2294,47 @@ Public Class Form1
     End Sub
 
     Private Sub ButtonIniApply_Click(sender As System.Object, e As System.EventArgs) Handles ButtonIniApply.Click
-        Dim result As DialogResult = MessageBox.Show("iniに変更を保存し適用しますか？", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+        Dim restart_str As String = "iniに変更を保存し適用しますか？"
+        If RestartExe_path.Length > 0 Then
+            restart_str = "iniの変更を適用し再起動しますか？"
+        End If
+        Dim result As DialogResult = MessageBox.Show(restart_str, "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
         If result = DialogResult.Yes Then
             rewrite_ini_file()
-            Me._worker.read_videopath()
-            Me._worker.check_ini_parameter()
-            If close2min = 2 Then
-                Me.FormBorderStyle = Windows.Forms.FormBorderStyle.SizableToolWindow
+
+            If RestartExe_path.Length > 0 Then
+                'https://dobon.net/vb/dotnet/programing/applicationrestart.html
+                'プロセスのIDを取得する
+                Dim processId As Integer = System.Diagnostics.Process.GetCurrentProcess().Id
+                'アプリケーションが終了するまで待機する時間
+                Dim waitTime As Integer = 30000
+                'コマンドライン引数を作成する
+                Dim cmd As String = """" & processId.ToString() & """ " & _
+                                     """" & waitTime.ToString() & """ " & _
+                                     Environment.CommandLine
+                '再起動用アプリケーションのパスを取得する
+                Dim restartPath As String = RestartExe_path 'System.IO.Path.Combine(Application.StartupPath, "restart.exe")
+                '再起動用アプリケーションを起動する
+                System.Diagnostics.Process.Start(restartPath, cmd)
+                'アプリケーションを終了する
+                Application.Exit()
             Else
-                Me.FormBorderStyle = Windows.Forms.FormBorderStyle.Sizable
+                Me._worker.read_videopath()
+                Me._worker.check_ini_parameter()
+                If close2min = 2 Then
+                    Me.FormBorderStyle = Windows.Forms.FormBorderStyle.SizableToolWindow
+                Else
+                    Me.FormBorderStyle = Windows.Forms.FormBorderStyle.Sizable
+                End If
+                If iniTextbox IsNot Nothing Then
+                    For i As Integer = 0 To iniTextbox.Length - 1
+                        iniTextbox(i).BackColor = Color.White
+                    Next
+                End If
+                'フォームのBonDriverコンボボックス更新
+                search_BonDriver()
+                log1write("iniを変更し適用作業を行いました")
             End If
-            If iniTextbox IsNot Nothing Then
-                For i As Integer = 0 To iniTextbox.Length - 1
-                    iniTextbox(i).BackColor = Color.White
-                Next
-            End If
-            'フォームのBonDriverコンボボックス更新
-            search_BonDriver()
-            log1write("iniを変更し適用作業を行いました")
         End If
     End Sub
 
@@ -2476,7 +2504,9 @@ Public Class Form1
 
                             If need_reset = 1 Then
                                 log_str = "【再起動が必要です】" & vbCrLf & log_str
-                                MsgBox("再起動が必要です")
+                                If RestartExe_path.Length = 0 Then
+                                    MsgBox("再起動が必要です")
+                                End If
                             End If
                         End If
                     End If

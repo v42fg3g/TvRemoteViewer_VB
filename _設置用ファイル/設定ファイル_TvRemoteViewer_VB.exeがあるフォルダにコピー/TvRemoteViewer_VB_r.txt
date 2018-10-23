@@ -1,0 +1,4 @@
+dobon.net アプリケーション（自分自身）を再起動する
+https://dobon.net/vb/dotnet/programing/applicationrestart.html
+のコードをほぼそのまま使用させていただきました
+ありがとうございます

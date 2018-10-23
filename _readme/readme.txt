@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.87
+TvRemoteViewer_VB v2.88
 
 
 
@@ -847,6 +847,8 @@ UDP1235,0,1,0,0,48835,0,0,1
 			iniに再生中のスリープを抑止するオプションを追加（viewing_NoSleep）（2.87d）
 			iniにAbemaTV番組表取得間隔設定を追加（AbemaTV_Program_get_interval_min）（2.87e）
 			起動時チェックでch2ファイルがShift_JISでなければログに警告を表示するようにした（2.87e）
+	2.88	設定画面上でのini適用時に補助プログラムが存在すれば再起動するようにした
+			ini適用時にTvRemoteViewer_VBを再起動させる補助プログラムTvRemoteViewer_VB_r.exeを添付
 
 
 
