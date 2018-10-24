@@ -194,10 +194,19 @@ Module モジュール_ファイル
         Return r
     End Function
 
-    Public Function file2str(ByVal filename As String, Optional ByVal encode As String = "shift_jis") As String
+    Public Function file2str(ByVal filename As String, Optional ByVal encode As String = "shift_jis", Optional ByVal enc As System.Text.Encoding = Nothing) As String
         Dim s As String = ""
+        Dim e_str As System.Text.Encoding = Nothing
+        If encode.Length > 0 Then
+            e_str = System.Text.Encoding.GetEncoding(encode)
+        ElseIf enc IsNot Nothing Then
+            e_str = enc
+        Else
+            e_str = System.Text.Encoding.GetEncoding("shift_jis")
+        End If
+
         Try
-            Dim sr As New System.IO.StreamReader(filename, System.Text.Encoding.GetEncoding(encode))
+            Dim sr As New System.IO.StreamReader(filename, e_str)
             '内容をすべて読み込む
             s = sr.ReadToEnd()
             '閉じる

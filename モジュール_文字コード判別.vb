@@ -15,7 +15,7 @@
     ' <param name="bytes">文字コードを調べるデータ</param>
     ' <returns>適当と思われるEncodingオブジェクト。
     ' 判断できなかった時はnull。</returns>
-    Public Function IsThisShiftJIS_GetCode(ByVal bytes As Byte()) As Integer
+    Public Function IsThisShiftJIS_GetCode(ByVal bytes As Byte(), ByRef ecode As System.Text.Encoding) As Integer
         Const bEscape As Byte = &H1B
         Const bAt As Byte = &H40
         Const bDollar As Byte = &H24
@@ -40,12 +40,14 @@
                 isBinary = True
                 If b1 = &H0 AndAlso i < len - 1 AndAlso bytes(i + 1) <= &H7F Then
                     'smells like raw unicode
+                    ecode = System.Text.Encoding.Unicode
                     Return 0
                 End If
             End If
         Next
         If isBinary Then
-            Return Nothing
+            ecode = Nothing
+            Return 0
         End If
 
         'not Japanese
@@ -58,6 +60,7 @@
             End If
         Next
         If notJapanese Then
+            ecode = System.Text.Encoding.ASCII
             Return 0
         End If
 
@@ -69,19 +72,23 @@
             If b1 = bEscape Then
                 If b2 = bDollar AndAlso b3 = bAt Then
                     'JIS_0208 1978
-                    'JIS
+                    'JI
+                    ecode = System.Text.Encoding.GetEncoding(50220)
                     Return 0
                 ElseIf b2 = bDollar AndAlso b3 = bB Then
                     'JIS_0208 1983
                     'JIS
+                    ecode = System.Text.Encoding.GetEncoding(50220)
                     Return 0
                 ElseIf b2 = bOpen AndAlso (b3 = bB OrElse b3 = bJ) Then
                     'JIS_ASC
                     'JIS
+                    ecode = System.Text.Encoding.GetEncoding(50220)
                     Return 0
                 ElseIf b2 = bOpen AndAlso b3 = bI Then
                     'JIS_KANA
                     'JIS
+                    ecode = System.Text.Encoding.GetEncoding(50220)
                     Return 0
                 End If
                 If i < len - 3 Then
@@ -89,6 +96,7 @@
                     If b2 = bDollar AndAlso b3 = bOpen AndAlso b4 = bD Then
                         'JIS_0212
                         'JIS
+                        ecode = System.Text.Encoding.GetEncoding(50220)
                         Return 0
                     End If
                     If i < len - 5 AndAlso _
@@ -96,6 +104,7 @@
                         bytes(i + 4) = bDollar AndAlso bytes(i + 5) = bB Then
                         'JIS_0208 1990
                         'JIS
+                        ecode = System.Text.Encoding.GetEncoding(50220)
                         Return 0
                     End If
                 End If
@@ -164,12 +173,15 @@
         'System.Diagnostics.Debug.WriteLine(String.Format("sjis = {0}, euc = {1}, utf8 = {2}", sjis, euc, utf8))
         If euc > sjis AndAlso euc > utf8 Then
             'EUC
+            ecode = System.Text.Encoding.GetEncoding(51932)
             Return 0
         ElseIf sjis > euc AndAlso sjis > utf8 Then
             'SJIS
+            ecode = System.Text.Encoding.GetEncoding(932)
             Return 1
         ElseIf utf8 > euc AndAlso utf8 > sjis Then
             'UTF8
+            ecode = System.Text.Encoding.UTF8
             Return 0
         End If
 
