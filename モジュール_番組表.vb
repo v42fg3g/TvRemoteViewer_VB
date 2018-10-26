@@ -799,7 +799,7 @@ Module モジュール_番組表
                 jikoku1 = "1970/01/01 " & Instr_pickup(html, " ", "～", dn)
                 jikoku2 = "1970/01/01 " & Instr_pickup(html, "～", " [", dn)
 
-                If hosokyoku.Length > 0 Then
+                If hosokyoku.Length > 0 And hosokyoku.IndexOf("放送大学") < 0 Then
                     Dim j As Integer = 0
                     If r Is Nothing Then
                         j = 0
