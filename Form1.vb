@@ -832,42 +832,47 @@ Public Class Form1
                                     If IsThisShiftJIS_GetCode(bs, ecode) <> 1 Then
                                         If ecode IsNot Nothing Then
                                             Dim f_ch2 As String = Path.GetFileName(ch2file)
-                                            log1write("【警告】" & ch2file & " の文字コードがRecTaskで使用できる形式では無い可能性があります。ch2ファイルはshift_jis形式で保存してください")
-                                            Dim result As DialogResult = MessageBox.Show(f_ch2 & vbCrLf & "の文字コードがRecTaskで使用できる形式では無いようです。" & vbCrLf & "Shift_JISへの変換を試みますか？" & vbCrLf & "元のファイルは" & f_ch2 & ".bakとして保存されます。" & vbCrLf & "※完璧ではありませんのでテキストエディタでの変更を推奨致します", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
-                                            If result = DialogResult.Yes Then
-                                                Dim ch2_str As String = file2str(ch2file, "", ecode)
-                                                If ch2_str.Length > 0 Then
-                                                    'コピー
-                                                    Try
-                                                        System.IO.File.Move(ch2file, ch2file & ".bak")
-                                                    Catch ex As Exception
-                                                        Try
-                                                            System.IO.File.Delete(ch2file)
-                                                        Catch ex2 As Exception
-                                                        End Try
-                                                    End Try
-                                                    str2file(ch2file, ch2_str, "shift_jis")
-                                                    ch2_str = file2str(ch2file, "shift_jis")
-                                                    Dim ch2_chk As Integer = count_str(ch2_str, "?")
-                                                    If ch2_str.IndexOf("?") > 0 Then
-                                                        Dim w_str As String = ""
-                                                        Dim line() As String = Split(ch2_str, vbCrLf)
-                                                        If line IsNot Nothing Then
-                                                            For k As Integer = 0 To line.Length - 1
-                                                                If line(k).IndexOf("?") > 0 Then
-                                                                    w_str &= "変換前：" & line(k) & vbCrLf
-                                                                    line(k) = line(k).Replace("メ?テレ", "メ～テレ") '文字化け対策
-                                                                    line(k) = line(k).Replace("ＡＴ?Ｘ", "ＡＴ－Ｘ") '文字化け対策
-                                                                    line(k) = line(k).Replace("?", "－") '文字化け対策
-                                                                    w_str &= "変換後：" & line(k) & vbCrLf
+                                            Dim udpAppName As String = Path.GetFileNameWithoutExtension(Me._worker._udpApp).ToLower
+                                            If udpAppName.IndexOf("tstask") < 0 Then
+                                                log1write("【警告】" & ch2file & " の文字コードがRecTaskで使用できる形式では無い可能性があります。ch2ファイルはshift_jis形式で保存してください")
+                                                If udpAppName.IndexOf("rectask") >= 0 Then
+                                                    Dim result As DialogResult = MessageBox.Show(f_ch2 & vbCrLf & "の文字コードがRecTaskで使用できる形式では無いようです。" & vbCrLf & "Shift_JISへの変換を試みますか？" & vbCrLf & "元のファイルは" & f_ch2 & ".bakとして保存されます。" & vbCrLf & "※完璧ではありませんのでテキストエディタでの変更を推奨致します", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+                                                    If result = DialogResult.Yes Then
+                                                        Dim ch2_str As String = file2str(ch2file, "", ecode)
+                                                        If ch2_str.Length > 0 Then
+                                                            'コピー
+                                                            Try
+                                                                System.IO.File.Move(ch2file, ch2file & ".bak")
+                                                            Catch ex As Exception
+                                                                Try
+                                                                    System.IO.File.Delete(ch2file)
+                                                                Catch ex2 As Exception
+                                                                End Try
+                                                            End Try
+                                                            str2file(ch2file, ch2_str, "shift_jis")
+                                                            ch2_str = file2str(ch2file, "shift_jis")
+                                                            Dim ch2_chk As Integer = count_str(ch2_str, "?")
+                                                            If ch2_str.IndexOf("?") > 0 Then
+                                                                Dim w_str As String = ""
+                                                                Dim line() As String = Split(ch2_str, vbCrLf)
+                                                                If line IsNot Nothing Then
+                                                                    For k As Integer = 0 To line.Length - 1
+                                                                        If line(k).IndexOf("?") > 0 Then
+                                                                            w_str &= "変換前：" & line(k) & vbCrLf
+                                                                            line(k) = line(k).Replace("メ?テレ", "メ～テレ") '文字化け対策
+                                                                            line(k) = line(k).Replace("ＡＴ?Ｘ", "ＡＴ－Ｘ") '文字化け対策
+                                                                            line(k) = line(k).Replace("?", "－") '文字化け対策
+                                                                            w_str &= "変換後：" & line(k) & vbCrLf
+                                                                        End If
+                                                                    Next
                                                                 End If
-                                                            Next
+                                                                line2file(ch2file, line, "shift_jis")
+                                                                MsgBox(f_ch2 & vbCrLf & "内の変換できなかった文字「?」を" & ch2_chk.ToString & "カ所「－」または「～」に変更しました" & vbCrLf & w_str)
+                                                                log1write(ch2file & vbCrLf & "内の変換できなかった文字「?」を" & ch2_chk.ToString & "カ所「－」または「～」に変更しました" & vbCrLf & w_str)
+                                                            End If
+                                                            log1write(ch2file & "の文字コードをshift_jisに変更しました。")
                                                         End If
-                                                        line2file(ch2file, line, "shift_jis")
-                                                        MsgBox(f_ch2 & vbCrLf & "内の変換できなかった文字「?」を" & ch2_chk.ToString & "カ所「－」または「～」に変更しました" & vbCrLf & w_str)
-                                                        log1write(ch2file & vbCrLf & "内の変換できなかった文字「?」を" & ch2_chk.ToString & "カ所「－」または「～」に変更しました" & vbCrLf & w_str)
                                                     End If
-                                                    log1write(ch2file & "の文字コードをshift_jisに変更しました。")
                                                 End If
                                             End If
                                         End If

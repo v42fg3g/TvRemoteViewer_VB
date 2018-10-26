@@ -181,15 +181,17 @@ Module モジュール_ファイル
     Public Function folder_exist(ByVal fn As String) As Integer
         'フォルダの有無を確認する
         Dim r As Integer = -1
-        Try
-            If System.IO.Directory.Exists(fn) Then
-                r = 1
-            Else
-                r = 0
-            End If
-        Catch ex As Exception
-            log1write(fn & " " & ex.Message)
-        End Try
+        If fn.Length > 0 Then
+            Try
+                If System.IO.Directory.Exists(fn) Then
+                    r = 1
+                Else
+                    r = 0
+                End If
+            Catch ex As Exception
+                log1write(fn & " " & ex.Message)
+            End Try
+        End If
 
         Return r
     End Function
