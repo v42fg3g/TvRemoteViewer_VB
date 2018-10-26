@@ -653,34 +653,49 @@ Module モジュール_番組表
 
                 For i = 0 To r.Length - 2
                     If r(i).nextFlag = 0 Then
-                        Dim n2_str As String = "" '次の次の番組情報
-                        Dim n2_genre As String = "-1"
-                        If next2_minutes > 0 Then
-                            Try
-                                If r(i + 2).nextFlag = 2 And ((r(i).sid > 0 And r(i).sid = r(i + 2).sid) Or r(i).stationDispName = r(i + 2).stationDispName) Then
-                                    '次の次の番組があれば
-                                    Dim tr As DateTime = CDate(r(i + 2).startDateTime)
-                                    Dim tt As String = Hour(tr) & ":" & Minute(tr).ToString("d2")
-                                    n2_str = "　　≫" & tt & " " & r(i + 2).programTitle
-                                    n2_genre = r(i + 2).genre
-                                End If
-                            Catch ex As Exception
-                            End Try
-                        End If
                         Try
                             If r(i + 1).nextFlag = 1 And ((r(i).sid > 0 And r(i).sid = r(i + 1).sid) Or r(i).stationDispName = r(i + 1).stationDispName) Then
-                                Dim tr As DateTime = CDate(r(i).endDateTime)
-                                Dim re As Integer = Hour(tr) * 100 + Minute(tr) '番組終了時間　4桁分秒
+                                Dim tr As DateTime = CDate(r(i + 1).startDateTime)
+                                Dim rs As Integer = Hour(tr) * 100 + Minute(tr) '次番組開始時間　4桁分秒
+                                If rs < ts Then
+                                    '日付またぎしていれば()
+                                    rs += 2400
+                                End If
+                                Dim tre As DateTime = CDate(r(i + 1).endDateTime)
+                                Dim re As Integer = Hour(tre) * 100 + Minute(tre) '次番組終了時間　4桁分秒
                                 If re < ts Then
                                     '日付またぎしていれば()
                                     re += 2400
                                 End If
-                                If te >= re Then
-                                    '次番組があれば
+                                If rs <= te Then
+                                    '次番組がuptonext分以内にあれば
                                     Dim n1_str As String = r(i + 1).programTitle
                                     Dim n1_genre As String = r(i + 1).genre
+
                                     '次の次の番組があれば
                                     Dim exist_next2program As Integer = 0
+                                    Dim n2_str As String = "" '次の次の番組情報
+                                    Dim n2_genre As String = "-1"
+                                    If next2_minutes > 0 Then
+                                        Try
+                                            If r(i + 2).nextFlag = 2 And ((r(i).sid > 0 And r(i).sid = r(i + 2).sid) Or r(i).stationDispName = r(i + 2).stationDispName) Then
+                                                '次の次の番組があれば
+                                                Dim tr2 As DateTime = CDate(r(i + 2).startDateTime)
+                                                Dim tr2s As Integer = Hour(tr2) * 100 + Minute(tr2) '次次番組開始時間　4桁分秒
+                                                If tr2s < ts Then
+                                                    '日付またぎしていれば()
+                                                    tr2s += 2400
+                                                End If
+                                                If tr2s = re Then
+                                                    '次次番組の開始時間が次番組の終了時間と一致した場合のみ表示
+                                                    n2_str = "　　≫" & tr2.ToString("H:mm") & " " & r(i + 2).programTitle
+                                                    n2_genre = r(i + 2).genre
+                                                End If
+                                            End If
+                                        Catch ex3 As Exception
+                                        End Try
+                                    End If
+
                                     If n2_str.Length > 0 Then
                                         Dim du As Integer = time2unix(r(i + 1).endDateTime) - time2unix(r(i + 1).startDateTime)
                                         If du < 0 Then
