@@ -33,4 +33,7 @@
 
     '変更されたファイルが存在するフォルダ
     Public VideoChangedFolders As String = vbCrLf
+
+    'watcherバッファサイズ
+    Public watcher_BufferSize As Integer = 8192
 End Module

@@ -1770,8 +1770,11 @@ Public Class Form1
                 watcher(i).Path = trim8(Me._worker._videopath_ini(i))
                 If watcher(i).Path.Length > 0 Then
                     '最終アクセス日時、最終更新日時、ファイル、フォルダ名の変更を監視する
-                    watcher(i).NotifyFilter = System.IO.NotifyFilters.LastAccess Or _
-                    System.IO.NotifyFilters.LastWrite Or _
+                    'watcher(i).NotifyFilter = System.IO.NotifyFilters.LastAccess Or _
+                    'System.IO.NotifyFilters.LastWrite Or _
+                    'System.IO.NotifyFilters.FileName Or _
+                    'System.IO.NotifyFilters.DirectoryName
+                    watcher(i).NotifyFilter = System.IO.NotifyFilters.LastWrite Or _
                     System.IO.NotifyFilters.FileName Or _
                     System.IO.NotifyFilters.DirectoryName
                     'すべてのファイルを監視
@@ -1781,12 +1784,14 @@ Public Class Form1
                     'UIのスレッドにマーシャリングする
                     'コンソールアプリケーションでの使用では必要ない
                     'watcher.SynchronizingObject = Me
+                    watcher(i).InternalBufferSize = watcher_BufferSize
 
                     'イベントハンドラの追加
                     AddHandler watcher(i).Changed, AddressOf watcher_Changed
                     AddHandler watcher(i).Created, AddressOf watcher_Changed
                     AddHandler watcher(i).Deleted, AddressOf watcher_Changed
                     AddHandler watcher(i).Renamed, AddressOf watcher_Changed
+                    AddHandler watcher(i).Error, AddressOf watcher_Error
 
                     '監視を開始する
                     watcher(i).EnableRaisingEvents = True
@@ -1847,6 +1852,15 @@ Public Class Form1
             watcher_lasttime = Now()
             '最後の変更からタイマーで10秒経ったら更新
         End If
+    End Sub
+
+    Private Sub watcher_Error(ByVal source As System.Object, ByVal e As System.IO.ErrorEventArgs)
+        'なんらかのエラーで監視ができなくなった　（フォルダごと削除された場合、反応しないことも）
+        Try
+            'source.EnableRaisingEvents = False
+        Catch ex As Exception
+        End Try
+        log1write(source.path & "の監視中にエラーが発生しました")
     End Sub
 
     Private Sub ButtonCopy2Clipboard_Click(sender As System.Object, e As System.EventArgs) Handles ButtonCopy2Clipboard.Click

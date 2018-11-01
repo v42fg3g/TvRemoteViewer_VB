@@ -112,6 +112,7 @@ HTTP配信	0	integer	HTTPSTREAM_METHOD	0	HTTPストリーム受信方法（0=従来通り 1=Read
 ファイル再生	1	folders380	VideoPath		ビデオフォルダのパス	（,区切りで複数可）\n例：　"D:\My Videos", "\\COM1\My Videos"
 ファイル再生	1	integer	AddSubFolder	1	サブフォルダーを（0=含めない 1=含める）
 ファイル再生	0	string200	VideoExtensions		ビデオファイル一覧に表示する拡張子（標準は無指定）	（,区切りで複数可）\n例：　".ts",".mp4"
+ファイル再生	1	integer	watcher_BufferSize	8192	各フォルダ監視に使用するInternalBufferSize（標準は8192）	ビデオフォルダ監視がうまくいかない場合は数値（4096の倍数）を増やしてみてください。 例：32768
 ファイル再生	0	document			　
 ファイル再生	0	integer	VideoSeekDefault	0	ファイル再生スタート時に指定秒数シークする
 ファイル再生	0	integer	VideoSizeCheck	1	ファイル一覧作成時にファイルサイズが0かどうか検査（1=する）

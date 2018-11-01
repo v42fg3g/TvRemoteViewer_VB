@@ -1842,6 +1842,12 @@ Class WebRemocon
                                     End If
                                     log1write(Outside_StationName & "番組情報の取得間隔を" & Outside_Program_get_interval_min.ToString & "分間に設定しました")
                                 End If
+                            Case "watcher_BufferSize"
+                                Dim i2 As Integer = Val(youso(1))
+                                Dim i4 As Integer = Math.Ceiling(i2 / 4096) * 4096
+                                If i4 < 4096 Then i4 = 4096
+                                watcher_BufferSize = i4
+                                log1write("各フォルダの監視に使用するInternalBufferSizeを" & watcher_BufferSize.ToString & "Byteに設定しました")
 
 
                                 'Case "video_force_ffmpeg"
