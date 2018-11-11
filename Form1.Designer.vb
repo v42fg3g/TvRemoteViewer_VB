@@ -114,8 +114,16 @@ Partial Class Form1
         Me.TextBoxIniDoc = New System.Windows.Forms.TextBox()
         Me.ButtonIniSetting = New System.Windows.Forms.Button()
         Me.ButtonIniBackup = New System.Windows.Forms.Button()
+        Me.CheckBoxBonSort = New System.Windows.Forms.CheckBox()
+        Me.ListBoxBonSort = New System.Windows.Forms.ListBox()
+        Me.PanelBonSort = New System.Windows.Forms.Panel()
+        Me.ButtonBonSortInit = New System.Windows.Forms.Button()
+        Me.ButtonBonSortClose = New System.Windows.Forms.Button()
+        Me.ButtonBonSrortDown = New System.Windows.Forms.Button()
+        Me.ButtonBonSortUp = New System.Windows.Forms.Button()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.TabControl1.SuspendLayout()
+        Me.PanelBonSort.SuspendLayout()
         Me.SuspendLayout()
         '
         'buttonHlsAppPath
@@ -963,11 +971,83 @@ Partial Class Form1
         Me.ButtonIniBackup.Text = "ini バックアップ"
         Me.ButtonIniBackup.UseVisualStyleBackColor = True
         '
+        'CheckBoxBonSort
+        '
+        Me.CheckBoxBonSort.Appearance = System.Windows.Forms.Appearance.Button
+        Me.CheckBoxBonSort.AutoSize = True
+        Me.CheckBoxBonSort.Location = New System.Drawing.Point(315, 467)
+        Me.CheckBoxBonSort.Name = "CheckBoxBonSort"
+        Me.CheckBoxBonSort.Size = New System.Drawing.Size(63, 22)
+        Me.CheckBoxBonSort.TabIndex = 124
+        Me.CheckBoxBonSort.Text = "優先順位"
+        Me.CheckBoxBonSort.UseVisualStyleBackColor = True
+        '
+        'ListBoxBonSort
+        '
+        Me.ListBoxBonSort.FormattingEnabled = True
+        Me.ListBoxBonSort.ItemHeight = 12
+        Me.ListBoxBonSort.Location = New System.Drawing.Point(8, 7)
+        Me.ListBoxBonSort.Name = "ListBoxBonSort"
+        Me.ListBoxBonSort.Size = New System.Drawing.Size(250, 280)
+        Me.ListBoxBonSort.TabIndex = 125
+        '
+        'PanelBonSort
+        '
+        Me.PanelBonSort.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.PanelBonSort.Controls.Add(Me.ButtonBonSortInit)
+        Me.PanelBonSort.Controls.Add(Me.ButtonBonSortClose)
+        Me.PanelBonSort.Controls.Add(Me.ButtonBonSrortDown)
+        Me.PanelBonSort.Controls.Add(Me.ButtonBonSortUp)
+        Me.PanelBonSort.Controls.Add(Me.ListBoxBonSort)
+        Me.PanelBonSort.Location = New System.Drawing.Point(374, 242)
+        Me.PanelBonSort.Name = "PanelBonSort"
+        Me.PanelBonSort.Size = New System.Drawing.Size(289, 297)
+        Me.PanelBonSort.TabIndex = 126
+        Me.PanelBonSort.Visible = False
+        '
+        'ButtonBonSortInit
+        '
+        Me.ButtonBonSortInit.Location = New System.Drawing.Point(262, 242)
+        Me.ButtonBonSortInit.Name = "ButtonBonSortInit"
+        Me.ButtonBonSortInit.Size = New System.Drawing.Size(22, 46)
+        Me.ButtonBonSortInit.TabIndex = 129
+        Me.ButtonBonSortInit.Text = "初期化"
+        Me.ButtonBonSortInit.UseVisualStyleBackColor = True
+        '
+        'ButtonBonSortClose
+        '
+        Me.ButtonBonSortClose.Location = New System.Drawing.Point(265, 7)
+        Me.ButtonBonSortClose.Name = "ButtonBonSortClose"
+        Me.ButtonBonSortClose.Size = New System.Drawing.Size(19, 21)
+        Me.ButtonBonSortClose.TabIndex = 128
+        Me.ButtonBonSortClose.Text = "×"
+        Me.ButtonBonSortClose.UseVisualStyleBackColor = True
+        '
+        'ButtonBonSrortDown
+        '
+        Me.ButtonBonSrortDown.Location = New System.Drawing.Point(262, 142)
+        Me.ButtonBonSrortDown.Name = "ButtonBonSrortDown"
+        Me.ButtonBonSrortDown.Size = New System.Drawing.Size(22, 25)
+        Me.ButtonBonSrortDown.TabIndex = 127
+        Me.ButtonBonSrortDown.Text = "↓"
+        Me.ButtonBonSrortDown.UseVisualStyleBackColor = True
+        '
+        'ButtonBonSortUp
+        '
+        Me.ButtonBonSortUp.Location = New System.Drawing.Point(262, 111)
+        Me.ButtonBonSortUp.Name = "ButtonBonSortUp"
+        Me.ButtonBonSortUp.Size = New System.Drawing.Size(22, 25)
+        Me.ButtonBonSortUp.TabIndex = 126
+        Me.ButtonBonSortUp.Text = "↑"
+        Me.ButtonBonSortUp.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(1062, 705)
+        Me.Controls.Add(Me.PanelBonSort)
+        Me.Controls.Add(Me.CheckBoxBonSort)
         Me.Controls.Add(Me.ButtonIniSetting)
         Me.Controls.Add(Me.ButtonIniBackup)
         Me.Controls.Add(Me.TextBoxIniDoc)
@@ -1053,6 +1133,7 @@ Partial Class Form1
         Me.WindowState = System.Windows.Forms.FormWindowState.Minimized
         Me.ContextMenuStrip1.ResumeLayout(False)
         Me.TabControl1.ResumeLayout(False)
+        Me.PanelBonSort.ResumeLayout(False)
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -1147,5 +1228,12 @@ Partial Class Form1
     Friend WithEvents ButtonIniSetting As System.Windows.Forms.Button
     Friend WithEvents ButtonIniBackup As System.Windows.Forms.Button
     Friend WithEvents TabPage7 As System.Windows.Forms.TabPage
+    Friend WithEvents CheckBoxBonSort As System.Windows.Forms.CheckBox
+    Friend WithEvents ListBoxBonSort As System.Windows.Forms.ListBox
+    Friend WithEvents PanelBonSort As System.Windows.Forms.Panel
+    Friend WithEvents ButtonBonSrortDown As System.Windows.Forms.Button
+    Friend WithEvents ButtonBonSortUp As System.Windows.Forms.Button
+    Friend WithEvents ButtonBonSortClose As System.Windows.Forms.Button
+    Friend WithEvents ButtonBonSortInit As System.Windows.Forms.Button
 
 End Class

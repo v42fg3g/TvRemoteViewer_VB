@@ -807,32 +807,8 @@ Class WebRemocon
                 '指定が無い場合はUDPAPPと同じフォルダにあると見なす
                 bondriver_path = filepath2path(Me._udpApp.ToString)
             End If
-            Try
-                For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
-                    If System.IO.Path.GetExtension(stFilePath).ToLower = ".dll" Then
-                        Dim s As String = stFilePath
-                        'フルパスファイル名がsに入る
-                        'ファイル名だけを取り出す
-                        s = Path.GetFileName(s)
-                        Dim sl As String = s.ToLower() '小文字に変換
-                        '表示しないBonDriverかをチェック
-                        If BonDriver_NGword IsNot Nothing Then
-                            For j As Integer = 0 To BonDriver_NGword.Length - 1
-                                If sl.IndexOf(BonDriver_NGword(j).ToLower) >= 0 Then
-                                    sl = ""
-                                End If
-                            Next
-                        End If
-                        If sl.IndexOf("bondriver") = 0 Then
-                            'セレクトボックス用にBonDriverを記録しておく
-                            ReDim Preserve bons(bons_n)
-                            bons(bons_n) = s
-                            bons_n += 1
-                        End If
-                    End If
-                Next
-            Catch ex As Exception
-            End Try
+
+            bons = get_and_sort_BonDrivers(bondriver_path)
 
             Dim i As Integer = 0
             If bons IsNot Nothing Then

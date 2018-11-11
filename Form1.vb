@@ -805,74 +805,63 @@ Public Class Form1
                 log1write("起動チェック　BonDriverパス：OK")
                 'Bondriverが存在するかまたch2が存在するかチェック
                 Dim bchk As Integer = 0
-                Try
-                    For Each stFilePath As String In System.IO.Directory.GetFiles(f_bondriver, "*.dll")
-                        If System.IO.Path.GetExtension(stFilePath).ToLower = ".dll" Then
-                            Dim s As String = trim8(stFilePath)
-                            Dim bonfile As String = IO.Path.GetFileName(s).ToLower 'ファイル名
-                            '表示しないBonDriverかをチェック
-                            If BonDriver_NGword IsNot Nothing Then
-                                For i As Integer = 0 To BonDriver_NGword.Length - 1
-                                    If bonfile.IndexOf(BonDriver_NGword(i).ToLower) >= 0 Then
-                                        bonfile = ""
-                                    End If
-                                Next
-                            End If
-                            If bonfile.IndexOf("bondriver") = 0 Then
-                                bchk += 1
-                                Dim ch2file As String = f_bondriver & "\" & IO.Path.GetFileNameWithoutExtension(s) & ".ch2"
-                                If file_exist(ch2file) <= 0 Then
-                                    log1write("【警告】" & bonfile & " に対応するch2ファイルが見つかりませんでした")
-                                Else
-                                    '文字コード判別
-                                    'テキストファイルを開く
-                                    Dim bs As Byte() = System.IO.File.ReadAllBytes(ch2file)
-                                    '文字コードを判別する
-                                    Dim ecode As System.Text.Encoding = Nothing
-                                    If IsThisShiftJIS_GetCode(bs, ecode) <> 1 Then
-                                        If ecode IsNot Nothing Then
-                                            Dim f_ch2 As String = Path.GetFileName(ch2file)
-                                            Dim udpAppName As String = Path.GetFileNameWithoutExtension(Me._worker._udpApp).ToLower
-                                            If udpAppName.IndexOf("tstask") < 0 Then
-                                                log1write("【警告】" & ch2file & " の文字コードがRecTaskで使用できる形式では無い可能性があります。ch2ファイルはshift_jis形式で保存してください")
-                                                If udpAppName.IndexOf("rectask") >= 0 Then
-                                                    Dim result As DialogResult = MessageBox.Show(f_ch2 & vbCrLf & "の文字コードがRecTaskで使用できる形式では無いようです。" & vbCrLf & "Shift_JISへの変換を試みますか？" & vbCrLf & "元のファイルは" & f_ch2 & ".bakとして保存されます。" & vbCrLf & "※完璧ではありませんのでテキストエディタでの変更を推奨致します", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
-                                                    If result = DialogResult.Yes Then
-                                                        Dim ch2_str As String = file2str(ch2file, "", ecode)
-                                                        If ch2_str.Length > 0 Then
-                                                            'コピー
-                                                            Try
-                                                                System.IO.File.Move(ch2file, ch2file & ".bak")
-                                                            Catch ex As Exception
-                                                                Try
-                                                                    System.IO.File.Delete(ch2file)
-                                                                Catch ex2 As Exception
-                                                                End Try
-                                                            End Try
-                                                            str2file(ch2file, ch2_str, "shift_jis")
-                                                            ch2_str = file2str(ch2file, "shift_jis")
-                                                            Dim ch2_chk As Integer = count_str(ch2_str, "?")
-                                                            If ch2_str.IndexOf("?") > 0 Then
-                                                                Dim w_str As String = ""
-                                                                Dim line() As String = Split(ch2_str, vbCrLf)
-                                                                If line IsNot Nothing Then
-                                                                    For k As Integer = 0 To line.Length - 1
-                                                                        If line(k).IndexOf("?") > 0 Then
-                                                                            w_str &= "変換前：" & line(k) & vbCrLf
-                                                                            line(k) = line(k).Replace("メ?テレ", "メ～テレ") '文字化け対策
-                                                                            line(k) = line(k).Replace("ＡＴ?Ｘ", "ＡＴ－Ｘ") '文字化け対策
-                                                                            line(k) = line(k).Replace("?", "－") '文字化け対策
-                                                                            w_str &= "変換後：" & line(k) & vbCrLf
-                                                                        End If
-                                                                    Next
+                Dim bons() As String = get_and_sort_BonDrivers(f_bondriver)
+                If bons IsNot Nothing Then
+                    bchk = bons.Length
+                    For Each stFilePath As String In bons
+                        Dim s As String = trim8(stFilePath)
+                        Dim bonfile As String = IO.Path.GetFileName(s).ToLower 'ファイル名
+                        Dim ch2file As String = f_bondriver & "\" & IO.Path.GetFileNameWithoutExtension(s) & ".ch2"
+                        If file_exist(ch2file) <= 0 Then
+                            log1write("【警告】" & bonfile & " に対応するch2ファイルが見つかりませんでした")
+                        Else
+                            '文字コード判別
+                            'テキストファイルを開く
+                            Dim bs As Byte() = System.IO.File.ReadAllBytes(ch2file)
+                            '文字コードを判別する
+                            Dim ecode As System.Text.Encoding = Nothing
+                            If IsThisShiftJIS_GetCode(bs, ecode) <> 1 Then
+                                If ecode IsNot Nothing Then
+                                    Dim f_ch2 As String = Path.GetFileName(ch2file)
+                                    Dim udpAppName As String = Path.GetFileNameWithoutExtension(Me._worker._udpApp).ToLower
+                                    If udpAppName.IndexOf("tstask") < 0 Then
+                                        log1write("【警告】" & ch2file & " の文字コードがRecTaskで使用できる形式では無い可能性があります。ch2ファイルはshift_jis形式で保存してください")
+                                        If udpAppName.IndexOf("rectask") >= 0 Then
+                                            Dim result As DialogResult = MessageBox.Show(f_ch2 & vbCrLf & "の文字コードがRecTaskで使用できる形式では無いようです。" & vbCrLf & "Shift_JISへの変換を試みますか？" & vbCrLf & "元のファイルは" & f_ch2 & ".bakとして保存されます。" & vbCrLf & "※完璧ではありませんのでテキストエディタでの変更を推奨致します", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+                                            If result = DialogResult.Yes Then
+                                                Dim ch2_str As String = file2str(ch2file, "", ecode)
+                                                If ch2_str.Length > 0 Then
+                                                    'コピー
+                                                    Try
+                                                        System.IO.File.Move(ch2file, ch2file & ".bak")
+                                                    Catch ex As Exception
+                                                        Try
+                                                            System.IO.File.Delete(ch2file)
+                                                        Catch ex2 As Exception
+                                                        End Try
+                                                    End Try
+                                                    str2file(ch2file, ch2_str, "shift_jis")
+                                                    ch2_str = file2str(ch2file, "shift_jis")
+                                                    Dim ch2_chk As Integer = count_str(ch2_str, "?")
+                                                    If ch2_str.IndexOf("?") > 0 Then
+                                                        Dim w_str As String = ""
+                                                        Dim line() As String = Split(ch2_str, vbCrLf)
+                                                        If line IsNot Nothing Then
+                                                            For k As Integer = 0 To line.Length - 1
+                                                                If line(k).IndexOf("?") > 0 Then
+                                                                    w_str &= "変換前：" & line(k) & vbCrLf
+                                                                    line(k) = line(k).Replace("メ?テレ", "メ～テレ") '文字化け対策
+                                                                    line(k) = line(k).Replace("ＡＴ?Ｘ", "ＡＴ－Ｘ") '文字化け対策
+                                                                    line(k) = line(k).Replace("?", "－") '文字化け対策
+                                                                    w_str &= "変換後：" & line(k) & vbCrLf
                                                                 End If
-                                                                line2file(ch2file, line, "shift_jis")
-                                                                MsgBox(f_ch2 & vbCrLf & "内の変換できなかった文字「?」を" & ch2_chk.ToString & "カ所「－」または「～」に変更しました" & vbCrLf & w_str)
-                                                                log1write(ch2file & vbCrLf & "内の変換できなかった文字「?」を" & ch2_chk.ToString & "カ所「－」または「～」に変更しました" & vbCrLf & w_str)
-                                                            End If
-                                                            log1write(ch2file & "の文字コードをshift_jisに変更しました。")
+                                                            Next
                                                         End If
+                                                        line2file(ch2file, line, "shift_jis")
+                                                        MsgBox(f_ch2 & vbCrLf & "内の変換できなかった文字「?」を" & ch2_chk.ToString & "カ所「－」または「～」に変更しました" & vbCrLf & w_str)
+                                                        log1write(ch2file & vbCrLf & "内の変換できなかった文字「?」を" & ch2_chk.ToString & "カ所「－」または「～」に変更しました" & vbCrLf & w_str)
                                                     End If
+                                                    log1write(ch2file & "の文字コードをshift_jisに変更しました。")
                                                 End If
                                             End If
                                         End If
@@ -881,9 +870,7 @@ Public Class Form1
                             End If
                         End If
                     Next
-                Catch ex As Exception
-                    log1write("【エラー】Bondriver一覧取得中にエラーが発生しました。" & ex.Message)
-                End Try
+                End If
                 If bchk > 0 Then
                     log1write("起動チェック　BonDriver：OK")
                 Else
@@ -1026,6 +1013,8 @@ Public Class Form1
                                     Me.Height = Val(d(3))
                                 End If
                             End If
+                        Case "BonDriverSort"
+                            bondriver_sort = lr(1).Split(",")
                     End Select
                 ElseIf lr.Length > 2 And trim8(lr(0)) = "textBoxHlsOpt" Then
                     'VLC OPTION
@@ -1140,6 +1129,11 @@ Public Class Form1
         s &= "CheckBoxLogWI=" & CheckBoxLogWI.Checked & vbCrLf
         s &= "CheckBoxLogETC=" & CheckBoxLogETC.Checked & vbCrLf
         s &= "CheckBoxLogDebug=" & CheckBoxLogDebug.Checked & vbCrLf
+        Dim bondriver_sort_str As String = ""
+        If bondriver_sort IsNot Nothing Then
+            bondriver_sort_str = String.Join(",", bondriver_sort)
+        End If
+        s &= "BonDriverSort=" & bondriver_sort_str & vbCrLf
         If me_top > -10 Then
             s &= "WindowStatus=" & me_left & "," & me_top & "," & me_width & "," & me_height & vbCrLf
         Else
@@ -1379,31 +1373,15 @@ Public Class Form1
             '指定が無い場合はUDPAPPと同じフォルダにあると見なす
             bondriver_path = filepath2path(path_s2z(textBoxUdpApp.Text.ToString))
         End If
-        Try
-            For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_path, "*.dll")
-                If System.IO.Path.GetExtension(stFilePath).ToLower = ".dll" Then
-                    Dim s As String = stFilePath
-                    'フルパスファイル名がsに入る
-                    'ファイル名だけを取り出す
-                    s = Path.GetFileName(s)
-                    Dim sl As String = s.ToLower() '小文字に変換
-                    '表示しないBonDriverかをチェック
-                    If BonDriver_NGword IsNot Nothing Then
-                        For i As Integer = 0 To BonDriver_NGword.Length - 1
-                            If sl.IndexOf(BonDriver_NGword(i).ToLower) >= 0 Then
-                                sl = ""
-                            End If
-                        Next
-                    End If
-                    'コンボボックスに追加
-                    If sl.IndexOf("bondriver") = 0 Then
-                        ComboBoxBonDriver.Items.Add(s)
-                    End If
-                End If
+
+        Dim bons() As String = get_and_sort_BonDrivers(bondriver_path)
+        If bons IsNot Nothing Then
+            For i As Integer = 0 To bons.Length - 1
+                'コンボボックスに追加
+                Dim s As String = Path.GetFileName(bons(i))
+                ComboBoxBonDriver.Items.Add(s)
             Next
-        Catch ex As Exception
-            log1write("Bondriver一覧取得中にエラーが発生しました。" & ex.Message)
-        End Try
+        End If
     End Sub
 
     'BonDriverが変更されたときはコンボボックス（サービスＩＤ）を変更
@@ -2578,5 +2556,87 @@ Public Class Form1
         End If
         'ログ出力
         TextBoxIniDoc.Text = log_str
+    End Sub
+
+    Private Sub CheckBoxBonSort_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxBonSort.CheckedChanged
+        If CheckBoxBonSort.Checked = True Then
+            ListBoxBonSort_refresh()
+            PanelBonSort.Visible = True
+        Else
+            PanelBonSort.Visible = False
+        End If
+    End Sub
+
+    Private Sub ListBoxBonSort_refresh()
+        ListBoxBonSort.Items.Clear()
+        Dim bondriver_path As String = path_s2z(TextBoxBonDriverPath.Text.ToString)
+        If bondriver_path.Length = 0 Then
+            '指定が無い場合はUDPAPPと同じフォルダにあると見なす
+            bondriver_path = filepath2path(path_s2z(textBoxUdpApp.Text.ToString))
+        End If
+        Dim bons() As String = get_and_sort_BonDrivers(bondriver_path)
+        If bons IsNot Nothing Then
+            For i As Integer = 0 To bons.Length - 1
+                ListBoxBonSort.Items.Add(bons(i))
+            Next
+        End If
+    End Sub
+
+    Private Sub ButtonBonSortUp_Click(sender As System.Object, e As System.EventArgs) Handles ButtonBonSortUp.Click
+        Dim k As Integer = ListBoxBonSort.SelectedIndex
+        Dim j As Integer = 0
+        If k >= 1 Then
+            Dim combotext As String = ComboBoxBonDriver.Text
+            Dim temp As String = ListBoxBonSort.Items(k - 1)
+            ListBoxBonSort.Items(k - 1) = ListBoxBonSort.Items(k)
+            ListBoxBonSort.Items(k) = temp
+            ListBoxBonSort.SelectedIndex = k - 1
+            bondriver_sort = Nothing
+            For i As Integer = 0 To ListBoxBonSort.Items.Count - 1
+                ReDim Preserve bondriver_sort(j)
+                bondriver_sort(j) = ListBoxBonSort.Items(i)
+                j += 1
+            Next
+            'combobox更新
+            search_BonDriver()
+            ComboBoxBonDriver.Text = combotext
+        End If
+    End Sub
+
+    Private Sub ButtonBonSrortDown_Click(sender As System.Object, e As System.EventArgs) Handles ButtonBonSrortDown.Click
+        Dim k As Integer = ListBoxBonSort.SelectedIndex
+        Dim j As Integer = 0
+        If k >= 0 And k < ListBoxBonSort.Items.Count - 1 Then
+            Dim combotext As String = ComboBoxBonDriver.Text
+            Dim temp As String = ListBoxBonSort.Items(k + 1)
+            ListBoxBonSort.Items(k + 1) = ListBoxBonSort.Items(k)
+            ListBoxBonSort.Items(k) = temp
+            ListBoxBonSort.SelectedIndex = k + 1
+            bondriver_sort = Nothing
+            For i As Integer = 0 To ListBoxBonSort.Items.Count - 1
+                ReDim Preserve bondriver_sort(j)
+                bondriver_sort(j) = ListBoxBonSort.Items(i)
+                j += 1
+            Next
+            'combobox更新
+            search_BonDriver()
+            ComboBoxBonDriver.Text = combotext
+        End If
+    End Sub
+
+
+    Private Sub ButtonBonSortClose_Click(sender As System.Object, e As System.EventArgs) Handles ButtonBonSortClose.Click
+        CheckBoxBonSort.Checked = False
+    End Sub
+
+    Private Sub ButtonBonSortInit_Click(sender As System.Object, e As System.EventArgs) Handles ButtonBonSortInit.Click
+        Dim result As DialogResult = MessageBox.Show("優先順位を初期化しますか？", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+        If result = DialogResult.Yes Then
+            Dim combotext As String = ComboBoxBonDriver.Text
+            bondriver_sort = Nothing
+            ListBoxBonSort_refresh()
+            search_BonDriver()
+            ComboBoxBonDriver.Text = combotext
+        End If
     End Sub
 End Class
