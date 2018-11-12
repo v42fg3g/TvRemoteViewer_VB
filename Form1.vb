@@ -2561,6 +2561,11 @@ Public Class Form1
     Private Sub CheckBoxBonSort_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxBonSort.CheckedChanged
         If CheckBoxBonSort.Checked = True Then
             ListBoxBonSort_refresh()
+            If Me.Width = 546 Then
+                PanelBonSort.Location = New Point(240, 160)
+            Else
+                PanelBonSort.Location = New Point(374, 242)
+            End If
             PanelBonSort.Visible = True
         Else
             PanelBonSort.Visible = False
@@ -2586,6 +2591,10 @@ Public Class Form1
         Dim k As Integer = ListBoxBonSort.SelectedIndex
         Dim j As Integer = 0
         If k >= 1 Then
+            'キャッシュクリア
+            html_selectbonsidch_a = ""
+            html_selectbonsidch_b = ""
+
             Dim combotext As String = ComboBoxBonDriver.Text
             Dim temp As String = ListBoxBonSort.Items(k - 1)
             ListBoxBonSort.Items(k - 1) = ListBoxBonSort.Items(k)
@@ -2607,6 +2616,10 @@ Public Class Form1
         Dim k As Integer = ListBoxBonSort.SelectedIndex
         Dim j As Integer = 0
         If k >= 0 And k < ListBoxBonSort.Items.Count - 1 Then
+            'キャッシュクリア
+            html_selectbonsidch_a = ""
+            html_selectbonsidch_b = ""
+
             Dim combotext As String = ComboBoxBonDriver.Text
             Dim temp As String = ListBoxBonSort.Items(k + 1)
             ListBoxBonSort.Items(k + 1) = ListBoxBonSort.Items(k)
@@ -2632,6 +2645,10 @@ Public Class Form1
     Private Sub ButtonBonSortInit_Click(sender As System.Object, e As System.EventArgs) Handles ButtonBonSortInit.Click
         Dim result As DialogResult = MessageBox.Show("優先順位を初期化しますか？", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
         If result = DialogResult.Yes Then
+            'キャッシュクリア
+            html_selectbonsidch_a = ""
+            html_selectbonsidch_b = ""
+
             Dim combotext As String = ComboBoxBonDriver.Text
             bondriver_sort = Nothing
             ListBoxBonSort_refresh()

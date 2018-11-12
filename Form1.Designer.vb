@@ -999,7 +999,7 @@ Partial Class Form1
         Me.PanelBonSort.Controls.Add(Me.ButtonBonSrortDown)
         Me.PanelBonSort.Controls.Add(Me.ButtonBonSortUp)
         Me.PanelBonSort.Controls.Add(Me.ListBoxBonSort)
-        Me.PanelBonSort.Location = New System.Drawing.Point(374, 242)
+        Me.PanelBonSort.Location = New System.Drawing.Point(240, 160)
         Me.PanelBonSort.Name = "PanelBonSort"
         Me.PanelBonSort.Size = New System.Drawing.Size(289, 297)
         Me.PanelBonSort.TabIndex = 126
