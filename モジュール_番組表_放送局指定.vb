@@ -764,7 +764,7 @@ Module モジュール_番組表_放送局指定
                         temp_stationDispName = Trim(temp_stationDispName)
                         temp_stationDispName = Trim(delete_tag(temp_stationDispName))
                         Dim s11 As String = Trim(delete_tag(Instr_pickup(html, "<i>", "～", sp)))
-                        Dim s12 As String = Trim(delete_tag(Instr_pickup(html, "～", "</i></small>", sp)))
+                        Dim s12 As String = Trim(delete_tag(Instr_pickup(html, "～", "</i></small>", sp2)))
                         Dim dt() As Integer = fix_time_d2u(s11, s12, 0, plus_days) 'plus_daysはByRef
                         temp_startt = dt(0)
                         temp_endt = dt(1)
