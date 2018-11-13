@@ -1163,6 +1163,10 @@ Public Class Form1
         Dim i1 As Integer = get_tvrock_html_program()
         System.Threading.Thread.Sleep(100)
         Dim i2 As Integer = get_tvrock_html_search()
+        Dim i3 As Integer = 0
+        If TvRock_isVer2 = -1 Or TvRock_isVer2 = 1 Then
+            i3 = get_tvrock_html_plc()
+        End If
         If i1 + i2 < 2 Then
             'どちらか一方でも失敗していれば10分後に再チャレンジ
             TvRock_html_getutime = time2unix(Now()) - 3600 + 180 + 600
@@ -1208,6 +1212,37 @@ Public Class Form1
                 log1write("ジャンル判別用にTvRockのPC番組表を取得しました")
             Else
                 log1write("【エラー】TvRockのPC用番組表取得に失敗しました")
+            End If
+        Else
+            log1write("TvRockの番組取得URL（TvProgram_tvrock_url）が未知の形式です。末尾に/iphoneが記入されていません。TvProgram_tvrock_url=" & TvProgram_tvrock_url)
+        End If
+
+        Return r
+    End Function
+
+    Private Function get_tvrock_html_plc() As Integer
+        '番組リストを取得
+        Dim r As Integer = 0
+        Dim url As String = TvProgram_tvrock_url
+        Dim sp As Integer = url.IndexOf("/iphone")
+        If sp > 0 Then
+            url = url.Substring(0, sp) & "/plc"
+            Dim html As String = get_html_by_webclient(url, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
+            If html.Length > 500 Then
+                If html.Substring(0, 5).ToLower = "<span" Then
+                    '番組表2.0が取得できた
+                    TvRock_html_plc_src = html
+                    r = 1
+                    log1write("ジャンル判別用にTvRockのPC番組リストを取得しました")
+                    TvRock_isVer2 = 1
+                Else
+                    If TvRock_isVer2 = -1 Then
+                        log1write("【エラー】ジャンル判別用TvRockのPC番組リストが番組表2.0形式ではありませんでした")
+                        TvRock_isVer2 = 0
+                    End If
+                End If
+            Else
+                log1write("【エラー】TvRockのPC用番組リスト取得に失敗しました")
             End If
         Else
             log1write("TvRockの番組取得URL（TvProgram_tvrock_url）が未知の形式です。末尾に/iphoneが記入されていません。TvProgram_tvrock_url=" & TvProgram_tvrock_url)

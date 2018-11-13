@@ -778,8 +778,12 @@ Module モジュール_番組表_放送局指定
                         End If
                         '予約番号がわからないのでタイトルから推測
                         temp_genre = get_tvrock_genre_from_program(0, 0, temp_programTitle).ToString '"-1"
-                        If temp_genre < 0 Then
-                            '予約のためわからなかった可能性
+                        If Val(temp_genre) < 0 And TvRock_html_plc_src.Length > 0 Then
+                            '予約のためわからなかった可能性　番組リストから
+                            temp_genre = get_tvrock_genre_from_plc(0, 0, temp_programTitle).ToString
+                        End If
+                        If Val(temp_genre) < 0 Then
+                            '予約のためわからなかった可能性　検索から
                             temp_genre = get_tvrock_genre_from_search(0, 0, temp_programTitle).ToString
                         End If
 
@@ -882,8 +886,14 @@ Module モジュール_番組表_放送局指定
                                                 r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).title).ToString
                                                 r1chk = 1
                                             Else
-                                                '予約されている場合は検索から
-                                                r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).title).ToString
+                                                If TvRock_html_plc_src.Length > 0 Then
+                                                    '予約されている場合は番組リストから
+                                                    r(j).genre = get_tvrock_genre_from_plc(sid, trid, r(j).title).ToString
+                                                End If
+                                                If r(j).genre = "-1" Then
+                                                    '予約されている場合は検索から
+                                                    r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).title).ToString
+                                                End If
                                                 r1chk = 2
                                             End If
                                             If r(j).genre < 0 And temp_startt - time2unix(t) < 120 Then
