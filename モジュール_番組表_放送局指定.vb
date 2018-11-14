@@ -751,7 +751,7 @@ Module モジュール_番組表_放送局指定
                         Dim temp_endt As Integer = 0
                         Dim temp_programTitle As String = ""
                         Dim temp_programContent As String = ""
-                        Dim temp_genre As String = ""
+                        Dim temp_genre As String = "-1"
                         Dim temp_sid As Integer = 0
 
                         Dim plus_days As Integer = 0
@@ -777,14 +777,14 @@ Module モジュール_番組表_放送局指定
                             sp3 = html.IndexOf("<small><b>", sp)
                         End If
                         '予約番号がわからないのでタイトルから推測
-                        temp_genre = get_tvrock_genre_from_program(0, 0, temp_programTitle).ToString '"-1"
-                        If Val(temp_genre) < 0 And TvRock_html_plc_src.Length > 0 Then
-                            '予約のためわからなかった可能性　番組リストから
+                        If TvRock_html_plc_src.Length > 0 Then
                             temp_genre = get_tvrock_genre_from_plc(0, 0, temp_programTitle).ToString
                         End If
-                        If Val(temp_genre) < 0 Then
-                            '予約のためわからなかった可能性　検索から
-                            temp_genre = get_tvrock_genre_from_search(0, 0, temp_programTitle).ToString
+                        If TvRock_genre_cache IsNot Nothing And temp_genre = "-1" Then
+                            temp_genre = get_tvrock_genre_from_search(0, 0, temp_programTitle, temp_stationDispName).ToString
+                        End If
+                        If temp_genre = "-1" < 0 Then
+                            temp_genre = get_tvrock_genre_from_program(0, 0, temp_programTitle).ToString '"-1"
                         End If
 
                         '次のチャンネルが始まる地点
@@ -881,21 +881,14 @@ Module モジュール_番組表_放送局指定
                                         r(j).fsid_startt = temp_stationDispName & "_" & temp_startt.ToString
                                         If TvRock_genre_ON = 1 Then
                                             Dim r1chk As Integer = 0
-                                            If rsv = 0 Then
-                                                '予約されていない場合は番組表から
-                                                r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).title).ToString
-                                                r1chk = 1
-                                            Else
-                                                If TvRock_html_plc_src.Length > 0 Then
-                                                    '予約されている場合は番組リストから
-                                                    r(j).genre = get_tvrock_genre_from_plc(sid, trid, r(j).title).ToString
-                                                End If
-                                                If r(j).genre = "-1" Then
-                                                    '予約されている場合は検索から
-                                                    r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).title).ToString
-                                                End If
-                                                r1chk = 2
+                                            r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).title).ToString
+                                            If TvRock_genre_cache IsNot Nothing And r(j).genre = "-1" Then
+                                                r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).title, temp_stationDispName).ToString
                                             End If
+                                            '無駄なので実行しない
+                                            'If TvRock_html_plc_src.Length > 0 And r(j).genre = "-1" Then
+                                            'r(j).genre = get_tvrock_genre_from_plc(sid, trid, r(j).title).ToString
+                                            'End If
                                             If r(j).genre < 0 And temp_startt - time2unix(t) < 120 Then
                                                 '120分以内なのに見つからない
                                                 log1write("【ジャンルが見つかりませんでした】sid=" & sid & " trid=" & trid & " title=" & r(j).title)
