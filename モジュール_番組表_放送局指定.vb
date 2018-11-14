@@ -918,18 +918,32 @@ Module モジュール_番組表_放送局指定
                     sp = html.LastIndexOf("><small>", sp2 + 1)
                 End While
 
-                '先頭の番組IDを推定する
                 Dim r0_chk As Integer = 0
-                If TvRock_html_program_src.Length > 0 Then
-                    '番組IDがわからない・・1番始めに見つかったtridから遡った直近のものだろう
-                    Dim s5 As Integer = TvRock_html_program_src.IndexOf("&c=" & p_sid & "&e=" & first_trid)
-                    If s5 > 0 Then
-                        Dim s6 As Integer = TvRock_html_program_src.LastIndexOf("&c=" & p_sid, s5 - 1)
-                        If s6 > 0 Then
-                            Dim s7 As String = Instr_pickup(TvRock_html_program_src, "&e=", "&", s6)
-                            r(0).reserve = -1 'まだ確定できない
-                            r(0).rsv_change = RecSrc & "javascript:reserv(0," & p_sid & "," & s7 & ",0)"
-                            r0_chk = 1 '最初の項目のチェックが終わった
+                '先頭の番組IDを推定する
+                If r IsNot Nothing Then
+                    If TvRock_genre_cache IsNot Nothing Then
+                        Dim temp_key As String = get_tvrock_title_key(r(0).title)
+                        Dim idx As Integer = Array.IndexOf(TvRock_genre_cache, r(0).title & ",_" & r(0).name & ",_" & temp_key)
+                        If idx >= 0 Then
+                            Dim d() As String = Split(TvRock_genre_cache(idx).sid_eid, "&e=")
+                            If d.Length = 2 Then
+                                r(0).reserve = -1 'まだ確定できない
+                                r(0).rsv_change = RecSrc & "javascript:reserv(0," & d(0) & "," & d(1) & ",0)"
+                                r0_chk = 1 '最初の項目のチェックが終わった
+                            End If
+                        End If
+                    End If
+                    If r0_chk = 0 And TvRock_html_program_src.Length > 0 Then
+                        '番組IDがわからない・・1番始めに見つかったtridから遡った直近のものだろう
+                        Dim s5 As Integer = TvRock_html_program_src.IndexOf("&c=" & p_sid & "&e=" & first_trid)
+                        If s5 > 0 Then
+                            Dim s6 As Integer = TvRock_html_program_src.LastIndexOf("&c=" & p_sid, s5 - 1)
+                            If s6 > 0 Then
+                                Dim s7 As String = Instr_pickup(TvRock_html_program_src, "&e=", "&", s6)
+                                r(0).reserve = -1 'まだ確定できない
+                                r(0).rsv_change = RecSrc & "javascript:reserv(0," & p_sid & "," & s7 & ",0)"
+                                r0_chk = 1 '最初の項目のチェックが終わった
+                            End If
                         End If
                     End If
                 End If
