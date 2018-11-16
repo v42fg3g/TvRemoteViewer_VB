@@ -10,6 +10,10 @@ Imports System.Text.RegularExpressions
 Module モジュール_番組表
     Public TvProgram_Force_NoRec As Integer = 0 'TvRock番組表の代わりにダミー番組表を表示する=1
 
+    Public Outside_program_isZip As Integer = -1
+    Public Outside_program_getZip_utime As Integer = 0
+    Public Outside_CustomURL_last As String = ""
+
     Public TvProgram_ch() As Integer '東京13等が複数配列で入る
     Public TvProgram_NGword() As String
     Public TvProgramEDCB_NGword() As String
@@ -989,12 +993,29 @@ Module モジュール_番組表
                 Outside_CustomURL_getutime = ut
                 'force=1 タイマーからの指令ならば必ず取得
                 Dim nocache_str As String = ""
-                Dim ext As String = Path.GetExtension(Outside_CustomURL)
-                If ext = ".txt" And Outside_CustomURL.IndexOf("abemagraph.info") < 0 Then
+                If Outside_CustomURL.IndexOf("abemagraph.info") < 0 Then
                     nocache_str = "?tvrvtm=" & ut.ToString 'txtの場合内部キャッシュさせないよう
                 End If
-                html = get_html_by_webclient(Outside_CustomURL & nocache_str, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
-                log1write(Outside_StationName & "番組情報元：" & Outside_CustomURL)
+                'zipでダウンロードを試みる
+                Dim url_temp As String = Outside_CustomURL
+                If Outside_CustomURL_last <> Outside_CustomURL Then
+                    Outside_program_isZip = -1
+                    Outside_CustomURL_last = Outside_CustomURL
+                End If
+                If Outside_program_isZip = -1 Or Outside_program_isZip = 1 Or ut > Outside_program_getZip_utime Then
+                    html = get_OutsideProgram_from_zip(Outside_CustomURL)
+                End If
+                If isThisAbemaProgram(html) = 1 Then
+                    Outside_program_isZip = 1 '次回もzipで
+                    log1write(Outside_StationName & "番組情報(zip)を取得しました。" & Path.GetDirectoryName(Outside_CustomURL))
+                Else
+                    'zipで取得できなかった場合
+                    Outside_program_isZip = 0
+                    Outside_program_getZip_utime = ut + (60 * 60 * 24 * 3) '3日後にもう一度zipでダウンロードをトライする
+                    'txtをダウンロード
+                    html = get_html_by_webclient(Outside_CustomURL & nocache_str, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
+                    log1write(Outside_StationName & "番組情報(txt)を取得しました。" & Path.GetDirectoryName(Outside_CustomURL))
+                End If
                 'うまく取得できなかった場合、次回のために取得先更新だけはしておく。取得は急がない
                 If isThisAbemaProgram(html) = 0 Then
                     log1write("【エラー】" & Outside_StationName & "番組情報データ取得に失敗しました" & timer_str & "。情報取得先を再取得します")
@@ -1017,6 +1038,103 @@ Module モジュール_番組表
             log1write("【エラー】" & Outside_StationName & "番組情報データ取得に失敗しました" & timer_str & "。既存のキャッシュを使用します")
             html = Outside_CustomURL_html '既存のキャッシュを返す
         End If
+        Return html
+    End Function
+
+    Private Function get_OutsideProgram_from_zip(ByVal url As String) As String
+        Dim html As String = ""
+
+        Dim filename_org As String = Path.GetFileName(url)
+        Dim url_zip As String = ""
+        Dim filepath_txt As String = ""
+
+        Dim dir_zip As String = path_s2z("zip_temp")
+        If folder_exist(dir_zip) <= 0 Then
+            Try
+                System.IO.Directory.CreateDirectory(dir_zip)
+                log1write("フォルダを作成しました。" & dir_zip)
+            Catch ex As Exception
+                log1write("【エラー】フォルダ作成に失敗しました。" & dir_zip)
+                Return ""
+                Exit Function
+            End Try
+        End If
+
+        Dim ext As String = Path.GetExtension(url)
+        If ext = ".txt" Then
+            filepath_txt = path_s2z("zip_temp\" & Path.GetFileName(url))
+            url_zip = url.Substring(0, url.Length - 4) & ".zip"
+        ElseIf ext = ".zip" Then
+            filepath_txt = path_s2z("zip_temp\" & Path.GetFileNameWithoutExtension(url) & ".txt")
+            url_zip = url
+        End If
+        If filepath_txt.Length > 0 Then
+            If file_exist(filepath_txt) = 1 Then
+                If deletefile(filepath_txt) = 0 Then '解凍フォルダ内ファイル削除
+                    log1write("【エラー】" & filepath_txt & "削除に失敗しました")
+                    Return ""
+                    Exit Function
+                End If
+            End If
+        End If
+
+        If url_zip.Length > 0 Then
+            Dim filepath As String = path_s2z(Path.GetFileName(url_zip))
+            If file_exist(filepath) = 1 Then
+                If deletefile(filepath) <= 0 Then 'ローカルファイルを削除
+                    log1write("【エラー】" & filepath & "の削除に失敗しました")
+                End If
+            End If
+            'zipダウンロード
+            Try
+                Dim wc As New System.Net.WebClient()
+                wc.DownloadFile(url_zip, filepath)
+                wc.Dispose()
+            Catch ex As Exception
+                'log1write(url_zip & "のダウンロードに失敗しました。" & ex.message)
+            End Try
+            If file_exist(filepath) = 1 Then
+                Try
+                    '展開するZIP書庫のパス 
+                    Dim zipFileName As String = filepath
+                    '展開したファイルを保存するフォルダ（存在しないと作成される） 
+                    Dim targetDirectory As String = dir_zip
+                    '展開するファイルのフィルタ 
+                    Dim fileFilter As String = ""
+
+                    'FastZipオブジェクトの作成 
+                    Dim fastZip As New ICSharpCode.SharpZipLib.Zip.FastZip()
+                    '属性を復元するか。デフォルトはfalse 
+                    fastZip.RestoreAttributesOnExtract = True
+                    'ファイル日時を復元するか。デフォルトはfalse 
+                    fastZip.RestoreDateTimeOnExtract = True
+                    '空のフォルダも作成するか。デフォルトはfalse 
+                    'fastZip.CreateEmptyDirectories = True
+
+                    'パスワードが設定されているとき 
+                    'パスワードが設定されている書庫をパスワードを指定せずに展開しようとすると、 
+                    '　例外ZipExceptionがスローされる 
+                    'fastZip.Password = "password"
+
+                    'ZIP書庫を展開する 
+                    fastZip.ExtractZip(zipFileName, targetDirectory, fileFilter)
+                Catch ex As Exception
+                    log1write("【エラー】" & filepath & " 解凍中にエラーが発生しました。" & ex.Message)
+                End Try
+
+                If file_exist(filepath_txt) = 1 Then
+                    html = file2str(filepath_txt, "UTF-8")
+                    log1write(url_zip & "からAbemaTV番組情報を取得しました")
+                Else
+                    log1write("【エラー】" & url_zip & "からのAbemaTV番組情報取得に失敗しました")
+                End If
+            Else
+                'log1write(url_zip & "が見つかりません")
+            End If
+        Else
+            log1write("【エラー】有効なURLではありません。" & url_zip)
+        End If
+
         Return html
     End Function
 

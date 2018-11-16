@@ -394,8 +394,13 @@ Public Class Form1
             Close()
         End If
 
-        If file_exist("CtrlCmdCLI.dll") = 0 Then
+        If file_exist("CtrlCmdCLI.dll") <= 0 Then
             MsgBox("CtrlCmdCLI.dllが見つかりません" & vbCrLf & "TvRemoteViewer_VB.exeと同じフォルダにコピーしてください")
+            '終了
+            Close()
+        End If
+        If file_exist("ICSharpCode.SharpZipLib.dll") <= 0 Then
+            MsgBox("SharpZipLib.dllが見つかりません" & vbCrLf & "TvRemoteViewer_VB.exeと同じフォルダにコピーしてください")
             '終了
             Close()
         End If
