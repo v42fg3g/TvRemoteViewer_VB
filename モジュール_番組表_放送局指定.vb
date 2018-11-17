@@ -239,7 +239,9 @@ Module モジュール_番組表_放送局指定
                 Next
             End If
         Else
-            r = Array.IndexOf(ch_list, p_sid)
+            If ch_list IsNot Nothing Then
+                r = Array.IndexOf(ch_list, p_sid)
+            End If
         End If
 
         Return r
@@ -306,7 +308,9 @@ Module モジュール_番組表_放送局指定
                                     r(j).fsid_startt = a.service_id & "_" & a.event_id '予約の検索用
                                 End If
                             Next
-                            Array.Sort(r)
+                            If r IsNot Nothing Then
+                                Array.Sort(r)
+                            End If
 
                             '予約状況を照らし合わせr()を修正
                             If r IsNot Nothing Then
