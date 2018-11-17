@@ -1645,6 +1645,9 @@ Module モジュール_番組表
             End If
 
             Dim title_key As String = get_tvrock_title_key(title) '最大長全角文字列
+            If title.ToLower.IndexOf("tail") > 0 Then
+                Debug.Print(title & " - " & title_key)
+            End If
 
             Dim search_str As String = key & ",_" & station
             If title_key.Length > 0 Then
@@ -1675,16 +1678,17 @@ Module モジュール_番組表
         Dim temp As String = title
         temp = Regex.Replace(temp, "&lt;+.*?&gt;", " ")
         temp = Regex.Replace(temp, "[\(\<＜【\[]+.*?[】\]＞\>\)]", " ")
+        temp = temp.Replace("，", ",")
         If temp.Length > 1 Then
             title_key = zenkakudake_max(temp, 0, 1)
         End If
         If title_key.Length = 0 Then
             '1文字以下ならばたぶん英文タイトル 一番長い単語
-            title = title.Replace("　", " ")
+            title = Trim(title.Replace("　", " "))
             Dim str As String = ""
             Dim d() As String = title.Split(" ")
             For k As Integer = 0 To d.Length - 1
-                If d(k).Length > str.Length Then
+                If d(k).Length > str.Length And d(k).IndexOf("#") < 0 Then
                     str = d(k)
                 End If
             Next
