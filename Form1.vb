@@ -1169,9 +1169,13 @@ Public Class Form1
         If TvRock_isVer2 = -1 Or TvRock_isVer2 = 1 Then
             i3 = get_tvrock_html_plc()
         End If
-        Dim i1 As Integer = get_tvrock_html_program()
+        Dim i2 As Integer = 0
+        Dim i1 As Integer = 0
         System.Threading.Thread.Sleep(100)
-        Dim i2 As Integer = get_tvrock_html_search()
+        If get_tvrock_html_program() = 1 Then
+            i1 = 1
+            i2 = get_tvrock_html_search()
+        End If
         If i1 + i2 < 2 Then
             'どちらか一方でも失敗していれば10分後に再チャレンジ
             TvRock_html_getutime = time2unix(Now()) - 3600 + 180 + 600
@@ -1266,6 +1270,13 @@ Public Class Form1
 
     Private Sub get_tvrock_ch_str()
         Dim url As String = TvProgram_tvrock_url
+
+        TvRock_web_ch_str = Nothing
+        Dim vol As Integer = 10 'ひとまとめ
+        Dim vol_org As Integer = vol
+        Dim cnt As Integer = 0
+
+        Dim TvRock_web_ch_str_temp As String() = Nothing
         Dim sp As Integer = url.IndexOf("/iphone")
         If sp > 0 Then
             'チャンネル一覧文字列を取得する
@@ -1273,39 +1284,55 @@ Public Class Form1
                 url = url.Substring(0, sp) & "/kws"
                 Dim str1 As String = ""
                 Dim chstr As String = get_html_by_webclient(url, "Shift_JIS")
-                TvRock_web_ch_str = Nothing
                 Dim sp1 As Integer = chstr.IndexOf("name=""z""")
                 Dim ep1 As Integer = chstr.IndexOf("name=""g""")
                 If sp1 > 0 And ep1 > 0 Then
                     sp1 = chstr.IndexOf("<OPTION", sp1 + 1)
                     Dim j As Integer = 0
-                    Dim vol As Integer = 7 'ひとまとめ
-                    Dim vol_org As Integer = vol
                     While sp1 > 0 And sp1 < ep1
                         Dim sid_str As String = Instr_pickup(chstr, "value=""", """", sp1)
                         str1 &= "&z=" & sid_str
                         sp1 = chstr.IndexOf("<OPTION", sp1 + 1)
                         vol -= 1
+                        cnt += 1
                         If vol <= 0 Then
-                            ReDim Preserve TvRock_web_ch_str(j)
-                            TvRock_web_ch_str(j) = str1
+                            ReDim Preserve TvRock_web_ch_str_temp(j)
+                            TvRock_web_ch_str_temp(j) = str1
                             str1 = ""
                             j += 1
                             vol = vol_org
                         End If
                     End While
                     If str1.Length > 0 Then
-                        ReDim Preserve TvRock_web_ch_str(j)
-                        TvRock_web_ch_str(j) = str1
+                        ReDim Preserve TvRock_web_ch_str_temp(j)
+                        TvRock_web_ch_str_temp(j) = str1
                     End If
                 Else
                     log1write("【エラー】TvRockジャンル判別用チャンネル一覧取得に失敗しました")
-                    TvRock_web_ch_str = Nothing
+                    TvRock_web_ch_str_temp = Nothing
                 End If
             Catch ex As Exception
                 log1write("【エラー】TvRockジャンル判別用チャンネル一覧取得中にエラーが発生しました。" & ex.Message)
-                TvRock_web_ch_str = Nothing
+                TvRock_web_ch_str_temp = Nothing
             End Try
+        End If
+
+        '地上波は情報が多いので分散させる
+        If TvRock_web_ch_str_temp IsNot Nothing Then
+            Dim k As Integer = 0
+            ReDim Preserve TvRock_web_ch_str(TvRock_web_ch_str_temp.Length - 1)
+            For i As Integer = 0 To TvRock_web_ch_str_temp.Length - 1
+                Dim d() As String = Split(TvRock_web_ch_str_temp(i), "&z=")
+                For j As Integer = 0 To d.Length - 1
+                    If d(j).Length > 0 Then
+                        TvRock_web_ch_str(k) &= "&z=" & d(j)
+                        k += 1
+                        If k > TvRock_web_ch_str_temp.Length - 1 Then
+                            k = 0
+                        End If
+                    End If
+                Next
+            Next
         End If
     End Sub
 
