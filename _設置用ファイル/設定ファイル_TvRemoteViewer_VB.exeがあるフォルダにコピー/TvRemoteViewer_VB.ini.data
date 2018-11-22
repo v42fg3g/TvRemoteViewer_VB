@@ -130,7 +130,7 @@ HTTP配信	0	integer	HTTPSTREAM_METHOD	0	HTTPストリーム受信方法（0=従来通り 1=Read
 ファイル再生	0	integer	make_chapter	0	assファイル内の文字列（ｷﾀ━,OP,A,B,C,ED）が現れる地点にチャプターを打つ=1
 ファイル再生	0	integer	chapter_bufsec	3	見つかった地点の何秒前にチャプターを打つか
 ファイル再生	0	integer	NicoConvAss_copy2NicoJK	1	NicoConvAssでassを作成するついでにNicoJKフォルダ\jk～にassを作成（しない=0 する=1）
-ファイル再生	0	integer	NicoConvAss_assData_download	1	NicoConvAssでコメントをダウンロードしてassを作成（しない=0 する=1）	コメントの多い動画の場合、再生前準備に時間がかかる可能性があります（映画等10秒以上かかる場合有り）\nなお、NicoConvAss_copy2NicoJK=1としておけば動画ファイル名.assを作成して2回目以降はスムーズにスタートできます
+ファイル再生	0	integer	NicoConvAss_assData_download	0	NicoConvAssでコメントをダウンロードしてassを作成（しない=0 する=1）	コメントの多い動画の場合、再生前準備に時間がかかる可能性があります（映画等10秒以上かかる場合有り）\nなお、NicoConvAss_copy2NicoJK=1としておけば動画ファイル名.assを作成して2回目以降はスムーズにスタートできます
 
 ファイル再生	0	document			　
 ファイル再生	0	string200	PipeRun_ffmpeg_option		PipeRun時にffmpegへ渡すパラメータ	無指定の場合は↓に設定されます。%VIDEOFILE%のみ変換されます\n-i %VIDEOFILE% -vcodec copy -vsync -1 -async 1000 -f mpegts pipe:1

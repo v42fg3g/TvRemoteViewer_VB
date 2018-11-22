@@ -121,6 +121,8 @@ Partial Class Form1
         Me.ButtonBonSortClose = New System.Windows.Forms.Button()
         Me.ButtonBonSrortDown = New System.Windows.Forms.Button()
         Me.ButtonBonSortUp = New System.Windows.Forms.Button()
+        Me.Label18 = New System.Windows.Forms.Label()
+        Me.ComboBoxNicoSet = New System.Windows.Forms.ComboBox()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.TabControl1.SuspendLayout()
         Me.PanelBonSort.SuspendLayout()
@@ -340,7 +342,7 @@ Partial Class Form1
         '
         'TextBoxLog
         '
-        Me.TextBoxLog.Location = New System.Drawing.Point(0, 544)
+        Me.TextBoxLog.Location = New System.Drawing.Point(0, 583)
         Me.TextBoxLog.Multiline = True
         Me.TextBoxLog.Name = "TextBoxLog"
         Me.TextBoxLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
@@ -667,7 +669,7 @@ Partial Class Form1
         'ButtonCopy2Clipboard
         '
         Me.ButtonCopy2Clipboard.Font = New System.Drawing.Font("MS UI Gothic", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(128, Byte))
-        Me.ButtonCopy2Clipboard.Location = New System.Drawing.Point(407, 667)
+        Me.ButtonCopy2Clipboard.Location = New System.Drawing.Point(407, 706)
         Me.ButtonCopy2Clipboard.Name = "ButtonCopy2Clipboard"
         Me.ButtonCopy2Clipboard.Size = New System.Drawing.Size(104, 17)
         Me.ButtonCopy2Clipboard.TabIndex = 99
@@ -729,7 +731,7 @@ Partial Class Form1
         'Label16
         '
         Me.Label16.AutoSize = True
-        Me.Label16.Location = New System.Drawing.Point(150, 690)
+        Me.Label16.Location = New System.Drawing.Point(150, 729)
         Me.Label16.Name = "Label16"
         Me.Label16.Size = New System.Drawing.Size(90, 12)
         Me.Label16.TabIndex = 106
@@ -738,7 +740,7 @@ Partial Class Form1
         'LabelVersionCheckDate
         '
         Me.LabelVersionCheckDate.AutoSize = True
-        Me.LabelVersionCheckDate.Location = New System.Drawing.Point(242, 690)
+        Me.LabelVersionCheckDate.Location = New System.Drawing.Point(242, 729)
         Me.LabelVersionCheckDate.Name = "LabelVersionCheckDate"
         Me.LabelVersionCheckDate.Size = New System.Drawing.Size(13, 12)
         Me.LabelVersionCheckDate.TabIndex = 107
@@ -749,7 +751,7 @@ Partial Class Form1
         Me.CheckBoxVersionCheck.AutoSize = True
         Me.CheckBoxVersionCheck.Checked = True
         Me.CheckBoxVersionCheck.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.CheckBoxVersionCheck.Location = New System.Drawing.Point(7, 689)
+        Me.CheckBoxVersionCheck.Location = New System.Drawing.Point(7, 728)
         Me.CheckBoxVersionCheck.Name = "CheckBoxVersionCheck"
         Me.CheckBoxVersionCheck.Size = New System.Drawing.Size(127, 16)
         Me.CheckBoxVersionCheck.TabIndex = 108
@@ -762,7 +764,7 @@ Partial Class Form1
         Me.LabelVersionWarning.AutoSize = True
         Me.LabelVersionWarning.Font = New System.Drawing.Font("MS UI Gothic", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(128, Byte))
         Me.LabelVersionWarning.ForeColor = System.Drawing.Color.Red
-        Me.LabelVersionWarning.Location = New System.Drawing.Point(377, 690)
+        Me.LabelVersionWarning.Location = New System.Drawing.Point(377, 729)
         Me.LabelVersionWarning.Name = "LabelVersionWarning"
         Me.LabelVersionWarning.Size = New System.Drawing.Size(143, 12)
         Me.LabelVersionWarning.TabIndex = 109
@@ -774,7 +776,7 @@ Partial Class Form1
         Me.CheckBoxLogReq.AutoSize = True
         Me.CheckBoxLogReq.Checked = True
         Me.CheckBoxLogReq.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.CheckBoxLogReq.Location = New System.Drawing.Point(271, 668)
+        Me.CheckBoxLogReq.Location = New System.Drawing.Point(271, 707)
         Me.CheckBoxLogReq.Name = "CheckBoxLogReq"
         Me.CheckBoxLogReq.Size = New System.Drawing.Size(44, 16)
         Me.CheckBoxLogReq.TabIndex = 110
@@ -787,7 +789,7 @@ Partial Class Form1
         Me.CheckBoxLogWI.AutoSize = True
         Me.CheckBoxLogWI.Checked = True
         Me.CheckBoxLogWI.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.CheckBoxLogWI.Location = New System.Drawing.Point(322, 668)
+        Me.CheckBoxLogWI.Location = New System.Drawing.Point(322, 707)
         Me.CheckBoxLogWI.Name = "CheckBoxLogWI"
         Me.CheckBoxLogWI.Size = New System.Drawing.Size(36, 16)
         Me.CheckBoxLogWI.TabIndex = 111
@@ -800,7 +802,7 @@ Partial Class Form1
         Me.CheckBoxLogETC.AutoSize = True
         Me.CheckBoxLogETC.Checked = True
         Me.CheckBoxLogETC.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.CheckBoxLogETC.Location = New System.Drawing.Point(363, 668)
+        Me.CheckBoxLogETC.Location = New System.Drawing.Point(363, 707)
         Me.CheckBoxLogETC.Name = "CheckBoxLogETC"
         Me.CheckBoxLogETC.Size = New System.Drawing.Size(42, 16)
         Me.CheckBoxLogETC.TabIndex = 112
@@ -822,7 +824,7 @@ Partial Class Form1
         'CheckBoxLogDebug
         '
         Me.CheckBoxLogDebug.AutoSize = True
-        Me.CheckBoxLogDebug.Location = New System.Drawing.Point(206, 668)
+        Me.CheckBoxLogDebug.Location = New System.Drawing.Point(206, 707)
         Me.CheckBoxLogDebug.Name = "CheckBoxLogDebug"
         Me.CheckBoxLogDebug.Size = New System.Drawing.Size(56, 16)
         Me.CheckBoxLogDebug.TabIndex = 114
@@ -842,7 +844,7 @@ Partial Class Form1
         Me.TabControl1.Location = New System.Drawing.Point(535, 30)
         Me.TabControl1.Name = "TabControl1"
         Me.TabControl1.SelectedIndex = 0
-        Me.TabControl1.Size = New System.Drawing.Size(526, 575)
+        Me.TabControl1.Size = New System.Drawing.Size(526, 616)
         Me.TabControl1.TabIndex = 115
         '
         'TabPage1
@@ -850,7 +852,7 @@ Partial Class Form1
         Me.TabPage1.Location = New System.Drawing.Point(4, 22)
         Me.TabPage1.Name = "TabPage1"
         Me.TabPage1.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage1.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage1.Size = New System.Drawing.Size(518, 590)
         Me.TabPage1.TabIndex = 0
         Me.TabPage1.Text = "全般"
         Me.TabPage1.UseVisualStyleBackColor = True
@@ -943,11 +945,11 @@ Partial Class Form1
         'TextBoxIniDoc
         '
         Me.TextBoxIniDoc.BackColor = System.Drawing.SystemColors.Control
-        Me.TextBoxIniDoc.Location = New System.Drawing.Point(535, 606)
+        Me.TextBoxIniDoc.Location = New System.Drawing.Point(535, 645)
         Me.TextBoxIniDoc.Multiline = True
         Me.TextBoxIniDoc.Name = "TextBoxIniDoc"
         Me.TextBoxIniDoc.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
-        Me.TextBoxIniDoc.Size = New System.Drawing.Size(522, 96)
+        Me.TextBoxIniDoc.Size = New System.Drawing.Size(522, 98)
         Me.TextBoxIniDoc.TabIndex = 121
         Me.TextBoxIniDoc.TabStop = False
         '
@@ -1041,11 +1043,31 @@ Partial Class Form1
         Me.ButtonBonSortUp.Text = "↑"
         Me.ButtonBonSortUp.UseVisualStyleBackColor = True
         '
+        'Label18
+        '
+        Me.Label18.AutoSize = True
+        Me.Label18.Location = New System.Drawing.Point(8, 560)
+        Me.Label18.Name = "Label18"
+        Me.Label18.Size = New System.Drawing.Size(127, 12)
+        Me.Label18.TabIndex = 127
+        Me.Label18.Text = "NicoConvAss 設定セット"
+        '
+        'ComboBoxNicoSet
+        '
+        Me.ComboBoxNicoSet.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
+        Me.ComboBoxNicoSet.FormattingEnabled = True
+        Me.ComboBoxNicoSet.Location = New System.Drawing.Point(138, 557)
+        Me.ComboBoxNicoSet.Name = "ComboBoxNicoSet"
+        Me.ComboBoxNicoSet.Size = New System.Drawing.Size(391, 20)
+        Me.ComboBoxNicoSet.TabIndex = 128
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(1062, 705)
+        Me.ClientSize = New System.Drawing.Size(1062, 744)
+        Me.Controls.Add(Me.ComboBoxNicoSet)
+        Me.Controls.Add(Me.Label18)
         Me.Controls.Add(Me.PanelBonSort)
         Me.Controls.Add(Me.CheckBoxBonSort)
         Me.Controls.Add(Me.ButtonIniSetting)
@@ -1125,7 +1147,7 @@ Partial Class Form1
         Me.Controls.Add(Me.textHttpPortNumber)
         Me.Controls.Add(Me.labelPortNuber)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximumSize = New System.Drawing.Size(1078, 744)
+        Me.MaximumSize = New System.Drawing.Size(1078, 783)
         Me.MinimumSize = New System.Drawing.Size(200, 50)
         Me.Name = "Form1"
         Me.ShowInTaskbar = False
@@ -1235,5 +1257,7 @@ Partial Class Form1
     Friend WithEvents ButtonBonSortUp As System.Windows.Forms.Button
     Friend WithEvents ButtonBonSortClose As System.Windows.Forms.Button
     Friend WithEvents ButtonBonSortInit As System.Windows.Forms.Button
+    Private WithEvents Label18 As System.Windows.Forms.Label
+    Friend WithEvents ComboBoxNicoSet As System.Windows.Forms.ComboBox
 
 End Class

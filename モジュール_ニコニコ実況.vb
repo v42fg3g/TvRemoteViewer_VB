@@ -16,6 +16,9 @@ Module モジュール_ニコニコ実況
     'NicoJKフォルダにassを作成
     Public NicoConvAss_copy2NicoJK As Integer = 1
 
+    'NicoConvAss設定セット指定
+    Public NicoConvAss_ConfigSet As String = ""
+
     'fonts.confの存在を確認
     Public fonts_conf_ok As Integer = 0
 
@@ -1220,7 +1223,12 @@ Module モジュール_ニコニコ実況
             '出力エンコード
             psi.StandardOutputEncoding = Encoding.UTF8
 
-            psi.Arguments = "/c NicoConvAss.exe """ & txt_file & """ -tx_margin " & margin1 & " -tx_programname 0 -ext .ass -tx_writefolder """ & fileroot & """ -tx_starttime """ & VideoStartTime & """ -chapter 0"
+            Dim configset_str As String = ""
+            If Trim(NicoConvAss_ConfigSet).Length > 0 Then
+                configset_str = " -configset """ & Trim(NicoConvAss_ConfigSet) & """"
+            End If
+
+            psi.Arguments = "/c NicoConvAss.exe """ & txt_file & """ -tx_margin " & margin1 & " -tx_programname 0 -ext .ass -tx_writefolder """ & fileroot & """ -tx_starttime """ & VideoStartTime & """ -chapter 0" & configset_str
             log1write(psi.Arguments)
             log1write("NicoConvAss実行：" & txt_file & " 動画開始日時：" & VideoStartTime & " 開始マージン：" & margin1 & "秒")
 
@@ -1295,7 +1303,12 @@ Module モジュール_ニコニコ実況
                 '出力エンコード
                 psi.StandardOutputEncoding = Encoding.UTF8
 
-                psi.Arguments = "/c NicoConvAss.exe """ & fullpathfilename & """ -wfilename """ & targetfile & """  -chapter 0"
+                Dim configset_str As String = ""
+                If Trim(NicoConvAss_ConfigSet).Length > 0 Then
+                    configset_str = " -configset " & Trim(NicoConvAss_ConfigSet)
+                End If
+
+                psi.Arguments = "/c NicoConvAss.exe """ & fullpathfilename & """ -wfilename """ & targetfile & """  -chapter 0" & configset_str
                 log1write(psi.Arguments)
                 log1write("NicoConvAss実行 コメントダウンロード＆ass作成：" & fullpathfilename)
 

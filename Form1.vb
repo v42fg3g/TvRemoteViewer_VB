@@ -646,6 +646,8 @@ Public Class Form1
         search_ComboBoxResolution()
         form1_resolution = ComboBoxResolution.Text.ToString
         form1_hls_or_rez = ComboBoxRezFormOrCombo.Text.ToString
+        NicoConvAss_ConfigSet = F_set_ComboboxNicoSet(NicoConvAss_ConfigSet)
+        ComboBoxNicoSet.Text = NicoConvAss_ConfigSet
 
         'フォーム上の項目が正常かどうかチェック
         check_form_youso()
@@ -1020,6 +1022,8 @@ Public Class Form1
                             End If
                         Case "BonDriverSort"
                             bondriver_sort = lr(1).Split(",")
+                        Case "NicoConvAss_ConfigSet"
+                            NicoConvAss_ConfigSet = Trim(lr(1))
                     End Select
                 ElseIf lr.Length > 2 And trim8(lr(0)) = "textBoxHlsOpt" Then
                     'VLC OPTION
@@ -1134,6 +1138,7 @@ Public Class Form1
         s &= "CheckBoxLogWI=" & CheckBoxLogWI.Checked & vbCrLf
         s &= "CheckBoxLogETC=" & CheckBoxLogETC.Checked & vbCrLf
         s &= "CheckBoxLogDebug=" & CheckBoxLogDebug.Checked & vbCrLf
+        s &= "NicoConvAss_ConfigSet=" & NicoConvAss_ConfigSet & vbCrLf
         Dim bondriver_sort_str As String = ""
         If bondriver_sort IsNot Nothing Then
             bondriver_sort_str = String.Join(",", bondriver_sort)
@@ -2866,5 +2871,44 @@ Public Class Form1
             search_BonDriver()
             ComboBoxBonDriver.Text = combotext
         End If
+    End Sub
+
+    Private Sub ComboBoxNicoSet_TextChanged(sender As System.Object, e As System.EventArgs) Handles ComboBoxNicoSet.TextChanged
+        NicoConvAss_ConfigSet = ComboBoxNicoSet.Text.ToString
+    End Sub
+
+    Public Function F_set_ComboboxNicoSet(ByVal s As String) As String
+        Dim r As String = ""
+
+        Try
+            If NicoConvAss_path.Length > 0 Then
+                Dim config_folder As String = Path.GetDirectoryName(NicoConvAss_path) & "\configset"
+                If folder_exist(config_folder) = 1 Then
+                    Dim files As String() = System.IO.Directory.GetFiles(config_folder, "*.txt", System.IO.SearchOption.AllDirectories)
+                    If files IsNot Nothing Then
+                        ComboBoxNicoSet.Items.Clear()
+                        ComboBoxNicoSet.Items.Add("")
+                        For i As Integer = 0 To files.Length - 1
+                            Dim config_name As String = Path.GetFileNameWithoutExtension(files(i))
+                            If config_name.Length > 0 Then
+                                ComboBoxNicoSet.Items.Add(config_name)
+                                If config_name = s Then
+                                    r = s
+                                End If
+                            End If
+                        Next
+                    End If
+                End If
+            End If
+        Catch ex As Exception
+            log1write("【エラー】F_set_ComboboxNicoSet内でエラーが発生しました。" & ex.Message)
+        End Try
+
+        Return r
+    End Function
+
+    Private Sub ComboBoxNicoSet_Enter(sender As System.Object, e As System.EventArgs) Handles ComboBoxNicoSet.Enter
+        NicoConvAss_ConfigSet = F_set_ComboboxNicoSet(ComboBoxNicoSet.Text.ToString)
+        ComboBoxNicoSet.Text = NicoConvAss_ConfigSet
     End Sub
 End Class
