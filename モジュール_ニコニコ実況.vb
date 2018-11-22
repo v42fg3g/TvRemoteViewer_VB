@@ -11,6 +11,7 @@ Module モジュール_ニコニコ実況
     Public NicoJK_first As Integer = 0
     'NicoConvAss_path
     Public NicoConvAss_path As String = ""
+    Public NicoConvAss_assData_download As Integer = 0 '字幕ファイルが見つからない場合その都度ダウンロードするか
 
     'NicoJKフォルダにassを作成
     Public NicoConvAss_copy2NicoJK As Integer = 1
@@ -1264,4 +1265,79 @@ Module モジュール_ニコニコ実況
         Return targetfile
     End Function
 
+    'txtからassに変換してfileroot & "\" & "sub" & num.ToString & "_nico.ass"として保存　
+    Public Function NicoConvAss_download2ass(ByVal num As Integer, ByVal fileroot As String, ByVal fullpathfilename As String) As String
+        'NicoConvAssを呼び出して処理
+        Dim r As String = ""
+        Dim targetfile As String = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
+
+        Try
+            If Path.GetExtension(fullpathfilename) = ".ts" Then
+                'ここでは使用しないがあらかじめTOTを調べてキャッシュを作っておく（WIリクエスト対策　そうしないと再生開始後に調べることがある）
+                Dim file_tot As tot_structure = TOT_read(fullpathfilename, exepath_ffmpeg)
+
+                Dim results As String = ""
+                Dim psi As New System.Diagnostics.ProcessStartInfo()
+
+                psi.FileName = System.Environment.GetEnvironmentVariable("ComSpec") 'ComSpecのパスを取得する
+                psi.RedirectStandardInput = False '出力を読み取れるようにする
+                psi.RedirectStandardOutput = True
+                psi.UseShellExecute = False
+                psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
+                ''プログラムが存在するディレクトリ
+                Dim ppath As String = IO.Path.GetDirectoryName(NicoConvAss_path)
+                If ppath.Length > 0 Then
+                    ''カレントディレクトリ変更
+                    System.IO.Directory.SetCurrentDirectory(ppath)
+                    ''作業ディレクトリ変更
+                    psi.WorkingDirectory = ppath
+                End If
+                '出力エンコード
+                psi.StandardOutputEncoding = Encoding.UTF8
+
+                psi.Arguments = "/c NicoConvAss.exe """ & fullpathfilename & """ -wfilename """ & targetfile & """  -chapter 0"
+                log1write(psi.Arguments)
+                log1write("NicoConvAss実行 コメントダウンロード＆ass作成：" & fullpathfilename)
+
+                Dim p As System.Diagnostics.Process
+                Try
+                    p = System.Diagnostics.Process.Start(psi)
+                    '出力を読み取る
+                    results = p.StandardOutput.ReadToEnd
+                    'WaitForExitはReadToEndの後である必要がある
+                    '(親プロセス、子プロセスでブロック防止のため)
+                    p.WaitForExit()
+                Catch ex As Exception
+                End Try
+
+                'カレントディレクトリを戻す必要も無いかもだが
+                F_set_ppath4program()
+
+                'ファイルが作られたことを確認して終了
+                If file_exist(targetfile) = 1 Then
+                    log1write(targetfile & "が作成されました")
+                    r = targetfile
+
+                    If NicoConvAss_copy2NicoJK = 1 Then
+                        '動画ファイル名.assファイルをコピーする
+                        Dim tfn As String = Path.GetDirectoryName(fullpathfilename) & "\" & Path.GetFileNameWithoutExtension(fullpathfilename) & ".ass"
+                        If file_exist(tfn) <= 0 Then
+                            My.Computer.FileSystem.CopyFile(targetfile, tfn, True)
+                            log1write("[字幕]" & tfn & "を作成しました")
+                        Else
+                            log1write("[字幕]" & tfn & "はすでに存在していました。新たなコピーは行いませんでした")
+                        End If
+                    End If
+                Else
+                    log1write("【エラー】NicoConvAssによるassファイル作成に失敗しました")
+                End If
+            Else
+                log1write("tsファイル以外のコメント作成には対応していません")
+            End If
+        Catch ex As Exception
+            log1write("【エラー】NicoConvAss_download2ass内でエラーが発生しました。" & ex.Message)
+        End Try
+
+        Return r
+    End Function
 End Module

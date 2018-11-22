@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.88
+TvRemoteViewer_VB v2.89
 
 
 
@@ -866,6 +866,9 @@ UDP1235,0,1,0,0,48835,0,0,1
 			ICSharpCode.SharpZipLib.dllを添付。exeと同じフォルダにコピーしてください（2.88p）
 			TvRockジャンル判定の調整（2.88p）
 			ジャンル判定のためのTvRockへのアクセス回数を削減（2.88q）
+	2.89	既存のコメントファイルが無い場合NicoConvAssでコメントをダウンロードしてassを作成できるようにした
+			iniにコメントをダウンロードするかを指定するNicoConvAss_assData_downloadを追加
+
 
 
 

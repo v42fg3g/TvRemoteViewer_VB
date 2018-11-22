@@ -1824,6 +1824,11 @@ Class WebRemocon
                                 If i4 < 4096 Then i4 = 4096
                                 watcher_BufferSize = i4
                                 log1write("各フォルダの監視に使用するInternalBufferSizeを" & watcher_BufferSize.ToString & "Byteに設定しました")
+                            Case "NicoConvAss_assData_download"
+                                NicoConvAss_assData_download = Val(youso(1))
+                                If NicoConvAss_assData_download = 1 Then
+                                    log1write("コメントファイルが見つからない場合、その都度NicoConvAssを使用してコメントをダウンロードするよう設定しました")
+                                End If
 
 
                                 'Case "video_force_ffmpeg"
@@ -2942,8 +2947,12 @@ Class WebRemocon
                                 If NicoConvAss_copy2NicoJK = 1 And txt_file.IndexOf(".txt") > 0 And txt_file.IndexOf(NicoJK_path) >= 0 Then
                                     'txtと同じフォルダにassファイルをコピーする　（123456789.assとして）
                                     Dim tfn As String = txt_file.Replace(".txt", ".ass")
-                                    My.Computer.FileSystem.CopyFile(ass_file, tfn, True)
-                                    log1write("[字幕]" & tfn & "を作成しました")
+                                    If file_exist(tfn) <= 0 Then
+                                        My.Computer.FileSystem.CopyFile(ass_file, tfn, True)
+                                        log1write("[字幕]" & tfn & "を作成しました")
+                                    Else
+                                        log1write("[字幕]" & tfn & "はすでに存在していました。新たなコピーは行いませんでした")
+                                    End If
                                 End If
                             Else
                                 log1write("[字幕]字幕ASSファイルへの変換が失敗しました")
@@ -2953,6 +2962,22 @@ Class WebRemocon
                         End If
                     End If
                 End If
+
+                If ass_file.Length = 0 Then
+                    If NicoConvAss_assData_download = 1 And num >= 0 Then
+                        If NicoConvAss_path.Length > 0 Then
+                            If filename_ext = ".ts" Then
+                                log1write("NicoConvAssによりコメントをダウンロードしてassを作成します")
+                                ass_file = NicoConvAss_download2ass(num, fileroot, filename)
+                            Else
+                                log1write("tsファイル以外のNicoConvAssコメントダウンロードは出来ません")
+                            End If
+                        Else
+                            log1write("【エラー】NicoConvAss_pathを指定してください")
+                        End If
+                    End If
+                End If
+
                 If ass_file.Length > 0 Then
                     log1write("[字幕]" & ass_file & "をコメントファイルとしてセットしました")
                 Else
