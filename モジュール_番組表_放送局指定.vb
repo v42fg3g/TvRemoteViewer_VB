@@ -781,11 +781,11 @@ Module モジュール_番組表_放送局指定
                             sp3 = html.IndexOf("<small><b>", sp)
                         End If
                         '予約番号がわからないのでタイトルから推測
-                        If TvRock_html_plc_src.Length > 0 Then
-                            temp_genre = get_tvrock_genre_from_plc(0, 0, temp_programTitle).ToString
-                        End If
-                        If TvRock_genre_cache IsNot Nothing And temp_genre = "-1" Then
+                        If TvRock_genre_cache IsNot Nothing Then
                             temp_genre = get_tvrock_genre_from_search(0, 0, temp_programTitle, temp_stationDispName).ToString
+                        End If
+                        If TvRock_html_plc_src.Length > 0 And temp_genre = "-1" Then
+                            temp_genre = get_tvrock_genre_from_plc(0, 0, temp_programTitle).ToString
                         End If
                         If temp_genre = "-1" < 0 Then
                             temp_genre = get_tvrock_genre_from_program(0, 0, temp_programTitle).ToString '"-1"

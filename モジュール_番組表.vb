@@ -1379,11 +1379,12 @@ Module モジュール_番組表
                             sp3 = html.IndexOf("<small><b>", sp)
                         End If
                         '予約番号がわからないのでタイトルから推測
-                        If TvRock_html_plc_src.Length > 0 Then
-                            temp_genre = get_tvrock_genre_from_plc(0, 0, temp_programTitle).ToString
-                        End If
-                        If TvRock_genre_cache IsNot Nothing And temp_genre = "-1" Then
+                        If TvRock_genre_cache IsNot Nothing Then
+                            'plcよりsearchのほうが正確
                             temp_genre = get_tvrock_genre_from_search(0, 0, temp_programTitle, temp_stationDispName).ToString
+                        End If
+                        If TvRock_html_plc_src.Length > 0 And temp_genre = "-1" Then
+                            temp_genre = get_tvrock_genre_from_plc(0, 0, temp_programTitle).ToString
                         End If
                         If temp_genre = "-1" < 0 Then
                             temp_genre = get_tvrock_genre_from_program(0, 0, temp_programTitle).ToString
@@ -1450,12 +1451,12 @@ Module モジュール_番組表
                                 End If
                                 If sid > 0 And trid > 0 Then
                                     r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).programTitle).ToString
-                                    If TvRock_html_plc_src.Length > 0 And r(j).genre = "-1" Then
-                                        r(j).genre = get_tvrock_genre_from_plc(sid, trid, r(j).programTitle).ToString
-                                    End If
                                     If TvRock_genre_cache IsNot Nothing And r(j).genre = "-1" Then
                                         r(j).genre = get_tvrock_genre_from_search(sid, trid, r(j).programTitle, temp_stationDispName).ToString
                                     End If
+                                    'If TvRock_html_plc_src.Length > 0 And r(j).genre = "-1" Then
+                                    'r(j).genre = get_tvrock_genre_from_plc(sid, trid, r(j).programTitle).ToString
+                                    'End If
                                 Else
                                     r(j).genre = "-1"
                                 End If
@@ -1558,6 +1559,7 @@ Module モジュール_番組表
         Return r
     End Function
 
+    '番組リスト(ver2)から　やや不正確なことが判明
     Public Function get_tvrock_genre_from_plc(ByVal sid As Integer, ByVal trid As Integer, ByVal title As String) As Integer
         Dim r As Integer = -1
 
@@ -1645,9 +1647,6 @@ Module モジュール_番組表
             End If
 
             Dim title_key As String = get_tvrock_title_key(title) '最大長全角文字列
-            If title.ToLower.IndexOf("tail") > 0 Then
-                Debug.Print(title & " - " & title_key)
-            End If
 
             Dim search_str As String = key & ",_" & station
             If title_key.Length > 0 Then

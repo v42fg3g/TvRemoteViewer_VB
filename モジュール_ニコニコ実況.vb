@@ -1308,7 +1308,7 @@ Module モジュール_ニコニコ実況
                     configset_str = " -configset " & Trim(NicoConvAss_ConfigSet)
                 End If
 
-                psi.Arguments = "/c NicoConvAss.exe """ & fullpathfilename & """ -wfilename """ & targetfile & """  -chapter 0" & configset_str
+                psi.Arguments = "/c NicoConvAss.exe """ & fullpathfilename & """ -wfilename """ & targetfile & """ -chapter 0" & configset_str
                 log1write(psi.Arguments)
                 log1write("NicoConvAss実行 コメントダウンロード＆ass作成：" & fullpathfilename)
 
