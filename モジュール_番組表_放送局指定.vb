@@ -661,7 +661,7 @@ Module モジュール_番組表_放送局指定
                             Dim ystart As Integer = time2unix(ystartDate)
                             '終了時間
                             Dim yendDate As DateTime = DateTime.FromBinary(tr.data1(i)(2)) '開始時刻(調整いらず）
-                            Dim yend As Integer = time2unix(ystartDate)
+                            Dim yend As Integer = time2unix(yendDate)
                             '録画時間（秒）
                             Dim duration As Integer = Val(tr.data1(i)(3))
                             'status
