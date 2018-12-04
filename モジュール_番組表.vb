@@ -2509,8 +2509,7 @@ Module モジュール_番組表
             Dim ip As String = Instr_pickup(TvProgram_EDCB_url, "://", ":", 0)
             ip = host2ip(ip) 'ホストネームからIPに変換
             Dim sp As Integer = TvProgram_EDCB_url.IndexOf("://")
-            Dim port As String = ""
-            port = 4510 'CtrlCmdCLIのポート　決め打ち？
+            Dim port As String = "4510" 'CtrlCmdCLIのポート　決め打ち？
 
             If ip.Length > 0 And Val(port) > 0 Then
                 EDCB_cmd.SetSendMode(True)

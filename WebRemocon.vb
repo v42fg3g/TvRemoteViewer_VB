@@ -1194,6 +1194,7 @@ Class WebRemocon
         End If
 
         Dim i, j As Integer
+        Dim chk_str As String = ",_"
 
         If line Is Nothing Then
             MsgBox("iniファイルの読み込みに失敗したようです" & vbCrLf & "TvRemoteViewer_VBを終了します")
@@ -1223,629 +1224,637 @@ Class WebRemocon
                         For j = 0 To youso.Length - 1
                             youso(j) = trim8(youso(j))
                         Next
-                        set_ini_data(youso(0), url_text)
-                        Select Case youso(0)
-                            Case "VideoPath"
-                                'サブフォルダ監視修正
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "")
-                                If trim8(youso(1)).Length > 0 Then
-                                    Dim clset() As String = youso(1).Split(",")
-                                    If clset Is Nothing Then
-                                    ElseIf clset.Length > 0 Then
-                                        ReDim Preserve Me._videopath_ini(clset.Length - 1)
-                                        For j = 0 To clset.Length - 1
-                                            Me._videopath_ini(j) = trim8(path_s2z(clset(j)))
-                                        Next
+
+                        If chk_str.IndexOf(",_" & youso(0) & ",_") >= 0 Then
+                            Dim p_chk As Integer = Array.IndexOf(ini_array, youso(0))
+                            Dim wtxt As String = "設定済の値：" & ini_array(p_chk).value & " 破棄された値：" & url_text
+                            log1write("【警告】ini内パラメーター " & youso(0) & " は複数回記載されています。最初の記述が優先されます。" & wtxt)
+                        Else
+                            chk_str &= youso(0) & ",_"
+                            set_ini_data(youso(0), url_text)
+                            Select Case youso(0)
+                                Case "VideoPath"
+                                    'サブフォルダ監視修正
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "")
+                                    If trim8(youso(1)).Length > 0 Then
+                                        Dim clset() As String = youso(1).Split(",")
+                                        If clset Is Nothing Then
+                                        ElseIf clset.Length > 0 Then
+                                            ReDim Preserve Me._videopath_ini(clset.Length - 1)
+                                            For j = 0 To clset.Length - 1
+                                                Me._videopath_ini(j) = trim8(path_s2z(clset(j)))
+                                            Next
+                                        End If
                                     End If
-                                End If
-                            Case "AddSubFolder"
-                                Me._AddSubFolder = Val(youso(1).ToString)
-                            Case "TvProgramD"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgram_ch(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        TvProgram_ch(j) = Val(trim8(clset(j)))
-                                    Next
-                                End If
-                            Case "TvProgramD_NGword"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgram_NGword(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        TvProgram_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
-                                    Next
-                                End If
-                            Case "TvProgramptTimer_NGword"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgramptTimer_NGword(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        TvProgramptTimer_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
-                                    Next
-                                End If
-                            Case "TvProgramTvmaid_NGword"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgramTvmaid_NGword(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        TvProgramTvmaid_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
-                                    Next
-                                End If
-                            Case "TvProgramEDCB_NGword"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgramEDCB_NGword(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        TvProgramEDCB_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
-                                    Next
-                                End If
-                            Case "TvProgramTvRock_NGword"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgramTvRock_NGword(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        TvProgramTvRock_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
-                                    Next
-                                End If
-                            Case "TvProgramEDCB_ignore"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgramEDCB_ignore(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        TvProgramEDCB_ignore(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
-                                    Next
-                                End If
-                            Case "TvProgramD_BonDriver1st"
-                                TvProgramD_BonDriver1st = para_split_str(youso(1).ToString)
-                            Case "TvProgramS_BonDriver1st"
-                                TvProgramS_BonDriver1st = para_split_str(youso(1).ToString)
-                            Case "TvProgramP_BonDriver1st"
-                                TvProgramP_BonDriver1st = para_split_str(youso(1).ToString)
-                            Case "TvProgram_tvrock_url"
-                                TvProgram_tvrock_url = trim8(youso(1).ToString)
-                                Dim sp As Integer = TvProgram_tvrock_url.IndexOf("?d")
-                                If sp > 0 Then
-                                    Try
-                                        TvProgram_tvrock_tuner = Val(youso(2))
-                                    Catch ex As Exception
-                                        TvProgram_tvrock_tuner = -1
-                                    End Try
-                                    TvProgram_tvrock_url = TvProgram_tvrock_url.Substring(0, sp)
-                                    log1write("TVROCK番組表チューナーに" & TvProgram_tvrock_tuner.ToString & "番を指定しました")
-                                End If
-                            Case "TvProgram_tvrock_sch"
-                                TvProgram_tvrock_sch = trim8(youso(1).ToString)
-                            Case "TvProgram_Force_NoRec"
-                                If Val(trim8(youso(1).ToString)) = 1 Then
-                                    TvProgram_Force_NoRec = 1
-                                    TvProgram_tvrock_url = "ForceNoRec" 'ダミー　何か入れておく
-                                    log1write("ダミー番組表をTVROCK番組表として表示するよう指定されました")
-                                End If
-                            Case "TvProgram_EDCB_url"
-                                TvProgram_EDCB_url = trim8(youso(1).ToString)
-                            Case "TvProgramD_channels"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgramD_channels(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        '全角に変換
-                                        TvProgramD_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
-                                    Next
-                                End If
-                            Case "TvProgramEDCB_channels"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgramEDCB_channels(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        '全角に変換
-                                        TvProgramEDCB_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
-                                    Next
-                                End If
-                            Case "TvProgramEDCB_premium"
-                                'プレミアム指定
-                                TvProgramEDCB_premium = Val(youso(1).ToString)
-                            Case "TvProgramTvRock_channels"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgramTvRock_channels(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        '全角に変換
-                                        TvProgramTvRock_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
-                                    Next
-                                End If
-                            Case "TvProgramD_sort"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve TvProgramD_sort(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        '全角に変換
-                                        TvProgramD_sort(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
-                                    Next
-                                End If
-                            Case "VideoExtensions"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    For j = 0 To clset.Length - 1
-                                        clset(j) = trim8(clset(j))
-                                        If clset(j).Length > 0 Then
-                                            '.が先頭になければ追加
-                                            If clset(j).Substring(0, 1) <> "." Then
-                                                clset(j) = "." & clset(j)
-                                            End If
-                                            If VideoExtensions Is Nothing Then
-                                                ReDim Preserve VideoExtensions(0)
-                                            Else
-                                                ReDim Preserve VideoExtensions(VideoExtensions.Length)
-                                            End If
-                                            VideoExtensions(VideoExtensions.Length - 1) = clset(j).ToLower
-                                        End If
-                                    Next
-                                End If
-                            Case "BonDriver_NGword"
-                                ReDim Preserve BonDriver_NGword(1)
-                                BonDriver_NGword(0) = "_file"
-                                BonDriver_NGword(1) = "_pipe"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    '既存のBonDriver_NGwordに追加
-                                    Dim k As Integer = BonDriver_NGword.Length
-                                    For j = 0 To clset.Length - 1
-                                        If clset(j).Length > 0 Then
-                                            If BonDriver_NGword Is Nothing Then
-                                                ReDim Preserve BonDriver_NGword(0)
-                                            Else
-                                                ReDim Preserve BonDriver_NGword(BonDriver_NGword.Length)
-                                            End If
-                                            BonDriver_NGword(BonDriver_NGword.Length - 1) = trim8(clset(j))
-                                        End If
-                                    Next
-                                End If
-                            Case "Stop_RecTask_at_StartQuit", "Stop_RecTask_at_StartEnd"
-                                Stop_RecTask_at_StartEnd = Val(youso(1).ToString)
-                            Case "Stop_ffmpeg_at_StartEnd"
-                                Stop_ffmpeg_at_StartEnd = Val(youso(1).ToString)
-                            Case "Stop_vlc_at_StartEnd"
-                                Stop_vlc_at_StartEnd = Val(youso(1).ToString)
-                            Case "Stop_QSVEnc_at_StartEnd"
-                                Stop_QSVEnc_at_StartEnd = Val(youso(1).ToString)
-                            Case "Stop_NVEnc_at_StartEnd"
-                                Stop_NVEnc_at_StartEnd = Val(youso(1).ToString)
-                            Case "NHK_dual_mono_mode"
-                                Me._NHK_dual_mono_mode = Val(youso(1).ToString)
-                            Case "tsfile_wait"
-                                Me._tsfile_wait = Val(youso(1).ToString)
-                                If Me._tsfile_wait <= 0 Then
-                                    Me._tsfile_wait = 3
-                                End If
-                            Case "MIME_TYPE_DEFAULT"
-                                If trim8(youso(1)).Length > 0 Then
-                                    Me._MIME_TYPE_DEFAULT = trim8(youso(1))
-                                End If
-                            Case "MIME_TYPE"
-                                If trim8(youso(1)).Length > 0 Then
+                                Case "AddSubFolder"
+                                    Me._AddSubFolder = Val(youso(1).ToString)
+                                Case "TvProgramD"
                                     youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                     Dim clset() As String = youso(1).Split(",")
                                     If clset Is Nothing Then
                                     ElseIf clset.Length > 0 Then
-                                        ReDim Preserve Me._MIME_TYPE(clset.Length - 1)
+                                        ReDim Preserve TvProgram_ch(clset.Length - 1)
                                         For j = 0 To clset.Length - 1
-                                            Me._MIME_TYPE(j) = trim8(clset(j))
+                                            TvProgram_ch(j) = Val(trim8(clset(j)))
                                         Next
                                     End If
-                                End If
-                            Case "PipeListGetter"
-                                PipeListGetter = trim8(youso(1).ToString)
-                            Case "HTTPSTREAM_App"
-                                HTTPSTREAM_App = Val(youso(1).ToString)
-                            Case "HTTPSTREAM_VLC_port"
-                                HTTPSTREAM_VLC_port = Val(youso(1).ToString)
-                            Case "HTTPSTREAM_FFMPEG_BUFFER"
-                                HTTPSTREAM_FFMPEG_BUFFER = Val(youso(1).ToString)
-                            Case "MAX_STREAM_NUMBER"
-                                If Val(youso(1).ToString) > 0 Then
-                                    MAX_STREAM_NUMBER = Val(youso(1).ToString)
-                                    ReDim Preserve file_last_filename(MAX_STREAM_NUMBER + 1)
-                                    ReDim Preserve stream_last_utime(MAX_STREAM_NUMBER + 1)
-                                    ReDim Preserve stream_reset_count(MAX_STREAM_NUMBER + 1)
-                                    ReDim Preserve waitingmessage_count(MAX_STREAM_NUMBER + 1)
-                                    ReDim Preserve dvdObject(MAX_STREAM_NUMBER + 1)
-                                End If
-                            Case "UDP_PRIORITY"
-                                UDP_PRIORITY = trim8(youso(1).ToString)
-                            Case "HLS_PRIORITY"
-                                HLS_PRIORITY = trim8(youso(1).ToString)
-                            Case "UDP2HLS_WAIT"
-                                UDP2HLS_WAIT = Val(youso(1).ToString)
-                            Case "OPENFIX_WAIT"
-                                OPENFIX_WAIT = Val(youso(1).ToString)
-                            Case "ALLOW_IDPASS2HTML"
-                                ALLOW_IDPASS2HTML = Val(youso(1).ToString)
-                            Case "FFMPEG_HTTP_CUT_SECONDS"
-                                FFMPEG_HTTP_CUT_SECONDS = Val(youso(1).ToString)
-                                '入出力をUTF-8以外のものは扱わないようにした
-                                'Case "HTML_IN_CHARACTER_CODE"
-                                'HTML_IN_CHARACTER_CODE = trim8(youso(1).ToString)
-                                'Case "HTML_OUT_CHARACTER_CODE"
-                                'HTML_OUT_CHARACTER_CODE = trim8(youso(1).ToString)
-                            Case "STOP_IDLEMINUTES"
-                                STOP_IDLEMINUTES = Val(youso(1).ToString)
-                            Case "STOP_IDLEMINUTES_METHOD"
-                                STOP_IDLEMINUTES_METHOD = Val(youso(1).ToString)
-                            Case "VideoSeekDefault"
-                                VideoSeekDefault = Val(youso(1).ToString)
-                            Case "VideoSizeCheck"
-                                VideoSizeCheck = Val(youso(1).ToString)
-                            Case "TvProgram_SelectUptoNum"
-                                TvProgram_SelectUptoNum = Val(youso(1).ToString)
-                            Case "OLDTS_NODELETE"
-                                OLDTS_NODELETE = Val(youso(1).ToString)
-                            Case "RecTask_SPHD"
-                                RecTask_SPHD = trim8(path_s2z(youso(1).ToString))
-                                If RecTask_SPHD.Length > 0 Then
-                                    If file_exist(RecTask_SPHD) <= 0 Then
-                                        log1write("【エラー】RecTask_SPHD：" & RecTask_SPHD & " が見つかりません")
-                                        RecTask_SPHD = ""
-                                    Else
-                                        log1write("スカパープレミアムSPHD用RecTaskとして " & RecTask_SPHD & " が指定されました")
-                                    End If
-                                End If
-                            Case "RecTask_force_restart"
-                                RecTask_force_restart = Val(youso(1).ToString)
-                            Case "ptTimer_path"
-                                ptTimer_path = youso(1).ToString
-                                If ptTimer_path.Length > 0 Then
-                                    If ptTimer_path.Substring(ptTimer_path.Length - 1, 1) <> "\" Then
-                                        '末尾に\を付ける
-                                        ptTimer_path += "\"
-                                    End If
-                                End If
-                            Case "Allow_BonDriver4Streams"
-                                Allow_BonDriver4Streams = Val(youso(1).ToString)
-                            Case "EDCB_thru_addprogres"
-                                EDCB_thru_addprogres = Val(youso(1).ToString)
-                            Case "EDCB_Velmy_niisaka"
-                                EDCB_Velmy_niisaka = Val(youso(1).ToString)
-                            Case "EDCB_GetCh_method"
-                                EDCB_GetCh_method = Val(youso(1).ToString)
-                            Case "Tvmaid_url"
-                                If youso(1).Length > 0 Then
-                                    Tvmaid_url = youso(1).ToString
-                                    TvmaidIsEX = 0
-                                    log1write("TvmaidのサーバーURLが指定されました。" & Tvmaid_url)
-                                End If
-                            Case "TvmaidEX_url", "TvmaidYUI_url"
-                                If youso(1).Length > 0 Then
-                                    Tvmaid_url = youso(1).ToString
-                                    TvmaidIsEX = 1
-                                    log1write("TvmaidYUIのサーバーURLが指定されました。" & Tvmaid_url)
-                                End If
-                            Case "NicoJK_path"
-                                NicoJK_path = trim8(path_s2z(youso(1).ToString))
-                                If NicoJK_path.Length > 0 Then
-                                    If folder_exist(NicoJK_path) <= 0 Then
-                                        log1write("【エラー】NicoJK_path：" & NicoJK_path & " が見つかりません")
-                                        NicoJK_path = ""
-                                    Else
-                                        log1write("NicoJKフォルダ：" & NicoJK_path & " が指定されました")
-                                    End If
-                                End If
-                            Case "NicoJK_first"
-                                NicoJK_first = Val(youso(1).ToString)
-                            Case "NicoConvAss_path"
-                                NicoConvAss_path = trim8(path_s2z(youso(1).ToString))
-                                If NicoConvAss_path.Length > 0 Then
-                                    If file_exist(NicoConvAss_path) <= 0 Then
-                                        log1write("【エラー】NicoConvAss_path：" & NicoConvAss_path & " が見つかりません")
-                                        NicoConvAss_path = ""
-                                    Else
-                                        log1write("NicoConvAss：" & NicoConvAss_path & " が指定されました")
-                                    End If
-                                End If
-                            Case "NicoConvAss_copy2NicoJK"
-                                NicoConvAss_copy2NicoJK = Val(youso(1).ToString)
-                                If NicoConvAss_copy2NicoJK = 1 Then
-                                    log1write("NicoConvAss使用時にNicoJKフォルダにもassファイルをコピーするよう設定しました")
-                                End If
-                            Case "Nico_delay"
-                                Nico_delay = Val(youso(1).ToString)
-                            Case "RecTask_CH_MaxWait"
-                                RecTask_CH_MaxWait = Val(youso(1).ToString)
-                                If RecTask_CH_MaxWait < 1 Then
-                                    RecTask_CH_MaxWait = 1 '最小値1秒
-                                End If
-                                log1write("RecTaskがチャンネル変更する際に待機する最大秒数を" & RecTask_CH_MaxWait & "秒に設定しました")
-                            Case "make_chapter"
-                                make_chapter = Val(youso(1).ToString)
-                            Case "chapter_bufsec"
-                                chapter_bufsec = Val(youso(1).ToString)
-                            Case "openfix_BonSid"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    If trim8(clset(0)).Length > 0 Then
-                                        ReDim Preserve openfix_BonSid(clset.Length - 1)
-                                        For j = 0 To clset.Length - 1
-                                            openfix_BonSid(j) = trim8(clset(j))
-                                        Next
-                                    End If
-                                End If
-                            Case "log_size"
-                                log_size = Val(youso(1).ToString)
-                            Case "html_publish_method"
-                                If IsNumeric(youso(1)) Then
-                                    html_publish_method = Val(youso(1).ToString)
-                                End If
-                            Case "TOT_get_duration"
-                                TOT_get_duration = Val(youso(1).ToString)
-                                If TOT_get_duration > 0 Then
-                                    log1write("ファイル再生時に動画の長さを調べるようセットしました")
-                                End If
-                            Case "meta_refresh_fix"
-                                meta_refresh_fix = Val(youso(1).ToString)
-                            Case "exepath_VLC", "exepath_vlc", "BS1_hlsApp"
-                                youso(1) = trim8(path_s2z((youso(1))))
-                                If youso(1).Length > 0 Then
-                                    If file_exist(youso(1)) = 1 Then
-                                        exepath_VLC = youso(1).ToString
-                                        log1write("個別実行用vlcとして" & exepath_VLC & "が指定されました")
-                                    Else
-                                        log1write("【エラー】個別実行用vlcが見つかりませんでした。" & exepath_VLC)
-                                        exepath_VLC = ""
-                                    End If
-                                End If
-                            Case "exepath_ffmpeg", "thumbnail_ffmpeg"
-                                youso(1) = trim8(path_s2z((youso(1))))
-                                If youso(1).Length > 0 Then
-                                    If file_exist(youso(1)) = 1 Then
-                                        exepath_ffmpeg = youso(1).ToString
-                                        log1write("個別実行用ffmpegとして" & exepath_ffmpeg & "が指定されました")
-                                    Else
-                                        log1write("【エラー】個別実行用ffmpegが見つかりませんでした。" & exepath_ffmpeg)
-                                        exepath_ffmpeg = ""
-                                    End If
-                                End If
-                            Case "exepath_QSVEnc"
-                                youso(1) = trim8(path_s2z((youso(1))))
-                                If youso(1).Length > 0 Then
-                                    If file_exist(youso(1)) = 1 Then
-                                        exepath_QSVEnc = youso(1).ToString
-                                        log1write("個別実行用QSVEncとして" & exepath_QSVEnc & "が指定されました")
-                                    Else
-                                        log1write("【エラー】個別実行用QSVEncが見つかりませんでした。" & exepath_QSVEnc)
-                                        exepath_QSVEnc = ""
-                                    End If
-                                End If
-                            Case "exepath_NVEnc"
-                                youso(1) = trim8(path_s2z((youso(1))))
-                                If youso(1).Length > 0 Then
-                                    If file_exist(youso(1)) = 1 Then
-                                        exepath_NVEnc = youso(1).ToString
-                                        log1write("個別実行用NVEncとして" & exepath_NVEnc & "が指定されました")
-                                    Else
-                                        log1write("【エラー】個別実行用NVEncが見つかりませんでした。" & exepath_NVEnc)
-                                        exepath_NVEnc = ""
-                                    End If
-                                End If
-                            Case "exepath_ISO_VLC"
-                                youso(1) = trim8(path_s2z((youso(1))))
-                                If youso(1).Length > 0 Then
-                                    If file_exist(youso(1)) = 1 Then
-                                        exepath_ISO_VLC = youso(1).ToString
-                                        log1write("ISO再生用VLCとして" & exepath_ISO_VLC & "が指定されました")
-                                    Else
-                                        log1write("【エラー】ISO再生用VLCが見つかりませんでした。" & exepath_ISO_VLC)
-                                        exepath_ISO_VLC = ""
-                                    End If
-                                End If
-                            Case "exepath_mplayer"
-                                youso(1) = trim8(path_s2z((youso(1))))
-                                If youso(1).Length > 0 Then
-                                    If file_exist(youso(1)) = 1 Then
-                                        mplayer4ISOPath = youso(1).ToString
-                                        log1write("ISO再生用mplayerとして" & mplayer4ISOPath & "が指定されました")
-                                    Else
-                                        log1write("【エラー】ISO再生用mplayerが見つかりませんでした。" & mplayer4ISOPath)
-                                        mplayer4ISOPath = ""
-                                    End If
-                                End If
-                            Case "PipeRun_ffmpeg_option"
-                                youso(1) = trim8(path_s2z((youso(1))))
-                                If youso(1).Length > 0 Then
-                                    PipeRun_ffmpeg_option = youso(1)
-                                    log1write("PipeRun実行時にffmpegに渡すオプション= " & PipeRun_ffmpeg_option)
-                                End If
-                            Case "stream_reset_limit"
-                                stream_reset_limit = Val(youso(1).ToString)
-                                log1write("ストリーム再起動回数の上限を" & stream_reset_limit.ToString & "回にセットしました")
-                            Case "waitingmessage_slow_limit"
-                                waitingmessage_slow_limit = Val(youso(1).ToString)
-                                log1write("同じwaitingページが" & waitingmessage_count.ToString & "回繰り返し表示された場合にrefresh秒数を延長するようセットしました")
-                            Case "waitingmessage_slow_sec"
-                                waitingmessage_slow_sec = Val(youso(1).ToString)
-                                log1write("同じwaitingページが繰り返し表示された場合にrefreshを" & waitingmessage_slow_sec.ToString & "秒以上とするようセットしました")
-                            Case "log_path"
-                                log_path = Trim(youso(1))
-                            Case "close2min"
-                                close2min = Val(youso(1).ToString)
-                            Case "Remocon_Domains"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                Dim clset() As String = youso(1).Split(",")
-                                If clset Is Nothing Then
-                                ElseIf clset.Length > 0 Then
-                                    ReDim Preserve Remocon_Domains(clset.Length - 1)
-                                    For j = 0 To clset.Length - 1
-                                        Remocon_Domains(j) = trim8(clset(j))
-                                    Next
-                                End If
-                            Case "HTTPSTREAM_METHOD"
-                                HTTPSTREAM_METHOD = Val(youso(1).ToString)
-                                If HTTPSTREAM_METHOD = 0 Then
-                                    log1write("HTTPストリーム配信方式をREADBEGIN形式にセットしました（従来通り）")
-                                Else
-                                    log1write("HTTPストリーム配信方式をREAD形式にセットしました")
-                                End If
-                            Case "TVRemoteFilesNEW"
-                                TVRemoteFilesNEW = Val(youso(1).ToString)
-                                log1write("画面推移方式を設定しました。TVRemoteFilesNEW=" & TVRemoteFilesNEW.ToString)
-                            Case "ISOPlayNEW"
-                                ISOPlayNEW = Val(youso(1).ToString)
-                            Case "ISO_DumpDirPath"
-                                ISO_DumpDirPath = youso(1)
-                            Case "ISO_ThumbPath"
-                                '無効　クライアントが未対応 streamフォルダに作成
-                                'ISO_ThumbPath = youso(1)
-                            Case "ISO_ThumbForceM"
-                                '廃止
-                                'ISO_ThumbForceM = Val(youso(1).ToString)
-                                'log1write("ISOサムネイル作成を強制的にMplayerで行います")
-                            Case "ISO_maxDump"
-                                ISO_maxDump = Val(youso(1).ToString)
-                                log1write("変換後ISOデータの最大保持数を" & ISO_maxDump & "にセットしました")
-                                If ISO_maxDump = 0 Then
-                                    log1write("【警告】ISO_maxDump=0にセットされましたが、新ISO再生のシーク時にいちいちVOB変換を行うようになります。1以上推奨です")
-                                End If
-                            Case "VLC_ISO_option"
-                                VLC_ISO_option = url_text
-                                log1write("VLC_ISO_option:" & VLC_ISO_option)
-                            Case "NoUseProgramCache"
-                                NoUseProgramCache = Val(youso(1).ToString)
-                                If NoUseProgramCache = 1 Then
-                                    log1write("【システム】番組表のキャッシュを作成しないよう設定しました")
-                                End If
-                            Case "AbemaTV_CustomURL", "Outside_CustomURL"
-                                If youso(1).Length > 0 Then
-                                    Outside_CustomURL = youso(1)
-                                    Outside_data_get_method = 0 'ini指定
-                                    log1write("AbemaTV_CustomURL=" & Outside_CustomURL)
-                                End If
-                            Case "AbemaTV_CustomURL_method", "Outside_CustomURL_method"
-                                '解析方法↑"Outside_CustomURL"とセットで使用　今のところ都合の良いデータ=1限定　意味が無いのでini未記入
-                                If youso(1).Length > 0 Then
-                                    Outside_CustomURL_method = Val(youso(1))
-                                    log1write("AbemaTV_CustomURL_method=" & Outside_CustomURL_method)
-                                End If
-                            Case "AvemaTV_data_get_method", "Outside_data_get_method"
-                                Outside_data_get_method = Val(youso(1))
-                                log1write("AvemaTV_data_get_method=" & Outside_data_get_method)
-                            Case "next2_minutes"
-                                If IsNumeric(youso(1)) Then
-                                    Try
-                                        next2_minutes = Val(youso(1))
-                                    Catch ex As Exception
-                                        next2_minutes = 500
-                                    End Try
-                                    If next2_minutes > 0 Then
-                                        log1write("次の番組が" & next2_minutes.ToString & "分以内の番組ならば次の次の番組情報を追加表示するよう設定しました")
-                                    Else
-                                        log1write("次の次の番組情報を取得しないよう設定しました")
-                                    End If
-                                End If
-                            Case "TvRock_genre_ON"
-                                If IsNumeric(youso(1)) Then
-                                    TvRock_genre_ON = Val(youso(1))
-                                    If TvRock_genre_ON = 1 Then
-                                        log1write("TvRockジャンル情報を取得するよう設定しました")
-                                    Else
-                                        log1write("TvRockジャンル情報を取得しないように設定しました")
-                                    End If
-                                End If
-                            Case "TvRock_genre_color"
-                                youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
-                                If Trim(youso(1)).Length > 0 Then
+                                Case "TvProgramD_NGword"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                     Dim clset() As String = youso(1).Split(",")
                                     If clset Is Nothing Then
-                                    ElseIf clset.Length = 16 Then
-                                        Dim temp As String = ""
-                                        ReDim Preserve TvRock_genre_color(clset.Length - 1)
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgram_NGword(clset.Length - 1)
                                         For j = 0 To clset.Length - 1
-                                            TvRock_genre_color(j) = trim8(clset(j).ToLower)
-                                            temp &= "ジャンル(" & j.ToString & "）色=" & TvRock_genre_color(j) & " "
+                                            TvProgram_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
                                         Next
-                                        log1write("TvRock番組表で表示中のジャンル色は、" & temp & "であると想定するようセットしました")
+                                    End If
+                                Case "TvProgramptTimer_NGword"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgramptTimer_NGword(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            TvProgramptTimer_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
+                                        Next
+                                    End If
+                                Case "TvProgramTvmaid_NGword"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgramTvmaid_NGword(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            TvProgramTvmaid_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
+                                        Next
+                                    End If
+                                Case "TvProgramEDCB_NGword"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgramEDCB_NGword(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            TvProgramEDCB_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
+                                        Next
+                                    End If
+                                Case "TvProgramTvRock_NGword"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgramTvRock_NGword(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            TvProgramTvRock_NGword(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
+                                        Next
+                                    End If
+                                Case "TvProgramEDCB_ignore"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgramEDCB_ignore(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            TvProgramEDCB_ignore(j) = StrConv(trim8(clset(j)), VbStrConv.Wide) '全角で保存
+                                        Next
+                                    End If
+                                Case "TvProgramD_BonDriver1st"
+                                    TvProgramD_BonDriver1st = para_split_str(youso(1).ToString)
+                                Case "TvProgramS_BonDriver1st"
+                                    TvProgramS_BonDriver1st = para_split_str(youso(1).ToString)
+                                Case "TvProgramP_BonDriver1st"
+                                    TvProgramP_BonDriver1st = para_split_str(youso(1).ToString)
+                                Case "TvProgram_tvrock_url"
+                                    TvProgram_tvrock_url = trim8(youso(1).ToString)
+                                    Dim sp As Integer = TvProgram_tvrock_url.IndexOf("?d")
+                                    If sp > 0 Then
+                                        Try
+                                            TvProgram_tvrock_tuner = Val(youso(2))
+                                        Catch ex As Exception
+                                            TvProgram_tvrock_tuner = -1
+                                        End Try
+                                        TvProgram_tvrock_url = TvProgram_tvrock_url.Substring(0, sp)
+                                        log1write("TVROCK番組表チューナーに" & TvProgram_tvrock_tuner.ToString & "番を指定しました")
+                                    End If
+                                Case "TvProgram_tvrock_sch"
+                                    TvProgram_tvrock_sch = trim8(youso(1).ToString)
+                                Case "TvProgram_Force_NoRec"
+                                    If Val(trim8(youso(1).ToString)) = 1 Then
+                                        TvProgram_Force_NoRec = 1
+                                        TvProgram_tvrock_url = "ForceNoRec" 'ダミー　何か入れておく
+                                        log1write("ダミー番組表をTVROCK番組表として表示するよう指定されました")
+                                    End If
+                                Case "TvProgram_EDCB_url"
+                                    TvProgram_EDCB_url = trim8(youso(1).ToString)
+                                Case "TvProgramD_channels"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgramD_channels(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            '全角に変換
+                                            TvProgramD_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
+                                        Next
+                                    End If
+                                Case "TvProgramEDCB_channels"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgramEDCB_channels(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            '全角に変換
+                                            TvProgramEDCB_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
+                                        Next
+                                    End If
+                                Case "TvProgramEDCB_premium"
+                                    'プレミアム指定
+                                    TvProgramEDCB_premium = Val(youso(1).ToString)
+                                Case "TvProgramTvRock_channels"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgramTvRock_channels(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            '全角に変換
+                                            TvProgramTvRock_channels(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
+                                        Next
+                                    End If
+                                Case "TvProgramD_sort"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve TvProgramD_sort(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            '全角に変換
+                                            TvProgramD_sort(j) = StrConv(trim8(clset(j)), VbStrConv.Wide)
+                                        Next
+                                    End If
+                                Case "VideoExtensions"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        For j = 0 To clset.Length - 1
+                                            clset(j) = trim8(clset(j))
+                                            If clset(j).Length > 0 Then
+                                                '.が先頭になければ追加
+                                                If clset(j).Substring(0, 1) <> "." Then
+                                                    clset(j) = "." & clset(j)
+                                                End If
+                                                If VideoExtensions Is Nothing Then
+                                                    ReDim Preserve VideoExtensions(0)
+                                                Else
+                                                    ReDim Preserve VideoExtensions(VideoExtensions.Length)
+                                                End If
+                                                VideoExtensions(VideoExtensions.Length - 1) = clset(j).ToLower
+                                            End If
+                                        Next
+                                    End If
+                                Case "BonDriver_NGword"
+                                    ReDim Preserve BonDriver_NGword(1)
+                                    BonDriver_NGword(0) = "_file"
+                                    BonDriver_NGword(1) = "_pipe"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        '既存のBonDriver_NGwordに追加
+                                        Dim k As Integer = BonDriver_NGword.Length
+                                        For j = 0 To clset.Length - 1
+                                            If clset(j).Length > 0 Then
+                                                If BonDriver_NGword Is Nothing Then
+                                                    ReDim Preserve BonDriver_NGword(0)
+                                                Else
+                                                    ReDim Preserve BonDriver_NGword(BonDriver_NGword.Length)
+                                                End If
+                                                BonDriver_NGword(BonDriver_NGword.Length - 1) = trim8(clset(j))
+                                            End If
+                                        Next
+                                    End If
+                                Case "Stop_RecTask_at_StartQuit", "Stop_RecTask_at_StartEnd"
+                                    Stop_RecTask_at_StartEnd = Val(youso(1).ToString)
+                                Case "Stop_ffmpeg_at_StartEnd"
+                                    Stop_ffmpeg_at_StartEnd = Val(youso(1).ToString)
+                                Case "Stop_vlc_at_StartEnd"
+                                    Stop_vlc_at_StartEnd = Val(youso(1).ToString)
+                                Case "Stop_QSVEnc_at_StartEnd"
+                                    Stop_QSVEnc_at_StartEnd = Val(youso(1).ToString)
+                                Case "Stop_NVEnc_at_StartEnd"
+                                    Stop_NVEnc_at_StartEnd = Val(youso(1).ToString)
+                                Case "NHK_dual_mono_mode"
+                                    Me._NHK_dual_mono_mode = Val(youso(1).ToString)
+                                Case "tsfile_wait"
+                                    Me._tsfile_wait = Val(youso(1).ToString)
+                                    If Me._tsfile_wait <= 0 Then
+                                        Me._tsfile_wait = 3
+                                    End If
+                                Case "MIME_TYPE_DEFAULT"
+                                    If trim8(youso(1)).Length > 0 Then
+                                        Me._MIME_TYPE_DEFAULT = trim8(youso(1))
+                                    End If
+                                Case "MIME_TYPE"
+                                    If trim8(youso(1)).Length > 0 Then
+                                        youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                        Dim clset() As String = youso(1).Split(",")
+                                        If clset Is Nothing Then
+                                        ElseIf clset.Length > 0 Then
+                                            ReDim Preserve Me._MIME_TYPE(clset.Length - 1)
+                                            For j = 0 To clset.Length - 1
+                                                Me._MIME_TYPE(j) = trim8(clset(j))
+                                            Next
+                                        End If
+                                    End If
+                                Case "PipeListGetter"
+                                    PipeListGetter = trim8(youso(1).ToString)
+                                Case "HTTPSTREAM_App"
+                                    HTTPSTREAM_App = Val(youso(1).ToString)
+                                Case "HTTPSTREAM_VLC_port"
+                                    HTTPSTREAM_VLC_port = Val(youso(1).ToString)
+                                Case "HTTPSTREAM_FFMPEG_BUFFER"
+                                    HTTPSTREAM_FFMPEG_BUFFER = Val(youso(1).ToString)
+                                Case "MAX_STREAM_NUMBER"
+                                    If Val(youso(1).ToString) > 0 Then
+                                        MAX_STREAM_NUMBER = Val(youso(1).ToString)
+                                        ReDim Preserve file_last_filename(MAX_STREAM_NUMBER + 1)
+                                        ReDim Preserve stream_last_utime(MAX_STREAM_NUMBER + 1)
+                                        ReDim Preserve stream_reset_count(MAX_STREAM_NUMBER + 1)
+                                        ReDim Preserve waitingmessage_count(MAX_STREAM_NUMBER + 1)
+                                        ReDim Preserve dvdObject(MAX_STREAM_NUMBER + 1)
+                                    End If
+                                Case "UDP_PRIORITY"
+                                    UDP_PRIORITY = trim8(youso(1).ToString)
+                                Case "HLS_PRIORITY"
+                                    HLS_PRIORITY = trim8(youso(1).ToString)
+                                Case "UDP2HLS_WAIT"
+                                    UDP2HLS_WAIT = Val(youso(1).ToString)
+                                Case "OPENFIX_WAIT"
+                                    OPENFIX_WAIT = Val(youso(1).ToString)
+                                Case "ALLOW_IDPASS2HTML"
+                                    ALLOW_IDPASS2HTML = Val(youso(1).ToString)
+                                Case "FFMPEG_HTTP_CUT_SECONDS"
+                                    FFMPEG_HTTP_CUT_SECONDS = Val(youso(1).ToString)
+                                    '入出力をUTF-8以外のものは扱わないようにした
+                                    'Case "HTML_IN_CHARACTER_CODE"
+                                    'HTML_IN_CHARACTER_CODE = trim8(youso(1).ToString)
+                                    'Case "HTML_OUT_CHARACTER_CODE"
+                                    'HTML_OUT_CHARACTER_CODE = trim8(youso(1).ToString)
+                                Case "STOP_IDLEMINUTES"
+                                    STOP_IDLEMINUTES = Val(youso(1).ToString)
+                                Case "STOP_IDLEMINUTES_METHOD"
+                                    STOP_IDLEMINUTES_METHOD = Val(youso(1).ToString)
+                                Case "VideoSeekDefault"
+                                    VideoSeekDefault = Val(youso(1).ToString)
+                                Case "VideoSizeCheck"
+                                    VideoSizeCheck = Val(youso(1).ToString)
+                                Case "TvProgram_SelectUptoNum"
+                                    TvProgram_SelectUptoNum = Val(youso(1).ToString)
+                                Case "OLDTS_NODELETE"
+                                    OLDTS_NODELETE = Val(youso(1).ToString)
+                                Case "RecTask_SPHD"
+                                    RecTask_SPHD = trim8(path_s2z(youso(1).ToString))
+                                    If RecTask_SPHD.Length > 0 Then
+                                        If file_exist(RecTask_SPHD) <= 0 Then
+                                            log1write("【エラー】RecTask_SPHD：" & RecTask_SPHD & " が見つかりません")
+                                            RecTask_SPHD = ""
+                                        Else
+                                            log1write("スカパープレミアムSPHD用RecTaskとして " & RecTask_SPHD & " が指定されました")
+                                        End If
+                                    End If
+                                Case "RecTask_force_restart"
+                                    RecTask_force_restart = Val(youso(1).ToString)
+                                Case "ptTimer_path"
+                                    ptTimer_path = youso(1).ToString
+                                    If ptTimer_path.Length > 0 Then
+                                        If ptTimer_path.Substring(ptTimer_path.Length - 1, 1) <> "\" Then
+                                            '末尾に\を付ける
+                                            ptTimer_path += "\"
+                                        End If
+                                    End If
+                                Case "Allow_BonDriver4Streams"
+                                    Allow_BonDriver4Streams = Val(youso(1).ToString)
+                                Case "EDCB_thru_addprogres"
+                                    EDCB_thru_addprogres = Val(youso(1).ToString)
+                                Case "EDCB_Velmy_niisaka"
+                                    EDCB_Velmy_niisaka = Val(youso(1).ToString)
+                                Case "EDCB_GetCh_method"
+                                    EDCB_GetCh_method = Val(youso(1).ToString)
+                                Case "Tvmaid_url"
+                                    If youso(1).Length > 0 Then
+                                        Tvmaid_url = youso(1).ToString
+                                        TvmaidIsEX = 0
+                                        log1write("TvmaidのサーバーURLが指定されました。" & Tvmaid_url)
+                                    End If
+                                Case "TvmaidEX_url", "TvmaidYUI_url"
+                                    If youso(1).Length > 0 Then
+                                        Tvmaid_url = youso(1).ToString
+                                        TvmaidIsEX = 1
+                                        log1write("TvmaidYUIのサーバーURLが指定されました。" & Tvmaid_url)
+                                    End If
+                                Case "NicoJK_path"
+                                    NicoJK_path = trim8(path_s2z(youso(1).ToString))
+                                    If NicoJK_path.Length > 0 Then
+                                        If folder_exist(NicoJK_path) <= 0 Then
+                                            log1write("【エラー】NicoJK_path：" & NicoJK_path & " が見つかりません")
+                                            NicoJK_path = ""
+                                        Else
+                                            log1write("NicoJKフォルダ：" & NicoJK_path & " が指定されました")
+                                        End If
+                                    End If
+                                Case "NicoJK_first"
+                                    NicoJK_first = Val(youso(1).ToString)
+                                Case "NicoConvAss_path"
+                                    NicoConvAss_path = trim8(path_s2z(youso(1).ToString))
+                                    If NicoConvAss_path.Length > 0 Then
+                                        If file_exist(NicoConvAss_path) <= 0 Then
+                                            log1write("【エラー】NicoConvAss_path：" & NicoConvAss_path & " が見つかりません")
+                                            NicoConvAss_path = ""
+                                        Else
+                                            log1write("NicoConvAss：" & NicoConvAss_path & " が指定されました")
+                                        End If
+                                    End If
+                                Case "NicoConvAss_copy2NicoJK"
+                                    NicoConvAss_copy2NicoJK = Val(youso(1).ToString)
+                                    If NicoConvAss_copy2NicoJK = 1 Then
+                                        log1write("NicoConvAss使用時にNicoJKフォルダにもassファイルをコピーするよう設定しました")
+                                    End If
+                                Case "Nico_delay"
+                                    Nico_delay = Val(youso(1).ToString)
+                                Case "RecTask_CH_MaxWait"
+                                    RecTask_CH_MaxWait = Val(youso(1).ToString)
+                                    If RecTask_CH_MaxWait < 1 Then
+                                        RecTask_CH_MaxWait = 1 '最小値1秒
+                                    End If
+                                    log1write("RecTaskがチャンネル変更する際に待機する最大秒数を" & RecTask_CH_MaxWait & "秒に設定しました")
+                                Case "make_chapter"
+                                    make_chapter = Val(youso(1).ToString)
+                                Case "chapter_bufsec"
+                                    chapter_bufsec = Val(youso(1).ToString)
+                                Case "openfix_BonSid"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        If trim8(clset(0)).Length > 0 Then
+                                            ReDim Preserve openfix_BonSid(clset.Length - 1)
+                                            For j = 0 To clset.Length - 1
+                                                openfix_BonSid(j) = trim8(clset(j))
+                                            Next
+                                        End If
+                                    End If
+                                Case "log_size"
+                                    log_size = Val(youso(1).ToString)
+                                Case "html_publish_method"
+                                    If IsNumeric(youso(1)) Then
+                                        html_publish_method = Val(youso(1).ToString)
+                                    End If
+                                Case "TOT_get_duration"
+                                    TOT_get_duration = Val(youso(1).ToString)
+                                    If TOT_get_duration > 0 Then
+                                        log1write("ファイル再生時に動画の長さを調べるようセットしました")
+                                    End If
+                                Case "meta_refresh_fix"
+                                    meta_refresh_fix = Val(youso(1).ToString)
+                                Case "exepath_VLC", "exepath_vlc", "BS1_hlsApp"
+                                    youso(1) = trim8(path_s2z((youso(1))))
+                                    If youso(1).Length > 0 Then
+                                        If file_exist(youso(1)) = 1 Then
+                                            exepath_VLC = youso(1).ToString
+                                            log1write("個別実行用vlcとして" & exepath_VLC & "が指定されました")
+                                        Else
+                                            log1write("【エラー】個別実行用vlcが見つかりませんでした。" & exepath_VLC)
+                                            exepath_VLC = ""
+                                        End If
+                                    End If
+                                Case "exepath_ffmpeg", "thumbnail_ffmpeg"
+                                    youso(1) = trim8(path_s2z((youso(1))))
+                                    If youso(1).Length > 0 Then
+                                        If file_exist(youso(1)) = 1 Then
+                                            exepath_ffmpeg = youso(1).ToString
+                                            log1write("個別実行用ffmpegとして" & exepath_ffmpeg & "が指定されました")
+                                        Else
+                                            log1write("【エラー】個別実行用ffmpegが見つかりませんでした。" & exepath_ffmpeg)
+                                            exepath_ffmpeg = ""
+                                        End If
+                                    End If
+                                Case "exepath_QSVEnc"
+                                    youso(1) = trim8(path_s2z((youso(1))))
+                                    If youso(1).Length > 0 Then
+                                        If file_exist(youso(1)) = 1 Then
+                                            exepath_QSVEnc = youso(1).ToString
+                                            log1write("個別実行用QSVEncとして" & exepath_QSVEnc & "が指定されました")
+                                        Else
+                                            log1write("【エラー】個別実行用QSVEncが見つかりませんでした。" & exepath_QSVEnc)
+                                            exepath_QSVEnc = ""
+                                        End If
+                                    End If
+                                Case "exepath_NVEnc"
+                                    youso(1) = trim8(path_s2z((youso(1))))
+                                    If youso(1).Length > 0 Then
+                                        If file_exist(youso(1)) = 1 Then
+                                            exepath_NVEnc = youso(1).ToString
+                                            log1write("個別実行用NVEncとして" & exepath_NVEnc & "が指定されました")
+                                        Else
+                                            log1write("【エラー】個別実行用NVEncが見つかりませんでした。" & exepath_NVEnc)
+                                            exepath_NVEnc = ""
+                                        End If
+                                    End If
+                                Case "exepath_ISO_VLC"
+                                    youso(1) = trim8(path_s2z((youso(1))))
+                                    If youso(1).Length > 0 Then
+                                        If file_exist(youso(1)) = 1 Then
+                                            exepath_ISO_VLC = youso(1).ToString
+                                            log1write("ISO再生用VLCとして" & exepath_ISO_VLC & "が指定されました")
+                                        Else
+                                            log1write("【エラー】ISO再生用VLCが見つかりませんでした。" & exepath_ISO_VLC)
+                                            exepath_ISO_VLC = ""
+                                        End If
+                                    End If
+                                Case "exepath_mplayer"
+                                    youso(1) = trim8(path_s2z((youso(1))))
+                                    If youso(1).Length > 0 Then
+                                        If file_exist(youso(1)) = 1 Then
+                                            mplayer4ISOPath = youso(1).ToString
+                                            log1write("ISO再生用mplayerとして" & mplayer4ISOPath & "が指定されました")
+                                        Else
+                                            log1write("【エラー】ISO再生用mplayerが見つかりませんでした。" & mplayer4ISOPath)
+                                            mplayer4ISOPath = ""
+                                        End If
+                                    End If
+                                Case "PipeRun_ffmpeg_option"
+                                    youso(1) = trim8(path_s2z((youso(1))))
+                                    If youso(1).Length > 0 Then
+                                        PipeRun_ffmpeg_option = youso(1)
+                                        log1write("PipeRun実行時にffmpegに渡すオプション= " & PipeRun_ffmpeg_option)
+                                    End If
+                                Case "stream_reset_limit"
+                                    stream_reset_limit = Val(youso(1).ToString)
+                                    log1write("ストリーム再起動回数の上限を" & stream_reset_limit.ToString & "回にセットしました")
+                                Case "waitingmessage_slow_limit"
+                                    waitingmessage_slow_limit = Val(youso(1).ToString)
+                                    log1write("同じwaitingページが" & waitingmessage_count.ToString & "回繰り返し表示された場合にrefresh秒数を延長するようセットしました")
+                                Case "waitingmessage_slow_sec"
+                                    waitingmessage_slow_sec = Val(youso(1).ToString)
+                                    log1write("同じwaitingページが繰り返し表示された場合にrefreshを" & waitingmessage_slow_sec.ToString & "秒以上とするようセットしました")
+                                Case "log_path"
+                                    log_path = Trim(youso(1))
+                                Case "close2min"
+                                    close2min = Val(youso(1).ToString)
+                                Case "Remocon_Domains"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    Dim clset() As String = youso(1).Split(",")
+                                    If clset Is Nothing Then
+                                    ElseIf clset.Length > 0 Then
+                                        ReDim Preserve Remocon_Domains(clset.Length - 1)
+                                        For j = 0 To clset.Length - 1
+                                            Remocon_Domains(j) = trim8(clset(j))
+                                        Next
+                                    End If
+                                Case "HTTPSTREAM_METHOD"
+                                    HTTPSTREAM_METHOD = Val(youso(1).ToString)
+                                    If HTTPSTREAM_METHOD = 0 Then
+                                        log1write("HTTPストリーム配信方式をREADBEGIN形式にセットしました（従来通り）")
                                     Else
-                                        log1write("【エラー】TvRock_genre_colorの要素数が16個ではありません")
+                                        log1write("HTTPストリーム配信方式をREAD形式にセットしました")
                                     End If
-                                End If
-                            Case "StarDigio_dummy_ON"
-                                StarDigio_dummy_ON = Val(youso(1))
-                                If StarDigio_dummy_ON = 1 Then
-                                    log1write("StarDigioダミー番組表を表示するよう設定しました")
-                                End If
-                            Case "skip_genre_NextShortProgram"
-                                skip_genre_NextShortProgram = Val(youso(1))
-                                If skip_genre_NextShortProgram = 1 Then
-                                    log1write("次の番組が短時間のものならばジャンル判定を次の次の番組のものとするように設定しました")
-                                End If
-                            Case "viewing_NoSleep"
-                                viewing_NoSleep = Val(youso(1))
-                                If viewing_NoSleep = 1 Then
-                                    log1write("視聴時にスリープを抑止するよう設定しました")
-                                End If
-                            Case "AbemaTV_Program_get_interval_min", "Outside_Program_get_interval_min"
-                                If IsNumeric(youso(1)) Then
-                                    Outside_Program_get_interval_min = Val(youso(1))
-                                    If Outside_Program_get_interval_min < 30 Then
-                                        Outside_Program_get_interval_min = 30
-                                        log1write("負担軽減のため" & Outside_StationName & "番組情報の取得間隔を30分未満にはできません")
+                                Case "TVRemoteFilesNEW"
+                                    TVRemoteFilesNEW = Val(youso(1).ToString)
+                                    log1write("画面推移方式を設定しました。TVRemoteFilesNEW=" & TVRemoteFilesNEW.ToString)
+                                Case "ISOPlayNEW"
+                                    ISOPlayNEW = Val(youso(1).ToString)
+                                Case "ISO_DumpDirPath"
+                                    ISO_DumpDirPath = youso(1)
+                                Case "ISO_ThumbPath"
+                                    '無効　クライアントが未対応 streamフォルダに作成
+                                    'ISO_ThumbPath = youso(1)
+                                Case "ISO_ThumbForceM"
+                                    '廃止
+                                    'ISO_ThumbForceM = Val(youso(1).ToString)
+                                    'log1write("ISOサムネイル作成を強制的にMplayerで行います")
+                                Case "ISO_maxDump"
+                                    ISO_maxDump = Val(youso(1).ToString)
+                                    log1write("変換後ISOデータの最大保持数を" & ISO_maxDump & "にセットしました")
+                                    If ISO_maxDump = 0 Then
+                                        log1write("【警告】ISO_maxDump=0にセットされましたが、新ISO再生のシーク時にいちいちVOB変換を行うようになります。1以上推奨です")
                                     End If
-                                    log1write(Outside_StationName & "番組情報の取得間隔を" & Outside_Program_get_interval_min.ToString & "分間に設定しました")
-                                End If
-                            Case "watcher_BufferSize"
-                                Dim i2 As Integer = Val(youso(1))
-                                Dim i4 As Integer = Math.Ceiling(i2 / 4096) * 4096
-                                If i4 < 4096 Then i4 = 4096
-                                watcher_BufferSize = i4
-                                log1write("各フォルダの監視に使用するInternalBufferSizeを" & watcher_BufferSize.ToString & "Byteに設定しました")
-                            Case "NicoConvAss_assData_download"
-                                NicoConvAss_assData_download = Val(youso(1))
-                                If NicoConvAss_assData_download = 1 Then
-                                    log1write("コメントファイルが見つからない場合、その都度NicoConvAssを使用してコメントをダウンロードするよう設定しました")
-                                End If
+                                Case "VLC_ISO_option"
+                                    VLC_ISO_option = url_text
+                                    log1write("VLC_ISO_option:" & VLC_ISO_option)
+                                Case "NoUseProgramCache"
+                                    NoUseProgramCache = Val(youso(1).ToString)
+                                    If NoUseProgramCache = 1 Then
+                                        log1write("【システム】番組表のキャッシュを作成しないよう設定しました")
+                                    End If
+                                Case "AbemaTV_CustomURL", "Outside_CustomURL"
+                                    If youso(1).Length > 0 Then
+                                        Outside_CustomURL = youso(1)
+                                        Outside_data_get_method = 0 'ini指定
+                                        log1write("AbemaTV_CustomURL=" & Outside_CustomURL)
+                                    End If
+                                Case "AbemaTV_CustomURL_method", "Outside_CustomURL_method"
+                                    '解析方法↑"Outside_CustomURL"とセットで使用　今のところ都合の良いデータ=1限定　意味が無いのでini未記入
+                                    If youso(1).Length > 0 Then
+                                        Outside_CustomURL_method = Val(youso(1))
+                                        log1write("AbemaTV_CustomURL_method=" & Outside_CustomURL_method)
+                                    End If
+                                Case "AvemaTV_data_get_method", "Outside_data_get_method"
+                                    Outside_data_get_method = Val(youso(1))
+                                    log1write("AvemaTV_data_get_method=" & Outside_data_get_method)
+                                Case "next2_minutes"
+                                    If IsNumeric(youso(1)) Then
+                                        Try
+                                            next2_minutes = Val(youso(1))
+                                        Catch ex As Exception
+                                            next2_minutes = 500
+                                        End Try
+                                        If next2_minutes > 0 Then
+                                            log1write("次の番組が" & next2_minutes.ToString & "分以内の番組ならば次の次の番組情報を追加表示するよう設定しました")
+                                        Else
+                                            log1write("次の次の番組情報を取得しないよう設定しました")
+                                        End If
+                                    End If
+                                Case "TvRock_genre_ON"
+                                    If IsNumeric(youso(1)) Then
+                                        TvRock_genre_ON = Val(youso(1))
+                                        If TvRock_genre_ON = 1 Then
+                                            log1write("TvRockジャンル情報を取得するよう設定しました")
+                                        Else
+                                            log1write("TvRockジャンル情報を取得しないように設定しました")
+                                        End If
+                                    End If
+                                Case "TvRock_genre_color"
+                                    youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
+                                    If Trim(youso(1)).Length > 0 Then
+                                        Dim clset() As String = youso(1).Split(",")
+                                        If clset Is Nothing Then
+                                        ElseIf clset.Length = 16 Then
+                                            Dim temp As String = ""
+                                            ReDim Preserve TvRock_genre_color(clset.Length - 1)
+                                            For j = 0 To clset.Length - 1
+                                                TvRock_genre_color(j) = trim8(clset(j).ToLower)
+                                                temp &= "ジャンル(" & j.ToString & "）色=" & TvRock_genre_color(j) & " "
+                                            Next
+                                            log1write("TvRock番組表で表示中のジャンル色は、" & temp & "であると想定するようセットしました")
+                                        Else
+                                            log1write("【エラー】TvRock_genre_colorの要素数が16個ではありません")
+                                        End If
+                                    End If
+                                Case "StarDigio_dummy_ON"
+                                    StarDigio_dummy_ON = Val(youso(1))
+                                    If StarDigio_dummy_ON = 1 Then
+                                        log1write("StarDigioダミー番組表を表示するよう設定しました")
+                                    End If
+                                Case "skip_genre_NextShortProgram"
+                                    skip_genre_NextShortProgram = Val(youso(1))
+                                    If skip_genre_NextShortProgram = 1 Then
+                                        log1write("次の番組が短時間のものならばジャンル判定を次の次の番組のものとするように設定しました")
+                                    End If
+                                Case "viewing_NoSleep"
+                                    viewing_NoSleep = Val(youso(1))
+                                    If viewing_NoSleep = 1 Then
+                                        log1write("視聴時にスリープを抑止するよう設定しました")
+                                    End If
+                                Case "AbemaTV_Program_get_interval_min", "Outside_Program_get_interval_min"
+                                    If IsNumeric(youso(1)) Then
+                                        Outside_Program_get_interval_min = Val(youso(1))
+                                        If Outside_Program_get_interval_min < 30 Then
+                                            Outside_Program_get_interval_min = 30
+                                            log1write("負担軽減のため" & Outside_StationName & "番組情報の取得間隔を30分未満にはできません")
+                                        End If
+                                        log1write(Outside_StationName & "番組情報の取得間隔を" & Outside_Program_get_interval_min.ToString & "分間に設定しました")
+                                    End If
+                                Case "watcher_BufferSize"
+                                    Dim i2 As Integer = Val(youso(1))
+                                    Dim i4 As Integer = Math.Ceiling(i2 / 4096) * 4096
+                                    If i4 < 4096 Then i4 = 4096
+                                    watcher_BufferSize = i4
+                                    log1write("各フォルダの監視に使用するInternalBufferSizeを" & watcher_BufferSize.ToString & "Byteに設定しました")
+                                Case "NicoConvAss_assData_download"
+                                    NicoConvAss_assData_download = Val(youso(1))
+                                    If NicoConvAss_assData_download = 1 Then
+                                        log1write("コメントファイルが見つからない場合、その都度NicoConvAssを使用してコメントをダウンロードするよう設定しました")
+                                    End If
 
 
-                                'Case "video_force_ffmpeg"
-                                'video_force_ffmpeg = Val(youso(1).ToString)
-                                'If video_force_ffmpeg > 0 Then
-                                'log1write("ファイル再生に標準HLSアプリ以外を使用するようセットしました")
-                                'End If
+                                    'Case "video_force_ffmpeg"
+                                    'video_force_ffmpeg = Val(youso(1).ToString)
+                                    'If video_force_ffmpeg > 0 Then
+                                    'log1write("ファイル再生に標準HLSアプリ以外を使用するようセットしました")
+                                    'End If
 
-                                'Case "WhiteBrowserWB_path"
-                                'WhiteBrowserWB_path = trim8(youso(1).ToString)
-                                'If file_exist(WhiteBrowserWB_path) = 1 Then
-                                'log1write("WhiteBrowserのデータベースとして " & WhiteBrowserWB_path & " をセットしました")
-                                'Else
-                                'log1write("【エラー】WhiteBrowserのデータベース " & WhiteBrowserWB_path & " が見つかりません")
-                                'WhiteBrowserWB_path = ""
-                                'End If
-                        End Select
+                                    'Case "WhiteBrowserWB_path"
+                                    'WhiteBrowserWB_path = trim8(youso(1).ToString)
+                                    'If file_exist(WhiteBrowserWB_path) = 1 Then
+                                    'log1write("WhiteBrowserのデータベースとして " & WhiteBrowserWB_path & " をセットしました")
+                                    'Else
+                                    'log1write("【エラー】WhiteBrowserのデータベース " & WhiteBrowserWB_path & " が見つかりません")
+                                    'WhiteBrowserWB_path = ""
+                                    'End If
+                            End Select
+                        End If
                     End If
                 Catch ex As Exception
                     log1write("パラメーター " & youso(0) & " の読み込みに失敗しました。" & ex.Message)
