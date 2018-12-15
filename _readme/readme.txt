@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.89
+TvRemoteViewer_VB v2.90
 
 
 
@@ -871,6 +871,7 @@ UDP1235,0,1,0,0,48835,0,0,1
 			設定画面に「NicoConvAss設定セット」選択欄を設置（2.89b）
 			TvRockジャンル判定の正確性向上（2.89c）
 			iniに同一パラメーターが複数回記入されている場合はログに警告を記載するようにした（2.89d）
+	2.90	VCEEncに対応（iniにexepath_VCEEncを追加）
 
 
 

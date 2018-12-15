@@ -2,14 +2,14 @@
 
 Module モジュール_その他
     'バージョン
-    Public TvRemoteViewer_VB_version As Double = 2.89
+    Public TvRemoteViewer_VB_version As Double = 2.9
     Public TvRemoteViewer_VB_notrecommend_version As Double = 0
     Public TvRemoteViewer_VB_recommend_version As Double = 0
     Public TvRemoteViewer_VB_version_check_datetime As DateTime = CDate("2000/01/01") '何分何秒にチェックするか　起動時に決定
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
     Public TvRemoteViewer_VB_version_URL As String = "http://vb45wb5b.up.seesaa.net/image/version.txt"
-    Public TvRemoteViewer_VB_revision As String = "d"
+    Public TvRemoteViewer_VB_revision As String = ""
 
     Public RestartExe_path As String = 0
 
@@ -72,6 +72,7 @@ Module モジュール_その他
     Public exepath_VLC As String = ""
     Public exepath_QSVEnc As String = ""
     Public exepath_NVEnc As String = ""
+    Public exepath_VCEEnc As String = ""
     Public exepath_ISO_VLC As String = ""
 
     'フォーム上の解像度コンボボックス.text
@@ -131,6 +132,9 @@ Module モジュール_その他
 
     'TvRemoteViewer_VBの起動時、終了時、全停止時にNVEncを名前付きで停止するかどうか
     Public Stop_NVEnc_at_StartEnd As Integer = 1
+
+    'TvRemoteViewer_VBの起動時、終了時、全停止時にVCEEncを名前付きで停止するかどうか
+    Public Stop_VCEEnc_at_StartEnd As Integer = 1
 
     'HTMLにID:PASS@を変換してもよいかどうか
     Public ALLOW_IDPASS2HTML As Integer = 0

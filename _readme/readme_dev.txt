@@ -36,7 +36,7 @@ TvRemoteViewer_VB v2.83
 									3=ソフトサブ　タイムシフトせずにassをコピーのみ
 		VideoSpeed	1.5					何倍速で再生するか（任意）
 		nicodelay	0					コメントがずれる場合に調整？通常は0（任意）
-		hlsAppSelect	ffmpeg					HLSアプリ名を指定(VLC,V,ffmpeg,F,QSVEnc,Q,QSV)
+		hlsAppSelect	ffmpeg					HLSアプリ名を指定(VLC,V,ffmpeg,F,QSVEnc,Q,QSV,NVVEnc,N,NV,VCEEnc,A,VCE)
 
 		hlsOptAdd	[1～2],[1～4],[文字列]			HLSソフトに追加するパラメーター（任意）
 			第1パラメータ：	1=HLSオプションの-iより前に文字列を追加します

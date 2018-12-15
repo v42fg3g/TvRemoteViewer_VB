@@ -13,6 +13,7 @@ exepath_ffmpeg =
 exepath_VLC = 
 exepath_QSVEnc = 
 exepath_NVEnc = 
+exepath_VCEEnc = 
 ;【2.22】ISO再生に使用するVLCへのパス　v2.1.2推奨
 ; http://download.videolan.org/pub/videolan/vlc/2.1.2/win32/
 ; http://download.videolan.org/pub/videolan/vlc/2.1.2/win64/

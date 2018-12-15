@@ -7,6 +7,7 @@
 全般	0	file400	exepath_VLC		VLCパス
 全般	0	file400	exepath_QSVEnc		QSVEncCパス
 全般	0	file400	exepath_NVEnc		NVEncCパス
+全般	0	file400	exepath_VCEEnc		VCEEncCパス
 全般	0	file400	exepath_ISO_VLC		ISO用VLCパス
 全般	0	file400	exepath_mplayer		mplayerパス
 全般	0	file300	RecTask_SPHD		SPプレミアム視聴時に使用するRecTask
@@ -17,6 +18,7 @@
 全般	0	integer	Stop_vlc_at_StartEnd	1	起動・終了・全停止時にVLCを名前指定で停止（しない=0 する=1）
 全般	0	integer	Stop_QSVEnc_at_StartEnd	1	起動・終了・全停止時にQSVEncCを名前指定で停止（しない=0 する=1）
 全般	0	integer	Stop_NVEnc_at_StartEnd	1	起動・終了・全停止時にNVEncCを名前指定で停止（しない=0 する=1）
+全般	0	integer	Stop_VCEEnc_at_StartEnd	1	起動・終了・全停止時にVCEEncCを名前指定で停止（しない=0 する=1）
 全般	0	document			　
 全般	0	integer	log_size	30000	ログの最大文字数
 全般	0	file200	log_path	TvRemoteViewer_VB.log	終了時のログ保存ファイル名(絶対パス可) 空白=保存しない
