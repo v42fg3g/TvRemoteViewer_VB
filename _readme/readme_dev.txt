@@ -384,10 +384,8 @@ TvRemoteViewer_VB v2.83
 		返値：　json形式 unixtime毎にコメントがまとめられたもの
 			unixtime 32400秒目の項目として [スレッド番号,送られた最初のコメントNo.,送られた最初のコメントunixtime,送られた最後のコメントNo.,送られた最後のコメントunixtime,直近に取得した最後のコメントNo.,直近に取得した最後のコメントunixtime]　が返されます
 
-
 	WI_CLEAR_ABEMA_CACHE.html
 		AbemaTV番組情報キャッシュを削除
-
 
 	WI_GET_STATION_PROGRAM.html?temp=[録画ソフト名],[サービスID](,[検索スタートunixtime],[検索終了unixtime],[TvRock予約状況強制更新])
 		各録画ソフトからサービスIDに対応した放送局番組一覧を取得する
@@ -395,6 +393,20 @@ TvRemoteViewer_VB v2.83
 		期間以降を省略した場合は6時間分が検索される
 		TvRock予約状況強制更新	1	同一分でもキャッシュを使用せずに予約状況を取得する
 
+	WI_GET_HLS_APP_COUNT.html
+	WI_GET_HLS_APP_COUNT.html?temp=HLSアプリ名（vlc, v, ffmpeg, f, qsvenc, qsvencc, q, qsv, nvenc, nvencc, n, nv, vceenc, vceencc, a, vceのいずれか）,区切りで複数可
+		サーバーPCで稼働中のHLSアプリそれぞれのプロセス数
+		他アプリでエンコード中等も考慮し、単純にサーバー上で実行されているHLSアプリのプロセス数を調べます
+		exepathが指定されていないHLSアプリは-1が返されます
+		exepathの実行ファイル名が標準と違っている場合も下の返値例のように略称で結果が返されます
+		例：WI_GET_HLS_APP_COUNT.html	（全てのHLSアプリ）
+			WI_GET_HLS_APP_COUNT.html?temp=qsv,nv,vce	（qsv,nv,vceのプロセス数のみ返す）
+		返値：
+			ffmpeg,0
+			qsv,0
+			nv,0
+			vce,-1
+			vlc,0
 
 
 

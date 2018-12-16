@@ -5337,6 +5337,11 @@ Class WebRemocon
                                         'stopping, チャンネル名, hlsApp, シーク秒, URL
                                         WI_cmd_reply = Me.WI_GET_LIVE_STREAM()
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_HLS_APP_COUNT"
+                                        '現在使用中のHLSアプリのプロセス数 tempにHLSアプリ名指定可（,区切り）
+                                        'APP名,プロセス数
+                                        WI_cmd_reply = Me.WI_GET_HLS_APP_COUNT(temp)
+                                        WI_cmd_reply_force = 1
                                     Case "WI_GET_TVRV_STATUS"
                                         'サーバー設定
                                         WI_cmd_reply = Me.WI_GET_TVRV_STATUS()
@@ -7304,6 +7309,151 @@ Class WebRemocon
                 If list(i).Length > 10 Then
                     r &= list(i) & vbCrLf
                 End If
+            Next
+        End If
+
+        Return r
+    End Function
+
+    Public Function WI_GET_HLS_APP_COUNT(ByVal HLS_Apps As String) As String
+        'サーバー上で実行されているQSV等のプロセス数を返す（別アプリでエンコ中等TvRemoteViewer_VB以外でも使用されている可能性を考慮）
+        'ffmpeg,QSVEnc,NVEnc,VCEEnc,vlc
+        Dim r As String = ""
+        Dim d() As String = {"ffmpeg", "qsv", "nv", "vce", "vlc"}
+        HLS_Apps = Trim(HLS_Apps)
+        If HLS_Apps.Length > 0 Then
+            'HLSアプリ名指定 ,区切り
+            d = HLS_Apps.Split(",")
+            For i As Integer = 0 To d.Length - 1
+                Select Case d(i).ToLower
+                    Case "ffmpeg", "f"
+                        d(i) = "ffmpeg"
+                    Case "qsvenc", "qsvencc", "q", "qsv"
+                        d(i) = "qsv"
+                    Case "nvenc", "nvencc", "n", "nv"
+                        d(i) = "nv"
+                    Case "vceenc", "vceencc", "a", "vce" '1文字はvlcとかぶるのでa
+                        d(i) = "vce"
+                    Case "vlc", "v"
+                        d(i) = "vlc"
+                End Select
+            Next
+        End If
+
+        Dim app_n() As String = Nothing '略称
+        Dim app_names() As String = Nothing 'プロセス名
+        Dim app_count() As String = Nothing
+        Dim j As Integer = 0
+        If Array.IndexOf(d, "ffmpeg") >= 0 Then
+            ReDim Preserve app_n(j)
+            ReDim Preserve app_names(j)
+            ReDim Preserve app_count(j)
+            app_n(j) = "ffmpeg"
+            If exepath_ffmpeg.Length > 0 Then
+                app_names(j) = Path.GetFileNameWithoutExtension(exepath_ffmpeg).ToLower
+                Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app_names(j))
+                If ps IsNot Nothing Then
+                    app_count(j) = ps.Count
+                End If
+            Else
+                app_names(j) = app_n(j)
+                app_count(j) = -1
+            End If
+            j += 1
+        End If
+        If Array.IndexOf(d, "qsv") >= 0 Then
+            ReDim Preserve app_n(j)
+            ReDim Preserve app_names(j)
+            ReDim Preserve app_count(j)
+            app_n(j) = "qsv"
+            If exepath_QSVEnc.Length > 0 Then
+                app_names(j) = Path.GetFileNameWithoutExtension(exepath_QSVEnc).ToLower
+                Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app_names(j))
+                If ps IsNot Nothing Then
+                    app_count(j) = ps.Count
+                End If
+            Else
+                app_names(j) = app_n(j)
+                app_count(j) = -1
+            End If
+            j += 1
+        End If
+        If Array.IndexOf(d, "nv") >= 0 Then
+            ReDim Preserve app_n(j)
+            ReDim Preserve app_names(j)
+            ReDim Preserve app_count(j)
+            app_n(j) = "nv"
+            If exepath_NVEnc.Length > 0 Then
+                app_names(j) = Path.GetFileNameWithoutExtension(exepath_NVEnc).ToLower
+                Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app_names(j))
+                If ps IsNot Nothing Then
+                    app_count(j) = ps.Count
+                End If
+            Else
+                app_names(j) = app_n(j)
+                app_count(j) = -1
+            End If
+            j += 1
+        End If
+        If Array.IndexOf(d, "vce") >= 0 Then
+            ReDim Preserve app_n(j)
+            ReDim Preserve app_names(j)
+            ReDim Preserve app_count(j)
+            app_n(j) = "vce"
+            If exepath_VCEEnc.Length > 0 Then
+                app_names(j) = Path.GetFileNameWithoutExtension(exepath_VCEEnc).ToLower
+                Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app_names(j))
+                If ps IsNot Nothing Then
+                    app_count(j) = ps.Count
+                End If
+            Else
+                app_names(j) = app_n(j)
+                app_count(j) = -1
+            End If
+            j += 1
+        End If
+        If Array.IndexOf(d, "vlc") >= 0 Then
+            Dim vlc_name As String = ""
+            Dim vlc_count As Integer = 0
+            If exepath_VLC.Length > 0 Then
+                vlc_name = Path.GetFileNameWithoutExtension(exepath_VLC).ToLower
+                Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(vlc_name)
+                If ps IsNot Nothing Then
+                    vlc_count += ps.Count
+                End If
+            End If
+            If exepath_ISO_VLC.Length > 0 Then
+                Dim vlc_temp As String = Path.GetFileNameWithoutExtension(exepath_ISO_VLC).ToLower
+                If vlc_temp <> vlc_name Then
+                    '二重にならないようプロセス名が違う時のみ集計
+                    Dim ps2 As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(vlc_temp)
+                    If ps2 IsNot Nothing Then
+                        vlc_count += ps2.Count
+                    End If
+                End If
+                If vlc_name.Length = 0 Then
+                    vlc_name = vlc_temp
+                End If
+            End If
+
+            ReDim Preserve app_n(j)
+            ReDim Preserve app_names(j)
+            ReDim Preserve app_count(j)
+            app_n(j) = "vlc"
+            If vlc_name.Length > 0 Then
+                app_names(j) = vlc_name
+                app_count(j) = vlc_count
+            Else
+                app_names(j) = app_n(j)
+                app_count(j) = -1
+            End If
+            j += 1
+        End If
+
+        '略称で返す
+        If app_n IsNot Nothing Then
+            For i As Integer = 0 To app_n.Length - 1
+                r &= app_n(i) & "," & app_count(i) & vbCrLf
             Next
         End If
 
