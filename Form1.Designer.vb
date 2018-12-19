@@ -862,7 +862,7 @@ Partial Class Form1
         Me.TabPage2.Location = New System.Drawing.Point(4, 22)
         Me.TabPage2.Name = "TabPage2"
         Me.TabPage2.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage2.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage2.Size = New System.Drawing.Size(518, 590)
         Me.TabPage2.TabIndex = 1
         Me.TabPage2.Text = "WEBサーバー"
         Me.TabPage2.UseVisualStyleBackColor = True
@@ -871,7 +871,7 @@ Partial Class Form1
         '
         Me.TabPage3.Location = New System.Drawing.Point(4, 22)
         Me.TabPage3.Name = "TabPage3"
-        Me.TabPage3.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage3.Size = New System.Drawing.Size(518, 590)
         Me.TabPage3.TabIndex = 2
         Me.TabPage3.Text = "番組表全般"
         Me.TabPage3.UseVisualStyleBackColor = True
@@ -880,7 +880,7 @@ Partial Class Form1
         '
         Me.TabPage4.Location = New System.Drawing.Point(4, 22)
         Me.TabPage4.Name = "TabPage4"
-        Me.TabPage4.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage4.Size = New System.Drawing.Size(518, 590)
         Me.TabPage4.TabIndex = 3
         Me.TabPage4.Text = "番組表データ"
         Me.TabPage4.UseVisualStyleBackColor = True
@@ -889,7 +889,7 @@ Partial Class Form1
         '
         Me.TabPage5.Location = New System.Drawing.Point(4, 22)
         Me.TabPage5.Name = "TabPage5"
-        Me.TabPage5.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage5.Size = New System.Drawing.Size(518, 590)
         Me.TabPage5.TabIndex = 4
         Me.TabPage5.Text = "HLS配信"
         Me.TabPage5.UseVisualStyleBackColor = True
@@ -898,7 +898,7 @@ Partial Class Form1
         '
         Me.TabPage6.Location = New System.Drawing.Point(4, 22)
         Me.TabPage6.Name = "TabPage6"
-        Me.TabPage6.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage6.Size = New System.Drawing.Size(518, 590)
         Me.TabPage6.TabIndex = 5
         Me.TabPage6.Text = "HTTP配信"
         Me.TabPage6.UseVisualStyleBackColor = True
@@ -908,7 +908,7 @@ Partial Class Form1
         Me.TabPage7.Location = New System.Drawing.Point(4, 22)
         Me.TabPage7.Name = "TabPage7"
         Me.TabPage7.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage7.Size = New System.Drawing.Size(518, 549)
+        Me.TabPage7.Size = New System.Drawing.Size(518, 590)
         Me.TabPage7.TabIndex = 6
         Me.TabPage7.Text = "ファイル再生"
         Me.TabPage7.UseVisualStyleBackColor = True

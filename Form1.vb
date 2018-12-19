@@ -914,24 +914,24 @@ Public Class Form1
 
         'RAMドライブに作成されることを考慮して存在しない場合は作成
         Dim fileroot As String = path_s2z(TextBoxFILEROOT.Text.ToString)
+        fileroot = (fileroot & "\").TrimEnd("\") '末尾の\を取り除く
         If fileroot.Length > 0 Then
             Dim sp As Integer = fileroot.LastIndexOf("\")
-            If sp > 1 Then
-                Dim s As String = fileroot.Substring(0, sp)
+            If fileroot.IndexOf("\\") = 0 And sp = 1 Then
+                'ネットワークドライブ直
+                log1write("【エラー】%FILEROOT%にネットワークドライブそのものを指定することはできません。ネットワークドライブ内フォルダを指定してください")
+            ElseIf sp > 1 Then
                 'フォルダが存在するか確認し、無ければ作成
-                Try
-                    If System.IO.Directory.Exists(fileroot) Then
-                    Else
-                        log1write("【フォルダ作成】%FILEROOT%が存在しません。" & fileroot & " を作成しました")
+                If folder_exist(fileroot) <= 0 Then
+                    Try
                         System.IO.Directory.CreateDirectory(fileroot)
-                    End If
-                Catch ex As Exception
-                    log1write("【エラー】フォルダ作成に失敗しました。" & fileroot)
-                End Try
+                        log1write("【フォルダ作成】%FILEROOT%が存在しません。" & fileroot & " を作成しました")
+                    Catch ex As Exception
+                        log1write("【エラー】フォルダ作成に失敗しました。" & fileroot)
+                    End Try
+                End If
             ElseIf fileroot.IndexOf(":") >= 0 Then
                 log1write("【エラー】%FILEROOT%にドライブそのものを指定することはできません。ドライブ内フォルダを指定してください")
-            ElseIf fileroot.IndexOf("\\") = 0 Then
-                log1write("【エラー】%FILEROOT%にネットワークドライブそのものを指定することはできません。ネットワークドライブ内フォルダを指定してください")
             Else
                 log1write("【エラー】%FILEROOT%が不正です")
             End If
