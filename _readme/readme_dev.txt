@@ -14,6 +14,7 @@ TvRemoteViewer_VB v2.83
 		BonDriver	BonDriver_pt2_t0.dll			BonDriverファイル名（テレビ配信時必須）
 		ServiceID	54321					サービスID（テレビ配信時必須）
 		ChSpace		0					チャンネルスペース（テレビ配信時必須）
+					iniのTSID_in_ChSpaceが1の場合、値をTSID*100+ChSpaceとすることでTSIDを含めることができます
 		resolution	640x360					解像度（任意）
 		Bon_Sid_Ch	BonDriver_pt2_t0.dll,54321,0		上記３つを同時に設定(HLSのみ)
 		redirect	ViewTV2.html				配信開始後ジャンプするページ(HLSのみ)

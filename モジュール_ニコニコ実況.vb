@@ -109,11 +109,11 @@ Module モジュール_ニコニコ実況
                         'html内から"OP","A","B",C","ED"を探し出して記録
                         Dim c(8) As Integer
                         c(2) = chapter_search_abc(html, "A")
-                        If c(2) >= 0 Then
+                        c(3) = chapter_search_abc(html, "B")
+                        If c(2) >= 0 Or c(3) >= 0 Then
                             '"A"が存在すれば
                             c(0) = chapter_search_abc(html, "ｷﾀ━")
                             c(1) = chapter_search_abc(html, "OP")
-                            c(3) = chapter_search_abc(html, "B")
                             c(4) = chapter_search_abc(html, "C")
                             c(5) = chapter_search_abc(html, "ED")
                             c(6) = chapter_search_abc(html, "予告")
@@ -134,6 +134,8 @@ Module モジュール_ニコニコ実況
                                     lastt = Val(c(i))
                                 End If
                             Next
+                        Else
+                            log1write("A,Bパートを示すポイントがありませんでした")
                         End If
                         If ctext.Length > 0 Then
                             '始まりと最後に印を追加

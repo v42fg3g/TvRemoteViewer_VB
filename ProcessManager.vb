@@ -2358,7 +2358,11 @@ Public Class ProcessManager
                             If s.Length = 9 Then
                                 If IsNumeric(s(1)) And IsNumeric(s(5)) And IsNumeric(s(7)) Then 'サービスID,TSIDが数値なら
                                     If Val(s(8)) > 0 Then
-                                        ichiran &= bondriver & "," & s(5) & "," & s(1) & "," & s(0) & vbCrLf
+                                        Dim chspace_add_tsid As Integer = Val(s(1))
+                                        If TSID_in_ChSpace = 1 Then
+                                            chspace_add_tsid = Val(s(7)) * 100 + Val(s(1))
+                                        End If
+                                        ichiran &= bondriver & "," & s(5) & "," & chspace_add_tsid.ToString & "," & s(0) & vbCrLf
 
                                         'serviceIDと放送局名を記録しておく
                                         If ch_list IsNot Nothing Then

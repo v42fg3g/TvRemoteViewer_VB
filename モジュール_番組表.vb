@@ -10,6 +10,8 @@ Imports System.Text.RegularExpressions
 Module モジュール_番組表
     Public TvProgram_Force_NoRec As Integer = 0 'TvRock番組表の代わりにダミー番組表を表示する=1
 
+    Public TSID_in_ChSpace As Integer = 0 '対外的なWIや出力HTMLのChSpaceに100倍したTSIDを加える=1
+
     Public Outside_program_isZip As Integer = -1
     Public Outside_program_getZip_utime As Integer = 0
     Public Outside_CustomURL_last As String = ""
@@ -368,7 +370,11 @@ Module モジュール_番組表
                                                 html &= "%SELECTRESOLUTION%" & vbCrLf '解像度選択
                                                 html &= "<input type=""hidden"" name=""ServiceID"" value=""" & d(2) & """>" & vbCrLf
                                                 sid = Val(Trim(d(2)))
-                                                html &= "<input type=""hidden"" name=""ChSpace"" value=""" & d(3) & """>" & vbCrLf
+                                                Dim chspace_add_tsid As Integer = Val(d(3))
+                                                If TSID_in_ChSpace = 1 Then
+                                                    chspace_add_tsid = Val(Trim(d(4))) * 100 + Val(d(3))
+                                                End If
+                                                html &= "<input type=""hidden"" name=""ChSpace"" value=""" & chspace_add_tsid.ToString & """>" & vbCrLf
                                                 html &= "<span class=""p_hosokyoku""> " & d(0) & " </span>" & vbCrLf
                                                 'NHK音声選択
                                                 'If hosokyoku.IndexOf("ＮＨＫ") >= 0 Then
@@ -1243,8 +1249,8 @@ Module モジュール_番組表
                                     End If
                                 End If
                                 r(j).ProgramInformation = d(0) '使ってないのでChanelIdを記録
-                                r(j).startDateTime = unix2time(d(2)).ToString("yyyy/MM/dd H:mm")
-                                r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
+                                r(j).startDateTime = unix2time(Val(d(2))).ToString("yyyy/MM/dd H:mm")
+                                r(j).endDateTime = unix2time(Val(d(3))).ToString("yyyy/MM/dd H:mm")
                                 r(j).programTitle = escape_program_str(d(4))
                                 r(j).programContent = escape_program_str(d(5))
                                 If d.Length >= 8 Then
@@ -1263,8 +1269,8 @@ Module モジュール_番組表
                                                 ReDim Preserve r(j)
                                                 r(j).stationDispName = d(1).Replace("チャンネル", "")
                                                 r(j).ProgramInformation = d(0) '使ってないのでChanelIdを記録
-                                                r(j).startDateTime = unix2time(d(2)).ToString("yyyy/MM/dd H:mm")
-                                                r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
+                                                r(j).startDateTime = unix2time(Val(d(2))).ToString("yyyy/MM/dd H:mm")
+                                                r(j).endDateTime = unix2time(Val(d(3))).ToString("yyyy/MM/dd H:mm")
                                                 r(j).programTitle = escape_program_str(d(4))
                                                 r(j).programContent = escape_program_str(d(5))
                                                 If d.Length >= 8 Then
@@ -1284,8 +1290,8 @@ Module モジュール_番組表
                                                             ReDim Preserve r(j)
                                                             r(j).stationDispName = d(1).Replace("チャンネル", "")
                                                             r(j).ProgramInformation = d(0) '使ってないのでChanelIdを記録
-                                                            r(j).startDateTime = unix2time(d(2)).ToString("yyyy/MM/dd H:mm")
-                                                            r(j).endDateTime = unix2time(d(3)).ToString("yyyy/MM/dd H:mm")
+                                                            r(j).startDateTime = unix2time(Val(d(2))).ToString("yyyy/MM/dd H:mm")
+                                                            r(j).endDateTime = unix2time(Val(d(3))).ToString("yyyy/MM/dd H:mm")
                                                             r(j).programTitle = escape_program_str(d(4))
                                                             r(j).programContent = escape_program_str(d(5))
                                                             r(j).nextFlag = 2
@@ -1293,7 +1299,7 @@ Module モジュール_番組表
                                                             If d.Length >= 8 Then
                                                                 r(j).genre = d(7)
                                                             Else
-                                                                r(j).genre = -1
+                                                                r(j).genre = "-1"
                                                             End If
                                                         End If
                                                     End If
@@ -1417,6 +1423,15 @@ Module モジュール_番組表
                             r(j).programContent = temp_programContent
                             r(j).genre = temp_genre
                             r(j).sid = temp_sid
+                            Dim tsid As Integer = 0
+                            Dim tsid4() As String = Nothing
+                            If TSID_in_ChSpace = 1 Then
+                                tsid4 = bangumihyou2bondriver(temp_stationDispName, -1, temp_sid, 0)
+                            End If
+                            If tsid4 IsNot Nothing Then
+                                tsid = Val(tsid4(4))
+                            End If
+                            r(j).tsid = tsid
 
                             '次の番組を取得
                             sp3 = html.IndexOf("</i>", sp3 + 1)
@@ -1437,6 +1452,7 @@ Module モジュール_番組表
                                 r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                                 r(j).programContent = ""
                                 r(j).sid = r(j - 1).sid
+                                r(j).tsid = tsid
 
                                 Dim spn As Integer = html.IndexOf("href=""javascript:", sp3)
                                 Dim sid As Integer = 0
@@ -1484,6 +1500,7 @@ Module モジュール_番組表
                                     r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                                     r(j).programContent = ""
                                     r(j).sid = r(j - 1).sid
+                                    r(j).tsid = tsid
 
                                     If skip_genre_NextShortProgram > 0 Then
                                         Dim spn As Integer = html.IndexOf("href=""javascript:", sp3)
@@ -2003,11 +2020,12 @@ Module モジュール_番組表
 
     '番組表の放送局名からbondriver,sid等の取得を試みる
     Public Function bangumihyou2bondriver(ByVal hosokyoku As String, ByVal a As Integer, ByVal sid As Integer, ByVal tsid As Integer) As Object
-        Dim r(3) As String
+        Dim r(4) As String
         r(0) = ""
         r(1) = ""
         r(2) = ""
         r(3) = ""
+        r(4) = ""
         hosokyoku = StrConv(hosokyoku, VbStrConv.Wide) '全角に変換
         Dim chk As Integer = 0
         Dim i As Integer = 0
@@ -2022,24 +2040,26 @@ Module モジュール_番組表
                         Exit For
                     End If
                 Next
-            ElseIf sid = 161 Then
-                'sid=161は重なっている　BS-TBSかQVCか局名でもチェック
-                For i = 0 To ch_list.Length - 1
-                    Dim h2 As String = StrConv(ch_list(i).jigyousha, VbStrConv.Wide)
-                    If ch_list(i).sid = 161 And hosokyoku = h2 Then
-                        cindex = i
-                        Exit For
-                    End If
-                Next
             ElseIf sid > 0 Then
-                'sidが指定されていれば（主にTvRock)
+                'sidと事業者で一致を探す
                 For i = 0 To ch_list.Length - 1
-                    If sid = ch_list(i).sid Then
-                        '一致した
+                    Dim h1 As String = StrConv(hosokyoku, VbStrConv.Wide)
+                    Dim h2 As String = StrConv(ch_list(i).jigyousha, VbStrConv.Wide)
+                    If sid = ch_list(i).sid And h1 = h2 Then
                         cindex = i
                         Exit For
                     End If
                 Next
+                'sidのみで探す
+                If cindex < 0 Then
+                    For i = 0 To ch_list.Length - 1
+                        If sid = ch_list(i).sid Then
+                            '一致した
+                            cindex = i
+                            Exit For
+                        End If
+                    Next
+                End If
             Else
                 'sidからではなく従来通りチャンネル名で判断する場合
                 Dim h2 As String = rename_hosokyoku2jigyousha(hosokyoku, a) 'iniでチャンネル名変換が指定されていれば
@@ -2101,6 +2121,7 @@ Module モジュール_番組表
                 r(1) = ch_list(cindex).bondriver
                 r(2) = ch_list(cindex).sid.ToString
                 r(3) = ch_list(cindex).chspace.ToString
+                r(4) = ch_list(cindex).tsid.ToString
             End If
         End If
 
@@ -2321,7 +2342,7 @@ Module モジュール_番組表
                                             Else
                                                 'BonDriver, sid, 事業者を取得
                                                 Dim d() As String = bangumihyou2bondriver(p.stationDispName, a, p.sid, p.tsid)
-                                                'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace
+                                                'd(0) = jigyousha d(1) = bondriver d(2) = sid d(3) = chspace d(4)=tsid
 
                                                 If d(0).Length > 0 Then
                                                     hosokyoku = StrConv(d(0), VbStrConv.Wide)
@@ -2332,7 +2353,11 @@ Module モジュール_番組表
                                                 End If
                                                 sid = Val(Trim(d(2)))
                                                 title = escape_program_str(p.programTitle)
-                                                html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & d(3) & "," & Trim(startt) & "," & Trim(endt) & "," & title & "," & escape_program_str(p.programContent)
+                                                Dim chspace_add_tsid As Integer = Val(d(3))
+                                                If TSID_in_ChSpace = 1 Then
+                                                    chspace_add_tsid = Val(Trim(d(4))) * 100 + Val(d(3))
+                                                End If
+                                                html &= d(0) & "," & p.stationDispName & "," & d(2) & "," & chspace_add_tsid.ToString & "," & Trim(startt) & "," & Trim(endt) & "," & title & "," & escape_program_str(p.programContent)
                                                 If template = 1 Then
                                                     html &= "," & p.genre
                                                 End If
@@ -2513,7 +2538,7 @@ Module モジュール_番組表
 
             If ip.Length > 0 And Val(port) > 0 Then
                 EDCB_cmd.SetSendMode(True)
-                EDCB_cmd.SetNWSetting(ip, port)
+                EDCB_cmd.SetNWSetting(ip, CType(port, UInteger))
                 Dim serviceList As New System.Collections.Generic.List(Of CtrlCmdCLI.Def.EpgServiceInfo)()
                 Dim ret As Integer = EDCB_cmd.SendEnumService(serviceList) 'IPやportがおかしいとここで止まる可能性有り
 
@@ -2936,7 +2961,15 @@ Module モジュール_番組表
                                                     ReDim Preserve r(i)
                                                 End If
                                                 r(i).sid = sid
-                                                r(i).tsid = 0
+                                                Dim tsid As Integer = 0
+                                                Dim tsid4() As String = Nothing
+                                                If TSID_in_ChSpace = 1 Then
+                                                    tsid4 = bangumihyou2bondriver(station, -1, sid, 0)
+                                                End If
+                                                If tsid4 IsNot Nothing Then
+                                                    tsid = tsid4(4)
+                                                End If
+                                                r(i).tsid = tsid
                                                 r(i).stationDispName = station
                                                 Dim t1s As String = "1970/01/01 " & ystart_time
                                                 Dim t2s As String = "1970/01/01 " & yend_time
@@ -3823,7 +3856,7 @@ Module モジュール_番組表
                                     End If
                                     ReDim Preserve r(j)
                                     r(j).sid = sid
-                                    r(j).tsid = 0
+                                    r(j).tsid = tsid
                                     r(j).stationDispName = station
                                     Dim t1s As String = "1970/01/01 " & ystart_time
                                     Dim t2s As String = "1970/01/01 " & yend_time
@@ -4021,7 +4054,7 @@ Module モジュール_番組表
                                     End If
                                     ReDim Preserve r(j)
                                     r(j).sid = sid
-                                    r(j).tsid = 0
+                                    r(j).tsid = tsid
                                     r(j).stationDispName = station
                                     Dim t1s As String = "1970/01/01 " & ystart_time
                                     Dim t2s As String = "1970/01/01 " & yend_time
