@@ -222,8 +222,8 @@ Public Class Form1
         End If
 
         If live_chk <= 0 And (form1_ID.Length = 0 Or form1_PASS.Length = 0) Then
-            '1時間に1度アクセス元チェック
-            If (ut2 - TvRemoteViewer_VB_Start_utime) Mod (3600) = 3500 Then
+            '10分に1度アクセス元チェック
+            If (ut2 - TvRemoteViewer_VB_Start_utime) Mod 600 = 500 Then
                 AccessLogListCheck()
             End If
         End If

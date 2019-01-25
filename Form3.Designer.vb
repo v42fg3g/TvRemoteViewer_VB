@@ -24,14 +24,14 @@ Partial Class Form3
     Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
         Me.DataGridViewAccessLog = New System.Windows.Forms.DataGridView()
-        Me.utime = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.IP = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.domain = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.URL = New System.Windows.Forms.DataGridViewTextBoxColumn()
         Me.LabelAccessLogWarning = New System.Windows.Forms.Label()
         Me.ButtonRefresh = New System.Windows.Forms.Button()
         Me.ButtonClear = New System.Windows.Forms.Button()
         Me.Timer1 = New System.Windows.Forms.Timer(Me.components)
+        Me.utime = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.IP = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.domain = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.URL = New System.Windows.Forms.DataGridViewTextBoxColumn()
         CType(Me.DataGridViewAccessLog, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
@@ -48,34 +48,6 @@ Partial Class Form3
         Me.DataGridViewAccessLog.RowTemplate.Height = 21
         Me.DataGridViewAccessLog.Size = New System.Drawing.Size(744, 235)
         Me.DataGridViewAccessLog.TabIndex = 0
-        '
-        'utime
-        '
-        Me.utime.HeaderText = "　"
-        Me.utime.Name = "utime"
-        Me.utime.ReadOnly = True
-        Me.utime.Width = 180
-        '
-        'IP
-        '
-        Me.IP.HeaderText = "IP"
-        Me.IP.Name = "IP"
-        Me.IP.ReadOnly = True
-        Me.IP.Width = 90
-        '
-        'domain
-        '
-        Me.domain.HeaderText = "　"
-        Me.domain.Name = "domain"
-        Me.domain.ReadOnly = True
-        Me.domain.Width = 200
-        '
-        'URL
-        '
-        Me.URL.HeaderText = "URL"
-        Me.URL.Name = "URL"
-        Me.URL.ReadOnly = True
-        Me.URL.Width = 300
         '
         'LabelAccessLogWarning
         '
@@ -110,6 +82,34 @@ Partial Class Form3
         '
         Me.Timer1.Interval = 3000
         '
+        'utime
+        '
+        Me.utime.HeaderText = "最終アクセス日時"
+        Me.utime.Name = "utime"
+        Me.utime.ReadOnly = True
+        Me.utime.Width = 180
+        '
+        'IP
+        '
+        Me.IP.HeaderText = "IP"
+        Me.IP.Name = "IP"
+        Me.IP.ReadOnly = True
+        Me.IP.Width = 90
+        '
+        'domain
+        '
+        Me.domain.HeaderText = "　"
+        Me.domain.Name = "domain"
+        Me.domain.ReadOnly = True
+        Me.domain.Width = 200
+        '
+        'URL
+        '
+        Me.URL.HeaderText = "最終リクエスト"
+        Me.URL.Name = "URL"
+        Me.URL.ReadOnly = True
+        Me.URL.Width = 300
+        '
         'Form3
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
@@ -129,10 +129,10 @@ Partial Class Form3
     Friend WithEvents DataGridViewAccessLog As System.Windows.Forms.DataGridView
     Friend WithEvents LabelAccessLogWarning As System.Windows.Forms.Label
     Friend WithEvents ButtonRefresh As System.Windows.Forms.Button
+    Friend WithEvents ButtonClear As System.Windows.Forms.Button
+    Friend WithEvents Timer1 As System.Windows.Forms.Timer
     Friend WithEvents utime As System.Windows.Forms.DataGridViewTextBoxColumn
     Friend WithEvents IP As System.Windows.Forms.DataGridViewTextBoxColumn
     Friend WithEvents domain As System.Windows.Forms.DataGridViewTextBoxColumn
     Friend WithEvents URL As System.Windows.Forms.DataGridViewTextBoxColumn
-    Friend WithEvents ButtonClear As System.Windows.Forms.Button
-    Friend WithEvents Timer1 As System.Windows.Forms.Timer
 End Class

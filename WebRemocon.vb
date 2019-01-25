@@ -5094,7 +5094,7 @@ Class WebRemocon
 
                         'リクエスト元
                         Dim ipstr As String = req.RemoteEndPoint.Address.ToString
-                        log1write(req_Url & "へのリクエストがありました。" & mtypestr & "[" & ipstr & "]")
+                        log1write(req_Url & req.Url.Query & "へのリクエストがありました。" & mtypestr & "[" & ipstr & "]")
 
                         'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
                         Dim pext As String = System.IO.Path.GetExtension(path).ToLower
@@ -5102,7 +5102,7 @@ Class WebRemocon
                             'HTMLなら
                             'ログ記録
                             If ipstr.Length > 0 Then
-                                SetAccessLog(ipstr, req_Url)
+                                SetAccessLog(ipstr, req_Url & req.Url.Query & "")
                             End If
 
                             '最後にWI_以外の.htmlにアクセスがあった日時を記録

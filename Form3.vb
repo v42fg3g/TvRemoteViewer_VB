@@ -260,4 +260,5 @@
     Private Sub DataGridViewAccessLog_ColumnWidthChanged(sender As System.Object, e As System.Windows.Forms.DataGridViewColumnEventArgs) Handles DataGridViewAccessLog.ColumnWidthChanged
         DataGridViewAccessLog.Columns(3).Width = DataGridViewAccessLog.Width - DataGridViewAccessLog.Columns(0).Width - DataGridViewAccessLog.Columns(1).Width - DataGridViewAccessLog.Columns(2).Width - SystemInformation.VerticalScrollBarWidth
     End Sub
+
 End Class
