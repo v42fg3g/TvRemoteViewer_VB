@@ -10,6 +10,7 @@ Public Class Form1
 
     'TvRemoteViewer_VBが無事スタートしたら1
     Public TvRemoteViewer_VB_Start As Integer = 0
+    Public TvRemoteViewer_VB_Start_utime As Integer = 0
 
     '================================================================
     'メイン
@@ -105,8 +106,12 @@ Public Class Form1
             Else
                 s = Me._worker.get_live_numbers()
             End If
-            live_chk = s.Length
-            If s.Length > 1 Then
+            Dim s_temp As String = s
+            If s_temp.IndexOf("(") > 0 Then
+                s_temp = s_temp.Substring(0, s_temp.IndexOf("("))
+            End If
+            live_chk = Trim(s_temp).Length
+            If live_chk > 0 Then
                 LabelStream.Text = "配信中：" & s 'ついでにフォーム上にも表示
                 s = "TvRemoteViewer_VB" & vbCrLf & "配信中：" & Trim(s)
             Else
@@ -216,6 +221,13 @@ Public Class Form1
             End If
         End If
 
+        If live_chk <= 0 And (form1_ID.Length = 0 Or form1_PASS.Length = 0) Then
+            '1時間に1度アクセス元チェック
+            If (ut2 - TvRemoteViewer_VB_Start_utime) Mod (3600) = 3500 Then
+                AccessLogListCheck()
+            End If
+        End If
+
         'ログ処理
         If log1 <> log1_dummy Then
             If log1.Length > log_size Then
@@ -228,7 +240,7 @@ Public Class Form1
 
         'ファイル一覧　最後の更新から10秒経ったらファイル一覧更新
         Dim duration1 As TimeSpan = Now.Subtract(watcher_lasttime)
-        If (live_chk > 1 Or live_chk = -1) And duration1.TotalSeconds < 3700 Then
+        If (live_chk > 0 Or live_chk = -1) And duration1.TotalSeconds < 3700 Then
             'ストリーム再生中、またはノーチェックならファイル一覧は更新しない
             'が、少なくとも1時間に1回は更新する
         Else
@@ -713,6 +725,7 @@ Public Class Form1
 
         '無事起動
         TvRemoteViewer_VB_Start = 1
+        TvRemoteViewer_VB_Start_utime = time2unix(Now())
     End Sub
 
     Private Sub log1_show_warning()
@@ -1024,6 +1037,8 @@ Public Class Form1
                             bondriver_sort = lr(1).Split(",")
                         Case "NicoConvAss_ConfigSet"
                             NicoConvAss_ConfigSet = Trim(lr(1))
+                        Case "CheckBoxCanFileOpeWrite"
+                            CheckBoxCanFileOpeWrite.Checked = lr(1)
                     End Select
                 ElseIf lr.Length > 2 And trim8(lr(0)) = "textBoxHlsOpt" Then
                     'VLC OPTION
@@ -1137,6 +1152,7 @@ Public Class Form1
         s &= "CheckBoxLogReq=" & CheckBoxLogReq.Checked & vbCrLf
         s &= "CheckBoxLogWI=" & CheckBoxLogWI.Checked & vbCrLf
         s &= "CheckBoxLogETC=" & CheckBoxLogETC.Checked & vbCrLf
+        s &= "CheckBoxCanFileOpeWrite=" & CheckBoxCanFileOpeWrite.Checked & vbCrLf
         s &= "CheckBoxLogDebug=" & CheckBoxLogDebug.Checked & vbCrLf
         s &= "NicoConvAss_ConfigSet=" & NicoConvAss_ConfigSet & vbCrLf
         Dim bondriver_sort_str As String = ""
@@ -1882,6 +1898,7 @@ Public Class Form1
             Me._worker._id = TextBoxID.Text.ToString
         Catch ex As Exception
         End Try
+        form1_ID = Trim(TextBoxID.Text.ToString)
     End Sub
 
     '項目が変更されたことをインスタンスに知らせる
@@ -1890,6 +1907,7 @@ Public Class Form1
             Me._worker._pass = TextBoxPASS.Text.ToString
         Catch ex As Exception
         End Try
+        form1_PASS = Trim(TextBoxID.Text.ToString)
     End Sub
 
     '初期値ボタン
@@ -1912,6 +1930,12 @@ Public Class Form1
         Select Case e.ClickedItem.Name
             Case "SeekMethodList"
                 Form2.Show()
+            Case "AccessLog"
+                Form3.Show()
+            Case "WarningReset"
+                AccessLogList = Nothing
+                NotifyIcon1.Icon = My.Resources.TvRemoteViewer_VB3
+                NotifyIcon_status = 0
             Case "quit"
                 close2min = 0 'すんなり終了させる
                 'close()
@@ -2910,5 +2934,62 @@ Public Class Form1
     Private Sub ComboBoxNicoSet_Enter(sender As System.Object, e As System.EventArgs) Handles ComboBoxNicoSet.Enter
         NicoConvAss_ConfigSet = F_set_ComboboxNicoSet(ComboBoxNicoSet.Text.ToString)
         ComboBoxNicoSet.Text = NicoConvAss_ConfigSet
+    End Sub
+
+    Private Sub CheckBoxCanFileOpeWrite_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles CheckBoxCanFileOpeWrite.CheckedChanged
+        If CheckBoxCanFileOpeWrite.Checked = True Then
+            CanFileOpeWrite = 1
+        Else
+            If TvRemoteViewer_VB_Start = 1 Then
+                Dim result As DialogResult = MessageBox.Show("このチェックを外すとセキュリティは高まりますが" & vbCrLf & "TvRemoteFilesの動作に一部支障が出ます。" & vbCrLf & "TVRVLauncher中心の運用等ロケフリを重視しない場合にチェックを外してもよいでしょう。" & vbCrLf & "※変更は即反映されます。" & vbCrLf & "よろしいですか？", "TvRemoteViewer_VB 確認", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2)
+                If result = DialogResult.Yes Then
+                    CanFileOpeWrite = 0
+                Else
+                    CanFileOpeWrite = 1
+                    CheckBoxCanFileOpeWrite.Checked = True
+                End If
+            Else
+                CanFileOpeWrite = 0
+            End If
+        End If
+    End Sub
+
+    Private Sub ButtonShowAccessLog_Click(sender As System.Object, e As System.EventArgs) Handles ButtonShowAccessLog.Click
+        Form3.Show()
+    End Sub
+
+    Private Sub AccessLogListCheck()
+        If AccessLogList IsNot Nothing Then
+            'ドメイン解析
+            Dim outchk As Integer = 0
+            For i As Integer = 0 To AccessLogList.Length - 1
+                If AccessLogList(i).domain.Length = 0 Then
+                    If isLocalIP(AccessLogList(i).IP) = 1 Then
+                        AccessLogList(i).domain = "LAN"
+                    Else
+                        'IPHostEntryオブジェクトを取得
+                        Try
+                            Dim iphe As System.Net.IPHostEntry = System.Net.Dns.GetHostEntry(AccessLogList(i).IP)
+                            If iphe.HostName.Length > 0 Then
+                                AccessLogList(i).domain = iphe.HostName
+                            End If
+                        Catch ex As Exception
+                        End Try
+                        outchk = 1
+                    End If
+                End If
+            Next
+
+            If outchk = 1 And (form1_ID.Length = 0 Or form1_PASS.Length = 0) Then
+                '"※警告　外部からアクセスする場合はIDとPASSを設定してください"
+                If NotifyIcon_status = 0 Then
+                    Try
+                        NotifyIcon1.Icon = My.Resources.TvRemoteViewer_Warning
+                        NotifyIcon_status = 1
+                    Catch ex2 As Exception
+                    End Try
+                End If
+            End If
+        End If
     End Sub
 End Class

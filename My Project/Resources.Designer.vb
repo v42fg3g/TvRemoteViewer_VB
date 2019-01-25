@@ -69,5 +69,15 @@ Namespace My.Resources
                 Return CType(obj,System.Drawing.Icon)
             End Get
         End Property
+        
+        '''<summary>
+        '''  (アイコン) に類似した型 System.Drawing.Icon のローカライズされたリソースを検索します。
+        '''</summary>
+        Friend ReadOnly Property TvRemoteViewer_Warning() As System.Drawing.Icon
+            Get
+                Dim obj As Object = ResourceManager.GetObject("TvRemoteViewer_Warning", resourceCulture)
+                Return CType(obj,System.Drawing.Icon)
+            End Get
+        End Property
     End Module
 End Namespace

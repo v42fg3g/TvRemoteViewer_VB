@@ -144,4 +144,24 @@ Module モジュール_GetHTTP
 
     End Function
 
+    Public Function isLocalIP(ByVal IP As String) As Integer
+        Dim r As Integer = 0
+
+        Dim d() As String = IP.Split(".")
+        If d.Length = 4 Then
+            If Val(d(0)) = 10 Then
+                r = 1
+            ElseIf Val(d(0)) = 172 Then
+                If Val(d(1)) >= 16 And Val(d(1)) <= 31 Then
+                    r = 1
+                End If
+            ElseIf Val(d(0)) = 192 And Val(d(1)) = 168 Then
+                r = 1
+            ElseIf IP = "127.0.0.1" Then
+                r = 1
+            End If
+        End If
+
+        Return r
+    End Function
 End Module

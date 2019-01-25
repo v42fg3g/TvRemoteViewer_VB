@@ -72,6 +72,8 @@ Partial Class Form1
         Me.NotifyIcon1 = New System.Windows.Forms.NotifyIcon(Me.components)
         Me.ContextMenuStrip1 = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.SeekMethodList = New System.Windows.Forms.ToolStripMenuItem()
+        Me.AccessLog = New System.Windows.Forms.ToolStripMenuItem()
+        Me.WarningReset = New System.Windows.Forms.ToolStripMenuItem()
         Me.quit = New System.Windows.Forms.ToolStripMenuItem()
         Me.CheckBoxShowConsole = New System.Windows.Forms.CheckBox()
         Me.LabelStream = New System.Windows.Forms.Label()
@@ -123,6 +125,8 @@ Partial Class Form1
         Me.ButtonBonSortUp = New System.Windows.Forms.Button()
         Me.Label18 = New System.Windows.Forms.Label()
         Me.ComboBoxNicoSet = New System.Windows.Forms.ComboBox()
+        Me.CheckBoxCanFileOpeWrite = New System.Windows.Forms.CheckBox()
+        Me.ButtonShowAccessLog = New System.Windows.Forms.Button()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.TabControl1.SuspendLayout()
         Me.PanelBonSort.SuspendLayout()
@@ -248,7 +252,7 @@ Partial Class Form1
         Me.ButtonWebStop.Enabled = False
         Me.ButtonWebStop.Location = New System.Drawing.Point(224, 103)
         Me.ButtonWebStop.Name = "ButtonWebStop"
-        Me.ButtonWebStop.Size = New System.Drawing.Size(68, 28)
+        Me.ButtonWebStop.Size = New System.Drawing.Size(68, 25)
         Me.ButtonWebStop.TabIndex = 52
         Me.ButtonWebStop.TabStop = False
         Me.ButtonWebStop.Text = "WebStop"
@@ -259,7 +263,7 @@ Partial Class Form1
         '
         Me.ButtonWebStart.Location = New System.Drawing.Point(205, 103)
         Me.ButtonWebStart.Name = "ButtonWebStart"
-        Me.ButtonWebStart.Size = New System.Drawing.Size(68, 28)
+        Me.ButtonWebStart.Size = New System.Drawing.Size(68, 25)
         Me.ButtonWebStart.TabIndex = 51
         Me.ButtonWebStart.TabStop = False
         Me.ButtonWebStart.Text = "WebStart"
@@ -425,7 +429,7 @@ Partial Class Form1
         '
         Me.Button2.Location = New System.Drawing.Point(414, 103)
         Me.Button2.Name = "Button2"
-        Me.Button2.Size = New System.Drawing.Size(102, 28)
+        Me.Button2.Size = New System.Drawing.Size(102, 25)
         Me.Button2.TabIndex = 73
         Me.Button2.TabStop = False
         Me.Button2.Text = "index.htmlを開く"
@@ -455,12 +459,12 @@ Partial Class Form1
         '
         'Button1
         '
-        Me.Button1.Location = New System.Drawing.Point(279, 103)
+        Me.Button1.Location = New System.Drawing.Point(669, 5)
         Me.Button1.Name = "Button1"
-        Me.Button1.Size = New System.Drawing.Size(129, 28)
+        Me.Button1.Size = New System.Drawing.Size(85, 21)
         Me.Button1.TabIndex = 76
         Me.Button1.TabStop = False
-        Me.Button1.Text = "iniファイルを開く(*)"
+        Me.Button1.Text = "iniを開く(*)"
         Me.Button1.UseVisualStyleBackColor = True
         '
         'ButtonHLSoption
@@ -537,16 +541,28 @@ Partial Class Form1
         '
         'ContextMenuStrip1
         '
-        Me.ContextMenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.SeekMethodList, Me.quit})
+        Me.ContextMenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.SeekMethodList, Me.AccessLog, Me.WarningReset, Me.quit})
         Me.ContextMenuStrip1.Name = "ContextMenuStrip1"
         Me.ContextMenuStrip1.ShowImageMargin = False
-        Me.ContextMenuStrip1.Size = New System.Drawing.Size(265, 48)
+        Me.ContextMenuStrip1.Size = New System.Drawing.Size(265, 92)
         '
         'SeekMethodList
         '
         Me.SeekMethodList.Name = "SeekMethodList"
         Me.SeekMethodList.Size = New System.Drawing.Size(264, 22)
         Me.SeekMethodList.Text = "ffmpeg シーク方法変更ファイルリスト"
+        '
+        'AccessLog
+        '
+        Me.AccessLog.Name = "AccessLog"
+        Me.AccessLog.Size = New System.Drawing.Size(264, 22)
+        Me.AccessLog.Text = "アクセスログ"
+        '
+        'WarningReset
+        '
+        Me.WarningReset.Name = "WarningReset"
+        Me.WarningReset.Size = New System.Drawing.Size(264, 22)
+        Me.WarningReset.Text = "アクセスログ警告クリア"
         '
         'quit
         '
@@ -612,7 +628,7 @@ Partial Class Form1
         '
         'TextBoxPASS
         '
-        Me.TextBoxPASS.Location = New System.Drawing.Point(258, 80)
+        Me.TextBoxPASS.Location = New System.Drawing.Point(254, 80)
         Me.TextBoxPASS.Name = "TextBoxPASS"
         Me.TextBoxPASS.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
         Me.TextBoxPASS.Size = New System.Drawing.Size(91, 19)
@@ -624,9 +640,9 @@ Partial Class Form1
         Me.Label12.AutoSize = True
         Me.Label12.Location = New System.Drawing.Point(6, 83)
         Me.Label12.Name = "Label12"
-        Me.Label12.Size = New System.Drawing.Size(81, 12)
+        Me.Label12.Size = New System.Drawing.Size(74, 12)
         Me.Label12.TabIndex = 94
-        Me.Label12.Text = "BASIC認証 (*)"
+        Me.Label12.Text = "セキュリティ (*)"
         '
         'Label13
         '
@@ -640,7 +656,7 @@ Partial Class Form1
         'Label14
         '
         Me.Label14.AutoSize = True
-        Me.Label14.Location = New System.Drawing.Point(221, 83)
+        Me.Label14.Location = New System.Drawing.Point(217, 83)
         Me.Label14.Name = "Label14"
         Me.Label14.Size = New System.Drawing.Size(34, 12)
         Me.Label14.TabIndex = 96
@@ -925,7 +941,7 @@ Partial Class Form1
         '
         'ButtonIniCancel
         '
-        Me.ButtonIniCancel.Location = New System.Drawing.Point(875, 5)
+        Me.ButtonIniCancel.Location = New System.Drawing.Point(877, 5)
         Me.ButtonIniCancel.Name = "ButtonIniCancel"
         Me.ButtonIniCancel.Size = New System.Drawing.Size(76, 21)
         Me.ButtonIniCancel.TabIndex = 117
@@ -965,7 +981,7 @@ Partial Class Form1
         '
         'ButtonIniBackup
         '
-        Me.ButtonIniBackup.Location = New System.Drawing.Point(760, 5)
+        Me.ButtonIniBackup.Location = New System.Drawing.Point(758, 5)
         Me.ButtonIniBackup.Name = "ButtonIniBackup"
         Me.ButtonIniBackup.Size = New System.Drawing.Size(93, 21)
         Me.ButtonIniBackup.TabIndex = 123
@@ -1061,11 +1077,35 @@ Partial Class Form1
         Me.ComboBoxNicoSet.Size = New System.Drawing.Size(391, 20)
         Me.ComboBoxNicoSet.TabIndex = 128
         '
+        'CheckBoxCanFileOpeWrite
+        '
+        Me.CheckBoxCanFileOpeWrite.AutoSize = True
+        Me.CheckBoxCanFileOpeWrite.Checked = True
+        Me.CheckBoxCanFileOpeWrite.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.CheckBoxCanFileOpeWrite.Location = New System.Drawing.Point(373, 82)
+        Me.CheckBoxCanFileOpeWrite.Name = "CheckBoxCanFileOpeWrite"
+        Me.CheckBoxCanFileOpeWrite.Size = New System.Drawing.Size(148, 16)
+        Me.CheckBoxCanFileOpeWrite.TabIndex = 129
+        Me.CheckBoxCanFileOpeWrite.Text = "TVRFilesデータ更新許可"
+        Me.CheckBoxCanFileOpeWrite.UseVisualStyleBackColor = True
+        '
+        'ButtonShowAccessLog
+        '
+        Me.ButtonShowAccessLog.Location = New System.Drawing.Point(322, 103)
+        Me.ButtonShowAccessLog.Name = "ButtonShowAccessLog"
+        Me.ButtonShowAccessLog.Size = New System.Drawing.Size(86, 25)
+        Me.ButtonShowAccessLog.TabIndex = 130
+        Me.ButtonShowAccessLog.TabStop = False
+        Me.ButtonShowAccessLog.Text = "アクセス ログ"
+        Me.ButtonShowAccessLog.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(1062, 744)
+        Me.Controls.Add(Me.ButtonShowAccessLog)
+        Me.Controls.Add(Me.CheckBoxCanFileOpeWrite)
         Me.Controls.Add(Me.ComboBoxNicoSet)
         Me.Controls.Add(Me.Label18)
         Me.Controls.Add(Me.PanelBonSort)
@@ -1259,5 +1299,9 @@ Partial Class Form1
     Friend WithEvents ButtonBonSortInit As System.Windows.Forms.Button
     Private WithEvents Label18 As System.Windows.Forms.Label
     Friend WithEvents ComboBoxNicoSet As System.Windows.Forms.ComboBox
+    Friend WithEvents CheckBoxCanFileOpeWrite As System.Windows.Forms.CheckBox
+    Private WithEvents ButtonShowAccessLog As System.Windows.Forms.Button
+    Friend WithEvents AccessLog As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents WarningReset As System.Windows.Forms.ToolStripMenuItem
 
 End Class

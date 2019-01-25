@@ -4787,6 +4787,12 @@ Class WebRemocon
             Dim rUrl As String = context.Request.RawUrl
             Dim rUrl_ext As String = GetExtensionFromURL(rUrl)
             If rUrl.IndexOf("/WatchTV") >= 0 Then
+                'ログ記録
+                Dim ipstr As String = context.Request.RemoteEndPoint.Address.ToString
+                If ipstr.Length > 0 Then
+                    SetAccessLog(ipstr, rUrl)
+                End If
+
                 '★ffmpeg HTTPストリームモード
                 Dim auth_ok As Integer = 0
                 If Me._id.Length = 0 Or Me._pass.Length = 0 Then
@@ -5087,18 +5093,17 @@ Class WebRemocon
                         Dim req_Url As String = req.Url.LocalPath
 
                         'リクエスト元
-                        Dim ipstr As String = req.RemoteEndPoint.ToString
-                        Try
-                            ipstr = ipstr.Substring(0, ipstr.IndexOf(":"))
-                        Catch ex As Exception
-                        End Try
-
+                        Dim ipstr As String = req.RemoteEndPoint.Address.ToString
                         log1write(req_Url & "へのリクエストがありました。" & mtypestr & "[" & ipstr & "]")
 
                         'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
                         Dim pext As String = System.IO.Path.GetExtension(path).ToLower
                         If pext.IndexOf(".htm") >= 0 Or (path.IndexOf("WI_") >= 0 And pext = ".json") Then
                             'HTMLなら
+                            'ログ記録
+                            If ipstr.Length > 0 Then
+                                SetAccessLog(ipstr, req_Url)
+                            End If
 
                             '最後にWI_以外の.htmlにアクセスがあった日時を記録
                             If STOP_IDLEMINUTES_METHOD >= 2 Then
@@ -6977,83 +6982,98 @@ Class WebRemocon
                         log1write("【エラー】ファイルが見つかりませんでした。" & fullpathfilename)
                     End If
                 Case "write" '新規・上書き
-                    If filename.Length > 0 Then
-                        If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
-                            'フォルダが存在しなければ作成
-                            If folder_exist(fullpath) < 1 And fullpath.IndexOf("..") < 0 Then
-                                Try
-                                    System.IO.Directory.CreateDirectory(fullpath)
-                                Catch ex As Exception
-                                    r = "2,フォルダ作成に失敗しました。" & ex.Message & vbCrLf
-                                    log1write("【エラー】フォルダ作成に失敗しました。" & fullpath)
-                                    Return r
-                                    Exit Function
-                                End Try
-                            End If
+                    If CanFileOpeWrite = 1 Then
+                        If filename.Length > 0 Then
+                            If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
+                                'フォルダが存在しなければ作成
+                                If folder_exist(fullpath) < 1 And fullpath.IndexOf("..") < 0 Then
+                                    Try
+                                        System.IO.Directory.CreateDirectory(fullpath)
+                                    Catch ex As Exception
+                                        r = "2,フォルダ作成に失敗しました。" & ex.Message & vbCrLf
+                                        log1write("【エラー】フォルダ作成に失敗しました。" & fullpath)
+                                        Return r
+                                        Exit Function
+                                    End Try
+                                End If
 
-                            If str2file(fullpathfilename, fl_text, "UTF-8") = 1 Then
-                                '新規・上書き成功
-                                r = "0,SUCCESS" & vbCrLf
-                            Else
-                                '失敗
-                                r = "2,ファイル書き込みに失敗しました" & vbCrLf
-                                log1write("【エラー】ファイル書き込みに失敗しました。" & fullpathfilename)
+                                If str2file(fullpathfilename, fl_text, "UTF-8") = 1 Then
+                                    '新規・上書き成功
+                                    r = "0,SUCCESS" & vbCrLf
+                                Else
+                                    '失敗
+                                    r = "2,ファイル書き込みに失敗しました" & vbCrLf
+                                    log1write("【エラー】ファイル書き込みに失敗しました。" & fullpathfilename)
+                                End If
                             End If
+                        Else
+                            'ファイル名が指定されていない
+                            r = "2,ファイル名が不正です" & vbCrLf
+                            log1write("【エラー】ファイル名が不正です。長さ0")
                         End If
                     Else
-                        'ファイル名が指定されていない
-                        r = "2,ファイル名が不正です" & vbCrLf
-                        log1write("【エラー】ファイル名が不正です。長さ0")
+                        r = "2,操作" & fl_cmd & "が拒否されました" & vbCrLf
+                        log1write("【ブロック】ファイル操作" & fullpathfilename & "への" & fl_cmd & "を拒否しました")
                     End If
                 Case "write_add" '追記
-                    If filename.Length > 0 Then
-                        If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
-                            'フォルダが存在しなければ作成
-                            If folder_exist(fullpath) < 1 And fullpath.IndexOf("..") < 0 Then
+                    If CanFileOpeWrite = 1 Then
+                        If filename.Length > 0 Then
+                            If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
+                                'フォルダが存在しなければ作成
+                                If folder_exist(fullpath) < 1 And fullpath.IndexOf("..") < 0 Then
+                                    Try
+                                        System.IO.Directory.CreateDirectory(fullpath)
+                                    Catch ex As Exception
+                                        r = "2,フォルダ作成に失敗しました。" & ex.Message & vbCrLf
+                                        log1write("【エラー】フォルダ作成に失敗しました。" & fullpath)
+                                        Return r
+                                        Exit Function
+                                    End Try
+                                End If
+
                                 Try
-                                    System.IO.Directory.CreateDirectory(fullpath)
+                                    Dim sw As New System.IO.StreamWriter(fullpathfilename, True, System.Text.Encoding.GetEncoding("UTF-8"))
+                                    '内容を追加モードで書き込む
+                                    sw.Write(fl_text)
+                                    '閉じる
+                                    sw.Close()
+                                    r = "0,SUCCESS" & vbCrLf
                                 Catch ex As Exception
-                                    r = "2,フォルダ作成に失敗しました。" & ex.Message & vbCrLf
-                                    log1write("【エラー】フォルダ作成に失敗しました。" & fullpath)
-                                    Return r
-                                    Exit Function
+                                    'ファイルオープンエラー
+                                    r = "2,追記書き込みに失敗しました。" & ex.Message & vbCrLf
+                                    log1write("【エラー】追記書き込みに失敗しました。" & fullpathfilename & " > " & ex.Message)
                                 End Try
                             End If
-
-                            Try
-                                Dim sw As New System.IO.StreamWriter(fullpathfilename, True, System.Text.Encoding.GetEncoding("UTF-8"))
-                                '内容を追加モードで書き込む
-                                sw.Write(fl_text)
-                                '閉じる
-                                sw.Close()
-                                r = "0,SUCCESS" & vbCrLf
-                            Catch ex As Exception
-                                'ファイルオープンエラー
-                                r = "2,追記書き込みに失敗しました。" & ex.Message & vbCrLf
-                                log1write("【エラー】追記書き込みに失敗しました。" & fullpathfilename & " > " & ex.Message)
-                            End Try
+                        Else
+                            'ファイル名が指定されていない
+                            r = "2,ファイル名が不正です" & vbCrLf
+                            log1write("【エラー】ファイル名が不正です。長さ0")
                         End If
                     Else
-                        'ファイル名が指定されていない
-                        r = "2,ファイル名が不正です" & vbCrLf
-                        log1write("【エラー】ファイル名が不正です。長さ0")
+                        r = "2,操作" & fl_cmd & "が拒否されました" & vbCrLf
+                        log1write("【ブロック】ファイル操作" & fullpathfilename & "への" & fl_cmd & "を拒否しました")
                     End If
                 Case "delete" '削除
-                    If filename.Length > 0 Then
-                        If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
-                            If deletefile(fullpathfilename) = 1 Then
-                                '削除成功
-                                r = "0,SUCCESS" & vbCrLf
-                            Else
-                                '失敗
-                                r = "2,ファイル削除に失敗しました" & vbCrLf
-                                log1write("【エラー】ファイル削除に失敗しました。" & fullpathfilename)
+                    If CanFileOpeWrite = 1 Then
+                        If filename.Length > 0 Then
+                            If file_ope_allow_files(fl_cmd, fl_file, fullpathfilename) = 1 Then
+                                If deletefile(fullpathfilename) = 1 Then
+                                    '削除成功
+                                    r = "0,SUCCESS" & vbCrLf
+                                Else
+                                    '失敗
+                                    r = "2,ファイル削除に失敗しました" & vbCrLf
+                                    log1write("【エラー】ファイル削除に失敗しました。" & fullpathfilename)
+                                End If
                             End If
+                        Else
+                            'ファイル名が指定されていない
+                            r = "2,ファイル名が不正です" & vbCrLf
+                            log1write("【エラー】ファイル名が不正です。長さ0")
                         End If
                     Else
-                        'ファイル名が指定されていない
-                        r = "2,ファイル名が不正です" & vbCrLf
-                        log1write("【エラー】ファイル名が不正です。長さ0")
+                        r = "2,操作" & fl_cmd & "が拒否されました" & vbCrLf
+                        log1write("【ブロック】ファイル操作" & fullpathfilename & "への" & fl_cmd & "を拒否しました")
                     End If
                 Case Else
                     'コマンドエラー
