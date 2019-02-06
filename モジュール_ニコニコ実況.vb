@@ -29,6 +29,16 @@ Module モジュール_ニコニコ実況
     Public make_chapter As Integer = 0
     Public chapter_bufsec As Integer = 3 '秒前の地点を送る
 
+    'チャプター調査用
+    Public Structure searchpointstructure
+        Implements IComparable
+        Public text As String
+        Public point As Integer
+        Public Function CompareTo(ByVal obj As Object) As Integer Implements IComparable.CompareTo
+            Return Me.point.CompareTo(DirectCast(obj, searchpointstructure).point)
+        End Function
+    End Structure
+
     'ffmpeg タイムシフト方式を変更するファイル名 vbcrlf区切り
     Public ffmpeg_seek_method_files As String = ""
 
@@ -112,7 +122,7 @@ Module モジュール_ニコニコ実況
                         c(3) = chapter_search_abc(html, "B")
                         If c(2) >= 0 Or c(3) >= 0 Then
                             '"A"が存在すれば
-                            c(0) = chapter_search_abc(html, "ｷﾀ━")
+                            c(0) = chapter_search_abc(html, "ｷﾀ━" & vbTab & "また＄" & vbTab & "ﾏﾀ＄")
                             c(1) = chapter_search_abc(html, "OP")
                             c(4) = chapter_search_abc(html, "C")
                             c(5) = chapter_search_abc(html, "ED")
@@ -167,29 +177,49 @@ Module モジュール_ニコニコ実況
 
     Private Function chapter_search_abc(ByRef html As String, ByVal s As String) As Integer
         Dim r As Integer = -1
+        Dim i As Integer = 0
+
+        Dim d() As String = Split(s, vbTab)
+        Dim j As Integer = d.Length
+        For i = 0 To d.Length - 1
+            Dim sw As String = StrConv(d(i), VbStrConv.Wide)
+            If sw <> d(i) Then
+                ReDim Preserve d(j)
+                d(j) = sw
+                j += 1
+            End If
+            'Dim sn As String = StrConv(d(i), VbStrConv.Narrow)
+            'If sn <> d(i) Then
+            'ReDim Preserve d(j)
+            'd(j) = sn
+            'j += 1
+            'End If
+        Next
+        Dim s1 As String = ""
+        Dim dem As String = ""
+        For i = 0 To d.Length - 1
+            If d(i).IndexOf("＄") > 0 Then
+                d(i) = d(i).Replace("＄", vbCrLf) '盾また　等に対応
+            ElseIf d(i).Length >= 3 Or d(i) = "予告" Then '予告ｷﾀ━が多いため
+                d(i) = ")}" & d(i)
+            Else
+                d(i) = ")}" & d(i) & vbCrLf
+            End If
+            s1 &= dem & d(i)
+            dem = vbTab
+        Next
 
         Dim sp As Integer = 0
         Dim ms1 As Long = -1
         Dim ms2 As Long = -1
         Dim buf As Integer = chapter_bufsec '秒前を送る
         Dim margin As Integer = 5 '秒以内に連続して現れれば正しいコメントだと判断
-        Dim s1 As String = ""
-        Dim s2 As String = ""
 
         sp = html.IndexOf("[Events]")
         If sp >= 0 Then
-            If s.Length >= 3 Or s = "予告" Then '予告ｷﾀ━が多いため
-                s1 = ")}" & s
-                's2 = ")}" & StrConv(s, VbStrConv.Wide)
-                s2 = s1
-            Else
-                s1 = ")}" & s & vbCrLf
-                s2 = ")}" & StrConv(s, VbStrConv.Wide) & vbCrLf
-            End If
-
-            sp = indexof2z(html, s1, s2, sp + 1)
+            sp = indexof2z(html, s1, sp + 1)
             ms1 = get_chapter_mstime(sp, html)
-            sp = indexof2z(html, s1, s2, sp + 1)
+            sp = indexof2z(html, s1, sp + 1)
             If ms1 >= 0 Then
                 '1個目が見つかれば
                 While sp > 0
@@ -204,7 +234,7 @@ Module モジュール_ニコニコ実況
                         ms2 = -1
                     End If
 
-                    sp = indexof2z(html, s1, s2, sp + 1)
+                    sp = indexof2z(html, s1, sp + 1)
                 End While
             End If
         End If
@@ -212,26 +242,33 @@ Module モジュール_ニコニコ実況
         Return r
     End Function
 
-    '文章に文字列（半角or全角）が含まれているかチェック
-    Public Function indexof2z(ByRef html As String, ByVal s1 As String, ByVal s2 As String, ByVal sp As Integer) As Integer
+    '文章に文字列（複数）が含まれているかチェック
+    Public Function indexof2z(ByRef html As String, ByVal s1 As String, ByVal sp As Integer) As Integer
         Dim r As Integer = -1
+        Dim i As Integer = 0
 
-        If s1 = s2 Then
+        Dim d() As String = Split(s1, vbTab)
+
+        If d.Length = 1 Then
             r = html.IndexOf(s1, sp)
         Else
-            Dim a1 As Integer = html.IndexOf(s1, sp)
-            Dim a2 As Integer = html.IndexOf(s2, sp)
+            Dim f() As searchpointstructure = Nothing
+            ReDim f(d.Length - 1)
+            For i = 0 To f.Length - 1
+                f(i).text = d(i)
+                f(i).point = -1
+            Next
 
-            If a1 >= 0 And a2 >= 0 Then
-                If a1 <= a2 Then
-                    r = a1
-                Else
-                    r = a2
+            For i = 0 To f.Length - 1
+                f(i).point = html.IndexOf(f(i).text, sp)
+                If f(i).point < 0 Then
+                    f(i).point = 2147483000 '十分大きな数　後方　並べ替えに備えて
                 End If
-            ElseIf a1 >= 0 Then
-                r = a1
-            ElseIf a2 >= 0 Then
-                r = a2
+            Next
+
+            Array.Sort(f) '並び替え
+            If f(0).point < 2147483000 Then
+                r = f(0).point
             End If
         End If
 
