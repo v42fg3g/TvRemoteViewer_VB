@@ -2584,7 +2584,7 @@ Module モジュール_番組表
             If EDCB_TSID IsNot Nothing Then
                 log1write("EDCB(CtrlCmdCLI)からEDCB番組表に表示する局を取得しました")
             Else
-                log1write("【エラー】EDCB(CtrlCmdCLI)からEDCB番組表に表示する局の取得に失敗しました")
+                log1write("【エラー】EDCB(CtrlCmdCLI)からEDCB番組表に表示する局の取得に失敗しました。EpgTimerSrvの設定→その他でネットワーク接続を許可してください。ポート4510")
                 EDCB_thru_addprogres = 1
                 log1write("EDCB番組表に全チャンネルを表示するようにセットしました")
             End If

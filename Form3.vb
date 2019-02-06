@@ -44,13 +44,11 @@
                     DataGridViewAccessLog_write_cell_by_name("utime", i, reserve_Hmm(AccessLogList(i).utime), fc, bc)
                     DataGridViewAccessLog_write_cell_by_name("IP", i, AccessLogList(i).IP, fc, bc)
                     DataGridViewAccessLog_write_cell_by_name("domain", i, AccessLogList(i).domain, fc, bc)
+                    DataGridViewAccessLog_write_cell_by_name("UserAgent", i, Analyse_UserAgent(AccessLogList(i).UserAgent), fc, bc)
                     DataGridViewAccessLog_write_cell_by_name("URL", i, AccessLogList(i).URL, fc, bc)
                 Next
 
-                DataGridViewAccessLog.ResumeLayout(False) 'レイアウト表示再開
-
                 DataGridViewAccessLog.ClearSelection()
-                DataGridViewAccessLog.Refresh()
 
                 'ドメイン表示
                 Dim outchk As Integer = 0
@@ -73,7 +71,6 @@
                         End If
                     End If
                 Next
-                DataGridViewAccessLog.Refresh()
 
                 If outchk = 1 And (form1_ID.Length = 0 Or form1_PASS.Length = 0) Then
                     LabelAccessLogWarning.Text = "※警告　外部からアクセスする場合はIDとPASSを設定してください"
@@ -88,6 +85,12 @@
             Catch ex As Exception
                 log1write("【エラー】DataGridView表示中にエラーが発生しました。" & ex.Message)
                 Exit Sub
+            Finally
+                Try
+                    DataGridViewAccessLog.ResumeLayout(False) 'レイアウト表示再開
+                    DataGridViewAccessLog.Refresh()
+                Catch ex2 As Exception
+                End Try
             End Try
         Else
             Try
@@ -102,6 +105,48 @@
             End Try
         End If
     End Sub
+
+    Private Function Analyse_UserAgent(ByVal UA As String) As String
+        Dim r As String = ""
+
+        UA &= ""
+        If Not String.IsNullOrEmpty(UA) Then
+            UA = UA.ToLower
+
+            If UA.IndexOf("windows") >= 0 Then
+                r = "Windows"
+            ElseIf UA.IndexOf("iphone") >= 0 Or UA.IndexOf("ipod") >= 0 Or UA.IndexOf("ipad") >= 0 Then
+                r = "iOS"
+            ElseIf UA.IndexOf("android") >= 0 Then
+                r = "Android"
+            ElseIf UA.IndexOf("os x") >= 0 Or UA.IndexOf("mac") Then
+                r = "OS X"
+            ElseIf UA.IndexOf("linux") >= 0 Or UA.IndexOf("bsd") >= 0 Or UA.IndexOf("sunos") >= 0 Then
+                r = "Linux"
+            ElseIf UA.IndexOf("nintendo") >= 0 Then
+                r = "Nintendo"
+            ElseIf UA.IndexOf("playstation") >= 0 Then
+                r = "PlayStation"
+            ElseIf UA.IndexOf("docomo") >= 0 Then
+                r = "docomo"
+            ElseIf UA.IndexOf("kddi") >= 0 Then
+                r = "AU"
+            ElseIf UA.IndexOf("softbank") >= 0 Or UA.IndexOf("j-phone") >= 0 Then
+                r = "SoftBank"
+            ElseIf UA.IndexOf("willcom") >= 0 Then
+                r = "WILLCOM"
+            End If
+        End If
+
+        If r.Length = 0 And UA.Length > 0 Then
+            r = "不明"
+        End If
+
+        If r.Length > 0 Then
+            r = r & ":    " & UA
+        End If
+        Return r
+    End Function
 
     Private Function reserve_Hmm(ByVal startt As Integer) As String
         Dim r As String = ""
@@ -164,12 +209,13 @@
         DataGridViewAccessLog.Top = 24
         DataGridViewAccessLog.Width = tSize.Width
         DataGridViewAccessLog.Height = tSize.Height - 24
-        DataGridViewAccessLog.Columns(3).Width = DataGridViewAccessLog.Width - DataGridViewAccessLog.Columns(0).Width - DataGridViewAccessLog.Columns(1).Width - DataGridViewAccessLog.Columns(2).Width - SystemInformation.VerticalScrollBarWidth
+        DataGridViewAccessLog.Columns(4).Width = DataGridViewAccessLog.Width - DataGridViewAccessLog.Columns(0).Width - DataGridViewAccessLog.Columns(1).Width - DataGridViewAccessLog.Columns(2).Width - DataGridViewAccessLog.Columns(3).Width - SystemInformation.VerticalScrollBarWidth
 
-        ButtonRefresh.Top = 0
-        ButtonRefresh.Left = tSize.Width - ButtonRefresh.Width - 2
+        'ButtonRefresh.Top = 0
+        'ButtonRefresh.Left = tSize.Width - ButtonRefresh.Width - 2
         ButtonClear.Top = 0
-        ButtonClear.Left = ButtonRefresh.Left - ButtonClear.Width - 8
+        ButtonClear.Left = tSize.Width - ButtonClear.Width - 2
+        'ButtonClear.Left = ButtonRefresh.Left - ButtonClear.Width - 8
     End Sub
 
     Private Sub ButtonRefresh_Click(sender As System.Object, e As System.EventArgs) Handles ButtonRefresh.Click
@@ -205,17 +251,24 @@
                     Select Case trim8(lr(0))
                         Case "columns_width"
                             Dim d() As String = lr(1).Split(",")
-                            If d.Length >= 4 Then
-                                DataGridViewAccessLog.Columns(0).Width = d(0)
-                                DataGridViewAccessLog.Columns(1).Width = d(1)
-                                DataGridViewAccessLog.Columns(2).Width = d(2)
-                                DataGridViewAccessLog.Columns(3).Width = d(3)
+                            If d.Length >= 5 Then
+                                DataGridViewAccessLog.Columns(0).Width = Val(d(0))
+                                DataGridViewAccessLog.Columns(1).Width = Val(d(1))
+                                DataGridViewAccessLog.Columns(2).Width = Val(d(2))
+                                DataGridViewAccessLog.Columns(3).Width = Val(d(3))
+                                DataGridViewAccessLog.Columns(4).Width = Val(d(4))
+                            ElseIf d.Length >= 4 Then
+                                DataGridViewAccessLog.Columns(0).Width = Val(d(0))
+                                DataGridViewAccessLog.Columns(1).Width = Val(d(1))
+                                DataGridViewAccessLog.Columns(2).Width = Val(d(2))
+                                Dim d3_temp As Integer = Int(Val(d(3)) / 2) 'データが無いので半分の幅に
+                                DataGridViewAccessLog.Columns(3).Width = d3_temp
+                                DataGridViewAccessLog.Columns(4).Width = Val(d(3)) - d3_temp
                             End If
                         Case "WindowStatus"
                             Dim d() As String = lr(1).Split(",")
                             If d.Length = 4 Then
                                 If Val(d(2)) >= 50 And Val(d(3)) >= 50 Then
-                                    me_window_backup = Trim(lr(1))
                                     Me.Left = Val(d(0))
                                     Me.Top = Val(d(1))
                                     Me.Width = Val(d(2))
@@ -237,6 +290,7 @@
             s &= "," & DataGridViewAccessLog.Columns(1).Width
             s &= "," & DataGridViewAccessLog.Columns(2).Width
             s &= "," & DataGridViewAccessLog.Columns(3).Width
+            s &= "," & DataGridViewAccessLog.Columns(4).Width
             s &= vbCrLf
 
             s &= "WindowStatus=" & Me.Left & "," & Me.Top & "," & Me.Width & "," & Me.Height & vbCrLf
@@ -258,7 +312,84 @@
     End Sub
 
     Private Sub DataGridViewAccessLog_ColumnWidthChanged(sender As System.Object, e As System.Windows.Forms.DataGridViewColumnEventArgs) Handles DataGridViewAccessLog.ColumnWidthChanged
-        DataGridViewAccessLog.Columns(3).Width = DataGridViewAccessLog.Width - DataGridViewAccessLog.Columns(0).Width - DataGridViewAccessLog.Columns(1).Width - DataGridViewAccessLog.Columns(2).Width - SystemInformation.VerticalScrollBarWidth
+        DataGridViewAccessLog.Columns(4).Width = DataGridViewAccessLog.Width - DataGridViewAccessLog.Columns(0).Width - DataGridViewAccessLog.Columns(1).Width - DataGridViewAccessLog.Columns(2).Width - DataGridViewAccessLog.Columns(3).Width - SystemInformation.VerticalScrollBarWidth
     End Sub
 
+    Private Sub ContextMenuStrip1_ItemClicked(sender As System.Object, e As System.Windows.Forms.ToolStripItemClickedEventArgs) Handles ContextMenuStrip1.ItemClicked
+        Select Case e.ClickedItem.Text
+            Case "CellCopy", "コピー"
+                Try
+                    Clipboard.Clear()
+                Catch ex As Exception
+                End Try
+                Dim r As String = ""
+
+                If clicked_cell.Length > 0 Then
+                    Dim cindex As Integer = -1
+                    Dim rindex As Integer = -1
+                    Try
+                        Dim cindex_str As String = Instr_pickup(clicked_cell, "(", ",", 0)
+                        Dim rindex_str As String = Instr_pickup(clicked_cell, ",", ")", 0)
+                        If IsNumeric(cindex_str) And IsNumeric(rindex_str) Then
+                            cindex = Val(cindex_str)
+                            rindex = Val(rindex_str)
+                            If cindex >= 0 And rindex >= 0 Then
+                                If DataGridViewAccessLog.Rows(rindex).Cells(cindex).Selected = True Then
+                                    '選択されていれば
+                                    Dim chk As Integer = 0
+                                    Dim ri As Integer = -1
+                                    Dim delm As String = ""
+                                    For Each c As DataGridViewCell In DataGridViewAccessLog.SelectedCells
+                                        If ri <> c.RowIndex And ri > -1 Then
+                                            r &= vbCrLf
+                                            delm = ""
+                                        End If
+                                        ri = c.RowIndex
+                                        r &= delm & DataGridViewAccessLog.Rows(c.RowIndex).Cells(c.ColumnIndex).Value.ToString
+                                        delm = vbTab
+                                        chk = 1
+                                    Next c
+                                    If chk = 0 Then
+                                        r = DataGridViewAccessLog.Rows(rindex).Cells(cindex).Value.ToString
+                                    End If
+                                Else
+                                    '無選択ならばそのセルのみコピー
+                                    r = DataGridViewAccessLog.Rows(rindex).Cells(cindex).Value.ToString
+                                End If
+                            End If
+                        End If
+                    Catch ex As Exception
+                        log1write("【エラー】アクセスログコピー中にエラーが発生しました。" & ex.Message)
+                    End Try
+                    clicked_cell = ""
+                End If
+
+                If Not String.IsNullOrEmpty(r) Then
+                    Try
+                        Clipboard.SetText(r)
+                    Catch ex As Exception
+                        log1write("【エラー】クリップボードへのコピーに失敗しました")
+                    End Try
+                End If
+        End Select
+    End Sub
+
+    Private clicked_cell As String = ""
+    Private Sub DataGridViewAccessLog_CellMouseClick(sender As System.Object, e As System.Windows.Forms.DataGridViewCellMouseEventArgs) Handles DataGridViewAccessLog.CellMouseClick
+        If e.Button = MouseButtons.Right Then
+            Try
+                'コンテキストメニューを表示する
+                ContextMenuStrip1.Items.Clear()
+                ContextMenuStrip1.Items.Add("コピー")
+                clicked_cell = "(" & e.ColumnIndex.ToString & "," & e.RowIndex.ToString & ")"
+                ContextMenuStrip1.Show()
+                'マウスカーソルの位置を画面座標で取得
+                Dim p As Point = Control.MousePosition
+                ContextMenuStrip1.Top = p.Y
+                ContextMenuStrip1.Left = p.X
+            Catch ex As Exception
+                log1write("【エラー】アクセスログコンテキストメニュー表示に失敗しました。" & ex.Message)
+            End Try
+        End If
+    End Sub
 End Class

@@ -4786,11 +4786,12 @@ Class WebRemocon
             'D:\TvRemoteViewer\html\WatchTV1.tsが見つかりませんでした
             Dim rUrl As String = context.Request.RawUrl
             Dim rUrl_ext As String = GetExtensionFromURL(rUrl)
+            Dim UserAgent As String = context.Request.UserAgent
             If rUrl.IndexOf("/WatchTV") >= 0 Then
                 'ログ記録
                 Dim ipstr As String = context.Request.RemoteEndPoint.Address.ToString
                 If ipstr.Length > 0 Then
-                    SetAccessLog(ipstr, rUrl)
+                    SetAccessLog(ipstr, rUrl, UserAgent)
                 End If
 
                 '★ffmpeg HTTPストリームモード
@@ -5102,7 +5103,7 @@ Class WebRemocon
                             'HTMLなら
                             'ログ記録
                             If ipstr.Length > 0 Then
-                                SetAccessLog(ipstr, req_Url & req.Url.Query & "")
+                                SetAccessLog(ipstr, req_Url & req.Url.Query & "", UserAgent)
                             End If
 
                             '最後にWI_以外の.htmlにアクセスがあった日時を記録

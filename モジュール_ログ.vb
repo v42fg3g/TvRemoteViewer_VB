@@ -21,6 +21,7 @@
         Public domain As String
         Public URL As String
         Public utime As Integer
+        Public UserAgent As String
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             'indexof用
             Dim pF As String = CType(obj, String) '検索内容を取得
@@ -42,7 +43,7 @@
 
     'アクセスログに記録
     Public AccessLogDays As Integer = 180 '何日間保持するか
-    Public Sub SetAccessLog(ByVal IP As String, ByVal URL As String)
+    Public Sub SetAccessLog(ByVal IP As String, ByVal URL As String, ByVal UserAgent As String)
         Dim j As Integer = -1
         If AccessLogList IsNot Nothing Then
             j = Array.IndexOf(AccessLogList, IP)
@@ -53,6 +54,7 @@
                         j = i
                         AccessLogList(i).IP = ""
                         AccessLogList(i).domain = ""
+                        AccessLogList(i).UserAgent = ""
                         AccessLogList(i).URL = ""
                         AccessLogList(i).utime = 0
                     End If
@@ -68,6 +70,7 @@
         End If
         AccessLogList(j).IP = IP
         AccessLogList(j).domain &= ""
+        AccessLogList(j).UserAgent = UserAgent
         AccessLogList(j).URL = URL
         AccessLogList(j).utime = time2unix(Now())
     End Sub
