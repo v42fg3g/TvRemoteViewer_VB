@@ -1602,7 +1602,12 @@ Class WebRemocon
                                 Case "make_chapter"
                                     make_chapter = Val(youso(1).ToString)
                                 Case "chapter_bufsec"
-                                    chapter_bufsec = Val(youso(1).ToString)
+                                    Try
+                                        chapter_bufsec = Double.Parse(youso(1))
+                                    Catch ex As Exception
+                                        chapter_bufsec = Val(youso(1))
+                                        log1write("【エラー】ini：chapter_bufsec=" & youso(1) & "の設定値が不正です。chapter_bufsec=" & chapter_bufsec & "に設定しました")
+                                    End Try
                                 Case "openfix_BonSid"
                                     youso(1) = youso(1).Replace("{", "").Replace("}", "").Replace("(", "").Replace(")", "")
                                     Dim clset() As String = youso(1).Split(",")

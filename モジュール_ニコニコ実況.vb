@@ -27,7 +27,7 @@ Module モジュール_ニコニコ実況
 
     'コメントファイルが存在＆チャプターファイルが無い場合にOP,A,B,C,EDを書き込んだチャプターファイルを作成するか
     Public make_chapter As Integer = 0
-    Public chapter_bufsec As Integer = 3 '秒前の地点を送る
+    Public chapter_bufsec As Double = 3 '秒前の地点を送る
     Public chapter_priority As Integer = 0 '1=ここで作成したチャプターファイル優先
 
     'チャプター調査用
@@ -222,7 +222,7 @@ Module モジュール_ニコニコ実況
         Dim sp As Integer = 0
         Dim ms1 As Long = -1
         Dim ms2 As Long = -1
-        Dim buf As Integer = chapter_bufsec '秒前を送る
+        Dim buf As Double = chapter_bufsec '秒前を送る
         Dim margin As Integer = 5 '秒以内に連続して現れれば正しいコメントだと判断
 
         sp = html.IndexOf("[Events]")
@@ -237,7 +237,7 @@ Module モジュール_ニコニコ実況
 
                     If ms1 > 0 And ms2 > ms1 And (ms2 - ms1) < (10 * margin) Then
                         '見つかった
-                        r = ms1 - (buf * 10)
+                        r = ms1 - Int(buf * 10)
                         Exit While
                     Else
                         ms1 = ms2
