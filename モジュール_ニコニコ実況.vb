@@ -28,6 +28,7 @@ Module モジュール_ニコニコ実況
     'コメントファイルが存在＆チャプターファイルが無い場合にOP,A,B,C,EDを書き込んだチャプターファイルを作成するか
     Public make_chapter As Integer = 0
     Public chapter_bufsec As Integer = 3 '秒前の地点を送る
+    Public chapter_priority As Integer = 0 '1=ここで作成したチャプターファイル優先
 
     'チャプター調査用
     Public Structure searchpointstructure
@@ -107,8 +108,11 @@ Module モジュール_ニコニコ実況
                     chapterfullpathfilename = chapterpath & "\chapters\" & chapterfilename
                 End If
             End If
-            If chapterfullpathfilename.Length = 0 Then
-                '見つからなければ作成
+            If chapterfullpathfilename.Length = 0 Or chapter_priority = 1 Then
+                'チャプター作成
+                If chapterfullpathfilename.Length > 0 And chapter_priority = 1 Then
+                    log1write("chapter作成に成功した場合、既存のchapterファイルへの上書きを試みます")
+                End If
                 'ビデオファイルのサイズを取得
                 Dim fi As New System.IO.FileInfo(videofilename)
                 If fi.Length < max_filesize Then
@@ -129,7 +133,7 @@ Module モジュール_ニコニコ実況
                             c(6) = chapter_search_abc(html, "予告")
                             c(7) = get_chapter_mstime(html.Length - 2, html) '最後のコメントタイム
                             'Aより後のキターなら削除
-                            If c(0) > c(2) Then
+                            If c(0) > c(2) Or c(0) > c(3) Then
                                 c(0) = -1
                             End If
                             '並び替え
@@ -155,8 +159,14 @@ Module モジュール_ニコニコ実況
                             If folder_exist(chapterpath & "\chapters") = 1 Then
                                 wf = chapterpath & "\chapters\" & chapterfilename
                             End If
-                            str2file(wf, ctext, "UTF-8")
-                            log1write("チャプターファイル " & wf & " を作成しました")
+                            If chapterfullpathfilename.Length > 0 And chapter_priority = 1 Then
+                                wf = chapterfullpathfilename '既存ファイルを上書き
+                            End If
+                            If str2file(wf, ctext, "UTF-8") = 1 Then
+                                log1write("チャプターファイル " & wf & " を作成しました")
+                            Else
+                                log1write("【エラー】チャプターファイル " & wf & " の作成に失敗しました")
+                            End If
                         Else
                             log1write("チャプターを作成するポイントがありませんでした")
                         End If

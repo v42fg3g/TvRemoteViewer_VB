@@ -128,8 +128,10 @@ Remocon_Domains =
 TVRemoteFilesNEW = 1
 
 
-;【2.91】TSID in ChSpace
+;【2.91】TSID in ChSpace（実験）
 ;外部に公開するパラメーターChSpaceにTSIDデータを含める=1
+;WI等で外部に公開されるChSpaceの値がTSID*100+ChSpaceとなります
+;クライアントは意識することなく今まで通りTvRemoteViewer_VBから与えられるServiceIDとChSpaceを使用して再生開始を指示すればよくプログラムを修正する必要はありません。
 TSID_in_ChSpace = 0
 
 
@@ -189,6 +191,8 @@ Nico_delay =
 make_chapter = 1
 ;【1.50】見つかった地点の何秒前にチャプターを打つか
 chapter_bufsec = 3
+;【2.91f】TvRemoteViewer_VB作成のチャプターファイルを既存のチャプターファイルより優先させる=1
+chapter_priority = 0
 ;【1.84】NicoConvAssでassを作成するついでにNicoJKフォルダ\jk～にassを作成（しない=0 する=1）
 ; 2度目以降の再生開始が早くなります
 ; 標準は1になっています。作成したくない場合は0を指定してください

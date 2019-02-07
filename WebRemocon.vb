@@ -1860,8 +1860,14 @@ Class WebRemocon
                                     End If
                                 Case "TSID_in_ChSpace"
                                     TSID_in_ChSpace = Val(youso(1))
-                                    log1write("TSIDを使用するよう設定しました")
-
+                                    If TSID_in_ChSpace = 1 Then
+                                        log1write("TSIDを使用するよう設定しました")
+                                    End If
+                                Case "chapter_priority"
+                                    chapter_priority = Val(youso(1))
+                                    If chapter_priority = 1 Then
+                                        log1write("TvRemoteViewer_VBが作成するチャプターファイルを優先するよう設定しました")
+                                    End If
 
 
                                     'Case "video_force_ffmpeg"

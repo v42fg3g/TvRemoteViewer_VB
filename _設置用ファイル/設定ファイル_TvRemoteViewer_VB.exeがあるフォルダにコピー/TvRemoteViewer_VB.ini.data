@@ -132,7 +132,8 @@ HTTP配信	0	integer	HTTPSTREAM_METHOD	0	HTTPストリーム受信方法（0=従来通り 1=Read
 ファイル再生	0	integer	NicoJK_first	0	すでに「動画ファイル名.ass」ファイルが存在している場合でもNicoJKファイルを優先する=1
 ファイル再生	0	integer	Nico_delay	0	NicoJKコメント再生における微妙なズレを修正（秒）	（コメントを早めたいときはマイナス値、遅くしたいときはプラス値）
 ファイル再生	0	integer	make_chapter	0	assファイル内の文字列（ｷﾀ━,OP,A,B,C,ED）が現れる地点にチャプターを打つ=1
-ファイル再生	0	integer	chapter_bufsec	3	見つかった地点の何秒前にチャプターを打つか
+ファイル再生	0	integer	chapter_bufsec	1	見つかった地点の何秒前にチャプターを打つか
+ファイル再生	0	integer	chapter_priority	0	TvRemoteViewer_VB作成のチャプターファイルを既存のチャプターファイルより優先させる=1
 ファイル再生	0	integer	NicoConvAss_copy2NicoJK	1	NicoConvAssでassを作成するついでにNicoJKフォルダ\jk～にassを作成（しない=0 する=1）
 ファイル再生	0	integer	NicoConvAss_assData_download	0	NicoConvAssでコメントをダウンロードしてassを作成（しない=0 する=1）	コメントの多い動画の場合、再生前準備に時間がかかる可能性があります（映画等10秒以上かかる場合有り）\nなお、NicoConvAss_copy2NicoJK=1としておけば動画ファイル名.assを作成して2回目以降はスムーズにスタートできます
 
