@@ -382,7 +382,7 @@ Class WebRemocon
                         Next
                     End If
                     If chk = 1 Then
-                        r &= Me._videopath(i).TrimEnd("\") & "\" & vbCrLf
+                        r &= filename_escape_set(Me._videopath(i)).TrimEnd("\") & "\" & vbCrLf
                         cnt += 1
                         rcode = 1
                     Else
