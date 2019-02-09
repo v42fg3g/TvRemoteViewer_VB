@@ -1873,6 +1873,11 @@ Class WebRemocon
                                     If chapter_priority = 1 Then
                                         log1write("TvRemoteViewer_VBが作成するチャプターファイルを優先するよう設定しました")
                                     End If
+                                Case "tsRenameSyncChapter"
+                                    tsRenameSyncChapter = Val(youso(1))
+                                    If tsRenameSyncChapter = 1 Then
+                                        log1write("tsファイルリネーム時にchapterファイルリネームも同時に行うよう設定しました。")
+                                    End If
 
 
                                     'Case "video_force_ffmpeg"

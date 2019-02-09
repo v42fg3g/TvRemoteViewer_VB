@@ -542,3 +542,5 @@ close2min = 0
 ;【2.87d】再生中はスリープを抑止する=1（テスト不足）
 viewing_NoSleep = 0
 
+;【2.91h】【おまけ機能】tsリネーム時にchapterファイルがあればあわせてリネームする=1
+tsRenameSyncChapter = 0

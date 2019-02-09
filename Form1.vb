@@ -2059,6 +2059,29 @@ Public Class Form1
                 Case System.IO.WatcherChangeTypes.Renamed
                     log1write(("ファイル 「" + e.FullPath + _
                         "」が名前変更されました。"))
+                    If tsRenameSyncChapter = 1 Then
+                        'tsファイルがリネームされた場合は自動的にchapterファイルをリネームする
+                        Dim ext As String = Path.GetExtension(e.FullPath)
+                        If ext = ".ts" Then
+                            Try
+                                Dim renameEventArgs = DirectCast(e, RenamedEventArgs)
+                                Dim file_path As String = Path.GetDirectoryName(e.FullPath)
+                                Dim file_old As String = Path.GetFileNameWithoutExtension(renameEventArgs.OldFullPath)
+                                Dim file_new As String = Path.GetFileNameWithoutExtension(renameEventArgs.FullPath)
+                                If file_old <> file_new Then
+                                    If file_exist(file_path & "\chapters\" & file_old & ".chapter") = 1 Then
+                                        My.Computer.FileSystem.RenameFile(file_path & "\chapters\" & file_old & ".chapter", file_new & ".chapter")
+                                        log1write(file_path & "\chapters\" & file_old & ".chapterから" & file_new & ".chapterへリネームしました")
+                                    ElseIf file_exist(file_path & "\" & file_old & ".chapter") = 1 Then
+                                        My.Computer.FileSystem.RenameFile(file_path & "\" & file_old & ".chapter", file_new & ".chapter")
+                                        log1write(file_path & "\" & file_old & ".chapterから" & file_new & ".chapterへリネームしました")
+                                    End If
+                                End If
+                            Catch ex As Exception
+                                log1write("【エラー】chapterファイルリネーム中にエラーが発生しました。" & ex.Message)
+                            End Try
+                        End If
+                    End If
             End Select
 
             '更新されたファイルがあるフォルダを記録

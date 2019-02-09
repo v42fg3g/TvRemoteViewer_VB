@@ -9,9 +9,12 @@ Module モジュール_その他
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
     Public TvRemoteViewer_VB_version_URL As String = "http://vb45wb5b.up.seesaa.net/image/version.txt"
-    Public TvRemoteViewer_VB_revision As String = "g"
+    Public TvRemoteViewer_VB_revision As String = "h"
 
-    Public RestartExe_path As String = 0
+    Public RestartExe_path As String = ""
+
+    'ts動画ファイルリネーム時に.chapterもリネームするか
+    Public tsRenameSyncChapter As Integer = 0
 
     'Write制限
     Public CanFileOpeWrite As Integer = 0
