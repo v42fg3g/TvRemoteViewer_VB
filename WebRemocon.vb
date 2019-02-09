@@ -319,64 +319,177 @@ Class WebRemocon
     End Function
 
     'ファイル一覧リスト　WEBインターフェース
-    Public Function WI_GET_VIDEOFILES2(ByVal videoexword As String, ByVal RefreshList As Integer, ByVal start_date As DateTime, ByVal vl_volume As Integer) As String
+    Public Function WI_GET_VIDEOFILES2(ByVal videoexword As String, ByVal RefreshList As Integer, ByVal start_date As DateTime, ByVal vl_volume As Integer, ByVal temp As String, ByVal vl_dir As String) As String
         Dim r As String = ""
-
-        Dim datestr As String = start_date.ToString("yyyyMMddHH")
-        If vl_volume = 0 Then
-            vl_volume = C_INTMAX
-        End If
-
-        If RefreshList = 1 Then
-            'リフレッシュするように指定されていればファイルリストを更新
-            video = RefreshVideoList("")
-        End If
-        Dim video2() As videostructure = Nothing
-        If videoexword.Length > 0 Then
-            'フィルタ
-            video2 = RefreshVideoListExword(videoexword)
-        Else
-            video2 = video
-        End If
-
         Dim i As Integer = 0
-        Dim cnt As Integer = 0
+        Dim rcode As Integer = 0
         Dim last_date As DateTime
-        If video2 IsNot Nothing Then
-            For i = 0 To video2.Length - 1
-                Dim f As videostructure = video2(i)
-                Dim fdatestr As String = ""
-                Try
-                    fdatestr = f.datestr.Substring(0, 8) 'yyyyMMddHHからyyyyMMddにする
-                    If f.datestr < datestr And (cnt < vl_volume Or (cnt >= vl_volume And fdatestr = last_date.ToString("yyyyMMdd"))) Then
-                        'r &= video2(i).modifytime & "," & video2(i).fullpathfilename
-                        r &= video2(i).datestr & "," & video2(i).encstr & vbCrLf 'value値と同じもの
-                        last_date = video2(i).modifytime
-                        VIDEOFROMDATE = last_date
-                        cnt += 1
-                    ElseIf cnt > 0 Then
-                        Exit For
-                    End If
-                Catch ex As Exception
-                    '不正なデータ
-                    log1write("ビデオファイル一覧に不正なデータがありました" & f.fullpathfilename & " " & ex.Message)
-                End Try
-            Next
+        Dim cnt As Integer = 0
+
+        If vl_dir.Length > 0 Then
+            vl_dir = System.Web.HttpUtility.UrlDecode(vl_dir)
+            vl_dir = filename_escape_recall(vl_dir)
+            vl_dir = vl_dir.Replace("/", "\")
+            vl_dir = vl_dir.TrimEnd("\")
         End If
 
-        'ヘッダを追加
-        Dim rcode As Integer = 0
-        If cnt = 0 Then
-            rcode = 2 'リクエストを満たすデータがありません
-            last_date = CDate("1970/01/01 00:00:00")
-        ElseIf i >= video2.Length Then
-            rcode = 1 'これが最終です　yyyは 0と同じ xxxx/xx/xxは空白
+        temp = "," & temp & ","
+        Dim dir_current As Integer = 0 '1=current
+        If temp.IndexOf(",current,") >= 0 Then
+            dir_current = 1
         End If
+
+        'Me._videopath_ini()にiniで読み込んだカレントフォルダsが入っている
+        Dim cdir() As String = Nothing 'カレントディレクトリ
+        If vl_dir.Length > 0 Then
+            ReDim cdir(0)
+            cdir(0) = vl_dir
+        Else
+            If Me._videopath_ini IsNot Nothing Then
+                Dim j As Integer = 0
+                For i = 0 To Me._videopath_ini.Length - 1
+                    If Me._videopath_ini(i).TrimEnd("\").Length > 0 Then
+                        ReDim Preserve cdir(j)
+                        cdir(j) = Me._videopath_ini(i).TrimEnd("\")
+                        j += 1
+                    End If
+                Next
+            End If
+        End If
+
+        If temp.IndexOf(",dironly,") >= 0 Then
+            'フォルダ構造のみ
+            If Me._videopath IsNot Nothing Then
+                For i = 0 To Me._videopath.Length - 1
+                    Dim chk As Integer = 0
+                    Dim chk_dir As Integer = isCurrentDir(Me._videopath(i), cdir)
+                    If dir_current = 1 Then
+                        If chk_dir = 1 Then
+                            chk = 1
+                        End If
+                    ElseIf chk_dir >= 0 Then
+                        chk = 1
+                    End If
+                    If chk = 1 And videoexword.Length > 0 Then
+                        videoexword = videoexword.Replace("　", " ").Trim()
+                        Dim d() As String = videoexword.Split(" ")
+                        For j As Integer = 0 To d.Length - 1
+                            If d.Length > 0 Then
+                                If Me._videopath(i).IndexOf(d(j)) < 0 Then
+                                    chk = 0
+                                End If
+                            End If
+                        Next
+                    End If
+                    If chk = 1 Then
+                        r &= Me._videopath(i).TrimEnd("\") & "\" & vbCrLf
+                        cnt += 1
+                        rcode = 1
+                    Else
+                        rcode = 2
+                    End If
+                    last_date = Now()
+                Next
+            End If
+        Else
+            Dim datestr As String = start_date.ToString("yyyyMMddHH")
+            If vl_volume = 0 Then
+                vl_volume = C_INTMAX
+            End If
+
+            If RefreshList = 1 Then
+                'リフレッシュするように指定されていればファイルリストを更新
+                video = RefreshVideoList("")
+            End If
+            Dim video2() As videostructure = Nothing
+            If videoexword.Length > 0 Then
+                'フィルタ
+                video2 = RefreshVideoListExword(videoexword)
+            Else
+                video2 = video
+            End If
+
+            If video2 IsNot Nothing Then
+                For i = 0 To video2.Length - 1
+                    Dim f As videostructure = video2(i)
+                    Dim fdatestr As String = ""
+                    Try
+                        fdatestr = f.datestr.Substring(0, 8) 'yyyyMMddHHからyyyyMMddにする
+                        If f.datestr < datestr And (cnt < vl_volume Or (cnt >= vl_volume And fdatestr = last_date.ToString("yyyyMMdd"))) Then
+                            Dim chk As Integer = 0
+                            If vl_dir.Length > 0 Or dir_current = 1 Then
+                                Dim chk_dir As Integer = isCurrentDir(video2(i).fullpathfilename, cdir)
+                                If dir_current = 1 Then
+                                    If chk_dir = 1 Then
+                                        chk = 1
+                                    End If
+                                ElseIf chk_dir >= 0 Then
+                                    chk = 1
+                                End If
+                            Else
+                                chk = 1
+                            End If
+
+                            If chk = 1 Then
+                                'r &= video2(i).modifytime & "," & video2(i).fullpathfilename
+                                r &= video2(i).datestr & "," & video2(i).encstr & vbCrLf 'value値と同じもの
+                                last_date = video2(i).modifytime
+                                VIDEOFROMDATE = last_date
+                                cnt += 1
+                            End If
+                        ElseIf cnt > 0 Then
+                            Exit For
+                        End If
+                    Catch ex As Exception
+                        '不正なデータ
+                        log1write("ビデオファイル一覧に不正なデータがありました" & f.fullpathfilename & " " & ex.Message)
+                    End Try
+                Next
+            End If
+
+            'ヘッダを追加
+            If cnt = 0 Then
+                rcode = 2 'リクエストを満たすデータがありません
+                last_date = CDate("1970/01/01 00:00:00")
+            ElseIf i >= video2.Length Then
+                rcode = 1 'これが最終です　yyyは 0と同じ xxxx/xx/xxは空白
+            End If
+        End If
+
         'Dim header As String = rcode & "," & cnt & "," & start_date.ToString("yyyy/MM/dd") & vbCrLf
         'Dim header As String = rcode & "," & cnt & "," & last_date.ToString("yyyy/MM/dd HH:mm:ss") & vbCrLf
         Dim header As String = rcode & "," & cnt & "," & last_date.ToString("yyyy/MM/dd") & vbCrLf
 
         r = header & r
+
+        Return r
+    End Function
+
+    'フォルダがcdir()で指定されたカレントフォルダ直下かどうか　末尾は\ではない
+    Private Function isCurrentDir(ByVal dir As String, ByVal cdir() As String) As Integer
+        Dim r As Integer = -1
+
+        dir = dir.TrimEnd("\")
+        If cdir IsNot Nothing Then
+            For i As Integer = 0 To cdir.Length - 1
+                Dim temp As String = dir.TrimEnd("\").Replace(cdir(i), "_+-_")
+                If temp.IndexOf("_+-_") = 0 Then
+                    Dim cnt As Integer = count_str(temp, "\")
+                    If cnt = 0 Then
+                        'そのもの
+                        r = 0
+                    ElseIf cnt = 1 Then
+                        '直下
+                        r = 1
+                        Exit For
+                    ElseIf cnt > 1 Then
+                        '子dir
+                        r = 2
+                        Exit For
+                    End If
+                End If
+            Next
+        End If
 
         Return r
     End Function
@@ -467,6 +580,8 @@ Class WebRemocon
                         Me._videopath(b) = folder
                     End If
                 Next folder
+                '並び替え
+                Array.Sort(Me._videopath)
             End If
         End If
     End Sub
@@ -5256,6 +5371,8 @@ Class WebRemocon
                                     vl_startdate = CDate("1980/01/01")
                                 End Try
                             End If
+                            'ビデオリスト　ディレクトリ指定
+                            Dim vl_dir As String = System.Web.HttpUtility.ParseQueryString(req.Url.Query)("vl_dir") & ""
                             'ISO再生関連
                             Dim iso As ISO_para_structure
                             Dim isotemp As String = ""
@@ -5439,7 +5556,7 @@ Class WebRemocon
                                                 videolist_firstview = 1
                                                 vl_refresh = 1
                                             End If
-                                            WI_cmd_reply = Me.WI_GET_VIDEOFILES2(videoexword, vl_refresh, vl_startdate, vl_volume)
+                                            WI_cmd_reply = Me.WI_GET_VIDEOFILES2(videoexword, vl_refresh, vl_startdate, vl_volume, temp, vl_dir)
                                         End If
                                         WI_cmd_reply_force = 1
                                     Case "WI_GET_ERROR_STREAM"

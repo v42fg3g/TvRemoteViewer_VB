@@ -885,6 +885,7 @@ UDP1235,0,1,0,0,48835,0,0,1
 			iniにTvRemoteViewer_VB作成チャプターを既存のチャプターより優先させるchapter_priorityを追加（2.91f）
 			iniのchapterポイントを何秒早めるか(-chapter_bufsec)に少数点を設定できるようにした（2.91g）
 			おまけ機能：iniにtsリネーム時にchapterファイルもあわせてリネームするtsRenameSyncChapterを追加（2.91h）
+			WI_GET_VIDEOFILES2.htmlに機能追加（2.91i）
 
 
 

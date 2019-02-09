@@ -652,7 +652,7 @@ Public Class Form1
         Me._worker.add_subfolder()
 
         '起動時にビデオファイル一覧を作成
-        Me._worker.WI_GET_VIDEOFILES2("", 1, C_DAY2038, 0)
+        Me._worker.WI_GET_VIDEOFILES2("", 1, C_DAY2038, 0, "", "")
 
         '解像度コンボボックスをセット httpサーバースタート後にhls_option()がセットされている
         search_ComboBoxResolution()

@@ -225,7 +225,15 @@ TvRemoteViewer_VB v2.83
 		vl_refresh	1=強制ビデオファイル更新
 		vl_startdate	指定日より前のビデオファイルを抽出する
 		vl_volume	何件表示するか（最終日付のファイルを追加するので不正確）
+		videoexword	単純に指定文字列が含まれているファイルリストを返す(半角スペース区切りでAND検索)【記述漏れ】
 		上記パラメーターは%SELECTVIDEO%を変換するSelectVideo.htmlにも有効
+		↓以下はWI_GET_VIDEOFILES2.htmlのみ対応【2.91i以降】
+		temp	,区切りで以下のパラメーターを指定可能
+				dironly		フォルダ構造のみ返す
+				current		カレントフォルダのみリストアップ
+		vl_dir	dironlyで取得したフォルダを指定（前方一致）
+		例：WI_GET_VIDEOFILES2.html?temp=dironly,current
+		    WI_GET_VIDEOFILES2.html?temp=current&vl_dir=D:\videos
 
 
 	WI_FILE_OPE.html	ファイル読み書き(UTF-8)
