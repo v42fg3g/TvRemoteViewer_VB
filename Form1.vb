@@ -2045,20 +2045,24 @@ Public Class Form1
     Private Sub watcher_Changed(ByVal source As System.Object, ByVal e As System.IO.FileSystemEventArgs)
         'もしかして並列ではなく直列に実行されているみたい・・
         If e.FullPath.ToString.IndexOf("Thumbs.db") < 0 Then
-
+            Dim cmd As Integer = 0
             Select Case e.ChangeType
                 Case System.IO.WatcherChangeTypes.Changed
                     log1write(("ファイル 「" + e.FullPath + _
                         "」が変更されました。"))
+                    cmd = 1
                 Case System.IO.WatcherChangeTypes.Created
                     log1write(("ファイル 「" + e.FullPath + _
                         "」が作成されました。"))
+                    cmd = 2
                 Case System.IO.WatcherChangeTypes.Deleted
                     log1write(("ファイル 「" + e.FullPath + _
                         "」が削除されました。"))
+                    cmd = 3
                 Case System.IO.WatcherChangeTypes.Renamed
                     log1write(("ファイル 「" + e.FullPath + _
                         "」が名前変更されました。"))
+                    cmd = 4
                     If tsRenameSyncChapter = 1 Then
                         'tsファイルがリネームされた場合は自動的にchapterファイルをリネームする
                         Dim ext As String = Path.GetExtension(e.FullPath)
@@ -2083,6 +2087,36 @@ Public Class Form1
                         End If
                     End If
             End Select
+
+            Dim chk As Integer = 0
+            If cmd = 2 Then
+                If folder_exist(e.FullPath) = 1 Then
+                    'フォルダが作成された
+                    chk = 1
+                End If
+            ElseIf cmd = 3 Then
+                '作成・削除の場合は、フォルダかファイルか判別しフォルダなら再構築
+                Dim isDir As Integer = 0
+                If Me._worker._videopath IsNot Nothing Then
+                    For i As Integer = 0 To Me._worker._videopath.Length - 1
+                        If Me._worker._videopath(i).Length > 0 Then
+                            If Me._worker._videopath(i).TrimEnd("\") = e.FullPath Then
+                                isDir = 1
+                                Exit For
+                            End If
+                        End If
+                    Next
+                End If
+                If isDir = 1 Then
+                    'フォルダが削除された場合
+                    chk = 1
+                End If
+            End If
+            If chk = 1 Then
+                '作成されたのに存在していない、または削除されたのに存在している場合
+                log1write("フォルダ構造が変更されました。再構築します")
+                Me._worker.add_subfolder()
+            End If
 
             '更新されたファイルがあるフォルダを記録
             Dim folder As String = Path.GetDirectoryName(e.FullPath)

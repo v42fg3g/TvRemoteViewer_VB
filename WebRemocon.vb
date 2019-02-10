@@ -338,6 +338,18 @@ Class WebRemocon
         If temp.IndexOf(",current,") >= 0 Then
             dir_current = 1
         End If
+        Dim pmark As Integer = 0
+        If temp.IndexOf(",pmark,") >= 0 Then
+            pmark = 1
+        End If
+        Dim dir_only As Integer = 0
+        If temp.IndexOf(",dironly,") >= 0 Then
+            dir_only = 1
+        End If
+        Dim dir_add As Integer = 0
+        If temp.IndexOf(",diradd,") >= 0 Then
+            dir_add = 1
+        End If
 
         'Me._videopath_ini()にiniで読み込んだカレントフォルダsが入っている
         Dim cdir() As String = Nothing 'カレントディレクトリ
@@ -357,9 +369,10 @@ Class WebRemocon
             End If
         End If
 
-        If temp.IndexOf(",dironly,") >= 0 Then
+        If dir_only = 1 Or dir_add = 1 Then
             'フォルダ構造のみ
             If Me._videopath IsNot Nothing Then
+                Dim parent_exist As Integer = 0
                 For i = 0 To Me._videopath.Length - 1
                     Dim chk As Integer = 0
                     Dim chk_dir As Integer = isCurrentDir(Me._videopath(i), cdir)
@@ -390,8 +403,42 @@ Class WebRemocon
                     End If
                     last_date = Now()
                 Next
+                If pmark = 1 And vl_dir.Length > 0 Then
+                    If folder_exist(vl_dir) = 1 Then
+                        '結果に親ディレクトリがあるか検査
+                        Dim d() As String = Split(r, vbCrLf)
+                        Dim f() As String = {""}
+                        For i = 0 To d.Length - 1
+                            If Me._videopath_ini IsNot Nothing Then
+                                For j = 0 To Me._videopath_ini.Length - 1
+                                    Dim a As String = Me._videopath_ini(j).TrimEnd("\")
+                                    If a.length <> vl_dir.Length Then
+                                        If vl_dir.IndexOf(a) = 0 Then
+                                            parent_exist = 1
+                                            Exit For
+                                        End If
+                                    End If
+                                Next
+                            End If
+                        Next
+                        If parent_exist = 1 Then
+                            r = "..," & Path.GetDirectoryName(vl_dir.TrimEnd("\")) & "\" & vbCrLf & r
+                            cnt += 1
+                        End If
+                    End If
+                End If
+                If dir_only = 0 Then
+                    Dim d() As String = Split(r, vbCrLf)
+                    For i = 0 To d.Length - 1
+                        If d(i).Length > 0 Then
+                            d(i) = "dir," & d(i)
+                        End If
+                    Next
+                    r = String.Join(vbCrLf, d)
+                End If
             End If
-        Else
+        End If
+        If dir_only = 0 Or dir_add = 1 Then
             Dim datestr As String = start_date.ToString("yyyyMMddHH")
             If vl_volume = 0 Then
                 vl_volume = C_INTMAX

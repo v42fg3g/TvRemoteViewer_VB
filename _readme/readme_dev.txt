@@ -231,9 +231,12 @@ TvRemoteViewer_VB v2.83
 		temp	,区切りで以下のパラメーターを指定可能
 				dironly		フォルダ構造のみ返す
 				current		カレントフォルダのみリストアップ
+				diradd		ファイル一覧にフォルダ一覧を併記（フォルダには日付の代わりに"dir"を追加）
+				pmark		vl_dirが指定されている場合に親フォルダがあるか検査し存在すれば「..,親フォルダパス」を追加
 		vl_dir	dironlyで取得したフォルダを指定（前方一致）
-		例：WI_GET_VIDEOFILES2.html?temp=dironly,current
-		    WI_GET_VIDEOFILES2.html?temp=current&vl_dir=D:\videos
+		例：WI_GET_VIDEOFILES2.html?temp=dironly,pmark,current
+		    WI_GET_VIDEOFILES2.html?temp=diradd,pmark,current
+		    WI_GET_VIDEOFILES2.html?temp=diradd,pmark,current&vl_dir=D:\videos
 
 
 	WI_FILE_OPE.html	ファイル読み書き(UTF-8)

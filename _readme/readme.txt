@@ -1,4 +1,4 @@
-TvRemoteViewer_VB v2.91
+TvRemoteViewer_VB v2.92
 
 
 
@@ -886,6 +886,8 @@ UDP1235,0,1,0,0,48835,0,0,1
 			iniのchapterポイントを何秒早めるか(-chapter_bufsec)に少数点を設定できるようにした（2.91g）
 			おまけ機能：iniにtsリネーム時にchapterファイルもあわせてリネームするtsRenameSyncChapterを追加（2.91h）
 			WI_GET_VIDEOFILES2.htmlに機能追加（2.91i）
+	2.92	WI_GET_VIDEOFILES2.htmlに機能追加
+			録画フォルダ内でフォルダ作成・削除された場合に録画ファイル一覧に反映されなかった不具合を修正
 
 
 
