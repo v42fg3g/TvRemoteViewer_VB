@@ -6739,6 +6739,7 @@ Class WebRemocon
         r &= "Stop_VCEEnc_at_StartEnd=" & Stop_VCEEnc_at_StartEnd & vbCrLf
         r &= "MAX_STREAM_NUMBER=" & MAX_STREAM_NUMBER & vbCrLf
         r &= "STOP_IDLEMINUTES=" & STOP_IDLEMINUTES & vbCrLf
+        r &= "TSID_in_ChSpace=" & TSID_in_ChSpace & vbCrLf
         r &= "TvRemoteViewer_VB_version=" & Format(TvRemoteViewer_VB_version, "0.00")
         r &= vbCrLf
         r &= "【UDPアプリ】" & vbCrLf

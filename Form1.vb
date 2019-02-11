@@ -2089,7 +2089,7 @@ Public Class Form1
             End Select
 
             Dim chk As Integer = 0
-            If cmd = 2 Then
+            If cmd = 2 Or cmd = 4 Then
                 If folder_exist(e.FullPath) = 1 Then
                     'フォルダが作成された
                     chk = 1
