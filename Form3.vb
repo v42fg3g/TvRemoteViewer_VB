@@ -106,48 +106,6 @@
         End If
     End Sub
 
-    Private Function Analyse_UserAgent(ByVal UA As String) As String
-        Dim r As String = ""
-
-        UA &= ""
-        If Not String.IsNullOrEmpty(UA) Then
-            UA = UA.ToLower
-
-            If UA.IndexOf("windows") >= 0 Then
-                r = "Windows"
-            ElseIf UA.IndexOf("iphone") >= 0 Or UA.IndexOf("ipod") >= 0 Or UA.IndexOf("ipad") >= 0 Then
-                r = "iOS"
-            ElseIf UA.IndexOf("android") >= 0 Then
-                r = "Android"
-            ElseIf UA.IndexOf("os x") >= 0 Or UA.IndexOf("mac") Then
-                r = "OS X"
-            ElseIf UA.IndexOf("linux") >= 0 Or UA.IndexOf("bsd") >= 0 Or UA.IndexOf("sunos") >= 0 Then
-                r = "Linux"
-            ElseIf UA.IndexOf("nintendo") >= 0 Then
-                r = "Nintendo"
-            ElseIf UA.IndexOf("playstation") >= 0 Then
-                r = "PlayStation"
-            ElseIf UA.IndexOf("docomo") >= 0 Then
-                r = "docomo"
-            ElseIf UA.IndexOf("kddi") >= 0 Then
-                r = "AU"
-            ElseIf UA.IndexOf("softbank") >= 0 Or UA.IndexOf("j-phone") >= 0 Then
-                r = "SoftBank"
-            ElseIf UA.IndexOf("willcom") >= 0 Then
-                r = "WILLCOM"
-            End If
-        End If
-
-        If r.Length = 0 And UA.Length > 0 Then
-            r = "不明"
-        End If
-
-        If r.Length > 0 Then
-            r = r & ":    " & UA
-        End If
-        Return r
-    End Function
-
     Private Function reserve_Hmm(ByVal startt As Integer) As String
         Dim r As String = ""
 

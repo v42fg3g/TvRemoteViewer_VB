@@ -887,7 +887,10 @@ UDP1235,0,1,0,0,48835,0,0,1
 			おまけ機能：iniにtsリネーム時にchapterファイルもあわせてリネームするtsRenameSyncChapterを追加（2.91h）
 			WI_GET_VIDEOFILES2.htmlに機能追加（2.91i）
 	2.92	WI_GET_VIDEOFILES2.htmlに機能追加
-			録画フォルダ内でフォルダ作成・削除された場合に録画ファイル一覧に反映されなかった不具合を修正
+			2.91iのWI_GET_VIDEOFILES2でフォルダ作成・削除時に録画ファイル一覧に反映されなかったバグを修正
+			WI_GET_VIDEOFILES2でフォルダ名変更時に録画ファイル一覧に反映されなかったバグを修正（2.92b）
+			WI_GET_TVRV_STATUSにTSID_in_ChSpaceを記載（2.92c）
+			終了後のTvRemoteViewer.logにアクセスログを記載（2.92d）
 
 
 

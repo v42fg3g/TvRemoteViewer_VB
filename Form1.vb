@@ -1096,7 +1096,18 @@ Public Class Form1
 
         'ログをファイル出力
         If log_path.Length > 0 Then
-            str2file(log_path, log1, "UTF-8")
+            Dim alog As String = ""
+            If AccessLogList IsNot Nothing Then
+                For i As Integer = 0 To AccessLogList.Length - 1
+                    alog &= "  " & unix2time(AccessLogList(i).utime) & " "
+                    alog &= AccessLogList(i).IP & "（"
+                    alog &= AccessLogList(i).domain & ")    "
+                    alog &= Analyse_UserAgent(AccessLogList(i).UserAgent) & "     "
+                    alog &= AccessLogList(i).URL & vbCrLf
+                    alog &= "-------------------------------------------------" & vbCrLf
+                Next
+            End If
+            str2file(log_path, alog & log1, "UTF-8")
             '整形済みログをTvRemoteViewer_VB_edited.logに出力
             Dim log_path2 As String = ""
             Dim ext As String = Path.GetExtension(log_path)

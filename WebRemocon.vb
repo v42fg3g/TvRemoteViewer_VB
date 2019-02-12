@@ -4966,12 +4966,6 @@ Class WebRemocon
             Dim rUrl_ext As String = GetExtensionFromURL(rUrl)
             Dim UserAgent As String = context.Request.UserAgent
             If rUrl.IndexOf("/WatchTV") >= 0 Then
-                'ログ記録
-                Dim ipstr As String = context.Request.RemoteEndPoint.Address.ToString
-                If ipstr.Length > 0 Then
-                    SetAccessLog(ipstr, rUrl, UserAgent)
-                End If
-
                 '★ffmpeg HTTPストリームモード
                 Dim auth_ok As Integer = 0
                 If Me._id.Length = 0 Or Me._pass.Length = 0 Then
@@ -4989,6 +4983,12 @@ Class WebRemocon
                 End If
 
                 If auth_ok > 0 Then
+                    'ログ記録
+                    Dim ipstr As String = context.Request.RemoteEndPoint.Address.ToString
+                    If ipstr.Length > 0 Then
+                        SetAccessLog(ipstr, rUrl, UserAgent)
+                    End If
+
                     '最後にアクセスがあった日時を記録
                     STOP_IDLEMINUTES_LAST = Now()
 
