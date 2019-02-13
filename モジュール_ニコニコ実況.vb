@@ -133,7 +133,7 @@ Module モジュール_ニコニコ実況
                             c(6) = chapter_search_abc(html, "予告")
                             c(7) = get_chapter_mstime(html.Length - 2, html) '最後のコメントタイム
                             'Aより後のキターなら削除
-                            If c(0) > c(2) Or c(0) > c(3) Then
+                            If (c(0) > c(1) And c(1) >= 0) Or (c(0) > c(2) And c(2) >= 0) Or (c(0) > c(3) And c(3) >= 0) Then
                                 c(0) = -1
                             End If
                             '並び替え
