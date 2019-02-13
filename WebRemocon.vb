@@ -732,7 +732,7 @@ Class WebRemocon
         'chk=-2 拡張子指定は無い
         'chk>=0 拡張子指定が有り、一致した
         'chk=-1 拡張子指定が有り、一致しなかった
-        If chk >= 0 Or (chk = -2 And ext <> ".db" < 0 And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass" And ext <> ".ini" And ext <> ".txt") Then
+        If chk >= 0 Or (chk = -2 And ext <> ".db" And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass" And ext <> ".ini" And ext <> ".txt") Then
             '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
             Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
             Dim datestr As String = modifytime.ToString("yyyyMMddHH")
@@ -4962,9 +4962,9 @@ Class WebRemocon
 
             Dim context As HttpListenerContext = listener.EndGetContext(result)
             'D:\TvRemoteViewer\html\WatchTV1.tsが見つかりませんでした
-            Dim rUrl As String = context.Request.RawUrl
+            Dim rUrl As String = context.Request.RawUrl & ""
             Dim rUrl_ext As String = GetExtensionFromURL(rUrl)
-            Dim UserAgent As String = context.Request.UserAgent
+            Dim UserAgent As String = context.Request.UserAgent & ""
             If rUrl.IndexOf("/WatchTV") >= 0 Then
                 '★ffmpeg HTTPストリームモード
                 Dim auth_ok As Integer = 0
@@ -4984,7 +4984,7 @@ Class WebRemocon
 
                 If auth_ok > 0 Then
                     'ログ記録
-                    Dim ipstr As String = context.Request.RemoteEndPoint.Address.ToString
+                    Dim ipstr As String = context.Request.RemoteEndPoint.Address.ToString & ""
                     If ipstr.Length > 0 Then
                         SetAccessLog(ipstr, rUrl, UserAgent)
                     End If
@@ -5269,10 +5269,10 @@ Class WebRemocon
                         End If
 
                         'リクエストされたURL
-                        Dim req_Url As String = req.Url.LocalPath
+                        Dim req_Url As String = req.Url.LocalPath & ""
 
                         'リクエスト元
-                        Dim ipstr As String = req.RemoteEndPoint.Address.ToString
+                        Dim ipstr As String = req.RemoteEndPoint.Address.ToString & ""
                         log1write(req_Url & req.Url.Query & "へのリクエストがありました。" & mtypestr & "[" & ipstr & "]")
 
                         'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
@@ -7415,7 +7415,7 @@ Class WebRemocon
     End Function
 
     Public file_ope_allow_filelist() As String
-    Public Function file_ope_allow_files(ByVal fl_cmd As String, ByVal fl_file As String, ByVal fullpathfilename As String)
+    Public Function file_ope_allow_files(ByVal fl_cmd As String, ByVal fl_file As String, ByVal fullpathfilename As String) As Integer
         Dim r As Integer = 0
 
         Dim ext As String = Path.GetExtension(fullpathfilename).ToLower

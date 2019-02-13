@@ -2004,7 +2004,7 @@ Module モジュール_番組表
     End Function
 
     '文字列内のhtmlタグを消去
-    Public Function delete_tag(ByVal s As String)
+    Public Function delete_tag(ByVal s As String) As String
         'タイトル内のタグを削除
         Dim k1 As Integer = s.IndexOf("<")
         Dim k2 As Integer = s.IndexOf(">", k1 + 1)

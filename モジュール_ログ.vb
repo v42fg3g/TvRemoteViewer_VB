@@ -88,7 +88,7 @@
                 r = "iOS"
             ElseIf UA.IndexOf("android") >= 0 Then
                 r = "Android"
-            ElseIf UA.IndexOf("os x") >= 0 Or UA.IndexOf("mac") Then
+            ElseIf UA.IndexOf("os x") >= 0 Or UA.IndexOf("mac") >= 0 Then
                 r = "OS X"
             ElseIf UA.IndexOf("linux") >= 0 Or UA.IndexOf("bsd") >= 0 Or UA.IndexOf("sunos") >= 0 Then
                 r = "Linux"

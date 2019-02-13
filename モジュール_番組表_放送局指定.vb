@@ -225,7 +225,7 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Public Function searchJigyoushaBySIDandNAME(ByVal p_sid As Integer, ByVal p_station As String)
+    Public Function searchJigyoushaBySIDandNAME(ByVal p_sid As Integer, ByVal p_station As String) As Integer
         Dim r As Integer = -1
 
         If p_sid = 161 Then
