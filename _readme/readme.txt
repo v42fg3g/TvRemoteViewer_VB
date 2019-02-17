@@ -891,6 +891,8 @@ UDP1235,0,1,0,0,48835,0,0,1
 			WI_GET_VIDEOFILES2でフォルダ名変更時に録画ファイル一覧に反映されなかったバグを修正（2.92b）
 			WI_GET_TVRV_STATUSにTSID_in_ChSpaceを記載（2.92c）
 			終了後のTvRemoteViewer.logにアクセスログを記載（2.92d）
+			チャプター作成でA,Bどちらかが存在しない場合にｷﾀｰが削除されてしまうバグの修正（2.92e）
+			WI_GET_VIDEOFILES2の修正（2.92f）
 
 
 

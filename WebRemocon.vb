@@ -323,8 +323,12 @@ Class WebRemocon
         Dim r As String = ""
         Dim i As Integer = 0
         Dim rcode As Integer = 0
+        Dim rcode_file As Integer = 0
+        Dim rcode_dir As Integer = 0
         Dim last_date As DateTime
         Dim cnt As Integer = 0
+        Dim cnt_dir As Integer = 0
+        Dim cnt_file As Integer = 0
 
         If vl_dir.Length > 0 Then
             vl_dir = System.Web.HttpUtility.UrlDecode(vl_dir)
@@ -351,68 +355,74 @@ Class WebRemocon
             dir_add = 1
         End If
 
+        Dim Me_VideoPath() As String = Nothing
+        Me_VideoPath = Me._videopath
+
         'Me._videopath_ini()にiniで読み込んだカレントフォルダsが入っている
         Dim cdir() As String = Nothing 'カレントディレクトリ
-        If vl_dir.Length > 0 Then
-            ReDim cdir(0)
-            cdir(0) = vl_dir
-        Else
-            If Me._videopath_ini IsNot Nothing Then
-                Dim j As Integer = 0
-                For i = 0 To Me._videopath_ini.Length - 1
-                    If Me._videopath_ini(i).TrimEnd("\").Length > 0 Then
-                        ReDim Preserve cdir(j)
-                        cdir(j) = Me._videopath_ini(i).TrimEnd("\")
-                        j += 1
-                    End If
-                Next
+        Try
+            If vl_dir.Length > 0 Then
+                ReDim cdir(0)
+                cdir(0) = vl_dir
+            Else
+                If Me._videopath_ini IsNot Nothing Then
+                    Dim j As Integer = 0
+                    For i = 0 To Me._videopath_ini.Length - 1
+                        If Me._videopath_ini(i).TrimEnd("\").Length > 0 Then
+                            ReDim Preserve cdir(j)
+                            cdir(j) = Me._videopath_ini(i).TrimEnd("\")
+                            j += 1
+                        End If
+                    Next
+                End If
             End If
-        End If
-
+        Catch ex As Exception
+            log1write("【エラー】WI_GET_VIDEOFILES2[A]でエラーが発生しました。" & ex.Message)
+        End Try
+        cdir = Nothing 'test
         If dir_only = 1 Or dir_add = 1 Then
             'フォルダ構造のみ
             If Me._videopath IsNot Nothing Then
                 Dim parent_exist As Integer = 0
-                For i = 0 To Me._videopath.Length - 1
-                    Dim chk As Integer = 0
-                    Dim chk_dir As Integer = isCurrentDir(Me._videopath(i), cdir)
-                    If dir_current = 1 Then
-                        If chk_dir = 1 Then
+                For i = 0 To Me_VideoPath.Length - 1
+                    Try
+                        Dim chk As Integer = 0
+                        Dim chk_dir As Integer = isCurrentDir(Me_VideoPath(i), cdir)
+                        If dir_current = 1 Then
+                            If chk_dir = 1 Then
+                                chk = 1
+                            End If
+                        ElseIf chk_dir >= 0 Then
                             chk = 1
                         End If
-                    ElseIf chk_dir >= 0 Then
-                        chk = 1
-                    End If
-                    If chk = 1 And videoexword.Length > 0 Then
-                        videoexword = videoexword.Replace("　", " ").Trim()
-                        Dim d() As String = videoexword.Split(" ")
-                        For j As Integer = 0 To d.Length - 1
-                            If d.Length > 0 Then
-                                If Me._videopath(i).IndexOf(d(j)) < 0 Then
-                                    chk = 0
+                        If chk = 1 And videoexword.Length > 0 Then
+                            videoexword = videoexword.Replace("　", " ").Trim()
+                            Dim d() As String = videoexword.Split(" ")
+                            For j As Integer = 0 To d.Length - 1
+                                If d(j).Length > 0 Then
+                                    If Me_VideoPath(i).IndexOf(d(j)) < 0 Then
+                                        chk = 0
+                                    End If
                                 End If
-                            End If
-                        Next
-                    End If
-                    If chk = 1 Then
-                        r &= filename_escape_set(Me._videopath(i)).TrimEnd("\") & "\" & vbCrLf
-                        cnt += 1
-                        rcode = 1
-                    Else
-                        rcode = 2
-                    End If
-                    last_date = Now()
+                            Next
+                        End If
+                        If chk = 1 Then
+                            r &= filename_escape_set(Me_VideoPath(i)).TrimEnd("\") & "\" & vbCrLf
+                            cnt_dir += 1
+                        End If
+                        last_date = Now()
+                    Catch ex As Exception
+                        log1write("【エラー】WI_GET_VIDEOFILES2[B]でエラーが発生しました。" & ex.Message)
+                    End Try
                 Next
-                If pmark = 1 And vl_dir.Length > 0 Then
-                    If folder_exist(vl_dir) = 1 Then
-                        '結果に親ディレクトリがあるか検査
-                        Dim d() As String = Split(r, vbCrLf)
-                        Dim f() As String = {""}
-                        For i = 0 To d.Length - 1
+                Try
+                    If pmark = 1 And vl_dir.Length > 0 Then
+                        If folder_exist(vl_dir) = 1 Then
+                            '結果に親ディレクトリがあるか検査
                             If Me._videopath_ini IsNot Nothing Then
                                 For j = 0 To Me._videopath_ini.Length - 1
                                     Dim a As String = Me._videopath_ini(j).TrimEnd("\")
-                                    If a.length <> vl_dir.Length Then
+                                    If a.Length <> vl_dir.Length Then
                                         If vl_dir.IndexOf(a) = 0 Then
                                             parent_exist = 1
                                             Exit For
@@ -420,22 +430,28 @@ Class WebRemocon
                                     End If
                                 Next
                             End If
-                        Next
-                        If parent_exist = 1 Then
-                            r = "..," & Path.GetDirectoryName(vl_dir.TrimEnd("\")) & "\" & vbCrLf & r
-                            cnt += 1
+                            If parent_exist = 1 Then
+                                r = "..," & Path.GetDirectoryName(vl_dir.TrimEnd("\")) & "\" & vbCrLf & r
+                                cnt_dir += 1
+                            End If
                         End If
                     End If
-                End If
-                If dir_only = 0 Then
-                    Dim d() As String = Split(r, vbCrLf)
-                    For i = 0 To d.Length - 1
-                        If d(i).Length > 0 Then
-                            d(i) = "dir," & d(i)
-                        End If
-                    Next
-                    r = String.Join(vbCrLf, d)
-                End If
+                Catch ex As Exception
+                    log1write("【エラー】WI_GET_VIDEOFILES2[C]でエラーが発生しました。" & ex.Message)
+                End Try
+                Try
+                    If dir_only = 0 Then
+                        Dim d() As String = Split(r, vbCrLf)
+                        For i = 0 To d.Length - 1
+                            If d(i).Length > 0 Then
+                                d(i) = "dir," & d(i)
+                            End If
+                        Next
+                        r = String.Join(vbCrLf, d)
+                    End If
+                Catch ex As Exception
+                    log1write("【エラー】WI_GET_VIDEOFILES2[D]でエラーが発生しました。" & ex.Message)
+                End Try
             End If
         End If
         If dir_only = 0 Or dir_add = 1 Then
@@ -449,20 +465,25 @@ Class WebRemocon
                 video = RefreshVideoList("")
             End If
             Dim video2() As videostructure = Nothing
-            If videoexword.Length > 0 Then
-                'フィルタ
-                video2 = RefreshVideoListExword(videoexword)
-            Else
-                video2 = video
-            End If
+            Try
+                If videoexword.Length > 0 Then
+                    'フィルタ
+                    video2 = RefreshVideoListExword(videoexword)
+                Else
+                    video2 = video
+                End If
+            Catch ex As Exception
+                log1write("【エラー】WI_GET_VIDEOFILES2[E]でエラーが発生しました。" & ex.Message)
+            End Try
 
+            i = 0
             If video2 IsNot Nothing Then
                 For i = 0 To video2.Length - 1
                     Dim f As videostructure = video2(i)
                     Dim fdatestr As String = ""
                     Try
                         fdatestr = f.datestr.Substring(0, 8) 'yyyyMMddHHからyyyyMMddにする
-                        If f.datestr < datestr And (cnt < vl_volume Or (cnt >= vl_volume And fdatestr = last_date.ToString("yyyyMMdd"))) Then
+                        If f.datestr < datestr And (cnt_file < vl_volume Or (cnt_file >= vl_volume And fdatestr = last_date.ToString("yyyyMMdd"))) Then
                             Dim chk As Integer = 0
                             If vl_dir.Length > 0 Or dir_current = 1 Then
                                 Dim chk_dir As Integer = isCurrentDir(video2(i).fullpathfilename, cdir)
@@ -482,30 +503,47 @@ Class WebRemocon
                                 r &= video2(i).datestr & "," & video2(i).encstr & vbCrLf 'value値と同じもの
                                 last_date = video2(i).modifytime
                                 VIDEOFROMDATE = last_date
-                                cnt += 1
+                                cnt_file += 1
                             End If
-                        ElseIf cnt > 0 Then
+                        ElseIf cnt_file > 0 Then
                             Exit For
                         End If
                     Catch ex As Exception
                         '不正なデータ
-                        log1write("ビデオファイル一覧に不正なデータがありました" & f.fullpathfilename & " " & ex.Message)
+                        log1write("【エラー】WI_GET_VIDEOFILES2[F] ビデオファイル一覧に不正なデータがありました" & f.fullpathfilename & " " & ex.Message)
                     End Try
                 Next
-            End If
 
-            'ヘッダを追加
-            If cnt = 0 Then
-                rcode = 2 'リクエストを満たすデータがありません
+                'ヘッダを追加
+                If cnt_file = 0 Then
+                    rcode_file = 1 'リクエストを満たすデータがありません
+                    last_date = CDate("1970/01/01 00:00:00")
+                ElseIf i >= video2.Length Then
+                    rcode_file = 1 'これが最終です　yyyは 0と同じ xxxx/xx/xxは空白
+                End If
+            Else
+                '空
+                rcode_file = 1
                 last_date = CDate("1970/01/01 00:00:00")
-            ElseIf i >= video2.Length Then
-                rcode = 1 'これが最終です　yyyは 0と同じ xxxx/xx/xxは空白
             End If
+        End If
+
+        If dir_only = 1 And dir_add = 0 Then
+            'フォルダ構造だけの場合のみフォルダ数を返す
+            rcode = rcode_dir
+            cnt = cnt_dir
+            'ElseIf dir_add = 1 Then 'フォルダ＆ファイル　合算しようかと思ったがファイル数のみカウント
+            'rcode = rcode_file
+            'cnt = cnt_file + cnt_dir
+        Else
+            'ファイルのみカウント
+            rcode = rcode_file
+            cnt = cnt_file
         End If
 
         'Dim header As String = rcode & "," & cnt & "," & start_date.ToString("yyyy/MM/dd") & vbCrLf
         'Dim header As String = rcode & "," & cnt & "," & last_date.ToString("yyyy/MM/dd HH:mm:ss") & vbCrLf
-        Dim header As String = rcode & "," & cnt & "," & last_date.ToString("yyyy/MM/dd") & vbCrLf
+        Dim header As String = rcode & "," & cnt_file & "," & last_date.ToString("yyyy/MM/dd") & vbCrLf
 
         r = header & r
 
@@ -556,8 +594,10 @@ Class WebRemocon
                         '抽出
                         '全てのワードに当てはまるかチェック
                         For j As Integer = 0 To v.Length - 1
-                            If filename.IndexOf(v(j)) < 0 Then
-                                filename = ""
+                            If v(j).Length > 0 Then
+                                If filename.IndexOf(v(j)) < 0 Then
+                                    filename = ""
+                                End If
                             End If
                         Next
 
@@ -597,15 +637,15 @@ Class WebRemocon
 
     '_videopath_ini下のサブフォルダを加えて_videopathとして記録
     Public Sub add_subfolder()
-        Me._videopath = Me._videopath_ini '元フォルダをコピー
+        Dim s() As String = Me._videopath_ini '元フォルダをコピー
 
         If Me._AddSubFolder = 1 Then
-            If Me._videopath IsNot Nothing Then
+            If s IsNot Nothing Then
                 'サブフォルダを含める
                 Dim sf As New ArrayList
                 Dim errf As New ArrayList
-                For j = 0 To Me._videopath.Length - 1
-                    GetSubfolders(Me._videopath(j), sf, errf)
+                For j = 0 To s.Length - 1
+                    GetSubfolders(s(j), sf, errf)
                     errf.Add("RECYCLER") '"RECYCLER"を除外する
                     errf.Add("chapters") 'chaptersを除外する
                 Next
@@ -622,13 +662,40 @@ Class WebRemocon
                     Next
                     If chk = 0 Then
                         'video_path()に追加
-                        Dim b As Integer = Me._videopath.Length
-                        ReDim Preserve Me._videopath(b)
-                        Me._videopath(b) = folder
+                        Dim b As Integer = 0
+                        If s IsNot Nothing Then
+                            b = s.Length
+                        End If
+                        ReDim Preserve s(b)
+                        s(b) = folder
                     End If
                 Next folder
                 '並び替え
-                Array.Sort(Me._videopath)
+                Array.Sort(s)
+
+                Dim chk2 As Integer = 0
+                Try
+                    If Me._videopath IsNot Nothing And s IsNot Nothing Then
+                        If Me._videopath.Length = s.Length Then
+                            For i As Integer = 0 To s.Length - 1
+                                If s(i) <> Me._videopath(i) Then
+                                    chk2 = 1
+                                    Exit For
+                                End If
+                            Next
+                        Else
+                            chk2 = 1
+                        End If
+                    Else
+                        chk2 = 1
+                    End If
+                    If chk2 = 1 Then
+                        '違いがあれば更新
+                        Me._videopath = s
+                    End If
+                Catch ex As Exception
+                    Me._videopath = s
+                End Try
             End If
         End If
     End Sub
@@ -651,11 +718,13 @@ Class WebRemocon
 
             If Me._videopath IsNot Nothing Then
                 If Me._videopath.Length > 0 Then
-                    For i = 0 To Me._videopath.Length - 1
+                    Dim vp() As String = Nothing
+                    vp = Me._videopath
+                    For i = 0 To vp.Length - 1
                         Try
-                            If Me._videopath(i).Length > 0 Then
+                            If vp(i).Length > 0 Then
                                 Try
-                                    Dim files As String() = System.IO.Directory.GetFiles(Me._videopath(i), "*")
+                                    Dim files As String() = System.IO.Directory.GetFiles(vp(i), "*")
                                     'For Each stFilePath As String In System.IO.Directory.GetFiles(Me._videopath(i), "*.*") ', "*.ts")
                                     For Each stFilePath As String In files
                                         Try
@@ -666,7 +735,7 @@ Class WebRemocon
                                         End Try
                                     Next stFilePath
                                 Catch ex As Exception
-                                    log1write("ビデオフォルダ " & Me._videopath(i) & " の読み込みに失敗しました。" & ex.Message)
+                                    log1write("ビデオフォルダ " & vp(i) & " の読み込みに失敗しました。" & ex.Message)
                                 End Try
                             End If
                         Catch ex As Exception
@@ -749,8 +818,10 @@ Class WebRemocon
                 '全てのワードに当てはまるかチェック
                 For j As Integer = 0 To v.Length - 1
                     'If filename.IndexOf(v(j)) < 0 Then
-                    If encstr.IndexOf(v(j)) < 0 Then 'フォルダもフィルタに含めるようにした
-                        filename = ""
+                    If v(j).Length > 0 Then
+                        If encstr.IndexOf(v(j)) < 0 Then 'フォルダもフィルタに含めるようにした
+                            filename = ""
+                        End If
                     End If
                 Next
             End If
