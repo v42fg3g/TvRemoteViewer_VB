@@ -6822,9 +6822,11 @@ Class WebRemocon
         'r &= "_BonDriverPath=" & Me._udpApp & vbCrLf
         r &= "_BonDriverPath="
         If Me._BonDriverPath.Length > 0 Then
-            r &= Me._BonDriverPath
+            r &= Me._BonDriverPath & ""
         Else
-            r &= Path.GetDirectoryName(Me._udpApp)
+            If (Me._udpApp & "").Length > 0 Then
+                r &= Path.GetDirectoryName(Me._udpApp & "")
+            End If
         End If
         r &= vbCrLf
         r &= "TvProgramD_BonDriver1st="

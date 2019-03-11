@@ -629,6 +629,75 @@ Module モジュール_番組表
                 r = get_D_program(regionID)
             End If
 
+            '現在時刻の番組が無ければ放送休止を作成し番組をずらす
+            If r IsNot Nothing Then
+                Dim t As DateTime = Now()
+                Dim plus_name As String = ","
+                For i As Integer = 0 To r.Length - 1
+                    Try
+                        If r(i).nextFlag = 0 Then
+                            Dim st As DateTime = Nothing
+                            Dim d() As String = r(i).startDateTime.Split(" ")
+                            If Val(d(0)) < 2010 And Val(d(0)) > 1900 Then
+                                st = CDate(t.ToString("yyyy/MM/dd ") & d(1))
+                            Else
+                                st = CDate(r(i).startDateTime)
+                            End If
+                            Dim et As DateTime = Nothing
+                            d = r(i).endDateTime.Split(" ")
+                            If Val(d(0)) < 2010 And Val(d(0)) > 1900 Then
+                                et = CDate(t.ToString("yyyy/MM/dd ") & d(1))
+                                If et < st Then
+                                    If Hour(t) > 12 Then
+                                        '現在が午後ならば
+                                        et = DateAdd(DateInterval.Day, 1, et)
+                                    Else
+                                        '現在が午前ならば
+                                        st = DateAdd(DateInterval.Day, -1, et)
+                                    End If
+                                End If
+                            Else
+                                et = CDate(r(i).startDateTime)
+                            End If
+                            If t < st Then
+                                Dim j As Integer = r.Length
+                                ReDim Preserve r(j)
+                                r(j).stationDispName = r(i).stationDispName
+                                r(j).sid = r(i).sid
+                                r(j).tsid = r(i).tsid
+                                r(j).programTitle = "放送休止"
+                                r(j).programContent = ""
+                                r(j).genre = "-1"
+                                r(j).ProgramInformation = r(i).ProgramInformation
+                                If Val(d(0)) < 2010 And Val(d(0)) > 1900 Then
+                                    r(j).startDateTime = d(0) & " " & Hour(t) & ":" & Minute(t).ToString("D2")
+                                Else
+                                    r(j).startDateTime = t.ToString
+                                End If
+                                If Val(d(0)) < 2010 And Val(d(0)) > 1900 Then
+                                    r(j).endDateTime = d(0) & " " & Hour(st) & ":" & Minute(st).ToString("D2")
+                                Else
+                                    r(j).endDateTime = st.ToString
+                                End If
+                                r(j).nextFlag = -1 '後で足されて0になる 順次繰り下がり
+                                plus_name &= r(i).stationDispName & ","
+                                log1write("現在時の番組情報が含まれていなかったので放送休止を追加しました。放送局=" & plus_name)
+                            End If
+                        End If
+                    Catch ex As Exception
+                        log1write("現在時放送休止チェック中にエラーが発生しました。" & ex.Message)
+                    End Try
+                Next
+                If plus_name.Length > 1 Then
+                    For i As Integer = 0 To r.Length - 1
+                        If plus_name.IndexOf("," & r(i).stationDispName & ",") >= 0 Then
+                            r(i).nextFlag += 1
+                        End If
+                    Next
+                    Array.Sort(r)
+                End If
+            End If
+
             'キャッシュに保存
             pcache_set(regionID, r)
             log1write("【番組表】番組情報取得作業を行いました。" & region2softname(regionID))
