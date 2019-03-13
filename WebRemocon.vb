@@ -6525,7 +6525,7 @@ Class WebRemocon
                                     sw.Flush() 'ここでエラーになることがある
                                     sw.Close()
                                 Catch ex As Exception
-                                    log1write("【エラー】" & "HTML出力に失敗しました(StreamWriter)" & req_Url & " " & ex.Message)
+                                    log1write("【エラー】HTML出力に失敗しました(StreamWriter)" & req_Url & " " & ex.Message)
                                 End Try
                             Else
                                 Dim content As Byte() = Nothing

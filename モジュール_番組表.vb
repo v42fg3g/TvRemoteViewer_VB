@@ -633,7 +633,7 @@ Module モジュール_番組表
                 r = get_Outside_program(t)
             ElseIf regionID > 0 Then
                 'ネットから地域の番組表を取得
-                r = get_D_program(regionID) '■■■時間操作不可　なんとかなるでしょう
+                r = get_D_program(regionID)
             End If
 
             '現在時刻の番組が無ければ放送休止を作成し番組をずらす
@@ -659,7 +659,7 @@ Module モジュール_番組表
                                         et = DateAdd(DateInterval.Day, 1, et)
                                     Else
                                         '現在が午前ならば
-                                        st = DateAdd(DateInterval.Day, -1, et)
+                                        st = DateAdd(DateInterval.Day, -1, st)
                                     End If
                                 End If
                             Else
@@ -722,6 +722,9 @@ Module モジュール_番組表
         t(0) = CDate("1970/01/01 09:00")
         t(1) = CDate("1970/01/01 09:00")
 
+        t1str = t1str.Replace("  ", " ")
+        t2str = t2str.Replace("  ", " ")
+
         Dim d() As String = t1str.Split(" ")
         If Val(d(0)) < 2010 And Val(d(0)) > 1900 Then
             t(0) = CDate(nowt.ToString("yyyy/MM/dd") & " " & d(1))
@@ -737,7 +740,7 @@ Module モジュール_番組表
                     t(1) = DateAdd(DateInterval.Day, 1, t(1))
                 Else
                     '現在が午前ならば
-                    t(1) = DateAdd(DateInterval.Day, -1, t(1))
+                    t(0) = DateAdd(DateInterval.Day, -1, t(0))
                 End If
             End If
         Else
@@ -943,6 +946,180 @@ Module モジュール_番組表
                 End If
             End If
         End If
+
+        Return r
+    End Function
+
+    Private Function get_D_program_new(ByVal regionID As Integer, ByVal t As DateTime) As TVprogramstructure()
+        Dim r() As TVprogramstructure = Nothing
+        Try
+            'ネットから地域の番組表を取得
+            Dim ut As Integer = time2unix(t)
+            Dim html As String = get_html_by_webclient("https://tv.so-net.ne.jp/chart/" & regionID & ".action?group=10", "UTF-8")
+            html = html.Replace("<wbr>", "")
+
+            Dim station_name As String = ""
+            Dim sid_top As String = ""
+            Dim top_str As String = """cell-station-top-"
+            Dim sp As Integer = html.IndexOf(top_str)
+            While sp > 0
+                Dim cnt As Integer = 0
+                Dim ep As Integer = html.IndexOf(top_str, sp + 1)
+                If ep < 0 Then
+                    ep = html.Length - 1
+                End If
+                Dim html2 As String = html.Substring(sp, ep - sp)
+                sid_top = Instr_pickup(html2, top_str, """", 0)
+                station_name = Instr_pickup(html2, "title=""", """", 0)
+                Dim program_temp() As TVprogramstructure = Nothing
+
+                If sid_top.Length > 0 Then
+                    Dim j As Integer = -1
+                    Dim nid As Integer = Int(Val(sid_top) / 100000) '1=D
+                    Dim sid As Integer = (Val(sid_top) Mod 100000)
+                    log1write(station_name & "(" & sid.ToString & ") 取得中です")
+
+                    'ch_listで設定されている放送局名に修正
+                    Dim ci As Integer = searchJigyoushaBySIDandNAMEorTSID(sid, station_name, 0)
+                    If ci >= 0 Then
+                        station_name = ch_list(ci).jigyousha
+                    End If
+
+                    Dim p1 As Integer = html2.IndexOf("""cell-schedule", 0)
+                    While p1 > 0 And p1 < ep
+                        Dim p2 As Integer = html2.IndexOf("""cell-schedule", p1 + 1)
+                        If p2 < 0 Or p2 > ep Then
+                            p2 = ep
+                        End If
+
+                        Dim datestr As String = Instr_pickup(html2, sid_top, """", p1)
+                        If datestr.IndexOf("-") > 0 Then
+                            datestr = datestr.Substring(0, datestr.IndexOf("-"))
+                        End If
+                        If datestr.Length = 12 Then
+                            Dim date1 As DateTime = CDate(datestr.Substring(0, 4) & "/" & datestr.Substring(4, 2) & "/" & datestr.Substring(6, 2) & " " & datestr.Substring(8, 2) & ":" & datestr.Substring(10, 2))
+                            Dim utime As Integer = time2unix(date1)
+                            Dim duration As Integer = -1 '不明
+                            Dim duration_px As String = Instr_pickup(html2, "height: ", "px", p1, p2)
+                            If IsNumeric(duration_px) Then
+                                duration = Int((Val(duration_px) + 3) / 3) '推定。最後の番組は不正確
+                            End If
+                            Dim title As String = Instr_pickup(html2, "schedule-title", "</", p1, p2)
+                            If title.IndexOf(">") >= 0 Then
+                                Try
+                                    title = title.Substring(title.IndexOf(">") + 1)
+                                Catch ex As Exception
+                                End Try
+                            End If
+                            title = System.Web.HttpUtility.HtmlDecode(title)
+                            title = Regex.Replace(title, "<(""[^""]*""|'[^']*'|[^'"">])*>", "") 'タグ除去
+                            Dim content As String = Instr_pickup(html2, "schedule-summary", "</", p1, p2)
+                            If content.IndexOf(">") >= 0 Then
+                                Try
+                                    content = content.Substring(content.IndexOf(">") + 1)
+                                Catch ex As Exception
+                                End Try
+                            End If
+                            content = System.Web.HttpUtility.HtmlDecode(content)
+                            content = Regex.Replace(content, "<br.*?>", vbCrLf)
+                            content = Regex.Replace(content, "<(""[^""]*""|'[^']*'|[^'"">])*>", "") 'タグ除去
+                            Dim genre1 As String = ""
+                            Dim genre2 As String = ""
+                            Dim p3 As Integer = html2.IndexOf("cell-genre-", p1)
+                            If p3 > 0 And p3 < p2 Then
+                                genre1 = Instr_pickup(html2, "cell-genre-", " ", p3, p2)
+                                If genre1.Length > 0 And IsNumeric(genre1) Then
+                                    genre2 = Instr_pickup(html2, "cell-genre-", " ", p3 + 1, p2)
+                                    If IsNumeric(genre1) = False Then
+                                        log1write("【エラー】" & title & " genre2が不正です。genre2=" & genre1)
+                                        genre2 = ""
+                                    End If
+                                Else
+                                    log1write("【エラー】" & title & " genre1が不正です。genre1=" & genre1)
+                                    genre1 = ""
+                                End If
+                            End If
+                            Dim genre As Integer = -1
+                            If IsNumeric(genre1) Then
+                                genre = Int((Val(genre1) Mod 100000) / 1000)
+                            End If
+
+                            If title.Length > 0 And utime >= ut - (60 * 60 * 10) Then
+                                Dim j2 As Integer = 0
+                                If program_temp IsNot Nothing Then
+                                    j2 = program_temp.Length
+                                End If
+                                ReDim Preserve program_temp(j2)
+                                program_temp(j2).stationDispName = station_name
+                                program_temp(j2).sid = sid
+                                program_temp(j2).tsid = 0
+                                program_temp(j2).programTitle = escape_program_str(title)
+                                program_temp(j2).programContent = escape_program_str(content)
+                                program_temp(j2).startDateTime = date1
+                                program_temp(j2).endDateTime = DateAdd(DateInterval.Minute, duration, date1)
+                                program_temp(j2).ProgramInformation = ""
+                                program_temp(j2).genre = (genre * 256).ToString
+                                cnt += 1
+                            End If
+                        Else
+                            log1write("【エラー】日付が不正です。datestr=" & datestr)
+                        End If
+
+                        p1 = html2.IndexOf("""cell-schedule", p1 + 1)
+                    End While
+
+                    If cnt = 0 Then
+                        log1write(station_name & "の番組は見つかりませんでした")
+                    Else
+                        log1write(station_name & " " & cnt.ToString & "件")
+                    End If
+
+                    '番組長さを入力 最後以外は正確になる
+                    If program_temp IsNot Nothing Then
+                        If program_temp.Length > 1 Then
+                            For i = 1 To program_temp.Length - 1
+                                Dim duration1 As Integer = Int((time2unix(program_temp(i).startDateTime) - time2unix(program_temp(i - 1).startDateTime)) / 60)
+                                If duration1 > 0 Then
+                                    Dim tt As DateTime = program_temp(i).startDateTime
+                                    program_temp(i - 1).endDateTime = DateAdd(DateInterval.Second, duration1, tt)
+                                Else
+                                    log1write("【エラー】" & station_name & " " & program_temp(i - 1).programTitle & " duration1=" & duration1)
+                                End If
+                            Next
+                        End If
+                    End If
+
+                    '時間帯に合った３つのみ取得
+                    If program_temp IsNot Nothing Then
+                        Dim pcnt As Integer = 0
+                        For i As Integer = 0 To program_temp.Length - 1
+                            Dim t1 As Integer = time2unix(program_temp(i).startDateTime)
+                            Dim t2 As Integer = time2unix(program_temp(i).endDateTime)
+                            If (ut > t1 And ut < t2) Or t1 >= ut Then
+                                Dim k As Integer = 0
+                                If r IsNot Nothing Then
+                                    k = r.Length
+                                End If
+                                ReDim Preserve r(k)
+                                r(k) = program_temp(i)
+                                r(k).nextFlag = pcnt
+                                pcnt += 1
+                                If pcnt >= 3 Then
+                                    Exit For
+                                End If
+                            End If
+                        Next
+                    End If
+                Else
+                    log1write("【エラー】「" & sid_top & "」が見つかりませんでした")
+                End If
+
+                sp = html.IndexOf(top_str, sp + 1)
+            End While
+
+        Catch ex As Exception
+            log1write("インターネットからの番組表取得に失敗しました。" & ex.Message)
+        End Try
 
         Return r
     End Function
@@ -1440,6 +1617,7 @@ Module モジュール_番組表
 
     Private Function get_TvRock_program(ByVal t As DateTime) As TVprogramstructure()
         Dim r() As TVprogramstructure = Nothing
+        Dim ut As Integer = time2unix(t)
         Dim err_count As Integer = 0
         Try
             If TvProgram_tvrock_tuner >= 0 Then
@@ -1529,7 +1707,7 @@ Module モジュール_番組表
                             End If
 
                             Dim nowtime() As DateTime = Convert_TvRockTime2nowtime(temp_startDateTime, temp_endDateTime, t)
-                            If t >= nowtime(0) And t < nowtime(1) Then
+                            If ut >= time2unix(nowtime(0)) And ut < time2unix(nowtime(1)) Then
                                 '現時間内の番組ならばOK
                                 If r Is Nothing Then
                                     j = 0
@@ -1681,7 +1859,7 @@ Module モジュール_番組表
         Return r
     End Function
 
-    'tvrock番組表の時刻をH:mmで返す
+    'tvrock番組表の時刻をH:mmで返す（時が１桁の場合は二重空白になることに注意）
     Private Function fix_tvrock_d_str(ByVal s As String) As String
         Dim r As String = ""
         Try
@@ -1996,7 +2174,7 @@ Module モジュール_番組表
                 Dim t As DateTime = Now()
                 If Second(t) >= 55 Then
                     '時計が合ってない可能性を考慮
-                    t = DateAdd(DateInterval.Minute, 60 - Second(t), t)
+                    t = DateAdd(DateInterval.Second, 60 - Second(t), t)
                 End If
                 Dim ut As Integer = time2unix(t)
 
