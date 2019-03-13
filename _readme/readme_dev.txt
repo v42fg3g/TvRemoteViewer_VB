@@ -399,11 +399,13 @@ TvRemoteViewer_VB v2.83
 	WI_CLEAR_ABEMA_CACHE.html
 		AbemaTV番組情報キャッシュを削除
 
-	WI_GET_STATION_PROGRAM.html?temp=[録画ソフト名],[サービスID](,[検索スタートunixtime],[検索終了unixtime],[TvRock予約状況強制更新])
+	WI_GET_STATION_PROGRAM.html?temp=[録画ソフト名],[サービスID](,[検索スタートunixtime],[検索終了unixtime],[TvRock予約状況強制更新],放送局名,TSID)
 		各録画ソフトからサービスIDに対応した放送局番組一覧を取得する
 		録画ソフト名	TvRock,EDCB,Tvmaid（複数指定の場合は「_」で連結。左側から優先的に検索する）
 		期間以降を省略した場合は6時間分が検索される
 		TvRock予約状況強制更新	1	同一分でもキャッシュを使用せずに予約状況を取得する
+		放送局名	指定無しでも可	正確性向上
+		TSID		指定無しでも可	正確性向上（EDCB,Tvmaid）
 
 	WI_GET_HLS_APP_COUNT.html
 	WI_GET_HLS_APP_COUNT.html?temp=HLSアプリ名（vlc, v, ffmpeg, f, qsvenc, qsvencc, q, qsv, nvenc, nvencc, n, nv, vceenc, vceencc, a, vceのいずれか）,区切りで複数可

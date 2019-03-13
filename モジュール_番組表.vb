@@ -244,11 +244,13 @@ Module モジュール_番組表
             TvProgram_ch2(0) = 999
         End If
 
+        Dim t As DateTime = Now()
+
         If TvProgram_ch2 IsNot Nothing Then
             For i As Integer = 0 To TvProgram_ch2.Length - 1
                 If TvProgram_ch2(i) > 0 Then
                     'Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i))
-                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i), nextmin_default)
+                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i), nextmin_default, t)
                     If program IsNot Nothing Then
                         For Each p As TVprogramstructure In program
                             Dim html As String = ""
@@ -592,8 +594,13 @@ Module モジュール_番組表
     End Function
 
     '地域番号から番組表を取得
-    Public Function get_TVprogram_now(ByVal regionID As Integer, ByVal getnext As Integer) As Object
+    Public Function get_TVprogram_now(ByVal regionID As Integer, ByVal getnext As Integer, ByVal t As DateTime) As Object
         Dim r() As TVprogramstructure = Nothing
+
+        If Second(t) >= 55 Then
+            '時計がずれいてる可能性を考慮　55秒以降のアクセスは次分のものとする
+            t = DateAdd(DateInterval.Second, 60 - Second(t), t)
+        End If
 
         '同一分のものはキャッシュから返す
         Dim msg As String = ""
@@ -603,35 +610,34 @@ Module モジュール_番組表
         Else
             If regionID = 991 Or (TvProgram_Force_NoRec And regionID = 999) = 1 Then
                 'ダミー
-                r = get_NoRec_program()
+                r = get_NoRec_program(t)
             ElseIf regionID = 996 Then
                 'Tvmaid
                 If TvmaidIsEX = 1 Then
-                    r = get_TvmaidEX_program()
+                    r = get_TvmaidEX_program(t)
                 Else
-                    r = get_Tvmaid_program()
+                    r = get_Tvmaid_program(t)
                 End If
             ElseIf regionID = 997 Then
                 'ptTimer
-                r = get_ptTimer_program()
+                r = get_ptTimer_program(t)
             ElseIf regionID = 998 Then
                 'EDCB
-                r = get_EDCB_program()
+                r = get_EDCB_program(t)
                 'r = get_EDCB_program_old(getnext) '旧方式
             ElseIf regionID = 999 Then
                 'TvRock
-                r = get_TvRock_program()
+                r = get_TvRock_program(t)
             ElseIf regionID = 801 And Outside_CustomURL.Length > 0 Then
                 'Outside
-                r = get_Outside_program()
+                r = get_Outside_program(t)
             ElseIf regionID > 0 Then
                 'ネットから地域の番組表を取得
-                r = get_D_program(regionID)
+                r = get_D_program(regionID) '■■■時間操作不可　なんとかなるでしょう
             End If
 
             '現在時刻の番組が無ければ放送休止を作成し番組をずらす
             If r IsNot Nothing Then
-                Dim t As DateTime = Now()
                 Dim plus_name As String = ","
                 For i As Integer = 0 To r.Length - 1
                     Try
@@ -699,7 +705,7 @@ Module モジュール_番組表
             End If
 
             'キャッシュに保存
-            pcache_set(regionID, r)
+            pcache_set(regionID, r, t)
             log1write("【番組表】番組情報取得作業を行いました。" & region2softname(regionID))
         End If
 
@@ -707,6 +713,38 @@ Module モジュール_番組表
         r = after_raad_cache4next(r, getnext)
 
         Return r
+    End Function
+
+    'TvRockの年月日がわからない日付を現在の日付に変換する。（あまり現在の日付と離れると不正確）
+    Public Function Convert_TvRockTime2nowtime(ByVal t1str As String, ByVal t2str As String, ByVal nowt As DateTime) As DateTime()
+        Dim t() As DateTime
+        ReDim t(1)
+        t(0) = CDate("1970/01/01 09:00")
+        t(1) = CDate("1970/01/01 09:00")
+
+        Dim d() As String = t1str.Split(" ")
+        If Val(d(0)) < 2010 And Val(d(0)) > 1900 Then
+            t(0) = CDate(nowt.ToString("yyyy/MM/dd") & " " & d(1))
+        Else
+            t(0) = CDate(t1str)
+        End If
+        d = t2str.Split(" ")
+        If Val(d(0)) < 2010 And Val(d(0)) > 1900 Then
+            t(1) = CDate(nowt.ToString("yyyy/MM/dd") & " " & d(1))
+            If t(1) < t(0) Then
+                If Hour(nowt) > 12 Then
+                    '現在が午後ならば
+                    t(1) = DateAdd(DateInterval.Day, 1, t(1))
+                Else
+                    '現在が午前ならば
+                    t(1) = DateAdd(DateInterval.Day, -1, t(1))
+                End If
+            End If
+        Else
+            t(1) = CDate(t2str)
+        End If
+
+        Return t
     End Function
 
     'TVprogramstructureをstringへ変換
@@ -1275,11 +1313,11 @@ Module モジュール_番組表
         Return r
     End Function
 
-    Private Function get_Outside_program() As TVprogramstructure()
+    Private Function get_Outside_program(ByVal t As DateTime) As TVprogramstructure()
         Dim r() As TVprogramstructure = Nothing
         Try
             'Outside番組表を取得
-            Dim ut As Integer = time2unix(Now())
+            Dim ut As Integer = time2unix(t)
             Dim html As String = get_Outside_html(0)
             If Outside_CustomURL_method = 1 Then
                 '都合の良いデータ形式の場合
@@ -1400,7 +1438,7 @@ Module モジュール_番組表
         Return r
     End Function
 
-    Private Function get_TvRock_program() As TVprogramstructure()
+    Private Function get_TvRock_program(ByVal t As DateTime) As TVprogramstructure()
         Dim r() As TVprogramstructure = Nothing
         Dim err_count As Integer = 0
         Try
@@ -1427,6 +1465,7 @@ Module モジュール_番組表
                 Dim sp As Integer = html.LastIndexOf("><small>", sp2 + 1) 'sp=チャンネルの頭
                 While sp > 0
                     Try
+                        Dim next_flg As Integer = 0
                         Dim j As Integer = 0
                         Dim temp_stationDispName As String = ""
                         Dim temp_startDateTime As String = ""
@@ -1445,6 +1484,7 @@ Module モジュール_番組表
                         temp_stationDispName = Trim(delete_tag(temp_stationDispName))
                         temp_startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp))))
                         temp_endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp2))))
+
                         temp_programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
                         Dim sp3 As Integer = html.IndexOf("<font color=", sp)
                         If sp3 >= 0 Then
@@ -1479,19 +1519,6 @@ Module モジュール_番組表
                         If sp4 > 0 And sp4 < se Then
                             temp_sid = Val(Instr_pickup(html, ",", ",", sp4))
 
-                            If r Is Nothing Then
-                                j = 0
-                            Else
-                                j = r.Length
-                            End If
-                            ReDim Preserve r(j)
-                            r(j).stationDispName = temp_stationDispName
-                            r(j).startDateTime = temp_startDateTime
-                            r(j).endDateTime = temp_endDateTime
-                            r(j).programTitle = temp_programTitle
-                            r(j).programContent = temp_programContent
-                            r(j).genre = temp_genre
-                            r(j).sid = temp_sid
                             Dim tsid As Integer = 0
                             Dim tsid4() As String = Nothing
                             If TSID_in_ChSpace = 1 Then
@@ -1500,7 +1527,27 @@ Module モジュール_番組表
                             If tsid4 IsNot Nothing Then
                                 tsid = Val(tsid4(4))
                             End If
-                            r(j).tsid = tsid
+
+                            Dim nowtime() As DateTime = Convert_TvRockTime2nowtime(temp_startDateTime, temp_endDateTime, t)
+                            If t >= nowtime(0) And t < nowtime(1) Then
+                                '現時間内の番組ならばOK
+                                If r Is Nothing Then
+                                    j = 0
+                                Else
+                                    j = r.Length
+                                End If
+                                ReDim Preserve r(j)
+                                r(j).stationDispName = temp_stationDispName
+                                r(j).startDateTime = temp_startDateTime
+                                r(j).endDateTime = temp_endDateTime
+                                r(j).programTitle = temp_programTitle
+                                r(j).programContent = temp_programContent
+                                r(j).genre = temp_genre
+                                r(j).sid = temp_sid
+                                r(j).tsid = tsid
+
+                                next_flg += 1
+                            End If
 
                             '次の番組を取得
                             sp3 = html.IndexOf("</i>", sp3 + 1)
@@ -1513,14 +1560,18 @@ Module モジュール_番組表
                                     '予約されている
                                     rsv = 1
                                 End If
-                                j = r.Length
+                                If r Is Nothing Then
+                                    j = 0
+                                Else
+                                    j = r.Length
+                                End If
                                 ReDim Preserve r(j)
-                                r(j).stationDispName = r(j - 1).stationDispName
+                                r(j).stationDispName = temp_stationDispName
                                 r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3))))
                                 r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3))))
                                 r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                                 r(j).programContent = ""
-                                r(j).sid = r(j - 1).sid
+                                r(j).sid = temp_sid
                                 r(j).tsid = tsid
 
                                 Dim spn As Integer = html.IndexOf("href=""javascript:", sp3)
@@ -1547,10 +1598,11 @@ Module モジュール_番組表
                                 End If
 
                                 '次の番組であることを記録
-                                r(j).nextFlag = 1
+                                r(j).nextFlag = next_flg
+                                next_flg += 1
                             End If
 
-                            If next2_minutes > 0 Then
+                            If next2_minutes > 0 Or next_flg <= 1 Then
                                 '次の次の番組を取得
                                 sp3 = html.IndexOf("<i>", sp3 + 1)
                                 If sp3 > 0 And sp3 < se Then
@@ -1563,12 +1615,12 @@ Module モジュール_番組表
                                     End If
                                     j = r.Length
                                     ReDim Preserve r(j)
-                                    r(j).stationDispName = r(j - 1).stationDispName
+                                    r(j).stationDispName = temp_stationDispName
                                     r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3))))
                                     r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3))))
                                     r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                                     r(j).programContent = ""
-                                    r(j).sid = r(j - 1).sid
+                                    r(j).sid = temp_sid
                                     r(j).tsid = tsid
 
                                     If skip_genre_NextShortProgram > 0 Then
@@ -1599,7 +1651,8 @@ Module モジュール_番組表
                                     End If
 
                                     '次の次の番組であることを記録
-                                    r(j).nextFlag = 2
+                                    r(j).nextFlag = next_flg
+                                    next_flg += 1
                                 End If
                             End If
                         Else
@@ -1941,6 +1994,10 @@ Module モジュール_番組表
             End If
             If i2 >= 0 Then
                 Dim t As DateTime = Now()
+                If Second(t) >= 55 Then
+                    '時計が合ってない可能性を考慮
+                    t = DateAdd(DateInterval.Minute, 60 - Second(t), t)
+                End If
                 Dim ut As Integer = time2unix(t)
 
                 'log1write("【番組表】キャッシュが見つかりました。" & p_r_s(RegionID, route, getnext))
@@ -1991,7 +2048,7 @@ Module モジュール_番組表
     End Function
 
     'キャッシュに格納
-    Public Sub pcache_set(ByVal RegionID As Integer, ByVal value() As TVprogramstructure)
+    Public Sub pcache_set(ByVal RegionID As Integer, ByVal value() As TVprogramstructure, ByVal t As DateTime)
         If NoUseProgramCache = 0 Then
             Dim str As String = RegionID.ToString '識別
             Dim pindex As Integer = -1
@@ -2008,7 +2065,6 @@ Module モジュール_番組表
             '一番遅い開始時間と一番早い終了時間を求める
             Dim p_start As Integer = 0
             Dim p_end As Integer = C_INTMAX - (3600 * 9)
-            Dim t As DateTime = Now()
             If value IsNot Nothing Then
                 For j As Integer = 0 To value.Length - 1
                     If value(j).nextFlag = 0 Then
@@ -2324,10 +2380,12 @@ Module モジュール_番組表
             TvProgram_ch2(0) = 999
         End If
 
+        Dim t As DateTime = Now()
+
         If TvProgram_ch2 IsNot Nothing Then
             For i As Integer = 0 To TvProgram_ch2.Length - 1
                 If TvProgram_ch2(i) > 0 Then
-                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i), getnext)
+                    Dim program() As TVprogramstructure = get_TVprogram_now(TvProgram_ch2(i), getnext, t)
                     If program IsNot Nothing Then
                         For Each p As TVprogramstructure In program
                             Dim html As String = ""
@@ -2881,7 +2939,7 @@ Module モジュール_番組表
     End Function
 
     'ptTimer番組表
-    Public Function get_ptTimer_program() As Object
+    Public Function get_ptTimer_program(ByVal t As DateTime) As Object
         Dim r() As TVprogramstructure = Nothing
 
         Dim nextsec As Integer = 180 * 60
@@ -2920,7 +2978,7 @@ Module モジュール_番組表
                     db_name = ptTimer_path & "pt" & pt3Timer_str & "Timer-" & pt2number & ".db"
                 End If
 
-                Dim nowtime As DateTime = Now()
+                Dim nowtime As DateTime = t
                 Dim ut As Integer = time2unix(nowtime) '現在のunixtime
 
                 If nextsec = 0 Then
@@ -3116,7 +3174,7 @@ Module モジュール_番組表
     End Function
 
     'NoRec番組表(TTRec等番組表データが無い時用）
-    Public Function get_NoRec_program() As Object
+    Public Function get_NoRec_program(ByVal t As DateTime) As Object
         '全てダミー
         Dim r() As TVprogramstructure = Nothing
         If ch_list IsNot Nothing Then
@@ -3133,8 +3191,8 @@ Module モジュール_番組表
                 ReDim Preserve r(j)
 
                 'ダミー時刻　開始は現在時　終了は7時間後
-                Dim t1s As String = "1970/01/01 " & Hour(Now()).ToString & ":00"
-                Dim t2s As String = "1970/01/01 " & ((Hour(Now()) + 6) Mod 24).ToString & ":59"
+                Dim t1s As String = "1970/01/01 " & Hour(t).ToString & ":00"
+                Dim t2s As String = "1970/01/01 " & ((Hour(t) + 6) Mod 24).ToString & ":59"
 
                 r(j).stationDispName = ch_list(i).jigyousha
                 r(j).startDateTime = t1s
@@ -3151,7 +3209,7 @@ Module モジュール_番組表
 
     'EDCB番組表
     Public EDCB_cmd As New CtrlCmdCLI.CtrlCmdUtil
-    Public Function get_EDCB_program() As Object
+    Public Function get_EDCB_program(ByVal t As DateTime) As Object
         Dim r() As TVprogramstructure = Nothing
 
         If TvProgram_EDCB_url.Length > 0 Then
@@ -3294,7 +3352,6 @@ Module モジュール_番組表
                                     For k = 0 To info.eventList.Count - 1
                                         Try
                                             'まず現在時刻にあてはまるかチェック
-                                            Dim t As DateTime = Now()
                                             Dim t1long As Integer = Int(info.eventList.Item(k).durationSec / 60) '分
                                             Dim t1 As DateTime = info.eventList.Item(k).start_time
                                             Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
@@ -3366,7 +3423,6 @@ Module モジュール_番組表
                                         If k2 >= 0 Then
                                             '次番組が存在すれば
                                             Try
-                                                Dim t As DateTime = Now()
                                                 Dim t1long As Integer = Int(info.eventList.Item(k2).durationSec / 60) '分
                                                 Dim t1 As DateTime = info.eventList.Item(k2).start_time
                                                 Dim t2 As DateTime = DateAdd(DateInterval.Minute, t1long, t1)
@@ -3423,7 +3479,6 @@ Module モジュール_番組表
                                                             If k2 >= 0 Then
                                                                 '次の次の番組が存在すれば
                                                                 Try
-                                                                    t = Now()
                                                                     t1long = Int(info.eventList.Item(k2).durationSec / 60) '分
                                                                     t1 = info.eventList.Item(k2).start_time
                                                                     t2 = DateAdd(DateInterval.Minute, t1long, t1)
@@ -3527,8 +3582,8 @@ Module モジュール_番組表
 
                                 If chk_j = 0 Then
                                     'ダミー時刻　開始は現在時　終了は7時間後
-                                    Dim t1s As String = "1970/01/01 " & Hour(Now()).ToString & ":00"
-                                    Dim t2s As String = "1970/01/01 " & ((Hour(Now()) + 6) Mod 24).ToString & ":59"
+                                    Dim t1s As String = "1970/01/01 " & Hour(t).ToString & ":00"
+                                    Dim t2s As String = "1970/01/01 " & ((Hour(t) + 6) Mod 24).ToString & ":59"
                                     Dim j As Integer = 0
                                     If r IsNot Nothing Then
                                         j = r.Length
@@ -3800,7 +3855,7 @@ Module モジュール_番組表
     End Function
 
     'Tvmaid番組表
-    Public Function get_Tvmaid_program() As Object
+    Public Function get_Tvmaid_program(ByVal t As DateTime) As Object
         Dim r() As TVprogramstructure = Nothing
 
         Dim nextsec As Integer = 150 * 60
@@ -3810,7 +3865,7 @@ Module モジュール_番組表
             'データベースから番組一覧を取得する
             Dim log_temp As String = ">>Tvmaid番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
             Try
-                Dim nowtime As DateTime = Now()
+                Dim nowtime As DateTime = t
                 Dim nowtime_n As DateTime = DateAdd(DateInterval.Second, nextsec, nowtime)
                 'Dim ut As Integer = time2unix(nowtime) '現在のunixtime
                 'Dim utn As Integer = ut + nextsec
@@ -3973,7 +4028,7 @@ Module モジュール_番組表
     End Function
 
     'TvmaidEX番組表
-    Public Function get_TvmaidEX_program() As Object
+    Public Function get_TvmaidEX_program(ByVal t As DateTime) As Object
         Dim r() As TVprogramstructure = Nothing
 
         Dim nextsec As Integer = 150 * 60
@@ -3983,7 +4038,7 @@ Module モジュール_番組表
             Dim log_temp As String = ">>TvmaidEX番組表 取得開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
             'データベースから番組一覧を取得する
             Try
-                Dim nowtime As DateTime = Now()
+                Dim nowtime As DateTime = t
                 Dim nowtime_n As DateTime = DateAdd(DateInterval.Second, nextsec, nowtime)
                 'Dim ut As Integer = time2unix(nowtime) '現在のunixtime
                 'Dim utn As Integer = ut + nextsec

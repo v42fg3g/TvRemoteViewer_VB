@@ -379,7 +379,6 @@ Class WebRemocon
         Catch ex As Exception
             log1write("【エラー】WI_GET_VIDEOFILES2[A]でエラーが発生しました。" & ex.Message)
         End Try
-        cdir = Nothing 'test
         If dir_only = 1 Or dir_add = 1 Then
             'フォルダ構造のみ
             If Me._videopath IsNot Nothing Then

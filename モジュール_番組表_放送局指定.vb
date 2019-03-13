@@ -54,11 +54,12 @@ Module モジュール_番組表_放送局指定
 
     Public Function WI_GET_STATION_PROGRAM(ByVal temp_str As String) As String
         Dim i As Integer = 0
-        'temp_str                取得元録画ソフト名,sid又はチャンネルid,開始時間,終了時間
+        'temp_str                取得元録画ソフト名,sid又はチャンネルid,開始時間,終了時間,force,放送局名,TSID
         Dim src() As String = Nothing
         Dim url As String = ""
         Dim sid_str As String = ""
         Dim sid As Integer = 0
+        Dim tsid As Integer = 0
         Dim station_name As String = ""
         Dim startt As Integer = 0
         Dim endt As Integer = 0
@@ -90,7 +91,10 @@ Module モジュール_番組表_放送局指定
                 force = Val(d(4))
             End If
             If d.Length >= 6 Then
-                station_name = Trim(d(5))
+                station_name = filename_escape_recall(Trim(d(5)))
+            End If
+            If d.Length >= 7 Then
+                tsid = Val((d(6)))
             End If
         End If
         '1行目に放送局データ 　　放送局名,sid_str,情報取得元録画ソフト,URL
@@ -108,10 +112,10 @@ Module モジュール_番組表_放送局指定
                         p = get_station_program_TvRock(sid, endt, force, station_name) 'tvrockにはstarttは不要
                     Case "edcb"
                         url = TvProgram_EDCB_url
-                        p = get_station_program_EDCB(sid, startt, endt, station_name)
+                        p = get_station_program_EDCB(sid, startt, endt, station_name, tsid)
                     Case "tvmaid"
                         url = Tvmaid_url
-                        p = get_station_program_TvmaidEX(sid, startt, endt, station_name)
+                        p = get_station_program_TvmaidEX(sid, startt, endt, station_name, tsid)
                     Case "pttimer"
                         url = ptTimer_path
                         p = get_station_program_ptTimer(sid, startt, endt, station_name)
@@ -120,6 +124,8 @@ Module モジュール_番組表_放送局指定
                         url = sid_str
                         p = get_station_program_AbemaTV(sid_str, startt, endt)
                 End Select
+                '空白時間があれば放送休止で埋める
+                p = StationProgram_check_noOnAir(p)
                 '文字列に整形
                 If p IsNot Nothing Then
                     r &= filename_escape_set(p(0).name) & "," _
@@ -144,6 +150,57 @@ Module モジュール_番組表_放送局指定
                 End If
             Next
         End If
+        Return r
+    End Function
+
+    '空白時間が無いかチェック
+    Private Function StationProgram_check_noOnAir(ByVal p() As StationTVprogramstructure) As StationTVprogramstructure()
+        Dim r() As StationTVprogramstructure = Nothing
+
+        Dim j As Integer = 0
+
+        If p IsNot Nothing Then
+            Dim ut As Integer = time2unix(Now())
+            If p(j).startt > ut Then
+                ReDim Preserve r(j)
+                r(j).title = "放送休止"
+                r(j).content = ""
+                r(j).startt = ut
+                r(j).endt = p(0).startt
+                r(j).name = p(0).name
+                r(j).nameid = p(0).nameid
+                r(j).genre = -1
+                r(j).reserve = 0
+                r(j).rsv_change = ""
+                r(j).thumbnail = ""
+                j += 1
+            End If
+
+            For i = 0 To p.Length - 1
+                ReDim Preserve r(j)
+                r(j) = p(i)
+                j += 1
+                If i < p.Length - 1 Then
+                    '次の番組との間に空白時間があれば
+                    Dim kt As Integer = p(i + 1).startt - p(i).endt
+                    If kt > 10 Then 'まぁ間違いもあるかもで10秒は余裕を持たせた
+                        ReDim Preserve r(j)
+                        r(j).title = "放送休止"
+                        r(j).content = ""
+                        r(j).startt = p(i).endt
+                        r(j).endt = p(i + 1).startt
+                        r(j).name = r(i).name
+                        r(j).nameid = r(i).nameid
+                        r(j).genre = -1
+                        r(j).reserve = 0
+                        r(j).rsv_change = ""
+                        r(j).thumbnail = ""
+                        j += 1
+                    End If
+                End If
+            Next
+        End If
+
         Return r
     End Function
 
@@ -225,21 +282,30 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Public Function searchJigyoushaBySIDandNAME(ByVal p_sid As Integer, ByVal p_station As String) As Integer
+    Public Function searchJigyoushaBySIDandNAMEorTSID(ByVal p_sid As Integer, ByVal p_station As String, ByVal p_tsid As Integer) As Integer
         Dim r As Integer = -1
 
-        If p_sid = 161 Then
-            'とりあえずQVCとBS-TBSだけ詳しくチェック
-            If ch_list IsNot Nothing Then
+        If ch_list IsNot Nothing Then
+            If p_tsid > 0 Then
+                'sid,tsid
                 For i As Integer = 0 To ch_list.Length - 1
-                    If ch_list(i).sid = p_sid And ch_list(i).jigyousha = p_station Then
+                    If ch_list(i).sid = p_sid And ch_list(i).tsid = p_tsid Then
+                        r = i
+                        Exit For
+                    End If
+                Next
+            ElseIf p_station.Length > 0 Then
+                'sid,放送局名
+                For i As Integer = 0 To ch_list.Length - 1
+                    If ch_list(i).sid = p_sid And StrConv(Trim(ch_list(i).jigyousha), VbStrConv.Wide) = StrConv(Trim(p_station), VbStrConv.Wide) Then
                         r = i
                         Exit For
                     End If
                 Next
             End If
-        Else
-            If ch_list IsNot Nothing Then
+
+            If r < 0 Then
+                'sidのみ
                 r = Array.IndexOf(ch_list, p_sid)
             End If
         End If
@@ -247,7 +313,7 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Private Function get_station_program_EDCB(ByVal p_sid As Integer, ByVal startt As Integer, ByVal endt As Integer, ByVal p_station As String) As StationTVprogramstructure()
+    Private Function get_station_program_EDCB(ByVal p_sid As Integer, ByVal startt As Integer, ByVal endt As Integer, ByVal p_station As String, ByVal p_tsid As Integer) As StationTVprogramstructure()
         Dim r() As StationTVprogramstructure = Nothing
 
         If TvProgram_EDCB_url.Length > 0 Then
@@ -259,11 +325,13 @@ Module モジュール_番組表_放送局指定
 
                     Dim RecSrc As String = "[EDCB]"
 
+                    Dim p_nid As Integer = 0
                     Dim fsid_long As Long = 0
-                    Dim z As Integer = searchJigyoushaBySIDandNAME(p_sid, p_station)
+                    Dim z As Integer = searchJigyoushaBySIDandNAMEorTSID(p_sid, p_station, p_tsid)
                     If z >= 0 Then
                         fsid_long = CType(ch_list(z).nid, Long) * 256 * 256 * 256 * 256 + CType(ch_list(z).tsid, Long) * 256 * 256 + CType(ch_list(z).sid, Long)
                         '↑ONIDがよくわからない・・これでも一応動く
+                        p_nid = ch_list(z).nid
                     End If
 
                     Dim ip As String = Instr_pickup(TvProgram_EDCB_url, "://", ":", 0)
@@ -316,7 +384,7 @@ Module モジュール_番組表_放送局指定
                             If r IsNot Nothing Then
                                 log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                                 '予約状況を照らし合わせr()を修正
-                                Dim spReserve() As spReservestructure = get_station_program_EDCB_reserve(p_sid)
+                                Dim spReserve() As spReservestructure = get_station_program_EDCB_reserve(p_sid, p_nid)
                                 If spReserve IsNot Nothing Then
                                     For i = 0 To spReserve.Length - 1
                                         Dim ri As Integer = Array.IndexOf(r, spReserve(i).sid & "_" & spReserve(i).eid)
@@ -351,7 +419,7 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Private Function get_station_program_EDCB_reserve(ByVal p_sid As Integer) As spReservestructure()
+    Private Function get_station_program_EDCB_reserve(ByVal p_sid As Integer, ByVal p_nid As Integer) As spReservestructure()
         Dim r() As spReservestructure = Nothing
 
         If TvProgram_EDCB_url.Length > 0 Then
@@ -372,8 +440,9 @@ Module モジュール_番組表_放送局指定
                         Dim epgList As New System.Collections.Generic.List(Of CtrlCmdCLI.Def.ReserveData)()
                         Dim ret As Integer = EDCB_cmd.SendEnumReserve(epgList) 'IPやportがおかしいとここで止まる可能性有り
                         If ret = 1 Then
+                            Dim chk As Integer = 0
                             For Each a As CtrlCmdCLI.Def.ReserveData In epgList
-                                If p_sid = a.ServiceID Then
+                                If p_sid = a.ServiceID And p_nid = a.OriginalNetworkID Then
                                     Dim j As Integer = 0
                                     If r Is Nothing Then
                                         j = 0
@@ -388,8 +457,30 @@ Module モジュール_番組表_放送局指定
                                     r(j).eid = a.EventID.ToString
                                     r(j).yid = a.ReserveID.ToString
                                     r(j).recmode = a.RecSetting.RecMode.ToString '5=無効
+                                    chk = 1
                                 End If
                             Next
+                            If chk = 0 Then
+                                '予約が無かった場合は念のためサービスIDのみで検索
+                                For Each a As CtrlCmdCLI.Def.ReserveData In epgList
+                                    If p_sid = a.ServiceID Then
+                                        Dim j As Integer = 0
+                                        If r Is Nothing Then
+                                            j = 0
+                                        Else
+                                            j = r.Length
+                                        End If
+                                        ReDim Preserve r(j)
+                                        r(j).title = a.Title
+                                        r(j).sid = p_sid.ToString
+                                        r(j).startt = time2unix(a.StartTime)
+                                        r(j).endt = r(j).startt + a.DurationSecond
+                                        r(j).eid = a.EventID.ToString
+                                        r(j).yid = a.ReserveID.ToString
+                                        r(j).recmode = a.RecSetting.RecMode.ToString '5=無効
+                                    End If
+                                Next
+                            End If
 
                             'log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                             'log1write(log_temp)
@@ -404,7 +495,7 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Private Function get_station_program_TvmaidEX(ByVal p_sid As Integer, ByVal startt As Integer, ByVal endt As Integer, ByVal p_station As String) As StationTVprogramstructure()
+    Private Function get_station_program_TvmaidEX(ByVal p_sid As Integer, ByVal startt As Integer, ByVal endt As Integer, ByVal p_station As String, ByVal p_tsid As Integer) As StationTVprogramstructure()
         Dim r() As StationTVprogramstructure = Nothing
 
         Dim maya As Integer = 0
@@ -424,7 +515,7 @@ Module モジュール_番組表_放送局指定
                 'fsid算出
                 Dim fsid As String = ""
                 Dim fsid_long_str As String = ""
-                Dim fi As Integer = searchJigyoushaBySIDandNAME(p_sid, p_station)
+                Dim fi As Integer = searchJigyoushaBySIDandNAMEorTSID(p_sid, p_station, p_tsid)
                 If fi >= 0 Then
                     fsid = Hex(ch_list(fi).nid).PadLeft(4, "0") & Hex(ch_list(fi).tsid).PadLeft(4, "0") & Hex(ch_list(fi).sid).PadLeft(4, "0")
                     fsid_long_str = (CType(ch_list(fi).nid, Long) * 65536 * 65536 + CType(ch_list(fi).tsid, Long) * 65536 + CType(ch_list(fi).sid, Long)).ToString
@@ -1236,7 +1327,7 @@ Module モジュール_番組表_放送局指定
 
                 If p_sid = 161 Then
                     Dim n_sid As Integer = 161
-                    If p_station = "ＱＶＣ" Then
+                    If StrConv(p_station, VbStrConv.Wide) = "ＱＶＣ" Then
                         n_sid += 65536
                     End If
                     If nextsec = 0 Then
