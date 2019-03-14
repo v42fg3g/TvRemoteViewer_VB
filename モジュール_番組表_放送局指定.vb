@@ -8,6 +8,8 @@ Imports System.Runtime.Serialization
 Imports System.Text.RegularExpressions
 
 Module モジュール_番組表_放送局指定
+    Public scache() As TVprogram_cache_structure
+
     Public Structure StationTVprogramstructure
         Implements IComparable
         Public name As String
@@ -53,6 +55,12 @@ Module モジュール_番組表_放送局指定
     End Structure
 
     Public Function WI_GET_STATION_PROGRAM(ByVal temp_str As String) As String
+        Dim t As DateTime = Now()
+        If Second(t) >= 55 Then
+            '時計がずれている場合に対処
+            t = DateAdd(DateInterval.Second, 60 - Second(t), t)
+        End If
+        Dim ut As Integer = time2unix(t)
         Dim i As Integer = 0
         'temp_str                取得元録画ソフト名,sid又はチャンネルid,開始時間,終了時間,force,放送局名,TSID
         Dim src() As String = Nothing
@@ -64,6 +72,7 @@ Module モジュール_番組表_放送局指定
         Dim startt As Integer = 0
         Dim endt As Integer = 0
         Dim force As Integer = 0
+        Dim r As String = ""
         Dim d() As String = temp_str.Split(",")
         If d.Length >= 2 Then
             For i = 0 To d.Length - 1
@@ -77,14 +86,14 @@ Module モジュール_番組表_放送局指定
             If d.Length >= 4 Then
                 startt = Val(Trim(d(2)))
                 If startt = 0 Then
-                    startt = time2unix(Now())
+                    startt = ut
                 End If
                 endt = Val(Trim(d(3)))
                 If endt = 0 Then
                     endt = startt + (60 * 60 * 6) '6時間
                 End If
             Else
-                startt = time2unix(Now())
+                startt = ut
                 endt = startt + (60 * 60 * 6) '6時間
             End If
             If d.Length >= 5 Then
@@ -97,61 +106,139 @@ Module モジュール_番組表_放送局指定
                 tsid = Val((d(6)))
             End If
         End If
-        '1行目に放送局データ 　　放送局名,sid_str,情報取得元録画ソフト,URL
-        Dim firstline As String = ""
-        '以後番組データ　　　　　start,end,title,content,genre,thumbnail,reserve,reserve_change_data
-        Dim r As String = ""
-        If sid_str.Length > 0 Then
-            For Each src1 As String In src
-                '放送局
-                Dim p() As StationTVprogramstructure = Nothing
-                Select Case src1.ToLower
-                    Case "tvrock"
-                        'http://127.0.0.1:40003/WI_GET_STATION_PROGRAM.html?temp=TvRock,101
-                        url = TvProgram_tvrock_url
-                        p = get_station_program_TvRock(sid, endt, force, station_name) 'tvrockにはstarttは不要
-                    Case "edcb"
-                        url = TvProgram_EDCB_url
-                        p = get_station_program_EDCB(sid, startt, endt, station_name, tsid)
-                    Case "tvmaid"
-                        url = Tvmaid_url
-                        p = get_station_program_TvmaidEX(sid, startt, endt, station_name, tsid)
-                    Case "pttimer"
-                        url = ptTimer_path
-                        p = get_station_program_ptTimer(sid, startt, endt, station_name)
-                    Case "abematv"
-                        sid = 99999801
-                        url = sid_str
-                        p = get_station_program_AbemaTV(sid_str, startt, endt)
-                End Select
-                '空白時間があれば放送休止で埋める
-                p = StationProgram_check_noOnAir(p)
-                '文字列に整形
-                If p IsNot Nothing Then
-                    r &= filename_escape_set(p(0).name) & "," _
-                        & filename_escape_set(p(0).nameid) & "," _
-                        & sid.ToString & "," _
-                        & filename_escape_set(src1) & "," _
-                        & filename_escape_set(url) & vbCrLf
-                    For i = 0 To p.Length - 1
-                        If p(i).startt > 0 Then
-                            r &= p(i).startt & "," _
-                                & p(i).endt & "," _
-                                & filename_escape_set(p(i).title) & "," _
-                                & filename_escape_set(p(i).content) & "," _
-                                & p(i).genre & "," _
-                                & filename_escape_set(p(i).thumbnail) & "," _
-                                & p(i).reserve & "," _
-                                & filename_escape_set(p(i).rsv_change) & vbCrLf
-                        End If
-                    Next
-
-                    Exit For '1つ見つかれば十分
+        'キャッシュ確認
+        Dim j As Integer = -1
+        If NoUseProgramCache = 0 And scache IsNot Nothing Then
+            For i = 0 To scache.Length - 1
+                If scache(i).str = d(1) And ut >= scache(i).min_utime And ut < scache(i).max_utime Then
+                    j = i
+                    Exit For
                 End If
             Next
         End If
+
+        If j >= 0 Then
+            If scache(j).value_str.Length <= 20 Then
+                'データが入っていない
+                j = -1
+                log1write("【エラー】放送局別番組表キャッシュに番組データがありませんでした（" & sid_str & "）")
+            End If
+        End If
+
+        If j >= 0 Then
+            'キャッシュから
+            r = scache(j).value_str
+            log1write("【放送局別番組表】番組データをキャッシュから取得しました（" & sid_str & "）")
+        Else
+            '1行目に放送局データ 　　放送局名,sid_str,情報取得元録画ソフト,URL
+            Dim firstline As String = ""
+            '以後番組データ　　　　　start,end,title,content,genre,thumbnail,reserve,reserve_change_data
+            If sid_str.Length > 0 Then
+                Dim ut1 As Integer = 0
+                Dim ut2 As Integer = 0
+                Dim str As String = ""
+                Dim value As String = ""
+                For Each src1 As String In src
+                    '放送局
+                    Dim p() As StationTVprogramstructure = Nothing
+                    Select Case src1.ToLower
+                        Case "tvrock"
+                            'http://127.0.0.1:40003/WI_GET_STATION_PROGRAM.html?temp=TvRock,101
+                            url = TvProgram_tvrock_url
+                            p = get_station_program_TvRock(sid, endt, force, station_name) 'tvrockにはstarttは不要
+                        Case "edcb"
+                            url = TvProgram_EDCB_url
+                            p = get_station_program_EDCB(sid, startt, endt, station_name, tsid)
+                        Case "tvmaid"
+                            url = Tvmaid_url
+                            p = get_station_program_TvmaidEX(sid, startt, endt, station_name, tsid)
+                        Case "pttimer"
+                            url = ptTimer_path
+                            p = get_station_program_ptTimer(sid, startt, endt, station_name)
+                        Case "abematv"
+                            sid = 99999801
+                            url = sid_str
+                            p = get_station_program_AbemaTV(sid_str, startt, endt)
+                    End Select
+                    '空白時間があれば放送休止で埋める
+                    p = StationProgram_check_noOnAir(p)
+                    '文字列に整形
+                    If p IsNot Nothing Then
+                        r &= filename_escape_set(p(0).name) & "," _
+                            & filename_escape_set(p(0).nameid) & "," _
+                            & sid.ToString & "," _
+                            & filename_escape_set(src1) & "," _
+                            & filename_escape_set(url) & vbCrLf
+                        For i = 0 To p.Length - 1
+                            If p(i).startt > 0 Then
+                                If ut1 = 0 Then ut1 = p(i).startt
+                                If ut2 = 0 Then ut2 = p(i).endt
+                                r &= p(i).startt & "," _
+                                    & p(i).endt & "," _
+                                    & filename_escape_set(p(i).title) & "," _
+                                    & filename_escape_set(p(i).content) & "," _
+                                    & p(i).genre & "," _
+                                    & filename_escape_set(p(i).thumbnail) & "," _
+                                    & p(i).reserve & "," _
+                                    & filename_escape_set(p(i).rsv_change) & vbCrLf
+                            End If
+                        Next
+
+                        'キャッシュに保存
+                        If NoUseProgramCache = 0 Then
+                            If r.Length > 0 And ut1 < ut2 And sid_str.Length > 0 Then
+                                scache_set(d(1), ut1, ut2, r, t)
+                            End If
+                        End If
+
+                        Exit For '1つ見つかれば十分
+                    End If
+                Next
+            End If
+        End If
         Return r
     End Function
+
+    'キャッシュに格納
+    Public Sub scache_set(ByVal str As String, ByVal ut1 As Integer, ByVal ut2 As Integer, ByVal value As String, ByVal t As DateTime)
+        If NoUseProgramCache = 0 Then
+            Dim ut As Integer = time2unix(t)
+            Dim pindex As Integer = -1
+            Dim j As Integer = -1
+            If scache IsNot Nothing Then
+                For i As Integer = 0 To scache.Length - 1
+                    If str = scache(i).str Then
+                        j = i
+                        Exit For
+                    End If
+                Next
+                If j < 0 Then
+                    j = scache.Length
+                    ReDim Preserve scache(j)
+                End If
+            Else
+                j = 0
+                ReDim scache(j)
+            End If
+
+            If str.Length > 0 And ut1 < ut2 And value.Length > 0 Then
+                scache(j).str = str
+                scache(j).min_utime = ut1
+                scache(j).max_utime = ut2
+                scache(j).value_str = value
+                scache(j).get_utime = time2unix(Now())
+            Else
+                log1write("【エラー】放送局別番組表の有効データではありません。str=" & str & " ut1=" & ut1.ToString & " ut2=" & ut2.ToString & " value.length=" & value.Length)
+            End If
+
+            '古いキャッシュデータを削除
+            For i As Integer = 0 To scache.Length - 1
+                If ut - scache(i).max_utime > 300 Then
+                    scache(j).value_str = ""
+                End If
+            Next
+        End If
+    End Sub
 
     '空白時間が無いかチェック
     Private Function StationProgram_check_noOnAir(ByVal p() As StationTVprogramstructure) As StationTVprogramstructure()
@@ -1583,8 +1670,8 @@ Module モジュール_番組表_放送局指定
                                     r(j).eid = eid
                                 End If
                             Catch ex As Exception
-                        log1write("ptTimer予約取得中にエラーが発生しました。" & ex.Message)
-                    End Try
+                                log1write("ptTimer予約取得中にエラーが発生しました。" & ex.Message)
+                            End Try
                         Next
                     End If
                 End If

@@ -604,7 +604,7 @@ Module モジュール_番組表
 
         '同一分のものはキャッシュから返す
         Dim msg As String = ""
-        r = pcache_search(regionID, msg) 'msgはByRefで返ってくる
+        r = pcache_search(regionID, msg, t) 'msgはByRefで返ってくる
         If r IsNot Nothing Then
             log1write("【番組表】番組情報をキャッシュから取得しました。" & region2softname(regionID) & " " & msg)
         Else
@@ -633,7 +633,12 @@ Module モジュール_番組表
                 r = get_Outside_program(t)
             ElseIf regionID > 0 Then
                 'ネットから地域の番組表を取得
-                r = get_D_program(regionID)
+                If NoUseProgramCache = 0 Then
+                    r = get_D_program(regionID, t)
+                Else
+                    'キャッシュを利用しない場合は遅いので従来通り
+                    r = get_D_program_old(regionID)
+                End If
             End If
 
             '現在時刻の番組が無ければ放送休止を作成し番組をずらす
@@ -950,7 +955,7 @@ Module モジュール_番組表
         Return r
     End Function
 
-    Private Function get_D_program_new(ByVal regionID As Integer, ByVal t As DateTime) As TVprogramstructure()
+    Private Function get_D_program(ByVal regionID As Integer, ByVal t As DateTime) As TVprogramstructure()
         Dim r() As TVprogramstructure = Nothing
         Try
             'ネットから地域の番組表を取得
@@ -1080,12 +1085,39 @@ Module モジュール_番組表
                             For i = 1 To program_temp.Length - 1
                                 Dim duration1 As Integer = Int((time2unix(program_temp(i).startDateTime) - time2unix(program_temp(i - 1).startDateTime)) / 60)
                                 If duration1 > 0 Then
-                                    Dim tt As DateTime = program_temp(i).startDateTime
-                                    program_temp(i - 1).endDateTime = DateAdd(DateInterval.Second, duration1, tt)
+                                    Dim tt As DateTime = program_temp(i - 1).startDateTime
+                                    program_temp(i - 1).endDateTime = DateAdd(DateInterval.Minute, duration1, tt)
                                 Else
                                     log1write("【エラー】" & station_name & " " & program_temp(i - 1).programTitle & " duration1=" & duration1)
                                 End If
                             Next
+                        End If
+                    End If
+
+                    '放送局別番組表のためにscacheに保存
+                    If program_temp IsNot Nothing Then
+                        Dim ut1 As Integer = 0
+                        Dim ut2 As Integer = 0
+                        Dim firstline As String = station_name & ",," & sid.ToString & ",D,"
+                        Dim value As String = ""
+                        For i As Integer = 0 To program_temp.Length - 1
+                            Dim u1 As Integer = time2unix(program_temp(i).startDateTime)
+                            Dim u2 As Integer = time2unix(program_temp(i).endDateTime)
+                            If (u1 < ut And u2 > ut) Or u1 >= ut Then
+                                If ut1 = 0 Then ut1 = u1
+                                If ut2 = 0 Then ut2 = u2
+                                value &= u1 & ","
+                                value &= u2 & ","
+                                value &= escape_program_str(program_temp(i).programTitle) & ","
+                                value &= escape_program_str(program_temp(i).programContent) & ","
+                                value &= program_temp(i).genre & ","
+                                value &= ",-1,"
+                                value &= vbCrLf
+                            End If
+                        Next
+                        value = firstline & vbCrLf & value
+                        If ut1 < ut2 And value.Length > 20 Then
+                            scache_set(sid.ToString, ut1, ut2, value, t)
                         End If
                     End If
 
@@ -1124,7 +1156,7 @@ Module モジュール_番組表
         Return r
     End Function
 
-    Private Function get_D_program(ByVal regionID As Integer) As TVprogramstructure()
+    Private Function get_D_program_old(ByVal regionID As Integer) As TVprogramstructure()
         Dim r() As TVprogramstructure = Nothing
         Try
             Dim url As String = "https://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=10&stationAreaId=" & regionID.ToString
@@ -2163,15 +2195,11 @@ Module モジュール_番組表
     End Function
 
     'キャッシュから
-    Public Function pcache_search(ByVal RegionID As Integer, ByRef msg As String) As TVprogramstructure()
+    Public Function pcache_search(ByVal RegionID As Integer, ByRef msg As String, ByVal t As DateTime) As TVprogramstructure()
         If NoUseProgramCache = 0 Then
             Dim str As String = RegionID.ToString '識別
-            Dim i2 As Integer = -1
-            If pcache IsNot Nothing Then
-                i2 = Array.IndexOf(pcache, str)
-            End If
+            Dim i2 As Integer = pcache_indexof(RegionID, t)
             If i2 >= 0 Then
-                Dim t As DateTime = Now()
                 If Second(t) >= 55 Then
                     '時計が合ってない可能性を考慮
                     t = DateAdd(DateInterval.Second, 60 - Second(t), t)
@@ -2225,20 +2253,47 @@ Module モジュール_番組表
         Return Nothing
     End Function
 
+    '該当キャッシュがあるか調査
+    Public Function pcache_indexof(ByVal regionID As Integer, ByVal t As DateTime) As Integer
+        Dim r As Integer = -1
+        Dim ut As Integer = time2unix(t)
+        If pcache IsNot Nothing Then
+            For i As Integer = 0 To pcache.Length - 1
+                If regionID = pcache(i).str And ut >= pcache(i).min_utime And ut < pcache(i).max_utime Then
+                    r = i
+                    Exit For
+                End If
+            Next
+        End If
+        Return r
+    End Function
+
     'キャッシュに格納
     Public Sub pcache_set(ByVal RegionID As Integer, ByVal value() As TVprogramstructure, ByVal t As DateTime)
         If NoUseProgramCache = 0 Then
+            Dim ut As Integer = time2unix(t)
             Dim str As String = RegionID.ToString '識別
-            Dim pindex As Integer = -1
-            Dim k As Integer = 0
-            If pcache IsNot Nothing Then
-                pindex = Array.IndexOf(pcache, str)
-                k = pcache.Length
-            End If
+            Dim pindex As Integer = pcache_indexof(RegionID, t)
             If pindex < 0 Then
-                '同条件が見つからない場合
-                ReDim Preserve pcache(k)
-                pindex = k
+                If pcache IsNot Nothing Then
+                    For i As Integer = 0 To pcache.Length - 1
+                        If ut - pcache(i).max_utime > 180 Then
+                            pindex = i
+                            Exit For
+                        End If
+                    Next
+                    If pindex < 0 Then
+                        pindex = pcache.Length
+                        ReDim Preserve pcache(pindex)
+                    Else
+                        '古いキャッシュ箇所が見つかった
+                    End If
+                Else
+                    pindex = 0
+                    ReDim pcache(pindex)
+                End If
+            Else
+                '既存のキャッシュ箇所が見つかった
             End If
             '一番遅い開始時間と一番早い終了時間を求める
             Dim p_start As Integer = 0
@@ -2286,6 +2341,13 @@ Module モジュール_番組表
                     log1write("【エラー】番組表の内容が不正です。" & region2softname(RegionID) & "：" & unix2time(p_start) & " > " & unix2time(p_end))
                 End If
             End If
+
+            '古いキャッシュのデータを削除
+            For i As Integer = 0 To pcache.Length - 1
+                If ut - pcache(i).max_utime > 300 Then
+                    pcache(i).value_str = ""
+                End If
+            Next
         End If
     End Sub
 

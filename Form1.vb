@@ -79,6 +79,7 @@ Public Class Form1
     'タイマー　1秒ごとに実行
     Private Sub Timer1_Tick(sender As System.Object, e As System.EventArgs) Handles Timer1.Tick
         Dim live_chk As Integer = -1
+        Dim t As DateTime = Now()
         If chk_timer1 = 0 Then '重複実行防止
             chk_timer1 = 1
 
@@ -250,6 +251,41 @@ Public Class Form1
             End If
         End If
 
+        If NoUseProgramCache = 0 Then
+            Dim rnd As Integer = TvRemoteViewer_VB_Start_utime Mod 10 'アクセスが集中しないよう配慮
+            If Second(t) >= 10 + rnd And Second(t) <= 15 + rnd And now_caching = 0 Then
+                now_caching = 1 '取りこぼしのないよう
+                'キャッシュ切れ寸前のものを前もって先読み
+                If pcache IsNot Nothing Then
+                    For i As Integer = 0 To pcache.Length - 1
+                        If pcache(i).max_utime - time2unix(Now()) < 55 Then
+                            Dim th As New System.Threading.Thread(New System.Threading.ThreadStart(AddressOf update_pcache))
+                            th.Start()
+                            Exit For
+                        End If
+                    Next
+                End If
+            ElseIf Second(t) > 50 Then
+                now_caching = 0
+            End If
+        End If
+    End Sub
+
+    'マルチスレッドで番組表キャッシュ先読み
+    Private now_caching As Integer = 0
+    Private Sub update_pcache()
+        If pcache IsNot Nothing Then
+            For i As Integer = 0 To pcache.Length - 1
+                If pcache(i).max_utime - time2unix(Now()) < 50 Then
+                    '現在時刻を1分後にセットして実行
+                    Dim t2 As DateTime = DateAdd(DateInterval.Minute, 1, Now())
+                    log1write("番組表を先読みします。取得設定日時 " & t2.ToString)
+                    'キャッシュ作成が目的なのでgetnextは指定しなくて良い
+                    Dim getnext As Integer = 0
+                    get_TVprogram_now(pcache(i).str, getnext, t2)
+                End If
+            Next
+        End If
     End Sub
 
     'ログ表示
