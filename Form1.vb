@@ -277,12 +277,17 @@ Public Class Form1
         If pcache IsNot Nothing Then
             For i As Integer = 0 To pcache.Length - 1
                 If pcache(i).max_utime - time2unix(Now()) < 50 Then
-                    '現在時刻を1分後にセットして実行
-                    Dim t2 As DateTime = DateAdd(DateInterval.Minute, 1, Now())
-                    log1write("番組表を先読みします。取得設定日時 " & t2.ToString)
-                    'キャッシュ作成が目的なのでgetnextは指定しなくて良い
-                    Dim getnext As Integer = 0
-                    get_TVprogram_now(pcache(i).str, getnext, t2)
+                    If pcache(i).str = "999" Then
+                        'TvRockの場合は先読みしない
+                        '次の番組詳細が取得できないため先読みすると更新後に番組詳細が表示されなくなる
+                    Else
+                        '現在時刻を1分後にセットして実行
+                        Dim t2 As DateTime = DateAdd(DateInterval.Minute, 1, Now())
+                        log1write("番組表を先読みします。取得設定日時 " & t2.ToString)
+                        'キャッシュ作成が目的なのでgetnextは指定しなくて良い
+                        Dim getnext As Integer = 0
+                        get_TVprogram_now(pcache(i).str, getnext, t2)
+                    End If
                 End If
             Next
         End If
