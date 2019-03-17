@@ -5864,6 +5864,10 @@ Class WebRemocon
                                     Case "WI_TVROCK_GENRE_TEST"
                                         WI_cmd_reply = WI_TVROCK_GENRE_TEST(temp)
                                         WI_cmd_reply_force = 1
+                                    Case "WI_GET_1GENRE_PROGRAM"
+                                        '番組表取得(放送局毎)
+                                        WI_cmd_reply = WI_GET_1GENRE_PROGRAM(temp)
+                                        WI_cmd_reply_force = 1
                                 End Select
                             End If
 

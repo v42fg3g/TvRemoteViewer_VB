@@ -401,11 +401,14 @@ TvRemoteViewer_VB v2.83
 
 	WI_GET_STATION_PROGRAM.html?temp=[録画ソフト名],[サービスID](,[検索スタートunixtime],[検索終了unixtime],[TvRock予約状況強制更新],放送局名,TSID)
 		各録画ソフトからサービスIDに対応した放送局番組一覧を取得する
-		録画ソフト名	TvRock,EDCB,Tvmaid（複数指定の場合は「_」で連結。左側から優先的に検索する）
+		録画ソフト名	TvRock,EDCB,Tvmaid,ptTimer,AbemaTV（複数指定の場合は「_」で連結。左側から優先的に検索する）
 		期間以降を省略した場合は6時間分が検索される
 		TvRock予約状況強制更新	1	同一分でもキャッシュを使用せずに予約状況を取得する
 		放送局名	指定無しでも可	正確性向上
 		TSID		指定無しでも可	正確性向上（EDCB,Tvmaid）
+		返値：
+			1行目に放送局データ 　　放送局名,sid,情報取得元録画ソフト,URL
+			開始時間unixtime,終了時間unixtime,番組名,詳細,ジャンル,サムネイルURL,予約状況,予約状況変更のためのデータ
 
 	WI_GET_HLS_APP_COUNT.html
 	WI_GET_HLS_APP_COUNT.html?temp=HLSアプリ名（vlc, v, ffmpeg, f, qsvenc, qsvencc, q, qsv, nvenc, nvencc, n, nv, vceenc, vceencc, a, vceのいずれか）,区切りで複数可
@@ -422,6 +425,13 @@ TvRemoteViewer_VB v2.83
 			vce,-1
 			vlc,0
 
+	WI_GET_1GENRE_PROGRAM.html?temp=abematv,7(,[検索スタートunixtime],[検索終了unixtime],[TvRock予約状況強制更新])
+		各録画ソフトからジャンルに適した番組一覧を取得する
+		録画ソフト名	AbemaTV（現在AbemaTVのみ対応。複数指定の場合は「_」で連結。左側から優先的に検索する）
+		期間以降を省略した場合は6時間分が検索される
+		TvRock予約状況強制更新	1	同一分でもキャッシュを使用せずに予約状況を取得する
+		返値：
+			開始時間unixtime,終了時間unixtime,番組名,詳細,放送局名,放送局URLコード,sid,tsid,予約状況,予約状況変更のためのデータ
 
 
 ■資料_AbemaTVカスタムデータ形式

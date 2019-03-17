@@ -1572,7 +1572,7 @@ Module モジュール_番組表
                                 If d.Length >= 8 Then
                                     r(j).genre = d(7)
                                 Else
-                                    r(j).genre = -1
+                                    r(j).genre = "-1"
                                 End If
                                 '次の番組
                                 Try
@@ -1592,7 +1592,7 @@ Module モジュール_番組表
                                                 If d.Length >= 8 Then
                                                     r(j).genre = d(7)
                                                 Else
-                                                    r(j).genre = -1
+                                                    r(j).genre = "-1"
                                                 End If
                                                 '次の番組であることを記録
                                                 r(j).nextFlag = 1
@@ -3632,7 +3632,7 @@ Module モジュール_番組表
                                                     If jnr IsNot Nothing Then
                                                         r(j).genre = (jnr.nibbleList(0).content_nibble_level_1 * 256 + jnr.nibbleList(0).content_nibble_level_2).ToString
                                                     Else
-                                                        r(j).genre = -1
+                                                        r(j).genre = "-1"
                                                     End If
 
                                                     '次番組を探すための開始時間
@@ -3695,7 +3695,7 @@ Module モジュール_番組表
                                                         If gnr IsNot Nothing Then
                                                             r(j).genre = (gnr.nibbleList(0).content_nibble_level_1 * 256 + gnr.nibbleList(0).content_nibble_level_2).ToString
                                                         Else
-                                                            r(j).genre = -1
+                                                            r(j).genre = "-1"
                                                         End If
 
                                                         '次の番組であることを記録
@@ -3836,7 +3836,7 @@ Module モジュール_番組表
                                     r(j).programContent = ""
                                     r(j).sid = ch_list(i).sid
                                     r(j).tsid = ch_list(i).tsid '一致しない可能性がある
-                                    r(j).genre = -1
+                                    r(j).genre = "-1"
                                 End If
                                 'log1write(".ch2に記載された放送局に合致するものがありませんでした。" & ch_list(i).jigyousha & " " & ch_list(i).chspace & " " & ch_list(i).sid)
                             End If

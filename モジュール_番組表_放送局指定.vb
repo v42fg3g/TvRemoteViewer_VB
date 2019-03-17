@@ -14,6 +14,8 @@ Module モジュール_番組表_放送局指定
         Implements IComparable
         Public name As String
         Public nameid As String
+        Public sid As Integer
+        Public tsid As Integer
         Public startt As Integer
         Public endt As Integer
         Public title As String
@@ -121,7 +123,7 @@ Module モジュール_番組表_放送局指定
             If scache(j).value_str.Length <= 20 Then
                 'データが入っていない
                 j = -1
-                log1write("【エラー】放送局別番組表キャッシュに番組データがありませんでした（" & sid_str & "）")
+                log1write("放送局別番組表キャッシュに番組データがありませんでした（" & sid_str & "）")
             End If
         End If
 
@@ -256,7 +258,7 @@ Module モジュール_番組表_放送局指定
                 r(j).endt = p(0).startt
                 r(j).name = p(0).name
                 r(j).nameid = p(0).nameid
-                r(j).genre = -1
+                r(j).genre = "-1"
                 r(j).reserve = 0
                 r(j).rsv_change = ""
                 r(j).thumbnail = ""
@@ -278,7 +280,7 @@ Module モジュール_番組表_放送局指定
                         r(j).endt = p(i + 1).startt
                         r(j).name = r(i).name
                         r(j).nameid = r(i).nameid
-                        r(j).genre = -1
+                        r(j).genre = "-1"
                         r(j).reserve = 0
                         r(j).rsv_change = ""
                         r(j).thumbnail = ""
@@ -341,7 +343,7 @@ Module モジュール_番組表_放送局指定
                                     If d.Length >= 8 Then
                                         r(j).genre = d(7)
                                     Else
-                                        r(j).genre = -1
+                                        r(j).genre = "-1"
                                     End If
                                 ElseIf chk_past.Length > 0 And sid_str <> chk_past Then
                                     Exit For
@@ -458,7 +460,7 @@ Module モジュール_番組表_放送局指定
                                     If jnr IsNot Nothing Then
                                         r(j).genre = (jnr.nibbleList(0).content_nibble_level_1 * 256 + jnr.nibbleList(0).content_nibble_level_2).ToString
                                     Else
-                                        r(j).genre = -1
+                                        r(j).genre = "-1"
                                     End If
                                     r(j).fsid_startt = a.service_id & "_" & a.event_id '予約の検索用
                                 End If

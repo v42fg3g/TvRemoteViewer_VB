@@ -167,6 +167,7 @@
     <Compile Include="モジュール_文字コード判別.vb" />
     <Compile Include="モジュール_番組表.vb" />
     <Compile Include="モジュール_名前付きパイプ取得.vb" />
+    <Compile Include="モジュール_番組表_ジャンル指定.vb" />
     <Compile Include="モジュール_番組表_放送局指定.vb" />
   </ItemGroup>
   <ItemGroup>
