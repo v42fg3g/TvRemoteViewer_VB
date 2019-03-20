@@ -104,7 +104,8 @@
                                 For i2 As Integer = 0 To d.Length - 1
                                     d(i2) = Trim(d(i2))
                                 Next
-                                If Int(Val(d(7)) / 256) = genre And ((Val(d(2)) < startt And Val(d(3)) >= startt) Or (Val(d(2)) < endt And Val(d(2)) >= startt)) Then
+                                Dim g1 As Integer = Int(Val(d(7)) / 256)
+                                If (g1 = genre Or (genre = 15 And (g1 = 2 Or g1 >= 8))) And ((Val(d(2)) < startt And Val(d(3)) >= startt) Or (Val(d(2)) < endt And Val(d(2)) >= startt)) Then
                                     chk_inTime = 1 '番組表が見つかった
                                     Dim j As Integer = 0
                                     If r Is Nothing Then
