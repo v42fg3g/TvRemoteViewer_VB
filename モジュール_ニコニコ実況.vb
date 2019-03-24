@@ -1008,6 +1008,7 @@ Module モジュール_ニコニコ実況
                         If file_tot.sid > 0 Then
                             fjk = sid2jk(file_tot.sid, 0)
                             If fjk.Length > 0 Then
+                                log1write("TOTパケット取得中にパケットからsidを取得しました。サービスID=" & file_tot.sid & " jk=" & fjk)
                                 targetfile = search_commentfile_in_folder(NicoJK_path & "\" & fjk, filestamp_mid)
                             End If
                         End If
@@ -1105,7 +1106,7 @@ Module モジュール_ニコニコ実況
                                                             '確定の場合は終了
                                                             Exit For
                                                         End If
-                                                    ElseIf fn.IndexOf(z2_all) >= 0 Then
+                                                    ElseIf fn.IndexOf(z2_all) >= 0 And z2_all.Length > 0 Then
                                                         'ファイルネームが全て含まれていれば時間が合っていなくてもキープ
                                                         jklfilename = Path.GetFileName(files(i))
                                                         cnt += 1
