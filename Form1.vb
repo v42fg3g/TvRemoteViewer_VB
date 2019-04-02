@@ -2102,19 +2102,15 @@ Public Class Form1
                 Case System.IO.WatcherChangeTypes.Changed
                     log1write(("ファイル 「" + e.FullPath + _
                         "」が変更されました。"))
-                    cmd = 1
                 Case System.IO.WatcherChangeTypes.Created
                     log1write(("ファイル 「" + e.FullPath + _
                         "」が作成されました。"))
-                    cmd = 2
                 Case System.IO.WatcherChangeTypes.Deleted
                     log1write(("ファイル 「" + e.FullPath + _
                         "」が削除されました。"))
-                    cmd = 3
                 Case System.IO.WatcherChangeTypes.Renamed
                     log1write(("ファイル 「" + e.FullPath + _
                         "」が名前変更されました。"))
-                    cmd = 4
                     If tsRenameSyncChapter = 1 Then
                         'tsファイルがリネームされた場合は自動的にchapterファイルをリネームする
                         Dim ext As String = Path.GetExtension(e.FullPath)
@@ -2140,52 +2136,10 @@ Public Class Form1
                     End If
             End Select
 
-            Dim dir_changed As Integer = 0
-            Try
-                Dim chk As Integer = 0
-                If cmd = 2 Or cmd = 4 Then
-                    If folder_exist(e.FullPath) = 1 Then
-                        'フォルダが作成された
-                        chk = 1
-                    End If
-                ElseIf cmd = 3 Then
-                    '削除の場合は、フォルダかファイルか判別しフォルダなら再構築
-                    Dim isDir As Integer = 0
-                    Dim vp() As String = Nothing
-                    vp = Me._worker._videopath
-                    If vp IsNot Nothing Then
-                        If vp.Length > 0 Then
-                            For i As Integer = 0 To vp.Length - 1
-                                If Not String.IsNullOrEmpty(vp(i)) Then
-                                    If vp(i).TrimEnd("\") = e.FullPath Then
-                                        isDir = 1
-                                        Exit For
-                                    End If
-                                End If
-                            Next
-                        End If
-                    End If
-                    If isDir = 1 Then
-                        'フォルダが削除された場合
-                        chk = 1
-                    End If
-                End If
-                If chk = 1 Then
-                    '作成されたのに存在していない、または削除されたのに存在している場合
-                    log1write("フォルダ構造が変更されました。10秒後に更新します")
-                    dir_changed = 1
-                    VideoChangedFolders = vbCrLf '全フォルダリフレッシュ予約
-                End If
-            Catch ex As Exception
-                log1write("【エラー】wathcer_Changedでエラーが発生しました。" & ex.Message)
-            End Try
-
-            If dir_changed = 0 Then
-                '更新されたファイルがあるフォルダを記録
-                Dim folder As String = Path.GetDirectoryName(e.FullPath)
-                If VideoChangedFolders.IndexOf(vbCrLf & folder & vbCrLf) < 0 Then
-                    VideoChangedFolders &= folder & vbCrLf
-                End If
+            '更新されたファイルがあるフォルダを記録
+            Dim folder As String = Path.GetDirectoryName(e.FullPath)
+            If VideoChangedFolders.IndexOf(vbCrLf & folder & vbCrLf) < 0 Then
+                VideoChangedFolders &= folder & vbCrLf
             End If
 
             watcher_lasttime = Now()

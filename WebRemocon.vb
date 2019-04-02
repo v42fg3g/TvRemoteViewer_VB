@@ -587,29 +587,33 @@ Class WebRemocon
             If video IsNot Nothing Then
                 If video.Length > 0 Then
                     Dim cnt As Integer = 0
-                    For i As Integer = 0 To video.Length - 1
-                        'Dim filename As String = video(i).filename
-                        Dim filename As String = video(i).fullpathfilename
-                        '抽出
-                        '全てのワードに当てはまるかチェック
-                        For j As Integer = 0 To v.Length - 1
-                            If v(j).Length > 0 Then
-                                If filename.IndexOf(v(j)) < 0 Then
-                                    filename = ""
+                    Try
+                        For i As Integer = 0 To video.Length - 1
+                            'Dim filename As String = video(i).filename
+                            Dim filename As String = video(i).fullpathfilename
+                            '抽出
+                            '全てのワードに当てはまるかチェック
+                            For j As Integer = 0 To v.Length - 1
+                                If v(j).Length > 0 Then
+                                    If filename.IndexOf(v(j)) < 0 Then
+                                        filename = ""
+                                    End If
                                 End If
+                            Next
+
+                            If filename.Length > 0 Then
+                                ReDim Preserve video2(cnt)
+                                video2(cnt).fullpathfilename = video(i).fullpathfilename
+                                video2(cnt).filename = video(i).filename
+                                video2(cnt).encstr = video(i).encstr
+                                video2(cnt).modifytime = video(i).modifytime
+                                video2(cnt).datestr = video(i).datestr
+                                cnt += 1
                             End If
                         Next
-
-                        If filename.Length > 0 Then
-                            ReDim Preserve video2(cnt)
-                            video2(cnt).fullpathfilename = video(i).fullpathfilename
-                            video2(cnt).filename = video(i).filename
-                            video2(cnt).encstr = video(i).encstr
-                            video2(cnt).modifytime = video(i).modifytime
-                            video2(cnt).datestr = video(i).datestr
-                            cnt += 1
-                        End If
-                    Next
+                    Catch ex As Exception
+                        log1write("【エラー】ビデオリスト更新中にエラーが発生しました。作業中にファイル構成が変化しました。" & ex.Message)
+                    End Try
                 End If
             End If
         Else
@@ -790,6 +794,7 @@ Class WebRemocon
     End Function
 
     Public Sub add_file_to_video2(ByRef video2() As videostructure, ByRef cnt As Integer, ByVal fullpath As String, ByVal videoexword As String)
+        fullpath = filename_escape_recall(fullpath)
         '拡張子を取得
         Dim ext As String = System.IO.Path.GetExtension(fullpath).ToLower
         '表示拡張子が指定されていれば該当するかチェックする
