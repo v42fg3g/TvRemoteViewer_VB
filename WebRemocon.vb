@@ -640,15 +640,15 @@ Class WebRemocon
 
     '_videopath_ini下のサブフォルダを加えて_videopathとして記録
     Public Sub add_subfolder()
-        Dim s() As String = Me._videopath_ini '元フォルダをコピー
+        Me._videopath = Me._videopath_ini '元フォルダをコピー
 
         If Me._AddSubFolder = 1 Then
-            If s IsNot Nothing Then
+            If Me._videopath IsNot Nothing Then
                 'サブフォルダを含める
                 Dim sf As New ArrayList
                 Dim errf As New ArrayList
-                For j = 0 To s.Length - 1
-                    GetSubfolders(s(j), sf, errf)
+                For j = 0 To Me._videopath.Length - 1
+                    GetSubfolders(Me._videopath(j), sf, errf)
                     errf.Add("RECYCLER") '"RECYCLER"を除外する
                     errf.Add("chapters") 'chaptersを除外する
                 Next
@@ -665,40 +665,13 @@ Class WebRemocon
                     Next
                     If chk = 0 Then
                         'video_path()に追加
-                        Dim b As Integer = 0
-                        If s IsNot Nothing Then
-                            b = s.Length
-                        End If
-                        ReDim Preserve s(b)
-                        s(b) = folder
+                        Dim b As Integer = Me._videopath.Length
+                        ReDim Preserve Me._videopath(b)
+                        Me._videopath(b) = folder
                     End If
                 Next folder
                 '並び替え
-                Array.Sort(s)
-
-                Dim chk2 As Integer = 0
-                Try
-                    If Me._videopath IsNot Nothing And s IsNot Nothing Then
-                        If Me._videopath.Length = s.Length Then
-                            For i As Integer = 0 To s.Length - 1
-                                If s(i) <> Me._videopath(i) Then
-                                    chk2 = 1
-                                    Exit For
-                                End If
-                            Next
-                        Else
-                            chk2 = 1
-                        End If
-                    Else
-                        chk2 = 1
-                    End If
-                    If chk2 = 1 Then
-                        '違いがあれば更新
-                        Me._videopath = s
-                    End If
-                Catch ex As Exception
-                    Me._videopath = s
-                End Try
+                Array.Sort(Me._videopath)
             End If
         End If
     End Sub
