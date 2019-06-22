@@ -2,6 +2,7 @@
 Imports System.IO
 Imports System.Threading
 Imports System.Text.RegularExpressions
+Imports System.Net
 
 Public Class Form1
     Private chk_timer1 As Integer = 0 'timer1重複回避用temp
@@ -438,6 +439,10 @@ Public Class Form1
             End If
         End If
 
+        'TLS1.2 for Framework4.5.2
+        'https://qiita.com/bubai/items/a4549df7d0c88b5bf848
+        ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol Or SecurityProtocolType.Tls12
+
         'カレントディレクトリ変更
         F_set_ppath4program()
 
@@ -624,7 +629,7 @@ Public Class Form1
         '×ボタン動作
         If close2min = 2 Then
             Me.Visible = False
-            Me.FormBorderStyle = Windows.Forms.FormBorderStyle.SizableToolWindow
+            Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow
         End If
         'iniを元に設定したパラメータの整合性チェック
         Me._worker.check_ini_parameter()
@@ -1785,7 +1790,7 @@ Public Class Form1
         OpenFileDialog1.ShowHelp = False
         ' ダイアログボックスを表示する
         Dim btn As DialogResult = OpenFileDialog1.ShowDialog()
-        If btn = Windows.Forms.DialogResult.OK Then
+        If btn = System.Windows.Forms.DialogResult.OK Then
             ' 選択した一つのファイルPATHを取得する
             'MessageBox.Show(OpenFileDialog1.FileName & "が選択されました")
             ' 選択した複数のファイルPATHを取得する
@@ -1793,7 +1798,7 @@ Public Class Form1
 
             r = OpenFileDialog1.FileName
 
-        ElseIf btn = Windows.Forms.DialogResult.Cancel Then
+        ElseIf btn = System.Windows.Forms.DialogResult.Cancel Then
             'MessageBox.Show("キャンセルされました")
         End If
 
@@ -2721,9 +2726,9 @@ Public Class Form1
                 Me._worker.read_videopath()
                 Me._worker.check_ini_parameter()
                 If close2min = 2 Then
-                    Me.FormBorderStyle = Windows.Forms.FormBorderStyle.SizableToolWindow
+                    Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow
                 Else
-                    Me.FormBorderStyle = Windows.Forms.FormBorderStyle.Sizable
+                    Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable
                 End If
                 If iniTextbox IsNot Nothing Then
                     For i As Integer = 0 To iniTextbox.Length - 1
