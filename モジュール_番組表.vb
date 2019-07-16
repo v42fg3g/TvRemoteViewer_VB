@@ -2329,7 +2329,8 @@ Module モジュール_番組表
                                     p_end = u2
                                 End If
                             Else
-                                log1write("【エラー】番組時間解析に失敗しました。" & region2softname(RegionID) & "：" & s1.ToString & " - " & s2.ToString)
+                                Dim jigyousha As String = sid2jigyousha(value(j).sid, value(j).tsid)
+                                log1write("【エラー】番組時間解析に失敗しました。" & region2softname(RegionID) & "：" & jigyousha & ":" & value(j).programTitle & " " & s1.ToString & " - " & s2.ToString)
                             End If
                         Catch ex As Exception
                         End Try
