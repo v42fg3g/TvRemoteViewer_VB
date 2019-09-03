@@ -917,6 +917,8 @@ UDP1235,0,1,0,0,48835,0,0,1
 			WI_GET_TVRV_STATUSの項目名TSID_in_ChSpaceをt_i_cに変更（2.93i）
 			番組表取得時エラーへの対応（要Framework4.5.2）（2.93j）
 			環境を要Framework4.5.0に移行（そのほうがインストール済みの方が多いため）（2.93k）
+			TVRemotePlusへの番組情報提供（TvRock,EDCB,Tvmaid,ptTimer）（2.93m）
+			（TVRemotePlusのconfig.php内「$EDCB_http_url = 'http://IPアドレス:40003/';」と記述するだけでOK）
 
 
 

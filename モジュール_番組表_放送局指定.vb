@@ -56,7 +56,7 @@ Module モジュール_番組表_放送局指定
         Public recmode As String 'EDCB 5=無効
     End Structure
 
-    Public Function WI_GET_STATION_PROGRAM(ByVal temp_str As String) As String
+    Public Function WI_GET_STATION_PROGRAM(ByVal temp_str As String, Optional ByVal IsTVRemotePlus As Integer = 0) As String
         Dim t As DateTime = Now()
         If Second(t) >= 55 Then
             '時計がずれている場合に対処
@@ -147,16 +147,16 @@ Module モジュール_番組表_放送局指定
                         Case "tvrock"
                             'http://127.0.0.1:40003/WI_GET_STATION_PROGRAM.html?temp=TvRock,101
                             url = TvProgram_tvrock_url
-                            p = get_station_program_TvRock(sid, endt, force, station_name) 'tvrockにはstarttは不要
+                            p = get_station_program_TvRock(sid, endt, force, station_name, IsTVRemotePlus) 'tvrockにはstarttは不要
                         Case "edcb"
                             url = TvProgram_EDCB_url
-                            p = get_station_program_EDCB(sid, startt, endt, station_name, tsid)
+                            p = get_station_program_EDCB(sid, startt, endt, station_name, tsid, IsTVRemotePlus)
                         Case "tvmaid"
                             url = Tvmaid_url
-                            p = get_station_program_TvmaidEX(sid, startt, endt, station_name, tsid)
+                            p = get_station_program_TvmaidEX(sid, startt, endt, station_name, tsid, IsTVRemotePlus)
                         Case "pttimer"
                             url = ptTimer_path
-                            p = get_station_program_ptTimer(sid, startt, endt, station_name)
+                            p = get_station_program_ptTimer(sid, startt, endt, station_name, IsTVRemotePlus)
                         Case "abematv"
                             sid = 99999801
                             url = sid_str
@@ -402,7 +402,7 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Private Function get_station_program_EDCB(ByVal p_sid As Integer, ByVal startt As Integer, ByVal endt As Integer, ByVal p_station As String, ByVal p_tsid As Integer) As StationTVprogramstructure()
+    Private Function get_station_program_EDCB(ByVal p_sid As Integer, ByVal startt As Integer, ByVal endt As Integer, ByVal p_station As String, ByVal p_tsid As Integer, Optional ByVal IsTVRemotePlus As Integer = 0) As StationTVprogramstructure()
         Dim r() As StationTVprogramstructure = Nothing
 
         If TvProgram_EDCB_url.Length > 0 Then
@@ -470,7 +470,7 @@ Module モジュール_番組表_放送局指定
                             End If
 
                             '予約状況を照らし合わせr()を修正
-                            If r IsNot Nothing Then
+                            If r IsNot Nothing And IsTVRemotePlus = 0 Then
                                 log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                                 '予約状況を照らし合わせr()を修正
                                 Dim spReserve() As spReservestructure = get_station_program_EDCB_reserve(p_sid, p_nid)
@@ -584,7 +584,7 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Private Function get_station_program_TvmaidEX(ByVal p_sid As Integer, ByVal startt As Integer, ByVal endt As Integer, ByVal p_station As String, ByVal p_tsid As Integer) As StationTVprogramstructure()
+    Private Function get_station_program_TvmaidEX(ByVal p_sid As Integer, ByVal startt As Integer, ByVal endt As Integer, ByVal p_station As String, ByVal p_tsid As Integer, Optional ByVal IsTVRemotePlus As Integer = 0) As StationTVprogramstructure()
         Dim r() As StationTVprogramstructure = Nothing
 
         Dim maya As Integer = 0
@@ -764,7 +764,7 @@ Module モジュール_番組表_放送局指定
                     sw.Close()
                     st.Close()
 
-                    If r IsNot Nothing Then
+                    If r IsNot Nothing And IsTVRemotePlus = 0 Then
                         log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                         '予約状況を照らし合わせr()を修正
                         Dim spReserve() As spReservestructure = get_station_program_TvmaidEX_reserve(fsid_long_str, maya)
@@ -890,7 +890,7 @@ Module モジュール_番組表_放送局指定
 
     Private TvRock_station_program_backup As String = ""
     Private TvRock_station_program_date As DateTime = CDate("1980/01/01")
-    Private Function get_station_program_TvRock(ByVal p_sid As Integer, ByVal p_endt As Integer, ByVal force As Integer, ByVal p_station As String) As StationTVprogramstructure()
+    Private Function get_station_program_TvRock(ByVal p_sid As Integer, ByVal p_endt As Integer, ByVal force As Integer, ByVal p_station As String, Optional ByVal IsTVRemotePlus As Integer = 0) As StationTVprogramstructure()
         Dim r() As StationTVprogramstructure = Nothing
         'TvRockの場合はstarttに意味無し
         Dim err_count As Integer = 0
@@ -961,14 +961,16 @@ Module モジュール_番組表_放送局指定
                             sp3 = html.IndexOf("<small><b>", sp)
                         End If
                         '予約番号がわからないのでタイトルから推測
-                        If TvRock_genre_cache IsNot Nothing Then
-                            temp_genre = get_tvrock_genre_from_search(0, 0, temp_programTitle, temp_stationDispName).ToString
-                        End If
-                        If TvRock_html_plc_src.Length > 0 And temp_genre = "-1" Then
-                            temp_genre = get_tvrock_genre_from_plc(0, 0, temp_programTitle).ToString
-                        End If
-                        If temp_genre = "-1" < 0 Then
-                            temp_genre = get_tvrock_genre_from_program(0, 0, temp_programTitle).ToString '"-1"
+                        If IsTVRemotePlus = 0 Then
+                            If TvRock_genre_cache IsNot Nothing Then
+                                temp_genre = get_tvrock_genre_from_search(0, 0, temp_programTitle, temp_stationDispName).ToString
+                            End If
+                            If TvRock_html_plc_src.Length > 0 And temp_genre = "-1" Then
+                                temp_genre = get_tvrock_genre_from_plc(0, 0, temp_programTitle).ToString
+                            End If
+                            If temp_genre = "-1" Then
+                                temp_genre = get_tvrock_genre_from_program(0, 0, temp_programTitle).ToString '"-1"
+                            End If
                         End If
 
                         '次のチャンネルが始まる地点
@@ -984,7 +986,7 @@ Module モジュール_番組表_放送局指定
                         End If
                         If sp4 > 0 And sp4 < se Then
                             temp_sid = Val(Instr_pickup(html, ",", ",", sp4))
-                            If temp_sid = 161 Then
+                            If p_station.Length > 0 And temp_sid = 161 Then
                                 'とりあえずQVCとBS-TBSだけチェック
                                 If StrConv(p_station, VbStrConv.Wide) <> StrConv(temp_stationDispName, VbStrConv.Wide) Then
                                     temp_sid = -1
@@ -1063,7 +1065,7 @@ Module モジュール_番組表_放送局指定
                                             r(j).rsv_change = ""
                                         End If
                                         r(j).fsid_startt = temp_stationDispName & "_" & temp_startt.ToString
-                                        If TvRock_genre_ON = 1 Then
+                                        If TvRock_genre_ON = 1 And IsTVRemotePlus = 0 Then
                                             Dim r1chk As Integer = 0
                                             r(j).genre = get_tvrock_genre_from_program(sid, trid, r(j).title).ToString
                                             If TvRock_genre_cache IsNot Nothing And r(j).genre = "-1" Then
@@ -1077,6 +1079,10 @@ Module モジュール_番組表_放送局指定
                                                 '120分以内なのに見つからない
                                                 log1write("【ジャンルが見つかりませんでした】sid=" & sid & " trid=" & trid & " title=" & r(j).title)
                                             End If
+                                        End If
+                                        If IsTVRemotePlus = 1 Then
+                                            'TVRemotePlusの場合は次番組1個で十分
+                                            Exit While
                                         End If
                                     Else
                                         Exit While
@@ -1102,67 +1108,69 @@ Module モジュール_番組表_放送局指定
                     sp = html.LastIndexOf("><small>", sp2 + 1)
                 End While
 
-                Dim r0_chk As Integer = 0
-                '先頭の番組IDを推定する
-                If r IsNot Nothing Then
-                    If TvRock_genre_cache IsNot Nothing Then
-                        Dim temp_key As String = get_tvrock_title_key(r(0).title)
-                        Dim idx As Integer = Array.IndexOf(TvRock_genre_cache, r(0).title & ",_" & r(0).name & ",_" & temp_key)
-                        If idx >= 0 Then
-                            Dim d() As String = Split(TvRock_genre_cache(idx).sid_eid, "&e=")
-                            If d.Length = 2 Then
-                                r(0).reserve = -1 'まだ確定できない
-                                r(0).rsv_change = RecSrc & "javascript:reserv(0," & d(0) & "," & d(1) & ",0)"
-                                r0_chk = 1 '最初の項目のチェックが終わった
-                            End If
-                        End If
-                    End If
-                    If r0_chk = 0 And TvRock_html_program_src.Length > 0 Then
-                        '番組IDがわからない・・1番始めに見つかったtridから遡った直近のものだろう
-                        Dim s5 As Integer = TvRock_html_program_src.IndexOf("&c=" & p_sid & "&e=" & first_trid)
-                        If s5 > 0 Then
-                            Dim s6 As Integer = TvRock_html_program_src.LastIndexOf("&c=" & p_sid, s5 - 1)
-                            If s6 > 0 Then
-                                Dim s7 As String = Instr_pickup(TvRock_html_program_src, "&e=", "&", s6)
-                                r(0).reserve = -1 'まだ確定できない
-                                r(0).rsv_change = RecSrc & "javascript:reserv(0," & p_sid & "," & s7 & ",0)"
-                                r0_chk = 1 '最初の項目のチェックが終わった
-                            End If
-                        End If
-                    End If
-                End If
-
-                If r IsNot Nothing Then
-                    log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
-                    '予約状況を照らし合わせr()を修正
-                    Dim spReserve() As spReservestructure = get_station_program_TvRock_reserve(p_sid)
-                    If spReserve IsNot Nothing Then
-                        For i = 0 To spReserve.Length - 1
-                            Dim ri As Integer = Array.IndexOf(r, spReserve(i).station & "_" & spReserve(i).startt)
-                            If ri >= 0 Then
-                                '放送局名と開始時間が一致
-                                If spReserve(i).recmode = 1 Then
-                                    r(ri).reserve = 1
-                                    r(ri).rsv_change = RecSrc & "list?i=" & spReserve(i).yid & "&amp;val=" & (Val(spReserve(i).recmode) + 1)
-                                ElseIf r(ri).reserve < 0 Then
-                                    r(ri).reserve = 0
-                                    r(ri).rsv_change = RecSrc & "list?i=" & spReserve(i).yid & "&amp;val=" & (Val(spReserve(i).recmode) + 1)
+                If IsTVRemotePlus = 0 Then
+                    Dim r0_chk As Integer = 0
+                    '先頭の番組IDを推定する
+                    If r IsNot Nothing Then
+                        If TvRock_genre_cache IsNot Nothing Then
+                            Dim temp_key As String = get_tvrock_title_key(r(0).title)
+                            Dim idx As Integer = Array.IndexOf(TvRock_genre_cache, r(0).title & ",_" & r(0).name & ",_" & temp_key)
+                            If idx >= 0 Then
+                                Dim d() As String = Split(TvRock_genre_cache(idx).sid_eid, "&e=")
+                                If d.Length = 2 Then
+                                    r(0).reserve = -1 'まだ確定できない
+                                    r(0).rsv_change = RecSrc & "javascript:reserv(0," & d(0) & "," & d(1) & ",0)"
+                                    r0_chk = 1 '最初の項目のチェックが終わった
                                 End If
-                            Else
-                                'webから返ってくるデータはsidが不明なので、該当局以外ののデータも含まれている
-                                'log1write("【エラー】TvRock予約状況照合中に当てはまらないデータがありました。" & spReserve(i).station & "_" & spReserve(i).startt)
+                            End If
+                        End If
+                        If r0_chk = 0 And TvRock_html_program_src.Length > 0 Then
+                            '番組IDがわからない・・1番始めに見つかったtridから遡った直近のものだろう
+                            Dim s5 As Integer = TvRock_html_program_src.IndexOf("&c=" & p_sid & "&e=" & first_trid)
+                            If s5 > 0 Then
+                                Dim s6 As Integer = TvRock_html_program_src.LastIndexOf("&c=" & p_sid, s5 - 1)
+                                If s6 > 0 Then
+                                    Dim s7 As String = Instr_pickup(TvRock_html_program_src, "&e=", "&", s6)
+                                    r(0).reserve = -1 'まだ確定できない
+                                    r(0).rsv_change = RecSrc & "javascript:reserv(0," & p_sid & "," & s7 & ",0)"
+                                    r0_chk = 1 '最初の項目のチェックが終わった
+                                End If
+                            End If
+                        End If
+                    End If
+
+                    If r IsNot Nothing Then
+                        log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
+                        '予約状況を照らし合わせr()を修正
+                        Dim spReserve() As spReservestructure = get_station_program_TvRock_reserve(p_sid)
+                        If spReserve IsNot Nothing Then
+                            For i = 0 To spReserve.Length - 1
+                                Dim ri As Integer = Array.IndexOf(r, spReserve(i).station & "_" & spReserve(i).startt)
+                                If ri >= 0 Then
+                                    '放送局名と開始時間が一致
+                                    If spReserve(i).recmode = 1 Then
+                                        r(ri).reserve = 1
+                                        r(ri).rsv_change = RecSrc & "list?i=" & spReserve(i).yid & "&amp;val=" & (Val(spReserve(i).recmode) + 1)
+                                    ElseIf r(ri).reserve < 0 Then
+                                        r(ri).reserve = 0
+                                        r(ri).rsv_change = RecSrc & "list?i=" & spReserve(i).yid & "&amp;val=" & (Val(spReserve(i).recmode) + 1)
+                                    End If
+                                Else
+                                    'webから返ってくるデータはsidが不明なので、該当局以外ののデータも含まれている
+                                    'log1write("【エラー】TvRock予約状況照合中に当てはまらないデータがありました。" & spReserve(i).station & "_" & spReserve(i).startt)
+                                End If
+                            Next
+                        End If
+                        '一巡してr()に対して判定がなされてなければ予約されていないとわかる
+                        If r0_chk = 1 And r(0).reserve < 0 Then
+                            r(0).reserve = 0
+                        End If
+                        For kk As Integer = 1 To r.Length - 1
+                            If r(kk).reserve < 0 Then
+                                r(kk).reserve = 0
                             End If
                         Next
                     End If
-                    '一巡してr()に対して判定がなされてなければ予約されていないとわかる
-                    If r0_chk = 1 And r(0).reserve < 0 Then
-                        r(0).reserve = 0
-                    End If
-                    For kk As Integer = 1 To r.Length - 1
-                        If r(kk).reserve < 0 Then
-                            r(kk).reserve = 0
-                        End If
-                    Next
                 End If
 
                 log_temp &= " > 解析完了：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
@@ -1371,7 +1379,7 @@ Module モジュール_番組表_放送局指定
         Return r
     End Function
 
-    Public Function get_station_program_ptTimer(ByVal p_sid As Integer, ByVal p_startt As Integer, ByVal p_endtt As Integer, ByVal p_station As String) As StationTVprogramstructure()
+    Public Function get_station_program_ptTimer(ByVal p_sid As Integer, ByVal p_startt As Integer, ByVal p_endtt As Integer, ByVal p_station As String, Optional ByVal IsTVRemotePlus As Integer = 0) As StationTVprogramstructure()
         'ptTimer番組表
         Dim r() As StationTVprogramstructure = Nothing
 
@@ -1550,7 +1558,7 @@ Module モジュール_番組表_放送局指定
                 End If
             Next
 
-            If r IsNot Nothing Then
+            If r IsNot Nothing And IsTVRemotePlus = 0 Then
                 log_temp &= " > 予約状況解析開始：" & Now().ToString("ss") & "." & Now().Millisecond.ToString("d3")
                 '予約状況を照らし合わせr()を修正
                 Dim spReserve() As spReservestructure = get_station_program_ptTimer_reserve(p_sid)

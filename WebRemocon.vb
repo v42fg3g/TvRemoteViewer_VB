@@ -5325,7 +5325,7 @@ Class WebRemocon
 
                         'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
                         Dim pext As String = System.IO.Path.GetExtension(path).ToLower
-                        If pext.IndexOf(".htm") >= 0 Or (path.IndexOf("WI_") >= 0 And pext = ".json") Then
+                        If path.IndexOf("EnumEventInfo") >= 0 Or pext.IndexOf(".htm") >= 0 Or (path.IndexOf("WI_") >= 0 And pext = ".json") Then
                             'HTMLなら
                             'ログ記録
                             If ipstr.Length > 0 Then
@@ -5847,6 +5847,9 @@ Class WebRemocon
                                         WI_cmd_reply = WI_GET_1GENRE_PROGRAM(temp)
                                         WI_cmd_reply_force = 1
                                 End Select
+                            ElseIf req_Url.IndexOf("EnumEventInfo") >= 0 Then
+                                WI_cmd_reply = WI_GET_EnumEventInfo(Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("onid") & ""), Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("sid") & ""), Val(System.Web.HttpUtility.ParseQueryString(req.Url.Query)("tsid") & ""))
+                                WI_cmd_reply_force = 1
                             End If
 
                             '===========================================
@@ -8529,6 +8532,117 @@ Class WebRemocon
 
         If r.Length < 10 Then
             r = "{""32400"":[""コメント無し""]}"
+        End If
+
+        Return r
+    End Function
+
+    Private Function WI_GET_EnumEventInfo(ByVal onid As Integer, ByVal sid As Integer, ByVal tsid As Integer) As String
+        Dim r As String = ""
+
+        If sid = 0 Then
+            '指定が無い場合はダミー
+            onid = 4
+            sid = 151
+            tsid = 16400
+        End If
+
+        Dim src As String = ""
+        Dim delm As String = ""
+        If TvProgram_tvrock_url.Length > 0 Then
+            src &= delm & "TvRock"
+            delm = "_"
+        End If
+        If Tvmaid_url.Length > 0 Then
+            src &= delm & "Tvmaid"
+            delm = "_"
+        End If
+        If ptTimer_path.Length > 0 Then
+            src &= delm & "ptTimer"
+            delm = "_"
+        End If
+        If TvProgram_EDCB_url.Length > 0 Then
+            src &= delm & "EDCB"
+            delm = "_"
+        End If
+
+        'If src.IndexOf("EDCB") >= 0 Then
+        ''EDCBが含まれていれば直接取得
+        'Dim EDCB_ip As String = Instr_pickup(TvProgram_EDCB_url, "://", "/", 0)
+        'If EDCB_ip.IndexOf(":") > 0 Then
+        'r = get_html_by_webclient("http://" & EDCB_ip & "/api/EnumEventInfo?onair=&" & onid & "=7&sid=" & sid, "UTF-8")
+        'If r.IndexOf("eventinfo") < 0 Then
+        ''取得に失敗した場合はEDCB以外で取得を試みる
+        'r = ""
+        'src = src.Replace("EDCB", "")
+        'src = src.Trim("_")
+        'End If
+        'End If
+        'End If
+
+        If r.Length = 0 Then
+            If src.Length > 0 Then
+                Dim startt As Integer = time2unix(Now())
+                Dim endt As Integer = startt + (3600 * 3) '3時間
+                Dim jigyousha As String = sid2jigyousha(sid, tsid)
+                Dim program1 As String = WI_GET_STATION_PROGRAM(src & "," & sid & "," & startt & "," & endt & ",0," & jigyousha & "," & tsid, 1)
+
+                Dim pxml As String = ""
+                Dim pcount As Integer = 0
+                If program1.Length > 100 Then
+                    Dim line() As String = Split(program1, vbCrLf)
+                    If line.Length >= 2 Then
+                        For i = 1 To line.Length - 1
+                            Dim d() As String = line(i).Split(",")
+                            If d.Length >= 5 Then
+                                Dim nibble1 As Integer = Int(Val(d(4)) / 256)
+                                Dim nibble2 As Integer = Val(d(4)) Mod 256
+                                If Val(d(4)) < 0 Then
+                                    nibble1 = 15 '-1
+                                    nibble2 = 0 '-1
+                                End If
+                                pxml &= "<eventinfo>"
+                                pxml &= "<ONID>" & onid & "</ONID>"
+                                pxml &= "<TSID>" & tsid & "</TSID>"
+                                pxml &= "<SID>" & sid & "</SID>"
+                                Dim date1 As DateTime = unix2time(Val(d(0)))
+                                Dim duration As Integer = (Val(d(1)) - Val(d(0)))
+                                Dim eid As String = tsid.ToString & sid.ToString & Hour(date1).ToString("D2") & Minute(date1).ToString("D2") 'てきとーな数値
+                                pxml &= "<eventID>" & eid & "</eventID>"
+                                pxml &= "<startDate>" & date1.ToString("yyyy/MM/dd") & "</startDate>"
+                                pxml &= "<startTime>" & date1.ToString("HH:mm:ss") & "</startTime>"
+                                Dim wday As Integer = Weekday(date1) - 1
+                                If wday < 0 Then
+                                    wday = 6
+                                End If
+                                pxml &= "<startDayOfWeek>" & wday.ToString & "</startDayOfWeek>"
+                                pxml &= "<duration>" & duration & "</duration>"
+                                Dim event_name As String = filename_escape_recall(d(2)) '.Replace(vbCrLf, "\n")
+                                Dim event_txt As String = filename_escape_recall(d(3)) '.Replace(vbCrLf, "\n")
+                                pxml &= "<event_name>" & event_name & "</event_name>"
+                                pxml &= "<event_text>" & event_txt & "</event_text>"
+                                pxml &= "<contentInfo><nibble1>" & nibble1 & "</nibble1><nibble2>" & nibble2 & "</nibble2></contentInfo>"
+                                'pxml &= "<groupInfo><ONID>" & onid & "</ONID><TSID>" & tsid & "</TSID><SID>" & sid & "</SID><eventID>" & eid & "</eventID></groupInfo></groupInfo>"
+                                pxml &= "<freeCAFlag>0</freeCAFlag>"
+                                pxml &= "</eventinfo>" & vbCrLf
+                                pcount += 1
+                                If pcount >= 2 Then
+                                    Exit For
+                                End If
+                            End If
+                        Next
+                    End If
+                End If
+
+                'ヘッダー＆フッター付加
+                pxml = "<?xml version=""1.0"" encoding=""UTF-8"" ?><entry><total>" & pcount & "</total><index>0</index><count>" & pcount & "</count><items>" & vbCrLf & pxml & "</items></entry>"
+
+                If pcount = 0 Then
+                    pxml = "<entry><err>EPGデータを読み込み中、または存在しません</err></entry>"
+                End If
+
+                r = pxml
+            End If
         End If
 
         Return r
