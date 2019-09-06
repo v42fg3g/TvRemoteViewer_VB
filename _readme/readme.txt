@@ -919,6 +919,7 @@ UDP1235,0,1,0,0,48835,0,0,1
 			環境を要Framework4.5.0に移行（そのほうがインストール済みの方が多いため）（2.93k）
 			TVRemotePlusへの番組情報提供（TvRock,EDCB,Tvmaid,ptTimer）（2.93m）
 			（TVRemotePlusのconfig.php内「$EDCB_http_url = 'http://IPアドレス:40003/';」と記述するだけでOK）
+			ネット番組表でNG指定放送局の番組情報はTVRVLauncherへ渡さないようにした(ログの警告表示抑止)（2.93n）
 
 
 
