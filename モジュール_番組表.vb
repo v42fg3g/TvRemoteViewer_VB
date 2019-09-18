@@ -1000,11 +1000,17 @@ Module モジュール_番組表
 
                     'NG指定されていないかチェック
                     Dim NGStation_chk As Integer = 0
-                    If Array.IndexOf(TvProgram_NGword, StrConv(station_name, VbStrConv.Wide)) >= 0 Then
-                        NGStation_chk = 1
-                    End If
-                    If Array.IndexOf(TvProgram_NGword, StrConv(ch_list(ci).jigyousha, VbStrConv.Wide)) >= 0 Then
-                        NGStation_chk = 1
+                    If TvProgram_NGword IsNot Nothing Then
+                        If ch_list(ci).jigyousha.Length > 0 Then
+                            If Array.IndexOf(TvProgram_NGword, StrConv(ch_list(ci).jigyousha, VbStrConv.Wide)) >= 0 Then
+                                NGStation_chk = 1
+                            End If
+                        End If
+                        If station_name <> ch_list(ci).jigyousha And station_name.Length > 0 Then
+                            If Array.IndexOf(TvProgram_NGword, StrConv(station_name, VbStrConv.Wide)) >= 0 Then
+                                NGStation_chk = 1
+                            End If
+                        End If
                     End If
 
                     If station_name.Length > 0 And NGStation_chk = 0 Then
