@@ -644,14 +644,14 @@ Public Class Form1
         ComboBoxServiceID.Text = ServiceID_temp '前回終了時に選択していたものをセット
 
         '起動時のスリープ状態を取得
-        If viewing_NoSleep = 1 Then
-            previousExecutionState = DisableSleepMode()
-            If previousExecutionState = 0 Then
-                log1write("【エラー】スリープ状態取得に失敗しました")
-            Else
-                log1write("起動時のスリープ状態を取得しました")
-            End If
-        End If
+        'If viewing_NoSleep = 1 Then
+        'previousExecutionState = DisableSleepMode()
+        'If previousExecutionState = 0 Then
+        'log1write("【エラー】スリープ状態取得に失敗しました")
+        'Else
+        'log1write("起動時のスリープ状態を取得しました")
+        'End If
+        'end If
 
         'Outside_CustomURL取得
         If TvProgram_ch IsNot Nothing Then
@@ -1167,11 +1167,11 @@ Public Class Form1
         End If
 
         'スリープ状態復帰
-        If viewing_NoSleep = 1 Then
-            If previousExecutionState <> 0 Then
-                SetSleepMode(previousExecutionState)
-            End If
-        End If
+        'If viewing_NoSleep = 1 Then
+        'If previousExecutionState <> 0 Then
+        'SetSleepMode(previousExecutionState)
+        'End If
+        'End If
 
         NotifyIcon1.Visible = False
         NotifyIcon1.Dispose()
