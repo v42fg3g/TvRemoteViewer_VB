@@ -1572,6 +1572,13 @@ Public Class Form1
             End If
             Dim color_str As String = Trim(Instr_pickup(html, "<trs>", " ", sp, ep))
             Dim station As String = Trim(Instr_pickup(html, "<t>", "</t>", sp, ep))
+            If station.Length = 0 Then
+                station = Trim(Instr_pickup(html, "<t>", "/", sp, ep))
+                Dim ep2 As Integer = station.LastIndexOf(" ")
+                If ep2 > 0 Then
+                    station = station.Substring(0, ep2)
+                End If
+            End If
             Dim title As String = Trim(Instr_pickup(html, "] ", """", sp, ep).Replace("<>", " "))
             title = Regex.Replace(title, "<.*?>", "") 'TvRockのルビを消す
             Dim title_key As String = title

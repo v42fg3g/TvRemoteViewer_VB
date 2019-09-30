@@ -127,7 +127,7 @@ Module モジュール_番組表_放送局指定
             End If
         End If
 
-        If j >= 0 Then
+        If j >= 0 And force = 0 Then
             'キャッシュから
             r = scache(j).value_str
             log1write("【放送局別番組表】番組データをキャッシュから取得しました（" & sid_str & "）")
