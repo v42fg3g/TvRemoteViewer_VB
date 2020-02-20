@@ -947,8 +947,8 @@ Module モジュール_番組表_放送局指定
                         End If
                         temp_stationDispName = Trim(temp_stationDispName)
                         temp_stationDispName = Trim(delete_tag(temp_stationDispName))
-                        Dim s11 As String = Trim(delete_tag(Instr_pickup(html, "<i>", "～", sp)))
-                        Dim s12 As String = Trim(delete_tag(Instr_pickup(html, "～", "</i></small>", sp2)))
+                        Dim s11 As String = fix28(Trim(delete_tag(Instr_pickup(html, "<i>", "～", sp))))
+                        Dim s12 As String = fix28(Trim(delete_tag(Instr_pickup(html, "～", "</i></small>", sp2))))
                         Dim dt() As Integer = fix_time_d2u(s11, s12, 0, plus_days) 'plus_daysはByRef
                         temp_startt = dt(0)
                         temp_endt = dt(1)
@@ -1038,8 +1038,8 @@ Module モジュール_番組表_放送局指定
                                         first_trid = trid
                                     End If
 
-                                    s11 = Trim(delete_tag(Instr_pickup(html, "<i>", "～", sp3)))
-                                    s12 = Trim(delete_tag(Instr_pickup(html, "～", "</i></small>", sp3)))
+                                    s11 = fix28(Trim(delete_tag(Instr_pickup(html, "<i>", "～", sp3))))
+                                    s12 = fix28(Trim(delete_tag(Instr_pickup(html, "～", "</i></small>", sp3))))
                                     dt = fix_time_d2u(s11, s12, 1, plus_days) 'plus_daysはByRef
                                     temp_startt = dt(0)
                                     temp_endt = dt(1)
@@ -1261,8 +1261,8 @@ Module モジュール_番組表_放送局指定
                                 '>1月26日(金) 23:00～23:30<
                                 Dim mm As Integer = Val(Instr_pickup(date_str, ">", "月", 0))
                                 Dim dd As Integer = Val(Instr_pickup(date_str, "月", "日", 0))
-                                Dim hm1 As String = Instr_pickup(date_str, ") ", "～", 0)
-                                Dim hm2 As String = Instr_pickup(date_str, "～", "<", 0)
+                                Dim hm1 As String = fix28(Instr_pickup(date_str, ") ", "～", 0))
+                                Dim hm2 As String = fix28(Instr_pickup(date_str, "～", "<", 0))
                                 Dim yyyy As String = Year(Now()).ToString
                                 Dim d1_str As String = yyyy & "/" & mm & "/" & dd & " " & hm1
                                 Dim d2_str As String = yyyy & "/" & mm & "/" & dd & " " & hm2

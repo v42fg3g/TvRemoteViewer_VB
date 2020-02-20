@@ -1717,8 +1717,8 @@ Module モジュール_番組表
                         End If
                         temp_stationDispName = Trim(temp_stationDispName)
                         temp_stationDispName = Trim(delete_tag(temp_stationDispName))
-                        temp_startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp))))
-                        temp_endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp2))))
+                        temp_startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & fix28(Instr_pickup(html, "<i>", "～", sp)))))
+                        temp_endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & fix28(Instr_pickup(html, "～", "</i></small>", sp2)))))
 
                         temp_programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><b>", "</b></small>", sp)))
                         Dim sp3 As Integer = html.IndexOf("<font color=", sp)
@@ -1802,8 +1802,8 @@ Module モジュール_番組表
                                 End If
                                 ReDim Preserve r(j)
                                 r(j).stationDispName = temp_stationDispName
-                                r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3))))
-                                r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3))))
+                                r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & fix28(Instr_pickup(html, "<i>", "～", sp3)))))
+                                r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & fix28(Instr_pickup(html, "～", "</i></small>", sp3)))))
                                 r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                                 r(j).programContent = ""
                                 r(j).sid = temp_sid
@@ -1851,8 +1851,8 @@ Module モジュール_番組表
                                     j = r.Length
                                     ReDim Preserve r(j)
                                     r(j).stationDispName = temp_stationDispName
-                                    r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "<i>", "～", sp3))))
-                                    r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & Instr_pickup(html, "～", "</i></small>", sp3))))
+                                    r(j).startDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & fix28(Instr_pickup(html, "<i>", "～", sp3)))))
+                                    r(j).endDateTime = fix_tvrock_d_str(Trim(delete_tag("1970/01/01 " & fix28(Instr_pickup(html, "～", "</i></small>", sp3)))))
                                     r(j).programTitle = escape_program_str(delete_tag(Instr_pickup(html, "<small><small><small>", "</small></small></small>", sp3)))
                                     r(j).programContent = ""
                                     r(j).sid = temp_sid
@@ -4530,6 +4530,20 @@ Module モジュール_番組表
         Catch ex As Exception
             log1write("【エラー】ジャンルテスト中にエラーが発生しました。" & ex.Message)
         End Try
+
+        Return r
+    End Function
+
+    '28時間表記を通常表記へ
+    Public Function fix28(ByVal s As String) As String
+        Dim r As String = s
+
+        If Val(s) >= 24 Then
+            Dim d() As String = s.Split(":")
+            If d.Length = 2 Then
+                r = (Val(d(0)) - 24).ToString & ":" & d(1)
+            End If
+        End If
 
         Return r
     End Function
