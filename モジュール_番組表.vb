@@ -4141,7 +4141,7 @@ Module モジュール_番組表
                 If nextsec = 0 Then
                     url &= "SELECT fsid,start,end,duration,title,desc,genre,subgenre from event WHERE start <= " & ut_b & " AND end > " & ut_b & " ORDER BY fsid"
                 Else
-                    url &= "SELECT fsid,start,end,duration,title,desce,genre,subgenre from event WHERE (start <= " & ut_b & " AND end > " & ut_b & ") OR (start <= " & utn_b & " AND start > " & ut_b & ") ORDER BY fsid,start"
+                    url &= "SELECT fsid,start,end,duration,title,desc,genre,subgenre from event WHERE (start <= " & ut_b & " AND end > " & ut_b & ") OR (start <= " & utn_b & " AND start > " & ut_b & ") ORDER BY fsid,start"
                 End If
                 url = url.Replace("//webapi?api", "/webapi?api")
 
