@@ -49,6 +49,10 @@ WEBƒT[ƒo[	0	string	TvProgramP_BonDriver1st		[–³Œø] ƒvƒŒƒ~ƒAƒ€‚Å—Dæ“I‚ÉŠ„‚è“–‚
 WEBƒT[ƒo[	0	document			@
 WEBƒT[ƒo[	0	string	HTML_IN_CHARACTER_CODE	UTF-8	[–³Œø] HTML“ü—ÍƒLƒƒƒ‰ƒNƒ^[ƒR[ƒh
 WEBƒT[ƒo[	0	string	HTML_OUT_CHARACTER_CODE	UTF-8	[–³Œø] HTMLo—ÍƒLƒƒƒ‰ƒNƒ^[ƒR[ƒh
+WEBƒT[ƒo[	0	document			@
+WEBƒT[ƒo[	0	integer	Ch5_read_dat	0	5chƒXƒŒƒf[ƒ^‚ğƒvƒƒLƒVŒo—R‚Åæ“¾‚·‚é=1 ƒXƒŒˆÈŠO‚àƒvƒƒLƒV‚ğŒo—R‚·‚é=2
+WEBƒT[ƒo[	0	string200	Ch5_Proxy_Server		5chƒXƒŒæ“¾—pƒvƒƒLƒV@—áF http://192.168.1.105:8080
+WEBƒT[ƒo[	0	string340	Ch5_UserAgent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3864.0 Safari/537.36	5chƒXƒŒæ“¾—pUser-Agent
 
 ”Ô‘g•\‘S”Ê	1	integer	next2_minutes	8	Ÿ‚ÌŸ‚Ì”Ô‘g‚ğæ“¾‚·‚é iŸ‚Ì”Ô‘g‚ªw’è•ªˆÈ“à‚Ì”Ô‘g‚È‚ç‚Îj 0=æ“¾‚µ‚È‚¢
 ”Ô‘g•\‘S”Ê	0	document			@

@@ -1420,11 +1420,17 @@ Class WebRemocon
         ElseIf line.Length > 0 Then
             '読み込み完了
             For i = 0 To line.Length - 1
-                line(i) = trim8(line(i))
                 'コメント削除
-                If line(i).IndexOf(";") >= 0 Then
-                    line(i) = line(i).Substring(0, line(i).IndexOf(";"))
+                If line(i).IndexOf("UserAgent") < 0 Then
+                    If Instr_pickup(line(i), """", """", 0).indexof(";") < 0 Then
+                        If line(i).IndexOf(";") >= 0 Then
+                            line(i) = line(i).Substring(0, line(i).IndexOf(";"))
+                        End If
+                    ElseIf line(i).LastIndexOf(";") > line(i).LastIndexOf("""") Then
+                        line(i) = line(i).Substring(0, line(i).LastIndexOf(";"))
+                    End If
                 End If
+                line(i) = trim8(line(i))
                 'If line(i).IndexOf("#") >= 0 Then
                 'line(i) = line(i).Substring(0, line(i).IndexOf("#"))
                 'End If
@@ -2087,6 +2093,17 @@ Class WebRemocon
                                     tsRenameSyncChapter = Val(youso(1))
                                     If tsRenameSyncChapter = 1 Then
                                         log1write("tsファイルリネーム時にchapterファイルリネームも同時に行うよう設定しました。")
+                                    End If
+                                Case "Ch5_read_dat"
+                                    Ch5_read_dat = Val(youso(1))
+                                    log1write("Ch5_read_dat=" & Ch5_read_dat)
+                                Case "Ch5_Proxy_Server"
+                                    Ch5_Proxy_Server = youso(1)
+                                    log1write("Ch5_Proxy_Server=" & Ch5_Proxy_Server)
+                                Case "Ch5_UserAgent"
+                                    If youso(1).Length > 0 Then
+                                        Ch5_UserAgent = youso(1)
+                                        log1write("Ch5_UserAgent=" & Ch5_UserAgent)
                                     End If
 
 
@@ -7976,16 +7993,20 @@ Class WebRemocon
                     log1write("【警告】" & url & " へのアクセスを拒否しました")
                 Else
                     log1write("HTMLを取得します。" & url)
-                    Select Case method
-                        Case 1
-                            r = get_html_by_WebBrowser(url, enc_str, UserAgent)
-                        Case 2
-                            r = get_html_by_webclient(url, enc_str, UserAgent)
-                        Case 3
-                            r = get_html_by_HttpWebRequest(url, enc_str, UserAgent)
-                        Case Else
-                            log1write("【エラー】HTML取得方法指定が不正です。" & temp)
-                    End Select
+                    If Ch5_read_dat > 0 And Ch5_Proxy_Server.Length > 0 Then
+                        r = get_html_by_HttpWebRequest_Proxy(url, enc_str, Ch5_UserAgent)
+                    Else
+                        Select Case method
+                            Case 1
+                                r = get_html_by_WebBrowser(url, enc_str, UserAgent)
+                            Case 2
+                                r = get_html_by_webclient(url, enc_str, UserAgent)
+                            Case 3
+                                r = get_html_by_HttpWebRequest(url, enc_str, UserAgent)
+                            Case Else
+                                log1write("【エラー】HTML取得方法指定が不正です。" & temp)
+                        End Select
+                    End If
                 End If
             End If
         Else
@@ -8570,11 +8591,11 @@ Class WebRemocon
         ''EDCBが含まれていれば直接取得
         'Dim EDCB_ip As String = Instr_pickup(TvProgram_EDCB_url, "://", "/", 0)
         'If EDCB_ip.IndexOf(":") > 0 Then
-        'r = get_html_by_webclient("http://" & EDCB_ip & "/api/EnumEventInfo?onair=&" & onid & "=7&sid=" & sid, "UTF-8")
+        'r = get_html_by_webclient("http://" & EDCB_ip & "/api/EnumEventInfo?onair=1&basic=0&onid=" & onid & "&sid=" & sid & "&tsid=" & tsid, "UTF-8")
         'If r.IndexOf("eventinfo") < 0 Then
         ''取得に失敗した場合はEDCB以外で取得を試みる
         'r = ""
-        'src = src.Replace("EDCB", "")
+        'src = src.Replace("EDCB", "").Replace("__", "_")
         'src = src.Trim("_")
         'End If
         'End If

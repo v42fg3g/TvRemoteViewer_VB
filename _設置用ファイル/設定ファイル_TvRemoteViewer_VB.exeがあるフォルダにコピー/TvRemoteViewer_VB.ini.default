@@ -135,6 +135,23 @@ TVRemoteFilesNEW = 1
 TSID_in_ChSpace = 0
 
 
+;【2.93t】5chスレプロキシ経由
+;datデータをプロキシ経由で取得する場合は1、datデータ以外もプロキシ経由する場合は2
+;通常はdat取得可能なプロキシと併用して使用します。例：Ch5_Proxy_Server = http://127.0.0.1:8080
+;すでにdat取得用プロキシがIEのインターネットオプションで指定されている場合はTvtComment_Proxy_Serverの指定はしなくても良いはずです
+Ch5_read_dat = 0
+
+
+;【2.93t】datデータを取得するためのプロキシURL
+;例： Ch5_Proxy_Server = "http://127.0.0.1:8080"
+Ch5_Proxy_Server = 
+
+
+;【2.93t】datデータを取得するためのUserAgent
+Ch5_UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3864.0 Safari/537.36"
+
+
+
 ;==============================================================
 ; ファイル再生
 ;==============================================================

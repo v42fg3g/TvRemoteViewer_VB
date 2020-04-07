@@ -9,9 +9,15 @@ Module モジュール_その他
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
     Public TvRemoteViewer_VB_version_URL As String = "http://vb45wb5b.up.seesaa.net/image/version.txt"
-    Public TvRemoteViewer_VB_revision As String = "s"
+    Public TvRemoteViewer_VB_revision As String = "t"
 
     Public RestartExe_path As String = ""
+
+    'dat取得用プロキシ
+    Public Ch5_read_dat As Integer = 0
+    Public Ch5_Proxy_Server As String = ""
+    Public Ch5_UserAgent As String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3864.0 Safari/537.36"
+    Public Ch5_subback_cache As String = "" 'スレタイトル取得用キャッシュ
 
     'ts動画ファイルリネーム時に.chapterもリネームするか
     Public tsRenameSyncChapter As Integer = 0

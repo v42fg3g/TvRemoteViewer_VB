@@ -52,10 +52,6 @@
                     '読み込み完了
                     For i = 0 To line.Length - 1
                         line(i) = Trim(line(i))
-                        'コメント削除
-                        If line(i).IndexOf(";") >= 0 Then
-                            line(i) = line(i).Substring(0, line(i).IndexOf(";"))
-                        End If
                         Dim youso() As String = Split(line(i), vbTab)
                         Try
                             If youso Is Nothing Then

@@ -2818,9 +2818,16 @@ Public Class Form1
                                 line_temp = Trim(line(i))
                                 'コメント削除
                                 Dim inline_comment As String = ""
-                                If line_temp.IndexOf(";") >= 0 Then
-                                    inline_comment = line_temp.Substring(line(i).IndexOf(";"))
-                                    line_temp = line_temp.Substring(0, line(i).IndexOf(";"))
+                                If line_temp.IndexOf("UserAgent") < 0 Then
+                                    If Instr_pickup(line_temp, """", """", 0).indexof(";") < 0 Then
+                                        If line_temp.IndexOf(";") >= 0 Then
+                                            inline_comment = line_temp.Substring(line(i).IndexOf(";"))
+                                            line_temp = line_temp.Substring(0, line(i).IndexOf(";"))
+                                        End If
+                                    ElseIf line_temp.LastIndexOf(";") > line_temp.LastIndexOf("""") Then
+                                        inline_comment = line_temp.Substring(line(i).LastIndexOf(";"))
+                                        line_temp = line_temp.Substring(0, line(i).LastIndexOf(";"))
+                                    End If
                                 End If
                                 Dim youso() As String = line_temp.Split("=")
                                 If youso Is Nothing Then
