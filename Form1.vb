@@ -270,6 +270,26 @@ Public Class Form1
                 now_caching = 0
             End If
         End If
+
+        If Second(t) = 28 Then
+            Try
+                If watcher IsNot Nothing Then
+                    For k As Integer = 0 To watcher.Length - 1
+                        If trim8(Me._worker._videopath_ini(k)).Length > 0 Then
+                            watcher(k).EnableRaisingEvents = True
+                            watcher(k).IncludeSubdirectories = True
+                            watcher(k).SynchronizingObject = Me
+                            watcher(k).Filter = ""
+                            watcher(k).Path = trim8(Me._worker._videopath_ini(k))
+                            watcher(k).NotifyFilter = System.IO.NotifyFilters.LastWrite Or System.IO.NotifyFilters.FileName Or System.IO.NotifyFilters.DirectoryName
+                            'log1write("reserve.txt監視をリセットしました")
+                        End If
+                    Next
+                End If
+            Catch ex As Exception
+                log1write("【エラー】ファイル監視リセット中にエラーが発生しました。" & ex.Message)
+            End Try
+        End If
     End Sub
 
     'マルチスレッドで番組表キャッシュ先読み
@@ -2065,7 +2085,7 @@ Public Class Form1
                     watcher(i).IncludeSubdirectories = True
                     'UIのスレッドにマーシャリングする
                     'コンソールアプリケーションでの使用では必要ない
-                    'watcher.SynchronizingObject = Me
+                    watcher(i).SynchronizingObject = Me
                     watcher(i).InternalBufferSize = watcher_BufferSize
 
                     'イベントハンドラの追加
