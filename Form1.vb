@@ -282,7 +282,7 @@ Public Class Form1
                             watcher(k).Filter = ""
                             watcher(k).Path = trim8(Me._worker._videopath_ini(k))
                             watcher(k).NotifyFilter = System.IO.NotifyFilters.LastWrite Or System.IO.NotifyFilters.FileName Or System.IO.NotifyFilters.DirectoryName
-                            'log1write("reserve.txt監視をリセットしました")
+                            'log1write("ファイル監視をリセットしました")
                         End If
                     Next
                 End If
@@ -880,11 +880,7 @@ Public Class Form1
         'bondriver
         Dim f_bondriver As String = path_s2z(Me.TextBoxBonDriverPath.Text.ToString)
         If f_bondriver.Length = 0 Then
-            Try
-                f_bondriver = IO.Path.GetDirectoryName(path_s2z(Me.textBoxUdpApp.Text.ToString))
-            Catch ex As Exception
-                f_bondriver = ""
-            End Try
+            f_bondriver = Path_GetDirectoryName(path_s2z(Me.textBoxUdpApp.Text.ToString))
         End If
         If f_bondriver.Length > 0 Then
             If folder_exist(f_bondriver) = 1 Then
@@ -896,8 +892,8 @@ Public Class Form1
                     bchk = bons.Length
                     For Each stFilePath As String In bons
                         Dim s As String = trim8(stFilePath)
-                        Dim bonfile As String = IO.Path.GetFileName(s).ToLower 'ファイル名
-                        Dim ch2file As String = f_bondriver & "\" & IO.Path.GetFileNameWithoutExtension(s) & ".ch2"
+                        Dim bonfile As String = Path_GetFileName(s).ToLower 'ファイル名
+                        Dim ch2file As String = f_bondriver & "\" & Path_GetFileNameWithoutExtension(s) & ".ch2"
                         If file_exist(ch2file) <= 0 Then
                             log1write("【警告】" & bonfile & " に対応するch2ファイルが見つかりませんでした")
                         Else
@@ -908,8 +904,8 @@ Public Class Form1
                             Dim ecode As System.Text.Encoding = Nothing
                             If IsThisShiftJIS_GetCode(bs, ecode) <> 1 Then
                                 If ecode IsNot Nothing Then
-                                    Dim f_ch2 As String = Path.GetFileName(ch2file)
-                                    Dim udpAppName As String = Path.GetFileNameWithoutExtension(Me._worker._udpApp).ToLower
+                                    Dim f_ch2 As String = Path_GetFileName(ch2file)
+                                    Dim udpAppName As String = Path_GetFileNameWithoutExtension(Me._worker._udpApp).ToLower
                                     If udpAppName.IndexOf("tstask") < 0 Then
                                         log1write("【警告】" & ch2file & " の文字コードがRecTaskで使用できる形式では無い可能性があります。ch2ファイルはshift_jis形式で保存してください")
                                         If udpAppName.IndexOf("rectask") >= 0 Then
@@ -1176,7 +1172,7 @@ Public Class Form1
             str2file(log_path, alog & log1, "UTF-8")
             '整形済みログをTvRemoteViewer_VB_edited.logに出力
             Dim log_path2 As String = ""
-            Dim ext As String = Path.GetExtension(log_path)
+            Dim ext As String = Path_GetExtension(log_path)
             If ext.Length > 0 Then
                 Dim sp As Integer = log_path.LastIndexOf(ext)
                 If sp > 0 Then
@@ -1694,7 +1690,7 @@ Public Class Form1
         If bons IsNot Nothing Then
             For i As Integer = 0 To bons.Length - 1
                 'コンボボックスに追加
-                Dim s As String = Path.GetFileName(bons(i))
+                Dim s As String = Path_GetFileName(bons(i))
                 ComboBoxBonDriver.Items.Add(s)
             Next
         End If
@@ -2149,13 +2145,13 @@ Public Class Form1
                     cmd = 4
                     If tsRenameSyncChapter = 1 Then
                         'tsファイルがリネームされた場合は自動的にchapterファイルをリネームする
-                        Dim ext As String = Path.GetExtension(e.FullPath)
+                        Dim ext As String = Path_GetExtension(e.FullPath)
                         If ext = ".ts" Then
                             Try
                                 Dim renameEventArgs = DirectCast(e, RenamedEventArgs)
-                                Dim file_path As String = Path.GetDirectoryName(e.FullPath)
-                                Dim file_old As String = Path.GetFileNameWithoutExtension(renameEventArgs.OldFullPath)
-                                Dim file_new As String = Path.GetFileNameWithoutExtension(renameEventArgs.FullPath)
+                                Dim file_path As String = Path_GetDirectoryName(e.FullPath)
+                                Dim file_old As String = Path_GetFileNameWithoutExtension(renameEventArgs.OldFullPath)
+                                Dim file_new As String = Path_GetFileNameWithoutExtension(renameEventArgs.FullPath)
                                 If file_old <> file_new Then
                                     If file_exist(file_path & "\chapters\" & file_old & ".chapter") = 1 Then
                                         My.Computer.FileSystem.RenameFile(file_path & "\chapters\" & file_old & ".chapter", file_new & ".chapter")
@@ -2214,7 +2210,7 @@ Public Class Form1
 
             If dir_changed = 0 Then
                 '更新されたファイルがあるフォルダを記録
-                Dim folder As String = Path.GetDirectoryName(e.FullPath)
+                Dim folder As String = Path_GetDirectoryName(e.FullPath)
                 If VideoChangedFolders.IndexOf(vbCrLf & folder & vbCrLf) < 0 Then
                     VideoChangedFolders &= folder & vbCrLf
                 End If
@@ -2258,7 +2254,7 @@ Public Class Form1
             Dim hlsAppNameFile As String = ""
             Dim hlsOptFile As String = ""
 
-            Dim hlsAppFilename As String = Path.GetFileName(path_s2z(textBoxHlsApp.Text.ToString))
+            Dim hlsAppFilename As String = Path_GetFileName(path_s2z(textBoxHlsApp.Text.ToString))
             Dim hlsAppNum As Integer = 0
             If isMatch_HLS(hlsAppFilename, "vlc") = 1 Then
                 hlsAppNum = 1
@@ -2636,9 +2632,9 @@ Public Class Form1
             openFile.DefaultExt = "exe"
             openFile.Filter = "(*.exe)|*.exe"
             If value.Length > 0 Then
-                openFile.InitialDirectory = Path.GetDirectoryName(value)
+                openFile.InitialDirectory = Path_GetDirectoryName(value)
             Else
-                openFile.InitialDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                openFile.InitialDirectory = Path_GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
             End If
             openFile.ShowDialog()
             If openFile.FileNames.Length > 0 Then
@@ -2660,7 +2656,7 @@ Public Class Form1
         Try
             Dim openFolder As New System.Windows.Forms.FolderBrowserDialog()
             openFolder.RootFolder = Environment.SpecialFolder.Desktop
-            openFolder.SelectedPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+            openFolder.SelectedPath = Path_GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
             If value.Length > 0 Then
                 Dim d() As String = value.Split(",")
                 If d.Length > 0 Then
@@ -3066,14 +3062,14 @@ Public Class Form1
 
         Try
             If NicoConvAss_path.Length > 0 Then
-                Dim config_folder As String = Path.GetDirectoryName(NicoConvAss_path) & "\configset"
+                Dim config_folder As String = Path_GetDirectoryName(NicoConvAss_path) & "\configset"
                 If folder_exist(config_folder) = 1 Then
                     Dim files As String() = System.IO.Directory.GetFiles(config_folder, "*.txt", System.IO.SearchOption.AllDirectories)
                     If files IsNot Nothing Then
                         ComboBoxNicoSet.Items.Clear()
                         ComboBoxNicoSet.Items.Add("")
                         For i As Integer = 0 To files.Length - 1
-                            Dim config_name As String = Path.GetFileNameWithoutExtension(files(i))
+                            Dim config_name As String = Path_GetFileNameWithoutExtension(files(i))
                             If config_name.Length > 0 Then
                                 ComboBoxNicoSet.Items.Add(config_name)
                                 If config_name = s Then

@@ -37,11 +37,11 @@ Module モジュール_HTMLキャッシュ
         Dim j As Integer = 0
         Try
             For Each stFilePath As String In System.IO.Directory.GetFiles(bondriver_folder, "*.dll")
-                If System.IO.Path.GetExtension(stFilePath).ToLower = ".dll" Then
+                If Path_GetExtension(stFilePath).ToLower = ".dll" Then
                     Dim s As String = stFilePath
                     'フルパスファイル名がsに入る
                     'ファイル名だけを取り出す
-                    s = Path.GetFileName(s)
+                    s = Path_GetFileName(s)
                     Dim sl As String = s.ToLower() '小文字に変換
                     '表示しないBonDriverかをチェック
                     If BonDriver_NGword IsNot Nothing Then

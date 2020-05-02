@@ -609,7 +609,7 @@ Public Class ProcessManager
                             Dim chk_QSVEnc As Integer = 0
                             While chk > 0
                                 If chk_ffmpeg = 0 Then
-                                    Dim p_ffmpeg As String = Path.GetFileNameWithoutExtension(exepath_ffmpeg)
+                                    Dim p_ffmpeg As String = Path_GetFileNameWithoutExtension(exepath_ffmpeg)
                                     Dim ps1b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(p_ffmpeg)
                                     For Each p11 As Process In ps1b
                                         If pstr1.IndexOf(":" & p11.Id.ToString & ":") < 0 Then
@@ -621,7 +621,7 @@ Public Class ProcessManager
                                     Next
                                 End If
                                 If chk_QSVEnc = 0 Then
-                                    Dim p_QSVEnc As String = Path.GetFileNameWithoutExtension(exepath_QSVEnc)
+                                    Dim p_QSVEnc As String = Path_GetFileNameWithoutExtension(exepath_QSVEnc)
                                     Dim ps2b As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(p_QSVEnc)
                                     For Each p22 As Process In ps2b
                                         If pstr2.IndexOf(":" & p22.Id.ToString & ":") < 0 Then
@@ -653,7 +653,7 @@ Public Class ProcessManager
                                 log1write("ffmpegプロセス=" & hlsProc2.Id.ToString)
                             Catch ex As Exception
                             End Try
-                        ElseIf Path.GetExtension(fullpathfilename).ToLower = ".iso" Then
+                        ElseIf Path_GetExtension(fullpathfilename).ToLower = ".iso" Then
                             'ISO再生の場合
                             If ISOPlayNEW = 1 Then
                                 'DVD2　新再生方法
@@ -749,8 +749,8 @@ Public Class ProcessManager
                                 '先に現在実行中のVLCとHLSアプリの全プロセスを記録
                                 Dim app1_name As String = "vlc"
                                 Dim app2_name As String = ""
-                                Dim qsvencc_pname As String = Path.GetFileNameWithoutExtension(exepath_QSVEnc)
-                                Dim nvencc_pname As String = Path.GetFileNameWithoutExtension(exepath_NVEnc)
+                                Dim qsvencc_pname As String = Path_GetFileNameWithoutExtension(exepath_QSVEnc)
+                                Dim nvencc_pname As String = Path_GetFileNameWithoutExtension(exepath_NVEnc)
                                 If hlsOpt.ToLower.IndexOf("ffmpeg.exe") > 0 Then
                                     app2_name = "ffmpeg"
                                 ElseIf hlsOpt.ToLower.IndexOf(qsvencc_pname.ToLower & ".exe") > 0 Then
@@ -947,7 +947,7 @@ Public Class ProcessManager
             '実際はエラー
             filename = Instr_pickup(hlsOpt, """", """", 0)
         End If
-        If Path.GetExtension(filename).ToLower = ".iso" Then
+        If Path_GetExtension(filename).ToLower = ".iso" Then
             hlsOpt = hlsOpt.Replace(filename, dvdinstance.dumpFileName)
         Else
             log1write("【エラー】ファイル名が不正です。" & filename)
@@ -2652,7 +2652,7 @@ Public Class ProcessManager
             For i As Integer = 0 To Me._list.Count - 1
                 For j As Integer = 0 To d.Length - 1
                     If d(j).Length > 0 Then
-                        If Path.GetFileName(Me._list(i)._hlsApp).ToLower.IndexOf(d(j).ToLower) >= 0 Then
+                        If Path_GetFileName(Me._list(i)._hlsApp).ToLower.IndexOf(d(j).ToLower) >= 0 Then
                             r = 1
                             Exit For
                         End If

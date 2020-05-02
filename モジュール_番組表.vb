@@ -1354,14 +1354,14 @@ Module モジュール_番組表
                 End If
                 If isThisAbemaProgram(html) = 1 Then
                     Outside_program_isZip = 1 '次回もzipで
-                    log1write(Outside_StationName & "番組情報(zip)を取得しました。" & Path.GetDirectoryName(Outside_CustomURL))
+                    log1write(Outside_StationName & "番組情報(zip)を取得しました。" & Path_GetDirectoryName(Outside_CustomURL))
                 Else
                     'zipで取得できなかった場合
                     Outside_program_isZip = 0
                     Outside_program_getZip_utime = ut + (60 * 60 * 24 * 3) '3日後にもう一度zipでダウンロードをトライする
                     'txtをダウンロード
                     html = get_html_by_webclient(Outside_CustomURL & nocache_str, "UTF-8", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.52 Safari/537.36")
-                    log1write(Outside_StationName & "番組情報(txt)を取得しました。" & Path.GetDirectoryName(Outside_CustomURL))
+                    log1write(Outside_StationName & "番組情報(txt)を取得しました。" & Path_GetDirectoryName(Outside_CustomURL))
                 End If
                 'うまく取得できなかった場合、次回のために取得先更新だけはしておく。取得は急がない
                 If isThisAbemaProgram(html) = 0 Then
@@ -1391,7 +1391,7 @@ Module モジュール_番組表
     Private Function get_OutsideProgram_from_zip(ByVal url As String) As String
         Dim html As String = ""
 
-        Dim filename_org As String = Path.GetFileName(url)
+        Dim filename_org As String = Path_GetFileName(url)
         Dim url_zip As String = ""
         Dim filepath_txt As String = ""
 
@@ -1407,12 +1407,12 @@ Module モジュール_番組表
             End Try
         End If
 
-        Dim ext As String = Path.GetExtension(url)
+        Dim ext As String = Path_GetExtension(url)
         If ext = ".txt" Then
-            filepath_txt = path_s2z("zip_temp\" & Path.GetFileName(url))
+            filepath_txt = path_s2z("zip_temp\" & Path_GetFileName(url))
             url_zip = url.Substring(0, url.Length - 4) & ".zip"
         ElseIf ext = ".zip" Then
-            filepath_txt = path_s2z("zip_temp\" & Path.GetFileNameWithoutExtension(url) & ".txt")
+            filepath_txt = path_s2z("zip_temp\" & Path_GetFileNameWithoutExtension(url) & ".txt")
             url_zip = url
         End If
         If filepath_txt.Length > 0 Then
@@ -1426,7 +1426,7 @@ Module モジュール_番組表
         End If
 
         If url_zip.Length > 0 Then
-            Dim filepath As String = path_s2z(Path.GetFileName(url_zip))
+            Dim filepath As String = path_s2z(Path_GetFileName(url_zip))
             If file_exist(filepath) = 1 Then
                 If deletefile(filepath) <= 0 Then 'ローカルファイルを削除
                     log1write("【エラー】" & filepath & "の削除に失敗しました")
@@ -4502,7 +4502,7 @@ Module モジュール_番組表
             For i = 0 To d.Length - 1
                 d(i) = Trim(filename_escape_recall(d(i)))
             Next
-            Dim logdir As String = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\"
+            Dim logdir As String = Path_GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\"
             Dim html1 As String = TvRock_html_program_src
             str2file(logdir & "TvRock_html_program_src.html", html1)
             log1write(logdir & "TvRock_html_program_src.htmlを保存しました")

@@ -6,9 +6,9 @@ Module モジュール_ファイル
     Public Function ReadAllTexts(ByVal path As String) As String
         Dim r As String = ""
         Try
-            Using fs As New FileStream(path, FileMode.Open, _
+            Using fs As New FileStream(path, FileMode.Open,
                 FileAccess.Read, FileShare.ReadWrite)
-                Using sr As TextReader = New StreamReader(fs, _
+                Using sr As TextReader = New StreamReader(fs,
                     Encoding.GetEncoding(HTML_IN_CHARACTER_CODE))
                     Dim line As String
                     ' Read and display lines from the file until the end of
@@ -346,4 +346,82 @@ Module モジュール_ファイル
             log1write(FILE_PATH & "の更新日時修正に失敗しました。" & ex.Message)
         End Try
     End Sub
+
+    Public Function Path_GetDirectoryName(ByVal str As String) As String
+        '長すぎるパスでPath.GetDirectoryNameが使えない場合用
+        Dim r As String = ""
+
+        Dim sp As Integer = str.LastIndexOf("\")
+        Dim sp2 As Integer = str.LastIndexOf("/")
+        If sp > 0 And sp > sp2 Then
+            r = str.Substring(0, sp)
+        ElseIf sp2 > 0 And sp2 > sp Then
+            r = str.Substring(0, sp2)
+        ElseIf sp < 0 And sp2 < 0 Then
+            r = str
+        End If
+
+        Return r
+    End Function
+
+    Public Function Path_GetFileNameWithoutExtension(ByVal str As String) As String
+        '長すぎるパスでPath.GetFileNameWithoutExtensionが使えない場合用
+        Dim r As String = ""
+
+        Dim sp As Integer = str.LastIndexOf("\")
+        Dim sp2 As Integer = str.LastIndexOf("/")
+        If sp > 0 And sp > sp2 Then
+            str = str.Substring(sp).TrimStart("\")
+            sp = str.LastIndexOf(".")
+            If sp > 0 Then
+                r = str.Substring(0, sp)
+            End If
+        ElseIf sp2 > 0 And sp2 > sp Then
+            str = str.Substring(sp2).TrimStart("/")
+            sp2 = str.LastIndexOf(".")
+            If sp2 > 0 Then
+                r = str.Substring(0, sp2)
+            End If
+        ElseIf sp < 0 And sp2 < 0 Then
+            'ファイル名のみ
+            sp = str.LastIndexOf(".")
+            If sp > 0 Then
+                r = str.Substring(0, sp)
+            Else
+                r = str
+            End If
+        End If
+
+        Return r
+    End Function
+
+    Public Function Path_GetFileName(ByVal str As String) As String
+        '長すぎるパスでPath.GetFileNameが使えない場合用
+        Dim r As String = ""
+
+        Dim sp As Integer = str.LastIndexOf("\")
+        Dim sp2 As Integer = str.LastIndexOf("/")
+        If sp > 0 And sp > sp2 Then
+            r = str.Substring(sp).TrimStart("\")
+        ElseIf sp2 > 0 And sp2 > sp Then
+            r = str.Substring(sp2).TrimStart("/")
+        ElseIf sp < 0 And sp2 < 0 Then
+            'ファイル名のみ
+            r = str
+        End If
+
+        Return r
+    End Function
+
+    Public Function Path_GetExtension(ByVal str As String) As String
+        '長すぎるパスでPath.GetExtensionが使えない場合用
+        Dim r As String = ""
+
+        Dim sp As Integer = str.LastIndexOf(".")
+        If sp > 0 Then
+            r = str.Substring(sp)
+        End If
+
+        Return r
+    End Function
 End Module

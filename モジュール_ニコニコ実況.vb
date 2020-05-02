@@ -99,8 +99,8 @@ Module モジュール_ニコニコ実況
 
             'すでにchapterファイルが存在すればスルー
             Dim chapterfullpathfilename As String = ""
-            Dim chapterpath As String = Path.GetDirectoryName(videofilename)
-            Dim chapterfilename As String = Path.GetFileNameWithoutExtension(videofilename) & ".chapter"
+            Dim chapterpath As String = Path_GetDirectoryName(videofilename)
+            Dim chapterfilename As String = Path_GetFileNameWithoutExtension(videofilename) & ".chapter"
             If chapterfilename.Length > 0 Then
                 If file_exist(chapterpath & "\" & chapterfilename) = 1 Then
                     chapterfullpathfilename = chapterpath & "\" & chapterfilename
@@ -949,11 +949,11 @@ Module モジュール_ニコニコ実況
 
         If NicoJK_path.Length > 0 Then
             If file_exist(fullpathfilename) = 1 Then
-                If Path.GetExtension(fullpathfilename).ToLower = ".ts" Then
+                If Path_GetExtension(fullpathfilename).ToLower = ".ts" Then
                     log1write("NicoJKコメントファイル検索を開始します。" & nowt & " " & nowt.Millisecond)
                     'tsならば
-                    filename = Path.GetFileName(fullpathfilename)
-                    filepath = IO.Path.GetDirectoryName(fullpathfilename)
+                    filename = Path_GetFileName(fullpathfilename)
+                    filepath = Path_GetDirectoryName(fullpathfilename)
                     '動画ファイルの終了日時を取得
                     Dim file_tot As tot_structure = TOT_read(fullpathfilename, ffmpeg_path)
                     If file_tot.start_time < C_DAY2038 Then
@@ -1017,7 +1017,7 @@ Module モジュール_ニコニコ実況
                             'ファイル名と同名でtxtまたはxmlがあるか
                             Dim filename_xml As String = fullpathfilename.Replace(".ts", ".xml")
                             Dim filename_txt As String = fullpathfilename.Replace(".ts", ".txt")
-                            Dim filename_xml2 As String = NicoJK_path & "\xml\" & Path.GetFileNameWithoutExtension(fullpathfilename) & ".xml"
+                            Dim filename_xml2 As String = NicoJK_path & "\xml\" & Path_GetFileNameWithoutExtension(fullpathfilename) & ".xml"
                             If file_exist(filename_xml) = 1 Then
                                 targetfile = filename_xml
                                 log1write("同名のxmlコメントファイルが見つかりました")
@@ -1030,7 +1030,7 @@ Module モジュール_ニコニコ実況
                             Else
                                 'NicoJKフォルダを探す
                                 If folder_exist(NicoJK_path) = 1 Then
-                                    Dim fwoe As String = Path.GetFileNameWithoutExtension(filename)
+                                    Dim fwoe As String = Path_GetFileNameWithoutExtension(filename)
                                     Dim jklfilename As String = ""
                                     'NicoJK_pathにあるjklファイルをチェックする
                                     Dim files As String() = System.IO.Directory.GetFiles(NicoJK_path, "*")
@@ -1040,7 +1040,7 @@ Module モジュール_ニコニコ実況
                                         For i = 0 To files.Length - 1
                                             If files(i).IndexOf(".jkl") > 0 Or files(i).IndexOf(".xml") > 0 Then
                                                 '一番長い全角文字列を抜き出す
-                                                Dim fn As String = Path.GetFileNameWithoutExtension(files(i))
+                                                Dim fn As String = Path_GetFileNameWithoutExtension(files(i))
                                                 Dim z As String = zenkakudake_max(fn)
                                                 Dim zh As String = StrConv(z, VbStrConv.Narrow) '半角でも調べる
                                                 'タイトル最初の3文字
@@ -1054,7 +1054,7 @@ Module モジュール_ニコニコ実況
                                                 Else
                                                     'xmlを想定
                                                     Try
-                                                        z2 = Path.GetFileNameWithoutExtension(files(i)).Substring(0, 3)
+                                                        z2 = Path_GetFileNameWithoutExtension(files(i)).Substring(0, 3)
                                                     Catch ex As Exception
                                                     End Try
                                                 End If
@@ -1099,7 +1099,7 @@ Module モジュール_ニコニコ実況
                                                     End If
                                                     If System.Math.Abs(jklstamp - filestamp_start) < (60 * 20) Then
                                                         '作成時間が前後20分未満ならほぼビンゴ
-                                                        jklfilename = Path.GetFileName(files(i))
+                                                        jklfilename = Path_GetFileName(files(i))
                                                         cnt += 1
 
                                                         If chk = 1 Then
@@ -1108,11 +1108,11 @@ Module モジュール_ニコニコ実況
                                                         End If
                                                     ElseIf fn.IndexOf(z2_all) >= 0 And z2_all.Length > 0 Then
                                                         'ファイルネームが全て含まれていれば時間が合っていなくてもキープ
-                                                        jklfilename = Path.GetFileName(files(i))
+                                                        jklfilename = Path_GetFileName(files(i))
                                                         cnt += 1
                                                     ElseIf System.Math.Abs((jklstamp_end) - filestamp_end) < (60 * 20) Then
                                                         '更新時間が前後20分以内ならキープ
-                                                        jklfilename = Path.GetFileName(files(i))
+                                                        jklfilename = Path_GetFileName(files(i))
                                                         cnt += 1
 
                                                         If chk = 1 Then
@@ -1204,7 +1204,7 @@ Module モジュール_ニコニコ実況
                 If files2 IsNot Nothing Then
                     'unixtimeだけを抜き出して並び替え
                     For i = 0 To files2.Length - 1
-                        files2(i) = Val(Path.GetFileName(files2(i))).ToString
+                        files2(i) = Val(Path_GetFileName(files2(i))).ToString
                     Next
                     Dim k As Integer = files2.Length
                     ReDim Preserve files2(k)
@@ -1245,7 +1245,7 @@ Module モジュール_ニコニコ実況
         End If
 
         Try
-            Dim filename As String = Path.GetFileName(txt_file)
+            Dim filename As String = Path_GetFileName(txt_file)
             Dim tempfilename As String = filename
             Dim sp As Integer = filename.LastIndexOf(".")
             If sp > 0 Then
@@ -1263,7 +1263,7 @@ Module モジュール_ニコニコ実況
             psi.UseShellExecute = False
             psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
             ''プログラムが存在するディレクトリ
-            Dim ppath As String = IO.Path.GetDirectoryName(NicoConvAss_path)
+            Dim ppath As String = Path_GetDirectoryName(NicoConvAss_path)
             If ppath.Length > 0 Then
                 ''カレントディレクトリ変更
                 System.IO.Directory.SetCurrentDirectory(ppath)
@@ -1330,7 +1330,7 @@ Module モジュール_ニコニコ実況
         Dim targetfile As String = fileroot & "\" & "sub" & num.ToString & "_nico.ass"
 
         Try
-            If Path.GetExtension(fullpathfilename) = ".ts" Then
+            If Path_GetExtension(fullpathfilename) = ".ts" Then
                 'ここでは使用しないがあらかじめTOTを調べてキャッシュを作っておく（WIリクエスト対策　そうしないと再生開始後に調べることがある）
                 Dim file_tot As tot_structure = TOT_read(fullpathfilename, exepath_ffmpeg)
 
@@ -1343,7 +1343,7 @@ Module モジュール_ニコニコ実況
                 psi.UseShellExecute = False
                 psi.CreateNoWindow = True 'ウィンドウを表示しないようにする
                 ''プログラムが存在するディレクトリ
-                Dim ppath As String = IO.Path.GetDirectoryName(NicoConvAss_path)
+                Dim ppath As String = Path_GetDirectoryName(NicoConvAss_path)
                 If ppath.Length > 0 Then
                     ''カレントディレクトリ変更
                     System.IO.Directory.SetCurrentDirectory(ppath)
@@ -1383,7 +1383,7 @@ Module モジュール_ニコニコ実況
 
                     If NicoConvAss_copy2NicoJK = 1 Then
                         '動画ファイル名.assファイルをコピーする
-                        Dim tfn As String = Path.GetDirectoryName(fullpathfilename) & "\" & Path.GetFileNameWithoutExtension(fullpathfilename) & ".ass"
+                        Dim tfn As String = Path_GetDirectoryName(fullpathfilename) & "\" & Path_GetFileNameWithoutExtension(fullpathfilename) & ".ass"
                         If file_exist(tfn) <= 0 Then
                             My.Computer.FileSystem.CopyFile(targetfile, tfn, True)
                             log1write("[字幕]" & tfn & "を作成しました")

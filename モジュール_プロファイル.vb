@@ -12,9 +12,9 @@ Module モジュール_プロファイル
 
     Public Function get_hlsApp_and_resolution_from_profiles(ByVal profile As String, ByVal StreamMode As Integer, ByVal hlsAppSelect As String, ByVal resolution As String, ByVal filename As String, ByVal voice As String, ByVal speed As String, ByVal hardsub_on As String, ByRef video_force_ffmpeg_temp As Integer) As String()
         'video_force_ffmpeg_tempはByRefで返す
-        Dim file_ext As String = Path.GetExtension(filename).ToLower
-        Dim file_instr As String = Path.GetFileName(filename)
-        Dim hlsAppName As String = Path.GetFileName(hlsAppSelect)
+        Dim file_ext As String = Path_GetExtension(filename).ToLower
+        Dim file_instr As String = Path_GetFileName(filename)
+        Dim hlsAppName As String = Path_GetFileName(hlsAppSelect)
 
         Dim r() As String = Nothing
         Dim j As Integer = 0
@@ -142,7 +142,7 @@ Module モジュール_プロファイル
     Public Function isMatch_HLS(ByVal fullpath As String, ByVal s As String) As Integer
         Dim r As Integer = 0
 
-        Dim p As String = Path.GetFileNameWithoutExtension(fullpath).ToLower
+        Dim p As String = Path_GetFileNameWithoutExtension(fullpath).ToLower
         Dim d() As String = s.Split("|")
         For i As Integer = 0 To d.Length - 1
             If d(i).Length > 0 Then
@@ -160,10 +160,7 @@ Module モジュール_プロファイル
     Public Function modify_hlsAppName(ByVal s As String) As String
         Dim r As String = ""
         If s.Length > 0 Then
-            Try
-                r = Path.GetFileNameWithoutExtension(s)
-            Catch ex As Exception
-            End Try
+            r = Path_GetFileNameWithoutExtension(s)
             If r.Length > 0 Then
                 s = ":" & r.ToLower & ":"
                 If hlschkstr_ffmpeg.IndexOf(s) >= 0 Then

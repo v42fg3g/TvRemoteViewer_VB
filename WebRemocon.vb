@@ -430,7 +430,7 @@ Class WebRemocon
                                 Next
                             End If
                             If parent_exist = 1 Then
-                                r = "..," & Path.GetDirectoryName(vl_dir.TrimEnd("\")) & "\" & vbCrLf & r
+                                r = "..," & Path_GetDirectoryName(vl_dir.TrimEnd("\")) & "\" & vbCrLf & r
                                 cnt_dir += 1
                             End If
                         End If
@@ -749,7 +749,9 @@ Class WebRemocon
             'その他のフォルダのファイルを追加
             If video IsNot Nothing Then
                 For j = 0 To video.Length - 1
-                    Dim fstr As String = Path.GetDirectoryName(video(j).fullpathfilename)
+                    '↓パスが長すぎると例外エラー
+                    'Dim fstr As String = Path.GetDirectoryName(video(j).fullpathfilename)
+                    Dim fstr As String = Path_GetDirectoryName(video(j).fullpathfilename)
                     If Array.IndexOf(changeList, fstr) < 0 Then
                         '1ファイル追加 video2とcntはByRef
                         add_file_to_video2(video2, cnt, video(j).fullpathfilename, videoexword)
@@ -769,7 +771,7 @@ Class WebRemocon
     Public Sub add_file_to_video2(ByRef video2() As videostructure, ByRef cnt As Integer, ByVal fullpath As String, ByVal videoexword As String)
         fullpath = filename_escape_recall(fullpath)
         '拡張子を取得
-        Dim ext As String = System.IO.Path.GetExtension(fullpath).ToLower
+        Dim ext As String = Path_GetExtension(fullpath).ToLower
         '表示拡張子が指定されていれば該当するかチェックする
         Dim chk As Integer = -2
         If VideoExtensions IsNot Nothing And ext.Length > 0 Then
@@ -780,9 +782,14 @@ Class WebRemocon
         'chk=-1 拡張子指定が有り、一致しなかった
         If chk >= 0 Or (chk = -2 And ext <> ".db" And ext <> ".chapter" And ext <> ".srt" And ext <> ".ass" And ext <> ".ini" And ext <> ".txt") Then
             '更新日時 作成日時に変更と思ったがコピー等するとおかしくなるので更新日時にした
-            Dim modifytime As DateTime = System.IO.File.GetLastWriteTime(fullpath)
+            Dim modifytime As DateTime = Now()
+            Try
+                modifytime = System.IO.File.GetLastWriteTime(fullpath)
+            Catch ex As Exception
+                log1write("【エラー】" & fullpath & "の最終更新日時取得に失敗しました")
+            End Try
             Dim datestr As String = modifytime.ToString("yyyyMMddHH")
-            Dim filename As String = System.IO.Path.GetFileName(fullpath)
+            Dim filename As String = Path_GetFileName(fullpath)
             'なぜかそのまま渡すと返ってきたときに文字化けするのでURLエンコードしておく
             'UTF-8化で解決
             'Dim encstr As String = System.Web.HttpUtility.UrlEncode(fullpath)
@@ -2556,7 +2563,7 @@ Class WebRemocon
 
         filename = filename_escape_recall(filename) ',エスケープを元に戻す
 
-        Dim filename_ext As String = Path.GetExtension(filename).ToLower
+        Dim filename_ext As String = Path_GetExtension(filename).ToLower
 
         'エラー防止
         If file_last_filename(num) Is Nothing Then
@@ -3093,7 +3100,7 @@ Class WebRemocon
         Dim filename_ext As String = "" '動画ファイルの拡張子
         Dim ISO_on As Integer = 0 '.isoなら1　旧方式は2段階変換なのでHLSアプリではseek文字列追加をしない
         If filename.Length > 0 Then
-            filename_ext = Path.GetExtension(filename).ToLower
+            filename_ext = Path_GetExtension(filename).ToLower
             If filename_ext = ".iso" Then
                 ISO_on = 1
             End If
@@ -3287,27 +3294,27 @@ Class WebRemocon
             Dim hlsApp_chk As Integer = 0
             If httpApp = 1 And exepath_VLC.Length > 0 Then
                 hlsApp = exepath_VLC
-                hlsroot = Path.GetDirectoryName(hlsApp)
+                hlsroot = Path_GetDirectoryName(hlsApp)
                 log1write("HTTP配信：パラメーター指定によりHLSアプリをVLCに設定しました")
                 hlsApp_chk = 1
             ElseIf httpApp = 2 And exepath_ffmpeg.Length > 0 Then
                 hlsApp = exepath_ffmpeg
-                hlsroot = Path.GetDirectoryName(hlsApp)
+                hlsroot = Path_GetDirectoryName(hlsApp)
                 log1write("HTTP配信：パラメーター指定によりHLSアプリをffmpegに設定しました")
                 hlsApp_chk = 1
             ElseIf httpApp = 3 And exepath_ffmpeg.Length > 0 Then
                 hlsApp = exepath_ffmpeg
-                hlsroot = Path.GetDirectoryName(hlsApp)
+                hlsroot = Path_GetDirectoryName(hlsApp)
                 log1write("HTTP配信：パラメーター指定によりHLSアプリをffmpeg(WebM)に設定しました")
                 hlsApp_chk = 1
             ElseIf HTTPSTREAM_App = 1 And exepath_VLC.Length > 0 Then
                 hlsApp = exepath_VLC
-                hlsroot = Path.GetDirectoryName(hlsApp)
+                hlsroot = Path_GetDirectoryName(hlsApp)
                 log1write("HTTP配信：ini指定によりHLSアプリをVLCに設定しました")
                 hlsApp_chk = 1
             ElseIf HTTPSTREAM_App = 2 And exepath_ffmpeg.Length > 0 Then
                 hlsApp = exepath_ffmpeg
-                hlsroot = Path.GetDirectoryName(hlsApp)
+                hlsroot = Path_GetDirectoryName(hlsApp)
                 log1write("HTTP配信：ini指定によりHLSアプリをffmpegに設定しました")
                 hlsApp_chk = 1
             End If
@@ -3324,7 +3331,7 @@ Class WebRemocon
                     Exit Sub
                 Else
                     'それ以外は Me._hlsAppが指定通りで問題無い
-                    log1write("HTTP配信：HLSアプリを" & Path.GetFileNameWithoutExtension(Me._hlsApp) & "に設定しました")
+                    log1write("HTTP配信：HLSアプリを" & Path_GetFileNameWithoutExtension(Me._hlsApp) & "に設定しました")
                 End If
             End If
 
@@ -3467,7 +3474,7 @@ Class WebRemocon
                     log1write("video_force_ffmpeg=4によりHLSアプリにffmpegが指定されました")
                 End If
             ElseIf video_force_ffmpeg = 9 And profiletxt.Length > 0 Then
-                Dim hls_temp As String = Path.GetFileNameWithoutExtension(hlsApp).ToLower
+                Dim hls_temp As String = Path_GetFileNameWithoutExtension(hlsApp).ToLower
                 If hlsAppSelect.Length > 0 Then
                     hls_temp = hlsAppSelect.ToLower
                 End If
@@ -3499,7 +3506,7 @@ Class WebRemocon
                         If exepath_VLC.Length > 0 Then
                             hlsAppSelect = "VLC"
                             hlsApp = exepath_VLC
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSアプリにVLCが指定されました")
                         Else
                             log1write("【エラー】ini内のexepath_VLCが指定されていません")
@@ -3509,7 +3516,7 @@ Class WebRemocon
                         If exepath_ffmpeg.Length > 0 Then
                             hlsAppSelect = "ffmpeg"
                             hlsApp = exepath_ffmpeg
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSアプリにffmpegが指定されました")
                         Else
                             log1write("【エラー】ini内のexepath_ffmpegが指定されていません")
@@ -3519,7 +3526,7 @@ Class WebRemocon
                         If exepath_QSVEnc.Length > 0 Then
                             hlsAppSelect = "QSVEnc"
                             hlsApp = exepath_QSVEnc
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSアプリにQSVEncが指定されました")
                         Else
                             log1write("【エラー】ini内のexepath_QSVEncが指定されていません")
@@ -3529,7 +3536,7 @@ Class WebRemocon
                         If exepath_NVEnc.Length > 0 Then
                             hlsAppSelect = "NVEnc"
                             hlsApp = exepath_NVEnc
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSアプリにNVEncが指定されました")
                         Else
                             log1write("【エラー】ini内のexepath_NVEncが指定されていません")
@@ -3539,7 +3546,7 @@ Class WebRemocon
                         If exepath_VCEEnc.Length > 0 Then
                             hlsAppSelect = "VCEEnc"
                             hlsApp = exepath_VCEEnc
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSアプリにVCEEncが指定されました")
                         Else
                             log1write("【エラー】ini内のexepath_VCEEncが指定されていません")
@@ -3549,7 +3556,7 @@ Class WebRemocon
                         If exepath_ffmpeg.Length > 0 And exepath_QSVEnc.Length > 0 Then
                             hlsAppSelect = "QSVEnc"
                             hlsApp = exepath_QSVEnc
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSアプリにPipeRunが指定されました")
                             video_force_ffmpeg_temp = 2
                             'パラメータはQSVEncで作っておいて後でPipeRunに直す
@@ -3752,7 +3759,7 @@ Class WebRemocon
                         If exepath_VLC.Length > 0 Then
                             hlsAppSelect = "VLC"
                             hlsApp = exepath_VLC
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSオプション内の指定によりHLSアプリにVLCが指定されました")
                             chk = 1
                         Else
@@ -3762,7 +3769,7 @@ Class WebRemocon
                         If exepath_ffmpeg.Length > 0 Then
                             hlsAppSelect = "ffmpeg"
                             hlsApp = exepath_ffmpeg
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSオプション内の指定によりHLSアプリにffmpegが指定されました")
                             chk = 1
                         Else
@@ -3772,7 +3779,7 @@ Class WebRemocon
                         If exepath_QSVEnc.Length > 0 Then
                             hlsAppSelect = "QSVEnc"
                             hlsApp = exepath_QSVEnc
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSオプション内の指定によりHLSアプリにQSVEncが指定されました")
                             chk = 1
                         Else
@@ -3782,7 +3789,7 @@ Class WebRemocon
                         If exepath_NVEnc.Length > 0 Then
                             hlsAppSelect = "NVEnc"
                             hlsApp = exepath_NVEnc
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSオプション内の指定によりHLSアプリにNVEncが指定されました")
                             chk = 1
                         Else
@@ -3792,7 +3799,7 @@ Class WebRemocon
                         If exepath_VCEEnc.Length > 0 Then
                             hlsAppSelect = "VCEEnc"
                             hlsApp = exepath_VCEEnc
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSオプション内の指定によりHLSアプリにVCEEncが指定されました")
                             chk = 1
                         Else
@@ -3802,7 +3809,7 @@ Class WebRemocon
                         If exepath_ffmpeg.Length > 0 And exepath_QSVEnc.Length > 0 Then
                             hlsAppSelect = "QSVEnc"
                             hlsApp = exepath_QSVEnc
-                            hlsroot = Path.GetDirectoryName(hlsApp)
+                            hlsroot = Path_GetDirectoryName(hlsApp)
                             log1write("HLSオプション内の指定によりHLSアプリにPipeRunが指定されました")
                             chk = 1
                             video_force_ffmpeg_temp = 2
@@ -3815,7 +3822,7 @@ Class WebRemocon
             'hlsAppとhlsOptの整合性をチェック
             If hlsApp.Length > 0 And hlsOpt.Length > 0 Then
                 Dim AppOptChk As Integer = 0
-                Dim haf As String = Path.GetFileNameWithoutExtension(hlsApp)
+                Dim haf As String = Path_GetFileNameWithoutExtension(hlsApp)
                 If isMatch_HLS(haf, "vlc") = 1 And (hlsOpt.IndexOf("--sout") >= 0 Or hlsOpt.IndexOf("vlc:") >= 0 Or hlsOpt.IndexOf("--rc-host") >= 0) Then
                     AppOptChk = 1
                 ElseIf isMatch_HLS(haf, "ffmpeg") = 1 And (hlsOpt.IndexOf(" -acodec") >= 0 Or hlsOpt.IndexOf(" -vcodec") >= 0 Or hlsOpt.IndexOf(" -hls_time") >= 0) Then
@@ -4104,8 +4111,8 @@ Class WebRemocon
                 'QSVEnc パイプ使用指定があった場合
                 If isMatch_HLS(hlsApp, "qsvenc") = 1 And video_force_ffmpeg_temp = 2 And Stream_mode = 1 Then
                     hlsAppSelect = "PipeRun"
-                    hlsApp = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\PipeRun.exe" 'ダミー
-                    hlsroot = Path.GetDirectoryName(hlsApp)
+                    hlsApp = Path_GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) & "\PipeRun.exe" 'ダミー
+                    hlsroot = Path_GetDirectoryName(hlsApp)
                     log1write("PipeRun用にパラメータを修正します")
                     'ファイル再生はプロセスチェックをせず再起動しないのでhlsAppが変わっても問題ない
                     'パラメーター書き換え PipeRun_ffmpeg_QSVEnc.exe用
@@ -4155,7 +4162,7 @@ Class WebRemocon
             'QSVEncC,NVEncC,VCEEncログ記録
             If Me._writeLog = True Then
                 If isMatch_HLS(hlsApp, "qsvenc|nvenc|vceenc") = 1 Then
-                    Dim logfile As String = Path.GetFileNameWithoutExtension(hlsApp)
+                    Dim logfile As String = Path_GetFileNameWithoutExtension(hlsApp)
                     hlsOpt = hlsOpt.Replace(" -o ", " --log " & logfile & ".log -o ")
                     log1write(logfile & "のログをストリームフォルダに出力しました。" & fileroot & "\" & logfile & ".log")
                 End If
@@ -4214,7 +4221,7 @@ Class WebRemocon
                     If hlsOpt_temp.Length > 0 Then
                         hlsOpt = hlsOpt_temp
                         hlsApp = exepath_VLC
-                        hlsroot = Path.GetDirectoryName(hlsApp)
+                        hlsroot = Path_GetDirectoryName(hlsApp)
                     End If
                 Else
                     NHK_dual_mono_mode_select = 0
@@ -4295,7 +4302,7 @@ Class WebRemocon
                     If hlsOpt_temp.Length > 0 Then
                         hlsOpt = hlsOpt_temp
                         hlsApp = exepath_VLC
-                        hlsroot = Path.GetDirectoryName(hlsApp)
+                        hlsroot = Path_GetDirectoryName(hlsApp)
                     End If
                 Else
                     NHK_dual_mono_mode_select = 0
@@ -4488,8 +4495,8 @@ Class WebRemocon
     Public Sub copy_chapter_to_fileroot(ByVal num As Integer, ByVal fullpathfilename As String, ByVal fileroot1 As String)
         Dim targetfilename As String = fileroot1 & "\chapter" & num & ".chapter"
         Dim chapterfullpathfilename As String = ""
-        Dim chapterpath As String = Path.GetDirectoryName(fullpathfilename)
-        Dim chapterfilename As String = Path.GetFileNameWithoutExtension(fullpathfilename) & ".chapter"
+        Dim chapterpath As String = Path_GetDirectoryName(fullpathfilename)
+        Dim chapterfilename As String = Path_GetFileNameWithoutExtension(fullpathfilename) & ".chapter"
         If chapterfilename.Length > 0 Then
             If file_exist(chapterpath & "\" & chapterfilename) = 1 Then
                 chapterfullpathfilename = chapterpath & "\" & chapterfilename
@@ -5248,7 +5255,7 @@ Class WebRemocon
 
                     'MIME TYPE
                     Dim mimetype As String = get_mimetype(req.Url.LocalPath)
-                    Dim Url_ext As String = System.IO.Path.GetExtension(req.Url.LocalPath).ToLower
+                    Dim Url_ext As String = Path_GetExtension(req.Url.LocalPath).ToLower
                     If mimetype.Length > 0 Then
                         'iniで指定されている場合値が設定されている
                     ElseIf Me._MIME_TYPE_DEFAULT.Length > 0 Then
@@ -5341,7 +5348,7 @@ Class WebRemocon
                         log1write(req_Url & req.Url.Query & "へのリクエストがありました。" & mtypestr & "[" & ipstr & "]")
 
                         'If path.IndexOf(".htm") > 0 Or path.IndexOf(".js") > 0 Then 'Or path.IndexOf(".css") > 0 Then
-                        Dim pext As String = System.IO.Path.GetExtension(path).ToLower
+                        Dim pext As String = Path_GetExtension(path).ToLower
                         If path.IndexOf("EnumEventInfo") >= 0 Or pext.IndexOf(".htm") >= 0 Or (path.IndexOf("WI_") >= 0 And pext = ".json") Then
                             'HTMLなら
                             'ログ記録
@@ -6672,7 +6679,7 @@ Class WebRemocon
         'videoname取得
         Dim videoname As String = Me._procMan.get_fullpathfilename(num)
 
-        If Path.GetExtension(videoname).ToLower = ".iso" Then
+        If Path_GetExtension(videoname).ToLower = ".iso" Then
             If ISOPlayNEW = 0 Then
                 '旧方式
                 r = 101
@@ -6826,7 +6833,7 @@ Class WebRemocon
             r &= Me._BonDriverPath & ""
         Else
             If (Me._udpApp & "").Length > 0 Then
-                r &= Path.GetDirectoryName(Me._udpApp & "")
+                r &= Path_GetDirectoryName(Me._udpApp & "")
             End If
         End If
         r &= vbCrLf
@@ -7156,7 +7163,7 @@ Class WebRemocon
         Else
             If fl_file.IndexOf("\") >= 0 Then
                 filepath = filepath2path(fl_file)
-                filename = Path.GetFileName(fl_file)
+                filename = Path_GetFileName(fl_file)
             Else
                 filepath = ""
                 filename = fl_file
@@ -7170,7 +7177,7 @@ Class WebRemocon
         Dim fullpath As String = ""
         Dim fullpathfilename As String = ""
 
-        Dim lastf As String = Path.GetFileName(Me._fileroot) '末フォルダ名
+        Dim lastf As String = Path_GetFileName(Me._fileroot) '末フォルダ名
         If Me._fileroot.Length > 0 And Me._fileroot.IndexOf(Me._wwwroot) < 0 And filepath = lastf Then
             '動画フォルダへのアクセス
             fullpath = Me._fileroot & "\" '末尾は\
@@ -7492,7 +7499,7 @@ Class WebRemocon
     Public Function file_ope_allow_files(ByVal fl_cmd As String, ByVal fl_file As String, ByVal fullpathfilename As String) As Integer
         Dim r As Integer = 0
 
-        Dim ext As String = Path.GetExtension(fullpathfilename).ToLower
+        Dim ext As String = Path_GetExtension(fullpathfilename).ToLower
 
         If ext.Length > 0 Then
             If file_ope_allow_filelist IsNot Nothing Then
@@ -7505,8 +7512,8 @@ Class WebRemocon
 
             'クライアント設定
             If client_allowFiles IsNot Nothing Then
-                Dim f As String = Path.GetFileName(fullpathfilename)
-                Dim f_ext As String = Path.GetExtension(fullpathfilename)
+                Dim f As String = Path_GetFileName(fullpathfilename)
+                Dim f_ext As String = Path_GetExtension(fullpathfilename)
                 For i As Integer = 0 To client_allowFiles.Length - 1
                     If Trim(client_allowFiles(i)).Length > 0 Then
                         If client_allowFiles(i).IndexOf("*.") = 0 Then
@@ -7669,7 +7676,7 @@ Class WebRemocon
             ReDim Preserve app_count(j)
             app_n(j) = "ffmpeg"
             If exepath_ffmpeg.Length > 0 Then
-                app_names(j) = Path.GetFileNameWithoutExtension(exepath_ffmpeg).ToLower
+                app_names(j) = Path_GetFileNameWithoutExtension(exepath_ffmpeg).ToLower
                 Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app_names(j))
                 If ps IsNot Nothing Then
                     app_count(j) = ps.Count
@@ -7686,7 +7693,7 @@ Class WebRemocon
             ReDim Preserve app_count(j)
             app_n(j) = "qsv"
             If exepath_QSVEnc.Length > 0 Then
-                app_names(j) = Path.GetFileNameWithoutExtension(exepath_QSVEnc).ToLower
+                app_names(j) = Path_GetFileNameWithoutExtension(exepath_QSVEnc).ToLower
                 Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app_names(j))
                 If ps IsNot Nothing Then
                     app_count(j) = ps.Count
@@ -7703,7 +7710,7 @@ Class WebRemocon
             ReDim Preserve app_count(j)
             app_n(j) = "nv"
             If exepath_NVEnc.Length > 0 Then
-                app_names(j) = Path.GetFileNameWithoutExtension(exepath_NVEnc).ToLower
+                app_names(j) = Path_GetFileNameWithoutExtension(exepath_NVEnc).ToLower
                 Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app_names(j))
                 If ps IsNot Nothing Then
                     app_count(j) = ps.Count
@@ -7720,7 +7727,7 @@ Class WebRemocon
             ReDim Preserve app_count(j)
             app_n(j) = "vce"
             If exepath_VCEEnc.Length > 0 Then
-                app_names(j) = Path.GetFileNameWithoutExtension(exepath_VCEEnc).ToLower
+                app_names(j) = Path_GetFileNameWithoutExtension(exepath_VCEEnc).ToLower
                 Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(app_names(j))
                 If ps IsNot Nothing Then
                     app_count(j) = ps.Count
@@ -7735,14 +7742,14 @@ Class WebRemocon
             Dim vlc_name As String = ""
             Dim vlc_count As Integer = 0
             If exepath_VLC.Length > 0 Then
-                vlc_name = Path.GetFileNameWithoutExtension(exepath_VLC).ToLower
+                vlc_name = Path_GetFileNameWithoutExtension(exepath_VLC).ToLower
                 Dim ps As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(vlc_name)
                 If ps IsNot Nothing Then
                     vlc_count += ps.Count
                 End If
             End If
             If exepath_ISO_VLC.Length > 0 Then
-                Dim vlc_temp As String = Path.GetFileNameWithoutExtension(exepath_ISO_VLC).ToLower
+                Dim vlc_temp As String = Path_GetFileNameWithoutExtension(exepath_ISO_VLC).ToLower
                 If vlc_temp <> vlc_name Then
                     '二重にならないようプロセス名が違う時のみ集計
                     Dim ps2 As System.Diagnostics.Process() = System.Diagnostics.Process.GetProcessesByName(vlc_temp)
@@ -7837,7 +7844,7 @@ Class WebRemocon
     Public Function WI_GET_CHAPTER(ByVal fullpathfilename As String) As String
         Dim r As String = ""
         fullpathfilename = filename_escape_recall(fullpathfilename) ',エスケープを元に戻す
-        Dim ext As String = Path.GetExtension(fullpathfilename).ToLower
+        Dim ext As String = Path_GetExtension(fullpathfilename).ToLower
         If ext = ".iso" Then
             If ISOPlayNEW >= 0 Then
                 'ISOならファイル情報キャッシュからchapter情報を取得
@@ -7848,8 +7855,8 @@ Class WebRemocon
             End If
         Else
             Dim chapterfullpathfilename As String = ""
-            Dim chapterpath As String = Path.GetDirectoryName(fullpathfilename)
-            Dim chapterfilename As String = Path.GetFileNameWithoutExtension(fullpathfilename) & ".chapter"
+            Dim chapterpath As String = Path_GetDirectoryName(fullpathfilename)
+            Dim chapterfilename As String = Path_GetFileNameWithoutExtension(fullpathfilename) & ".chapter"
             If chapterfilename.Length > 0 Then
                 If file_exist(chapterpath & "\" & chapterfilename) = 1 Then
                     chapterfullpathfilename = chapterpath & "\" & chapterfilename
@@ -7882,13 +7889,13 @@ Class WebRemocon
                 'endif 'ファイル名での指定を廃止したのでend ifは下に移動
                 If trim8(d(0)).Length > 0 Then
                     'ファイル名で指定された場合
-                    Dim ext As String = Path.GetExtension(d(0)).ToLower
+                    Dim ext As String = Path_GetExtension(d(0)).ToLower
                     If ext = ".chapter" Then
                         chapterfullpathfilename = d(0)
                     Else
                         '動画ファイルが指定された場合は.chapterを探す
-                        Dim p1 As String = Path.GetDirectoryName(d(0))
-                        Dim f1 As String = Path.GetFileNameWithoutExtension(d(0))
+                        Dim p1 As String = Path_GetDirectoryName(d(0))
+                        Dim f1 As String = Path_GetFileNameWithoutExtension(d(0))
                         'まずchaptersフォルダの中にあるかどうか
                         If file_exist(p1 & "\chapters\" & f1 & ".chapter") = 1 Then
                             chapterfullpathfilename = p1 & "\chapters\" & f1 & ".chapter"
@@ -8054,7 +8061,7 @@ Class WebRemocon
                 ffmpeg_path = exepath_ffmpeg
             End If
             Dim stream_folder As String = Me._fileroot
-            If Path.GetExtension(video_path).ToLower = ".iso" Then
+            If Path_GetExtension(video_path).ToLower = ".iso" Then
                 If ISOPlayNEW = 1 Then
                     'DVD2 mplayerを使用したサムネイル作成
                     Dim thumbName As String = "mystream" & num.ToString & "_thumb.jpg"

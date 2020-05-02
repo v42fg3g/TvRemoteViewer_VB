@@ -78,7 +78,7 @@ Module モジュール_サムネイル
             ss2(0) = Val(ss)
         End If
 
-        If Path.GetExtension(video_path).ToLower = ".iso" And exepath_ISO_VLC.Length > 0 And ss2(0) >= 0 Then
+        If Path_GetExtension(video_path).ToLower = ".iso" And exepath_ISO_VLC.Length > 0 And ss2(0) >= 0 Then
             'ISO再生 単独作成のみ対応
             If track >= 0 Then
                 Dim t As DateTime = Now()
@@ -144,7 +144,7 @@ Module モジュール_サムネイル
                 t = Now()
                 log1write("サムネイル作成 終了 " & t & " " & t.Millisecond)
             End If
-        ElseIf isMatch_HLS(ffmpeg_path, "ffmpeg") = 1 And Path.GetExtension(video_path).ToLower <> ".iso" Then
+        ElseIf isMatch_HLS(ffmpeg_path, "ffmpeg") = 1 And Path_GetExtension(video_path).ToLower <> ".iso" Then
             'ffmpegの場合
             Dim thumb_filename_noex As String = ""
             If num = 0 Then
@@ -163,7 +163,7 @@ Module モジュール_サムネイル
                     url_path &= "file_thumbs/"
                 End If
                 'ファイル名は、動画ファイル名(.秒数).jpg
-                thumb_filename_noex = System.IO.Path.GetFileNameWithoutExtension(video_path)
+                thumb_filename_noex = Path_GetFileNameWithoutExtension(video_path)
                 'ここで、#が含まれるとどうしても作成したサムネイルにアクセスできないので全角に変換
                 thumb_filename_noex = thumb_filename_noex.Replace("#", "＃")
             Else

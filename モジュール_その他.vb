@@ -9,7 +9,7 @@ Module モジュール_その他
     Public TvRemoteViewer_VB_version_check_on As Integer = 1 'バージョンチェックする=1
     Public TvRemoteViewer_VB_version_NG As Integer = 0 '強く更新を求めるバージョンならば1
     Public TvRemoteViewer_VB_version_URL As String = "http://vb45wb5b.up.seesaa.net/image/version.txt"
-    Public TvRemoteViewer_VB_revision As String = "u"
+    Public TvRemoteViewer_VB_revision As String = "v"
 
     Public RestartExe_path As String = ""
 
@@ -248,7 +248,7 @@ Module モジュール_その他
             Exit Function
         Else
             '相対パス
-            Dim basePath As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+            Dim basePath As String = Path_GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
             basePath &= "\"
 
             'http://dobon.net/vb/dotnet/file/getabsolutepath.html
@@ -293,7 +293,7 @@ Module モジュール_その他
         If sp > 0 Then
             url = url.Substring(0, sp)
         End If
-        Return Path.GetExtension(url).ToLower
+        Return Path_GetExtension(url).ToLower
     End Function
 
     '文字列に指定文字が何個含まれているか

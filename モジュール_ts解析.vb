@@ -126,7 +126,7 @@ Module モジュール_ts解析
     Public Function F_ts2tot(ByVal fullpathfilename As String, ByVal t2 As DateTime, ByVal t2_end As DateTime, ByVal ffmpeg_path As String) As tot_structure
         Dim r As tot_structure = Nothing
 
-        Dim ext As String = Path.GetExtension(fullpathfilename).ToLower
+        Dim ext As String = Path_GetExtension(fullpathfilename).ToLower
         If ext = ".ts" Then
             'TSの場合
             Try
@@ -439,7 +439,7 @@ Module モジュール_ts解析
 
         If isMatch_HLS(ffmpeg_path, "ffmpeg") = 1 Then
             Try
-                Dim f_path As String = Path.GetDirectoryName(ffmpeg_path)
+                Dim f_path As String = Path_GetDirectoryName(ffmpeg_path)
                 Dim ffprobe_path As String = f_path & "\ffprobe.exe"
 
                 If file_exist(ffprobe_path) = 1 Then

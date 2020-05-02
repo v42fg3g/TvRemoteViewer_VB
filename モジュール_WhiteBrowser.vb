@@ -10,7 +10,7 @@ Module モジュール_WhiteBrowser
         Dim r As Integer = 0
 
         If WhiteBrowserWB_path.Length > 0 Then
-            Dim filename_noext As String = Path.GetFileNameWithoutExtension(fullpathfilename).ToLower
+            Dim filename_noext As String = Path_GetFileNameWithoutExtension(fullpathfilename).ToLower
             If filename_noext.Length > 0 Then
                 If file_exist(WhiteBrowserWB_path) = 1 Then
 
