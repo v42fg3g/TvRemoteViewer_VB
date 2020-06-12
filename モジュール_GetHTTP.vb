@@ -393,7 +393,7 @@ Module モジュール_GetHTTP
     Private Function get_sure_title(ByVal server_name As String, ByVal ita_name As String, ByVal thread_num As String) As String
         Dim r As String = "タイトル不明"
         'http://nhk2.5ch.net/livenhk/subback.html
-        Dim subback_url As String = "http://" & server_name & "/" & ita_name & "/subback.html"
+        Dim subback_url As String = "https://" & server_name & "/" & ita_name & "/subback.html"
         Dim ti As Integer = -1
         If Ch5_subback_cache.Length > 0 Then
             Dim html As String = Ch5_subback_cache

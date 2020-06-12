@@ -2262,10 +2262,11 @@ Class WebRemocon
         Dim i, j, k, n As Integer
 
         '標準
-        ReDim Preserve client_allowDomains(1)
+        ReDim Preserve client_allowDomains(2)
         client_allowDomains(0) = ".2ch.net"
-        client_allowDomains(1) = ".nicovideo.jp"
-        log1write("【クライアント設定 標準】.2ch.net/と.nicovideo.jp/へのWEBアクセスを許可します")
+        client_allowDomains(1) = ".5ch.net"
+        client_allowDomains(2) = ".nicovideo.jp"
+        log1write("【クライアント設定 標準】.2ch.net/、.5ch.net/、.nicovideo.jp/へのWEBアクセスを許可します")
 
         'カレントディレクトリ変更
         F_set_ppath4program()
@@ -7465,7 +7466,7 @@ Class WebRemocon
                             ip_chk = 1
                     End Select
                 End If
-            ElseIf (domainstr & "/").IndexOf(".2ch.net/") > 0 Then
+            ElseIf (domainstr & "/").IndexOf(".2ch.net/") > 0 Or (domainstr & "/").IndexOf(".5ch.net/") > 0 Then
                 '2chThreads.jsonの場合を考慮
             Else
                 '不正
@@ -7988,7 +7989,7 @@ Class WebRemocon
                         Next
                         If chk >= 0 Then
                             '2chの場合は更にチェック
-                            If domain_str.IndexOf(".2ch.net") > 0 Then
+                            If domain_str.IndexOf(".2ch.net") > 0 Or domain_str.IndexOf(".5ch.net") > 0 Then
                                 If url.IndexOf("/read.cgi/") < 0 And url.IndexOf(".html") < 0 Then
                                     chk = -1
                                 End If
