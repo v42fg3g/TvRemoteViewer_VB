@@ -2339,10 +2339,10 @@ Module モジュール_番組表
                             If s1 < s2 Then
                                 Dim u1 As Integer = time2unix(s1)
                                 Dim u2 As Integer = time2unix(s2)
-                                If u1 > p_start Then
+                                If u1 > p_start And u1 <= ut Then
                                     p_start = u1
                                 End If
-                                If u2 < p_end Then
+                                If u2 < p_end And u2 > ut Then
                                     p_end = u2
                                 End If
                             Else
@@ -2355,7 +2355,7 @@ Module モジュール_番組表
                 Next
 
                 'おかしな値でないかチェック
-                If p_start > time2unix(DateAdd(DateInterval.Day, -1, t)) And p_end < time2unix(DateAdd(DateInterval.Day, 1, t)) Then
+                If p_start > time2unix(DateAdd(DateInterval.Day, -1, t)) And p_end < time2unix(DateAdd(DateInterval.Day, 1, t)) And p_start < p_end Then
                     '記録
                     pcache(pindex).get_utime = time2unix(t)
                     pcache(pindex).min_utime = p_start
@@ -2372,6 +2372,8 @@ Module モジュール_番組表
             For i As Integer = 0 To pcache.Length - 1
                 If ut - pcache(i).max_utime > 300 Then
                     pcache(i).value_str = ""
+                    pcache(i).min_utime = 0
+                    pcache(i).max_utime = 0
                 End If
             Next
         End If

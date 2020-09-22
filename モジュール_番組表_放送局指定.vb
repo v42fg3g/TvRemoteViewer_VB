@@ -237,6 +237,8 @@ Module モジュール_番組表_放送局指定
             For i As Integer = 0 To scache.Length - 1
                 If ut - scache(i).max_utime > 300 Then
                     scache(j).value_str = ""
+                    scache(j).min_utime = 0
+                    scache(j).max_utime = 0
                 End If
             Next
         End If
