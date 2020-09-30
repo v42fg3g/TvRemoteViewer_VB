@@ -150,6 +150,7 @@ Module モジュール_GetHTTP
 
         Dim url_org As String = url
         Dim comment_vol As Integer = 0 '末尾から何件返すか
+        Dim comment_from As Integer = 0 '指定レス番号から末尾まで取得
         Dim isDat As Integer = 0
         Dim base_url As String = "" 'ヘッダー用
         Dim url_footer As String = url 'フッター用
@@ -157,13 +158,24 @@ Module モジュール_GetHTTP
         Dim f_sure_num As String = ""
         Dim f_servername As String = ""
         If url.IndexOf("/read.cgi/") > 0 Then
-            Dim sp As Integer = url.LastIndexOf("/l")
-            If sp > 0 Then
-                Dim cc As String = url.Substring(sp).Replace("/l", "").Trim
+            Dim sp As Integer = -1
+            sp = url.LastIndexOf("-")
+            If sp = url.Length - 1 Then
+                sp = url.LastIndexOf("/")
+                Dim cc As String = Instr_pickup(url, "/", "-", sp)
                 If IsNumeric(cc) Then
-                    comment_vol = Val(cc)
+                    comment_from = Val(cc)
                 End If
                 url_footer = url.Substring(0, sp).Replace("https:", "").Replace("http:", "") '//himawari.5ch.net/test/read.cgi/livecx/9876543210
+            Else
+                sp = url.LastIndexOf("/l")
+                If sp > 0 Then
+                    Dim cc As String = url.Substring(sp).Replace("/l", "").Trim
+                    If IsNumeric(cc) Then
+                        comment_vol = Val(cc)
+                    End If
+                    url_footer = url.Substring(0, sp).Replace("https:", "").Replace("http:", "") '//himawari.5ch.net/test/read.cgi/livecx/9876543210
+                End If
             End If
             'URLをdat形式に変更
             'http://nhk2.5ch.net/test/read.cgi/livenhk/1578976941/l50
@@ -198,7 +210,6 @@ Module モジュール_GetHTTP
             'プロキシの設定
             If Ch5_Proxy_Server.Length > 0 Then
                 If (Ch5_read_dat = 1 And isDat = 1) Or Ch5_read_dat = 2 Then
-                    Debug.Print("[PROXY]")
                     Dim proxy As New System.Net.WebProxy(Ch5_Proxy_Server)
                     webreq.Proxy = proxy
                 End If
@@ -280,7 +291,12 @@ Module モジュール_GetHTTP
                         Dim last_date As String = "1980/01/01(火) 00:00:00.00"
                         Dim line() As String = Split(ghtml, vbLf)
                         Dim coms() As String = Nothing
-                        If comment_vol = 0 Or comment_vol > line.Length Then
+                        If comment_from > 0 Then
+                            comment_vol = line.Length - comment_from - 1
+                            If comment_vol < 0 Then
+                                comment_vol = line.Length
+                            End If
+                        ElseIf comment_vol = 0 Or comment_vol > line.Length Then
                             comment_vol = line.Length
                         End If
                         ReDim coms(comment_vol + 1) '51=52スロット
