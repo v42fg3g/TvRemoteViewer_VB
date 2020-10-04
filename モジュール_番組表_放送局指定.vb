@@ -1534,7 +1534,6 @@ Module モジュール_番組表_放送局指定
                                                     i = r.Length
                                                     ReDim Preserve r(i)
                                                 End If
-                                                ReDim Preserve r(j)
                                                 r(i).name = station
                                                 r(i).nameid = ""
                                                 r(i).startt = ystart
