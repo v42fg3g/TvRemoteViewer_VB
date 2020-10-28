@@ -78,6 +78,8 @@ Module モジュール_GetHTTP
                 CType(System.Net.WebRequest.Create(url),  _
                 System.Net.HttpWebRequest)
 
+            webreq.AutomaticDecompression = DecompressionMethods.GZip Or DecompressionMethods.Deflate '追加
+
             'UserAgent
             If UserAgent.Length > 0 Then
                 webreq.UserAgent = UserAgent
@@ -206,6 +208,8 @@ Module モジュール_GetHTTP
             Dim webreq As System.Net.HttpWebRequest =
                 CType(System.Net.WebRequest.Create(url),
                 System.Net.HttpWebRequest)
+
+            webreq.AutomaticDecompression = DecompressionMethods.GZip Or DecompressionMethods.Deflate '追加
 
             'プロキシの設定
             If Ch5_Proxy_Server.Length > 0 Then

@@ -232,9 +232,9 @@ Public Class Form1
 
         'ログ処理
         If log1 <> log1_dummy Then
-            If log1.Length > log_size Then
+            If log1.Length > log_size And log_size > 0 Then
                 'log_size文字以上になったらカット
-                log1 = log1.Substring(0, log_size)
+                log1 = log1.Substring(log1.Length - log_size, log_size)
             End If
             log1_dummy = log1
             show_log() 'フォーム上へ表示
@@ -318,11 +318,15 @@ Public Class Form1
     Private Sub show_log()
         If Me.WindowState <> FormWindowState.Minimized And (CheckBoxLogReq.Checked = False Or CheckBoxLogWI.Checked = False Or CheckBoxLogETC.Checked = False) Then
             '手の込んだログ表示
-            TextBoxLog.Text = edit_log(log1)
-            TextBoxLog.Refresh()
+            TextBoxLog.SuspendLayout()
+            TextBoxLog.Text = ""
+            TextBoxLog.AppendText(edit_log(log1))
+            TextBoxLog.ResumeLayout()
         Else
-            TextBoxLog.Text = log1
-            TextBoxLog.Refresh()
+            TextBoxLog.SuspendLayout()
+            TextBoxLog.Text = ""
+            TextBoxLog.AppendText(log1)
+            TextBoxLog.ResumeLayout()
         End If
     End Sub
 

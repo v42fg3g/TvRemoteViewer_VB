@@ -792,7 +792,7 @@ Partial Class Form1
         Me.CheckBoxLogReq.AutoSize = True
         Me.CheckBoxLogReq.Checked = True
         Me.CheckBoxLogReq.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.CheckBoxLogReq.Location = New System.Drawing.Point(271, 707)
+        Me.CheckBoxLogReq.Location = New System.Drawing.Point(373, 585)
         Me.CheckBoxLogReq.Name = "CheckBoxLogReq"
         Me.CheckBoxLogReq.Size = New System.Drawing.Size(44, 16)
         Me.CheckBoxLogReq.TabIndex = 110
@@ -805,7 +805,7 @@ Partial Class Form1
         Me.CheckBoxLogWI.AutoSize = True
         Me.CheckBoxLogWI.Checked = True
         Me.CheckBoxLogWI.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.CheckBoxLogWI.Location = New System.Drawing.Point(322, 707)
+        Me.CheckBoxLogWI.Location = New System.Drawing.Point(424, 585)
         Me.CheckBoxLogWI.Name = "CheckBoxLogWI"
         Me.CheckBoxLogWI.Size = New System.Drawing.Size(36, 16)
         Me.CheckBoxLogWI.TabIndex = 111
@@ -818,7 +818,7 @@ Partial Class Form1
         Me.CheckBoxLogETC.AutoSize = True
         Me.CheckBoxLogETC.Checked = True
         Me.CheckBoxLogETC.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.CheckBoxLogETC.Location = New System.Drawing.Point(363, 707)
+        Me.CheckBoxLogETC.Location = New System.Drawing.Point(465, 585)
         Me.CheckBoxLogETC.Name = "CheckBoxLogETC"
         Me.CheckBoxLogETC.Size = New System.Drawing.Size(42, 16)
         Me.CheckBoxLogETC.TabIndex = 112
@@ -840,7 +840,7 @@ Partial Class Form1
         'CheckBoxLogDebug
         '
         Me.CheckBoxLogDebug.AutoSize = True
-        Me.CheckBoxLogDebug.Location = New System.Drawing.Point(206, 707)
+        Me.CheckBoxLogDebug.Location = New System.Drawing.Point(308, 585)
         Me.CheckBoxLogDebug.Name = "CheckBoxLogDebug"
         Me.CheckBoxLogDebug.Size = New System.Drawing.Size(56, 16)
         Me.CheckBoxLogDebug.TabIndex = 114
